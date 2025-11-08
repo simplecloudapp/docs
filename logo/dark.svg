@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Ebene_2" data-name="Ebene 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 474.07 88.14">
+<svg id="Ebene_2" data-name="Ebene 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 475.87 88.14">
   <defs>
     <style>
       .cls-1 {
@@ -11,25 +11,25 @@
       }
 
       .cls-3 {
-        fill: #010101;
+        letter-spacing: -.01em;
+      }
+
+      .cls-4 {
+        letter-spacing: 0em;
+      }
+
+      .cls-5 {
+        fill: #fff;
         font-family: Satoshi-Bold, Satoshi;
         font-size: 72px;
         font-weight: 700;
       }
-
-      .cls-4 {
-        letter-spacing: -.01em;
-      }
-
-      .cls-5 {
-        letter-spacing: 0em;
-      }
     </style>
   </defs>
-  <g id="dark">
+  <g id="light">
     <g>
       <path class="cls-1" d="M50.02,36.9h-14.71L39.59,2.66c.3-2.4-2.77-3.64-4.22-1.71L.48,47.47c-1.17,1.55-.06,3.77,1.89,3.77h14.71l-4.28,34.24c-.3,2.4,2.77,3.64,4.22,1.71l34.89-46.52c1.17-1.55.06-3.77-1.89-3.77Z"/>
-      <text class="cls-3" transform="translate(70.88 66.44)"><tspan x="0" y="0">simplecl</tspan><tspan class="cls-4" x="275.32" y="0">o</tspan><tspan class="cls-5" x="317.37" y="0">u</tspan><tspan class="cls-2" x="358.63" y="0">d</tspan></text>
+      <text class="cls-5" transform="translate(72.68 66.44)"><tspan x="0" y="0">simplecl</tspan><tspan class="cls-3" x="275.32" y="0">o</tspan><tspan class="cls-4" x="317.37" y="0">u</tspan><tspan class="cls-2" x="358.63" y="0">d</tspan></text>
     </g>
   </g>
 </svg>
