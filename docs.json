@@ -17,27 +17,54 @@
             "tab": "Manual",
             "groups": [
               {
-                "group": "Getting started",
+                "group": "Introduction",
                 "pages": [
-                  "index",
-                  "quickstart",
-                  "development"
+                  "en/manual/introduction/overview",
+                  "en/manual/introduction/philosophy",
+                  "en/manual/introduction/updates",
+                  "en/manual/introduction/faq"
                 ]
               },
               {
-                "group": "Customization",
+                "group": "Setup",
                 "pages": [
-                  "essentials/settings",
-                  "essentials/navigation"
+                  "en/manual/setup/installation",
+                  "en/manual/setup/dashboard",
+                  "en/manual/setup/groups",
+                  "en/manual/setup/servers",
+                  "en/manual/setup/templates"
                 ]
               },
               {
-                "group": "Writing content",
+                "group": "Droplets",
                 "pages": [
-                  "essentials/markdown",
-                  "essentials/code",
-                  "essentials/images",
-                  "essentials/reusable-snippets"
+                  "en/manual/droplet/overview",
+                  "en/manual/droplet/player",
+                  "en/manual/droplet/resourcepack"
+                ]
+              },
+              {
+                "group": "Plugins",
+                "pages": [
+                  "en/manual/plugin/overview",
+                  "en/manual/plugin/server-connection",
+                  "en/manual/plugin/cloud-command",
+                  "en/manual/plugin/proxy-essentials",
+                  "en/manual/plugin/notify",
+                  "en/manual/plugin/prefixes",
+                  "en/manual/plugin/signs",
+                  "en/manual/plugin/npcs",
+                  "en/manual/plugin/placeholders"
+                ]
+              },
+              {
+                "group": "Guides",
+                "pages": [
+                  "en/manual/guide/permissions",
+                  "en/manual/guide/testimonials",
+                  "en/manual/guide/remote-access",
+                  "en/manual/guide/multi-root",
+                  "en/manual/guide/self-hosted-dashboard"
                 ]
               }
             ]
@@ -46,18 +73,9 @@
             "tab": "Concepts",
             "groups": [
               {
-                "group": "API documentation",
+                "group": "Core Concepts",
                 "pages": [
-                  "api-reference/introduction"
-                ]
-              },
-              {
-                "group": "Endpoint examples",
-                "pages": [
-                  "api-reference/endpoint/get",
-                  "api-reference/endpoint/create",
-                  "api-reference/endpoint/delete",
-                  "api-reference/endpoint/webhook"
+                  "en/concepts/overview"
                 ]
               }
             ]
@@ -66,18 +84,9 @@
             "tab": "Developer",
             "groups": [
               {
-                "group": "API documentation",
+                "group": "Developer Guide",
                 "pages": [
-                  "api-reference/introduction"
-                ]
-              },
-              {
-                "group": "Endpoint examples",
-                "pages": [
-                  "api-reference/endpoint/get",
-                  "api-reference/endpoint/create",
-                  "api-reference/endpoint/delete",
-                  "api-reference/endpoint/webhook"
+                  "en/developer/overview"
                 ]
               }
             ]
@@ -86,10 +95,84 @@
       },
       {
         "language": "de",
-        "groups": [
+        "tabs": [
           {
-            "group": "Getting started",
-            "pages": ["index", "quickstart", "development"]
+            "tab": "Manual",
+            "groups": [
+              {
+                "group": "Introduction",
+                "pages": [
+                  "de/manual/introduction/overview",
+                  "de/manual/introduction/philosophy",
+                  "de/manual/introduction/updates",
+                  "de/manual/introduction/faq"
+                ]
+              },
+              {
+                "group": "Setup",
+                "pages": [
+                  "de/manual/setup/installation",
+                  "de/manual/setup/dashboard",
+                  "de/manual/setup/groups",
+                  "de/manual/setup/servers",
+                  "de/manual/setup/templates"
+                ]
+              },
+              {
+                "group": "Droplets",
+                "pages": [
+                  "de/manual/droplet/overview",
+                  "de/manual/droplet/player",
+                  "de/manual/droplet/resourcepack"
+                ]
+              },
+              {
+                "group": "Plugins",
+                "pages": [
+                  "de/manual/plugin/overview",
+                  "de/manual/plugin/server-connection",
+                  "de/manual/plugin/cloud-command",
+                  "de/manual/plugin/proxy-essentials",
+                  "de/manual/plugin/notify",
+                  "de/manual/plugin/prefixes",
+                  "de/manual/plugin/signs",
+                  "de/manual/plugin/npcs",
+                  "de/manual/plugin/placeholders"
+                ]
+              },
+              {
+                "group": "Guides",
+                "pages": [
+                  "de/manual/guide/permissions",
+                  "de/manual/guide/testimonials",
+                  "de/manual/guide/remote-access",
+                  "de/manual/guide/multi-root",
+                  "de/manual/guide/self-hosted-dashboard"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Concepts",
+            "groups": [
+              {
+                "group": "Core Concepts",
+                "pages": [
+                  "de/concepts/overview"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Developer",
+            "groups": [
+              {
+                "group": "Developer Guide",
+                "pages": [
+                  "de/developer/overview"
+                ]
+              }
+            ]
           }
         ]
       }
@@ -117,7 +200,7 @@
     "links": [
       {
         "label": "Discord",
-        "href": "discord.simplecloud.app"
+        "href": "https://discord.simplecloud.app"
       }
     ],
     "primary": {
