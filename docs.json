@@ -4,8 +4,14 @@
   "name": "simplecloud",
   "colors": {
     "primary": "#00BCFF",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "light": "#00BCFF",
+    "dark": "#00BCFF"
+  },
+  "background": {
+    "color": {
+      "light": "#FFFFFF",
+      "dark": "#09090B"
+    }
   },
   "favicon": "/favicon.svg",
   "navigation": {
