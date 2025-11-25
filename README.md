@@ -1,16 +1,38 @@
-# Mintlify Starter Kit
+# docs.simplecloud.app
 
-Use the starter kit to get your docs deployed and ready to customize.
+![Banner][banner]
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+<div align="center">
+  
+  [![Documentation Status][badge-docs]][docs]
+  [![License][badge-license]][license]
+  <br>
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+[![Discord][badge-discord]][social-discord]
+[![Follow @simplecloudapp][badge-x]][social-x]
+[![Follow @simplecloudapp][badge-bluesky]][social-bluesky]
+[![Follow @simplecloudapp][badge-youtube]][social-youtube]
+<br>
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+[Report a Bug][issue-bug-report]
+·
+[Request Documentation][issue-docs-request]
+<br>
+
+🌟 Give us a star — your support means the world to us!
+
+</div>
+<br>
+
+Official documentation for SimpleCloud, providing comprehensive guides, tutorials, and API references for managing and creating Minecraft server networks.
+
+## Purpose
+
+- [x] **Comprehensive Guides**: Detailed documentation for all SimpleCloud components
+- [x] **API References**: Complete API documentation for developers
+- [x] **Integration Tutorials**: Step-by-step guides for plugins and droplets
+- [x] **Best Practices**: Recommended patterns and configurations
+- [x] **Troubleshooting**: Common issues and their solutions
 
 ## Development
 
@@ -28,16 +50,34 @@ mint dev
 
 View your local preview at `http://localhost:3000`.
 
-## Publishing changes
+## Contributing
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+Contributions to SimpleCloud are welcome and highly appreciated. However, before you jump right into it, we would like you to read our [Contribution Guide][docs-contribute].
 
-## Need help?
+## License
 
-### Troubleshooting
+This repository is licensed under [Tailwind UI License][license].
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+<!-- LINK GROUP -->
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+[banner]: https://raw.githubusercontent.com/simplecloudapp/branding/refs/heads/main/readme/banner/docs.png
+[docs]: https://docs.simplecloud.app
+[issue-bug-report]: https://github.com/simplecloudapp/docs/issues/new?labels=bug&projects=template=01_BUG-REPORT.yml&title=%5BBUG%5D+%3Ctitle%3E
+[issue-docs-request]: https://github.com/simplecloudapp/docs/discussions/new?category=documentation
+[docs-contribute]: https://docs.simplecloud.app/contribute
+[modrinth]: https://modrinth.com/organization/simplecloud
+
+<!-- ⛔ DON'T TOUCH -->
+
+[license]: https://github.com/simplecloudapp/docs.simplecloud.app/blob/main/LICENSE.md
+[snapshots]: https://repo.simplecloud.app/#/snapshots
+[social-x]: https://x.com/simplecloudapp
+[social-bluesky]: https://bsky.app/profile/simplecloud.app
+[social-youtube]: https://www.youtube.com/@thesimplecloud9075
+[social-discord]: https://discord.simplecloud.app
+[badge-docs]: https://img.shields.io/website?url=https%3A%2F%2Fdocs.simplecloud.app&style=flat-square&label=Documentation&labelColor=18181b&color=0ea5e9
+[badge-license]: https://img.shields.io/badge/apache%202.0-blue.svg?style=flat-square&label=license&labelColor=18181b&style=flat-square&color=e11d48
+[badge-discord]: https://img.shields.io/badge/Community_Discord-d95652.svg?style=flat-square&logo=discord&color=27272a
+[badge-x]: https://img.shields.io/badge/Follow_@simplecloudapp-d95652.svg?style=flat-square&logo=x&color=27272a
+[badge-bluesky]: https://img.shields.io/badge/Follow_@simplecloud.app-d95652.svg?style=flat-square&logo=bluesky&color=27272a
+[badge-youtube]: https://img.shields.io/badge/youtube-d95652.svg?style=flat-square&logo=youtube&color=27272a
