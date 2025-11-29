@@ -96,6 +96,36 @@
                 ]
               }
             ]
+          },
+          {
+            "tab": "Course",
+            "groups": [
+              {
+                "group": "Foundations",
+                "pages": [
+                  "en/course/foundations/introduction",
+                  "en/course/foundations/installation",
+                  "en/course/foundations/server-groups-and-templates",
+                  "en/course/foundations/droplets",
+                  "en/course/foundations/plugins"
+                ]
+              },
+              {
+                "group": "In-Depth Videos",
+                "pages": [
+                  "en/course/in-depth/self-hosted",
+                  "en/course/in-depth/multi-root",
+                  "en/course/in-depth/remote-access"
+                ]
+              },
+              {
+                "group": "More Guides",
+                "pages": [
+                  "en/course/guides/linux-essentials",
+                  "en/course/guides/permissions"
+                ]
+              }
+            ]
           }
         ]
       },
@@ -182,21 +212,7 @@
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
