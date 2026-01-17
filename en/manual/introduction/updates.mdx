@@ -5,56 +5,49 @@ description: 'Keep your SimpleCloud installation up to date with our built-in up
 
 ## Automatic Updates
 
-SimpleCloud automatically checks for updates when you start the cloud. This means:
+SimpleCloud features a fully automatic update system. When we release a new version, your installation automatically downloads and applies the update - no action required on your part.
 
-- When you start SimpleCloud, it checks for newer versions
-- If updates are available, they're downloaded and applied automatically
+- Updates are downloaded automatically in the background
 - Your configuration files are preserved during updates
-- The cloud restarts with the new version where necessary
+- Components restart seamlessly without downtime - your servers continue running
+- Players remain connected without interruption
 
 This hands-off approach ensures you're always running the latest version without manual intervention.
 
-## Updating the CLI
+## Zero-Downtime Updates
 
-The CLI is your primary interface with SimpleCloud and can be updated using:
+SimpleCloud supports rolling updates for all components. When an update is applied:
+
+- Components are updated and restarted one by one
+- Your Minecraft servers continue running throughout the update process
+- Players remain connected without interruption
+- The update completes automatically in the background
+
+## Manual Updates
+
+If you prefer to trigger updates manually, use the update command:
 
 ```bash
-simplecloud upgrade cli
+simplecloud update
+```
+
+This updates all installed components to their latest versions. You can also update specific components:
+
+```bash
+simplecloud update [components..]
+```
+
+## Updating the CLI
+
+The CLI itself can be updated separately using:
+
+```bash
+simplecloud upgrade
 ```
 
 This command checks for a newer version of the CLI, downloads it, and replaces your current installation.
 
-## Handling Breaking Changes with Migrations
-
-Occasionally, SimpleCloud may introduce breaking changes that require manual migration steps. For these cases, we provide the `migrate` command:
-
-```bash
-simplecloud migrate [version]
-```
-
-This command guides you through any necessary migration steps for moving between major versions or handling significant changes that can't be applied automatically.
-
-For example, migrating to version 3.0.0-beta.1:
-
-```bash
-simplecloud migrate 3.0.0-beta.1
-```
-
 <Note>
-  The migrate command is only needed in specific cases where breaking changes
-  are introduced. For regular updates, the automatic update system handles
-  everything for you.
+  The CLI will automatically prompt you to update if it is more than 5 versions behind the latest release.
 </Note>
 
-## Best Practices
-
-- **Stay Updated**: Since updates happen automatically, it's best to restart the cloud periodically to ensure you have the latest version
-- **Backup First**: Before a major version migration, always create a backup of your configuration files
-- **Check Changelog**: Review the changelog for major versions to understand what has changed before migrating
-- **Test Migrations**: For production environments, test migrations on a staging system first
-
-<Warning>
-  If you're running a custom or modified version of SimpleCloud, automatic
-  updates might overwrite your changes. Consider creating a backup before
-  restarting the cloud.
-</Warning>

@@ -1,6 +1,53 @@
 ---
 title: 'Updates'
-description: 'Description for Updates'
+description: 'Halte deine SimpleCloud-Installation mit unseren integrierten Update-Mechanismen aktuell'
 ---
 
-## Updates
+## Automatische Updates
+
+SimpleCloud verfuegt ueber ein vollautomatisches Update-System. Wenn wir eine neue Version veroeffentlichen, laedt deine Installation das Update automatisch herunter und wendet es an - ohne dass du etwas tun musst.
+
+- Updates werden automatisch im Hintergrund heruntergeladen
+- Deine Konfigurationsdateien bleiben bei Updates erhalten
+- Komponenten starten nahtlos ohne Ausfallzeit neu - deine Server laufen weiter
+- Spieler bleiben ohne Unterbrechung verbunden
+
+Dieser automatische Ansatz stellt sicher, dass du immer die neueste Version verwendest, ohne manuell eingreifen zu muessen.
+
+## Updates ohne Ausfallzeit
+
+SimpleCloud unterstuetzt Rolling Updates fuer alle Komponenten. Wenn ein Update angewendet wird:
+
+- Komponenten werden nacheinander aktualisiert und neu gestartet
+- Deine Minecraft-Server laufen waehrend des gesamten Update-Prozesses weiter
+- Spieler bleiben ohne Unterbrechung verbunden
+- Das Update wird automatisch im Hintergrund abgeschlossen
+
+## Manuelle Updates
+
+Wenn du Updates lieber manuell ausloesen moechtest, verwende den Update-Befehl:
+
+```bash
+simplecloud update
+```
+
+Dies aktualisiert alle installierten Komponenten auf ihre neuesten Versionen. Du kannst auch bestimmte Komponenten aktualisieren:
+
+```bash
+simplecloud update [komponenten..]
+```
+
+## CLI aktualisieren
+
+Die CLI selbst kann separat aktualisiert werden mit:
+
+```bash
+simplecloud upgrade
+```
+
+Dieser Befehl prueft auf eine neuere Version der CLI, laedt sie herunter und ersetzt deine aktuelle Installation.
+
+<Note>
+  Die CLI fordert dich automatisch zum Update auf, wenn sie mehr als 5 Versionen hinter der neuesten Version liegt.
+</Note>
+

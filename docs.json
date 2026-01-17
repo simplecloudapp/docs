@@ -36,8 +36,8 @@
                 "group": "Setup",
                 "pages": [
                   "en/manual/setup/installation",
-                  "en/manual/setup/dashboard",
                   "en/manual/setup/groups",
+                  "en/manual/setup/persistent-servers",
                   "en/manual/setup/servers",
                   "en/manual/setup/templates"
                 ]
@@ -193,7 +193,6 @@
                 "group": "Setup",
                 "pages": [
                   "de/manual/setup/installation",
-                  "de/manual/setup/dashboard",
                   "de/manual/setup/groups",
                   "de/manual/setup/servers",
                   "de/manual/setup/templates"

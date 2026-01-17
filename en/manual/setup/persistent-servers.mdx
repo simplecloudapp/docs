@@ -1,0 +1,102 @@
+---
+title: 'Persistent Servers'
+description: 'Create always-on server instances that maintain state between restarts'
+---
+
+Persistent servers are single, always-on server instances. Use them for servers that need to keep their world and data between restarts - like Citybuild, Skyblock, SMP, or Build servers.
+
+For servers that should scale based on player demand, use [Groups](/en/manual/setup/groups) instead.
+
+## Creating a Persistent Server
+
+<Steps>
+  <Step title="Navigate to Servers">
+    Click **Servers** in the navigation to view your existing persistent servers. Click the **New Server** button in the top right.
+  </Step>
+  <Step title="Configure Basics">
+    - **Name**: Enter a unique name for your server (e.g., "Hub", "Proxy", "Lobby")
+    - **Type**: Choose **Server** for game servers or **Proxy** for load balancers
+    - **Server Host**: Select which host should run this server
+    - **Activate on creation**: Toggle on to start the server immediately after creation
+  </Step>
+  <Step title="Select Software">
+    - **Software**: Choose your server software (Paper, Spigot, Purpur, Fabric, Velocity, etc.)
+    - **Version**: Select the Minecraft/software version
+    - **Custom URL**: Alternatively, provide a direct download URL for custom server JARs
+    - **Configurator**: Select how your server should be configured (appears for Server type)
+  </Step>
+  <Step title="Set Resources">
+    - **Memory**: Use a preset or set custom min/max memory allocation (in MB)
+    - **Max Players**: Maximum players allowed on this server
+  </Step>
+  <Step title="Network (Proxy only)">
+    For proxy servers, configure the **Port** for incoming player connections.
+  </Step>
+  <Step title="Add Plugins (Optional)">
+    Search and select plugins from Modrinth to automatically install. You can also add plugins later in server settings.
+  </Step>
+  <Step title="Review and Create">
+    Review your configuration summary and click **Create Server** to finish.
+  </Step>
+</Steps>
+
+## Server Status
+
+| Status | Meaning |
+|--------|---------|
+| **Active** | Server is enabled and running (or ready to run) |
+| **Inactive** | Server is disabled - enable it in general settings to start |
+
+## Server Settings
+
+### General Settings
+
+- **Active Toggle**: Enable or disable the server
+- **Memory**: Adjust min/max memory allocation
+- **Max Players**: Change player limit
+- **Tags**: Add organizational tags for filtering
+
+### Deployment Settings
+
+Shows the assigned server host. Unlike groups, persistent servers run on a single host which is set during creation.
+
+### Blueprint Settings
+
+Modify the underlying server template:
+
+- View current software and version
+- Change configurator settings
+- Edit JVM options and runtime arguments
+
+### Properties Settings
+
+Add custom key-value properties to your server:
+
+- Properties are metadata you define for your own use
+- Access them in your plugins via the [Cloud API](/en/developer/controller/servers)
+- Available as environment variables (prefixed with `SIMPLECLOUD_`)
+- Use cases: server type identifiers, custom settings for your plugins
+
+### Workflows Settings
+
+Automate tasks with workflows:
+
+- **Manual Workflows**: Trigger on demand
+- **On Start Workflows**: Run when the server starts
+- **On Stop Workflows**: Run when the server stops
+
+### Plugins Settings
+
+Manage plugins for the server:
+
+- Add plugins from Modrinth, GitHub, or direct URLs
+- View installed plugins with source information
+- Remove plugins from the server
+
+### Danger Zone
+
+Permanently delete the server:
+
+- Removes the server and its configuration
+- Stop the server first before deleting
+- Requires confirmation by typing the server name

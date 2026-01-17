@@ -1,116 +1,148 @@
 ---
 title: 'Groups'
-description: 'Learn how to create and manage server groups in SimpleCloud'
+description: 'Create and manage server groups with auto-scaling in the SimpleCloud dashboard'
 ---
 
-## What is a Group?
+Groups are the core building blocks of your SimpleCloud infrastructure. A group defines a template for servers that share the same configuration, and can automatically scale based on player demand.
 
-A server group is a configuration blueprint that defines how servers should be created and managed. Groups specify:
+<Note>
+  Looking for static servers? They've been replaced by [Persistent Servers](/en/manual/setup/persistent-servers) - single instances that keep their data between restarts and don't auto-scale.
+</Note>
 
-- The server software to use (e.g., Paper, Velocity)
-- Memory allocation (minimum and maximum)
-- Player capacity
-- How many servers should run at any time
-- Whether the template is dynamic or static
+## Understanding Groups
 
-When you create a group, SimpleCloud uses it to automatically start and manage servers based on your configuration.
+A **group** is a collection of servers that:
+
+- Share the same software (Paper, Velocity, etc.) and configuration
+- Can automatically scale up or down based on player count
+- Are deployed to your configured server hosts
+- Inherit plugins, properties, and workflows from the group configuration
+
+There are two types of groups:
+
+- **Server Groups** - Minecraft game servers (Spigot, Paper, Fabric, etc.)
+- **Proxy Groups** - Load balancers that route players to servers (Velocity, BungeeCord)
 
 ## Creating a Group
 
-You can create groups either through the [Dashboard](/en/manual/setup/dashboard) or via the CLI.
+<Steps>
+  <Step title="Navigate to Groups">
+    Click **Groups** in the navigation to view your existing groups. Click the **New Group** button in the top right.
+  </Step>
+  <Step title="Configure Basics">
+    - **Name**: Enter a unique name for your group (e.g., "Lobby", "SkyWars", "BungeeCord")
+    - **Type**: Choose **Server** for game servers or **Proxy** for load balancers
+    - **Activate on creation**: Toggle on to start scaling immediately after creation
+  </Step>
+  <Step title="Select Software">
+    - **Software**: Choose your server software (Paper, Spigot, Purpur, Fabric, Velocity, etc.)
+    - **Version**: Select the Minecraft/software version
+    - **Custom URL**: Alternatively, provide a direct download URL for custom server JARs
+    - **Configurator**: Select how your server should be configured (appears for Server type)
+  </Step>
+  <Step title="Set Resources">
+    - **Memory**: Use a preset or set custom min/max memory allocation (in MB)
+    - **Max Players**: Maximum players allowed per server instance
+  </Step>
+  <Step title="Configure Scaling">
+    - **Scaling Mode**:
+      - *Slots* - Scale based on available player slots
+      - *Servers* - Scale based on server count
+    - **Min Servers**: Minimum servers to keep running at all times
+    - **Max Servers**: Maximum servers allowed to scale up to
+    - **Player Threshold**: Percentage (0-100%) at which to trigger scaling
+    - **Available Slots**: Number of open slots to maintain across the group
+  </Step>
+  <Step title="Network (Proxy only)">
+    For proxy groups, configure the **Starting Port** for incoming player connections.
+  </Step>
+  <Step title="Add Plugins (Optional)">
+    Search and select plugins from Modrinth to automatically install on all servers in this group. You can also add plugins later in group settings.
+  </Step>
+  <Step title="Review and Create">
+    Review your configuration summary and click **Create Group** to finish.
+  </Step>
+</Steps>
 
-### Using the CLI
+## Group Status
 
-Run the group creation wizard:
+| Status | Meaning |
+|--------|---------|
+| **Healthy** | Running normally, meeting minimum server requirements |
+| **Scaling** | Currently scaling up to meet player demand |
+| **Down** | No servers running - verify the group is activated, at least one server host is enabled in deployment settings, and hosts have available resources |
+| **Inactive** | Group is deactivated - enable it in general settings |
+| **Disabled** | Minimum servers set to 0 - increase min servers to start scaling |
 
-```bash
-simplecloud create group
-```
+## Group Settings
 
-This starts an interactive wizard that guides you through:
+### General Settings
 
-1. **Group Name**: A unique identifier for your group
-2. **Server Type**: Proxy or Server
-3. **Server Software**: Paper, Velocity, etc.
-4. **Memory Allocation**: Min/Max RAM
-5. **Online Count**: Min/Max servers running
-6. **Template Type**: Dynamic or Static
+- **Active Toggle**: Enable or disable auto-scaling
+- **Memory**: Adjust min/max memory allocation
+- **Max Players**: Change player limit per server
+- **Tags**: Add organizational tags for filtering
 
-### Using Flags
+### Scaling Settings
 
-For automation or quick setup, you can specify all options directly:
+Fine-tune auto-scaling behavior:
 
-```bash
-simplecloud create group \
-  --name lobby \
-  --type SERVER \
-  --software paper \
-  --minecraft-version 1.21.4 \
-  --software-version latest \
-  --min-memory 512 \
-  --max-memory 1024 \
-  --min-online 1 \
-  --max-online 5 \
-  --max-players 100 \
-  --port 25565 \
-  --template dynamic
-```
+- **Scaling Mode**: Switch between Slots and Servers mode
+- **Server Limits**: Adjust min/max server counts
+- **Player Threshold**: When to trigger scaling (as decimal, e.g., 0.8 = 80%)
+- **Available Slots**: Target number of open slots to maintain
+- **Idle Time**: How long before scaling down idle servers (e.g., "3m", "1h")
 
-<Note>
-  When all flags are set (except `--server-url`), the interactive setup wizard
-  will be skipped. This is useful for automated group creation.
-</Note>
+### Deployment Settings
 
-## Editing a Group
+Control where servers are deployed:
 
-To modify an existing group's configuration:
+- **Toggle hosts on/off** to allow or prevent deployment
+- **Drag to reorder** priority (when some hosts are disabled)
+- First host in the list is preferred for new server deployments
 
-```bash
-simplecloud edit group [name] [flags]
-```
+<Tip>
+  When all hosts are enabled, servers are distributed automatically. Disable some hosts to set a specific priority order.
+</Tip>
 
-**Available Flags:**
+### Blueprint Settings
 
-- `-P, --max-players uint`: Maximum players per server
-- `-M, --maximum-memory uint`: Maximum memory allocation (MB)
-- `-N, --maximum-online-count uint`: Maximum servers running
-- `-m, --minimum-memory uint`: Minimum memory allocation (MB)
-- `-n, --minimum-online-count uint`: Minimum servers running
-- `-p, --start-port uint`: Starting port number
-- `-r, --properties stringToString`: Custom properties (key=value)
-- `-s, --server-url string`: Server software URL (`change` or `update`)
+Modify the underlying server template:
 
-**Example:**
+- View current software and version
+- Change configurator settings
+- Edit JVM options and runtime arguments
 
-```bash
-simplecloud edit group lobby --max-players 200 --maximum-memory 2048
-```
+### Properties Settings
 
-## Deleting a Group
+Add custom key-value properties to your group:
 
-To remove a group:
+- Properties are metadata you define for your own use
+- Access them in your plugins via the [Cloud API](/en/developer/controller/groups)
+- Available as environment variables on servers (prefixed with `SIMPLECLOUD_`)
+- Use cases: game modes, map names, custom settings for your plugins
 
-```bash
-simplecloud delete group [name]
-```
+### Workflows Settings
 
-Use `--confirm` to skip the confirmation prompt:
+Automate tasks with workflows:
 
-```bash
-simplecloud delete group lobby --confirm
-```
+- **Manual Workflows**: Trigger on demand
+- **On Start Workflows**: Run when servers start
+- **On Stop Workflows**: Run when servers stop
 
-<Warning>
-  Deleting a group will stop all running servers in that group. This action
-  cannot be undone.
-</Warning>
+### Plugins Settings
 
-## Viewing Groups
+Manage plugins for the group:
 
-To see all configured groups:
+- Add plugins from Modrinth, GitHub, or direct URLs
+- View installed plugins with source information
+- Remove plugins from the group
 
-```bash
-simplecloud info groups
-```
+### Danger Zone
 
-This displays a list of all groups with their basic information including type, memory settings, and online server counts.
+Permanently delete the group:
+
+- Removes the group and its configuration
+- Does not delete running servers (stop them first)
+- Requires confirmation by typing the group name
+

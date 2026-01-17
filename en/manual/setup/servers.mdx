@@ -1,104 +1,59 @@
 ---
 title: 'Servers'
-description: 'Learn how to manage individual servers in your SimpleCloud network'
+description: 'Understanding server instances in your SimpleCloud network'
 ---
 
-## Understanding Servers
+A server is a running Minecraft instance - the actual Java process that players connect to. Servers are ephemeral by default: they exist only while running and can be created or destroyed as needed.
 
-Servers are individual instances created from a group's configuration. While groups define the blueprint, servers are the actual running Minecraft processes.
+Every server belongs to either a [Group](/en/manual/setup/groups) or a [Persistent Server](/en/manual/setup/persistent-servers).
 
-Each server has:
+## How Servers are Created
 
-- A unique ID (UUID)
-- A numerical ID within its group
-- Its own port and resources
-- Independent state management
+### From Groups
 
-## Server States
+Groups create servers automatically based on player demand:
 
-Servers progress through various states during their lifecycle:
+- Auto-scaling spins up new servers when players join and removes idle ones when demand drops
+- Minimum count ensures servers are always available, even with no players
+- Multiple instances run simultaneously (Lobby-1, Lobby-2, Lobby-3, etc.)
+- You can also manually start additional servers when needed
 
-| State      | Description                                  |
-| ---------- | -------------------------------------------- |
-| PREPARING  | Server is being set up                       |
-| STARTING   | Server is starting up                        |
-| AVAILABLE  | Server is online and accepting players       |
-| INGAME     | Server is running a game session             |
-| STOPPING   | Server is shutting down                      |
+### From Persistent Servers
 
-## Starting Servers
+Persistent servers are single instances that don't scale:
 
-To start a new server from a group:
+- Always the same server - just on or off
+- Maintains its world and data between restarts
+- Ideal for gamemodes like Skyblock, SMP, or Citybuild
 
-```bash
-simplecloud start server [group-name]
+## Server Lifecycle
+
+Every server progresses through these states:
+
+```
+QUEUED → PREPARING → STARTING → AVAILABLE ↔ INGAME → STOPPING → STOPPED
 ```
 
-**Example:**
+| State | Description |
+|-------|-------------|
+| **Queued** | Waiting for a server host to be assigned |
+| **Preparing** | Template files being copied to the runtime directory |
+| **Starting** | JVM process launching, plugins loading |
+| **Available** | Ready for players, registered with proxy |
+| **Ingame** | Has active players connected |
+| **Stopping** | Graceful shutdown in progress |
+| **Stopped** | Process terminated, runtime cleaned up |
 
-```bash
-simplecloud start server lobby
-```
+## Server Properties
 
-This creates a new server instance using the lobby group's configuration.
+- Each server inherits properties from its group or persistent server configuration
+- Instance-specific property overrides are possible at runtime
+- Properties are available to plugins via the Cloud API and as environment variables
 
-<Note>
-  Servers are also started automatically based on your group's minimum online
-  count setting. Manual starts are useful for scaling beyond the minimum.
-</Note>
+## Server Host Allocation
 
-## Viewing Servers
+Servers don't run in a vacuum - they're assigned to [server hosts](/en/manual/setup/templates):
 
-To see all running servers:
-
-```bash
-simplecloud info servers
-```
-
-This shows all servers across all groups with their current state, player count, and resource usage.
-
-## Editing Servers
-
-You can modify a running server's configuration:
-
-```bash
-simplecloud edit server [id] [flags]
-```
-
-**Available Flags:**
-
-- `-P, --max-players uint`: Maximum players for this server
-- `-r, --properties stringToString`: Custom properties (key=value)
-
-**Example:**
-
-```bash
-simplecloud edit server lobby-1 --max-players 50
-```
-
-<Note>
-  Changes to individual servers don't affect the group configuration. When the
-  server restarts, it will use the group's default settings again.
-</Note>
-
-## Stopping Servers
-
-Servers can be stopped manually:
-
-```bash
-simplecloud stop server [group-name] [numerical-id]
-```
-
-**Example:**
-
-```bash
-simplecloud stop server lobby 1
-```
-
-This gracefully stops the specified server, giving players time to disconnect.
-
-<Warning>
-  If a group's minimum online count requires more servers than are running after
-  stopping one, SimpleCloud will automatically start a new server to maintain
-  the minimum.
-</Warning>
+- The controller assigns servers to hosts based on deployment settings
+- Priority order determines which host is preferred when multiple are available
+- Each server runs in its own isolated directory on the host
