@@ -1,0 +1,314 @@
+---
+title: 'Workflows'
+description: 'Define server preparation and cleanup processes with workflow steps'
+---
+
+## What are Workflows?
+
+Workflows define the sequence of actions executed during server lifecycle events. They handle everything from copying template files to installing plugins and applying configurations.
+
+## How Workflows Work
+
+During server preparation:
+
+1. Serverhost receives a start request from the Controller
+2. Loads the setup workflow from `workflows/internal/setup.yml`
+3. Executes each step in order with the server context
+4. Reports status back to the Controller
+
+During cleanup:
+
+1. Server stop signal received
+2. Loads the cleanup workflow from `workflows/internal/cleanup.yml`
+3. Executes cleanup steps (cache push, directory deletion)
+
+## Workflow Structure
+
+Workflows are YAML files in the `workflows/` directory:
+
+```yaml
+# workflows/internal/setup.yml
+steps:
+  - action: copy
+    from: "{{templates}}/cache/{{group}}"
+    to: "{{server-dir}}"
+
+  - action: copy
+    from: "{{templates}}/every"
+    to: "{{server-dir}}"
+
+  - action: plugins-load
+    dir: "{{server-dir}}/plugins"
+
+  - action: configurator
+    configurator: "{{configurator}}"
+    dir: "{{server-dir}}"
+```
+
+## Built-in Workflows
+
+### Setup Workflow
+
+The default setup workflow (`workflows/internal/setup.yml`) performs:
+
+1. **Cache Pull** - Copy cached files from previous runs
+2. **Template Copy** - Apply template hierarchy (every, type, software, tagged)
+3. **Plugin Installation** - Download and install plugins
+4. **Configuration** - Apply configurators for server software
+
+### Cleanup Workflow
+
+The cleanup workflow (`workflows/internal/cleanup.yml`) performs:
+
+1. **Cache Push** - Save reusable files for faster future starts
+2. **Directory Deletion** - Remove the server directory
+
+## Workflow Actions
+
+### `copy`
+
+Copies files or directories from source to destination.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `from` | path | Source file or directory |
+| `to` | path | Destination file or directory |
+| `replace` | boolean | Overwrite existing files (default: `true`) |
+| `create-dirs` | boolean | Create parent directories if missing (default: `true`) |
+
+```yaml
+- action: copy
+  from: "{{templates}}/every"
+  to: "{{server-dir}}"
+  replace: true
+```
+
+### `delete`
+
+Deletes a file or directory.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `path` | path | File or directory to delete |
+| `force` | boolean | Force deletion (default: `true`) |
+
+```yaml
+- action: delete
+  path: "{{server-dir}}"
+  force: true
+```
+
+### `for-each`
+
+Iterates over a list and executes nested steps for each item.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `items` | list | Items to iterate over |
+| `as` | string | Variable name for current item |
+| `steps` | list | Steps to execute for each item |
+
+```yaml
+- action: for-each
+  items: "{{tags}}"
+  as: "tag"
+  steps:
+    - action: copy
+      from: "{{templates}}/_tagged/{{tag}}"
+      to: "{{server-dir}}"
+```
+
+### `plugins-load`
+
+Installs plugins from configured sources (Modrinth, Hangar, Spigot, URL).
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `dir` | path | Directory to install plugins into |
+
+```yaml
+- action: plugins-load
+  dir: "{{server-dir}}/plugins"
+```
+
+Plugins are defined at the group level and automatically downloaded based on:
+- Server software (Paper, Velocity, etc.)
+- Minecraft version
+- Platform compatibility
+
+### `configurator`
+
+Applies a configurator to configure server files.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `configurator` | string | Configurator name (from `options/configurators/`) |
+| `dir` | path | Server directory to configure |
+
+```yaml
+- action: configurator
+  configurator: "paper_velocity"
+  dir: "{{server-dir}}"
+```
+
+See [Configurators](/en/concepts/serverhost/configurators) for more details.
+
+## Placeholders
+
+Workflows support dynamic placeholders replaced at runtime:
+
+### Server Context
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{{server-dir}}` | Server's working directory |
+| `{{server-name}}` | Server name (e.g., `lobby-1`) |
+| `{{group}}` | Group name |
+| `{{port}}` | Assigned port |
+| `{{max-players}}` | Maximum player count |
+| `{{memory}}` | Allocated memory (MB) |
+
+### Path Context
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{{templates}}` | Templates base directory |
+| `{{running}}` | Running servers directory |
+| `{{cache}}` | Cache directory |
+
+### Blueprint Context
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{{configurator}}` | Configurator name from blueprint |
+| `{{software}}` | Server software (paper, velocity, etc.) |
+| `{{minecraft-version}}` | Minecraft version |
+| `{{type}}` | Server type (proxy, server, lobby) |
+
+### Custom Properties
+
+Access custom properties from the server:
+
+```yaml
+- action: copy
+  from: "{{templates}}/{{$.custom-template}}"
+  to: "{{server-dir}}"
+```
+
+The `$.` prefix accesses the server's properties map.
+
+## Default Setup Flow
+
+The built-in setup workflow follows this order:
+
+```yaml
+steps:
+  # 1. Pull from cache (faster restarts)
+  - action: copy
+    from: "{{templates}}/cache/{{group}}"
+    to: "{{server-dir}}"
+
+  # 2. Apply base templates
+  - action: copy
+    from: "{{templates}}/every"
+    to: "{{server-dir}}"
+
+  # 3. Apply type-specific templates
+  - action: copy
+    from: "{{templates}}/every_{{type}}"
+    to: "{{server-dir}}"
+
+  # 4. Apply software-specific templates
+  - action: copy
+    from: "{{templates}}/every_{{software}}"
+    to: "{{server-dir}}"
+
+  # 5. Apply tagged templates
+  - action: for-each
+    items: "{{tags}}"
+    as: "tag"
+    steps:
+      - action: copy
+        from: "{{templates}}/_tagged/{{tag}}"
+        to: "{{server-dir}}"
+
+  # 6. Apply server-specific template
+  - action: copy
+    from: "{{templates}}/{{server-name}}"
+    to: "{{server-dir}}"
+
+  # 7. Install plugins
+  - action: plugins-load
+    dir: "{{server-dir}}/plugins"
+
+  # 8. Apply configurator
+  - action: configurator
+    configurator: "{{configurator}}"
+    dir: "{{server-dir}}"
+```
+
+## Customizing Workflows
+
+### Override Default Workflow
+
+Create your own setup workflow:
+
+```yaml
+# workflows/internal/setup.yml
+steps:
+  - action: copy
+    from: "{{templates}}/my-base"
+    to: "{{server-dir}}"
+
+  - action: plugins-load
+    dir: "{{server-dir}}/plugins"
+
+  - action: configurator
+    configurator: "{{configurator}}"
+    dir: "{{server-dir}}"
+```
+
+### Add Custom Steps
+
+Extend the workflow with additional actions:
+
+```yaml
+steps:
+  # ... standard setup steps ...
+
+  # Custom: Copy world from shared storage
+  - action: copy
+    from: "/shared/worlds/{{group}}"
+    to: "{{server-dir}}/world"
+
+  # Custom: Download additional resources
+  - action: copy
+    from: "{{templates}}/shared-configs"
+    to: "{{server-dir}}/plugins"
+```
+
+## Troubleshooting
+
+### Workflow Not Executing
+
+1. Check workflow file exists at `workflows/internal/setup.yml`
+2. Verify YAML syntax is valid
+3. Check serverhost logs for errors
+
+### Placeholder Not Replaced
+
+1. Ensure placeholder syntax is correct: `{{name}}`
+2. Verify the property exists in the server context
+3. For custom properties, use `{{$.property-name}}`
+
+### Copy Action Fails
+
+1. Verify source path exists
+2. Check file permissions
+3. Ensure `create-dirs` is enabled if parent directories don't exist
+
+### Plugin Installation Fails
+
+1. Check network connectivity to plugin sources
+2. Verify plugin exists for the specified Minecraft version
+3. Check `options/modrinth-platform-mappings.yml` for software mappings

@@ -93,7 +93,7 @@
                 "pages": [
                   "en/concepts/serverhost/overview",
                   "en/concepts/serverhost/configurators",
-                  "en/concepts/serverhost/template-actions"
+                  "en/concepts/serverhost/workflows"
                 ]
               }
             ]
@@ -242,7 +242,7 @@
                 "pages": [
                   "de/concepts/serverhost/overview",
                   "de/concepts/serverhost/configurators",
-                  "de/concepts/serverhost/template-actions"
+                  "de/concepts/serverhost/workflows"
                 ]
               }
             ]

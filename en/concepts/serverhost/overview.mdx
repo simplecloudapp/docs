@@ -1,115 +1,260 @@
 ---
-title: 'ServerHost Overview'
-description: 'The component responsible for managing server lifecycles and templates'
+title: 'Serverhost Overview'
+description: 'The execution agent responsible for running Minecraft servers'
 ---
 
-## What is the ServerHost?
+## What is the Serverhost?
 
-The ServerHost (ServerHost Droplet) is responsible for the actual execution and management of Minecraft servers. It handles server lifecycle operations, template deployment, and process management.
+The Serverhost is a distributed execution agent that runs on each machine in your SimpleCloud infrastructure. It receives commands from the Controller and manages the actual lifecycle of Minecraft servers - from preparation to execution to cleanup.
 
 ## Key Responsibilities
 
 ### Server Lifecycle
 
-The ServerHost manages the complete lifecycle of servers:
+The Serverhost manages the complete server lifecycle:
 
-1. **Preparation**: Setting up the server directory from templates
-2. **Starting**: Launching the Java process with correct parameters
-3. **Monitoring**: Tracking server health and state
-4. **Stopping**: Graceful shutdown and cleanup
+1. **Preparation** - Execute workflows, copy templates, install plugins
+2. **Configuration** - Apply configurators to set ports, secrets, etc.
+3. **Execution** - Launch the server process (Screen/Tmux or Docker)
+4. **Monitoring** - Track server health and stream logs
+5. **Cleanup** - Stop process and remove temporary files
 
-### Template Management
+### Workflow Execution
 
-Templates define what files and configurations a server starts with:
+Workflows define the server preparation process:
 
-- Copying template files to server directories
-- Applying configuration changes
-- Managing world files and plugins
+- Copy template files to server directory
+- Download and install plugins from registries
+- Apply configuration based on server software
+- Execute custom setup steps
 
-### Process Management
+### Plugin Management
 
-Each Minecraft server runs as a separate process:
+Automatic plugin installation from multiple sources:
 
-- Memory allocation and JVM arguments
-- Port assignment
-- Console output capture
-- Crash detection and handling
+| Source | Description |
+|--------|-------------|
+| Modrinth | Modern plugin/mod registry |
+| Hangar | PaperMC's plugin repository |
+| Spigot | SpigotMC resource pages |
+| URL | Direct download from any HTTP(S) URL |
 
 ## Architecture
 
+```mermaid
+flowchart TB
+    subgraph Serverhost["Serverhost"]
+        subgraph NATS["NATS Receiver"]
+            Start["Start requests"]
+            Status["Status reports"]
+        end
+
+        subgraph Workflow["Workflow Engine"]
+            Copy["Copy"]
+            Delete["Delete"]
+            ForEach["ForEach"]
+            Plugins["Plugin loading"]
+            Config["Configurator actions"]
+        end
+
+        subgraph Deploy["Deployment Manager"]
+            Screen["Screen/Tmux"]
+            Docker["Docker"]
+        end
+
+        subgraph Configs["Configurators"]
+            YAML["YAML"]
+            JSON["JSON"]
+            Props["Properties"]
+            TOML["TOML"]
+            Text["Text"]
+        end
+    end
 ```
-┌─────────────────────────────────────────────────────┐
-│                    ServerHost                        │
-├─────────────────────────────────────────────────────┤
-│  ┌─────────────────┐  ┌─────────────────────────┐  │
-│  │ Template Engine │  │    Process Manager      │  │
-│  │  - Actions      │  │  - JVM Launcher         │  │
-│  │  - Configurators│  │  - Console Handler      │  │
-│  └─────────────────┘  └─────────────────────────┘  │
-│  ┌─────────────────┐  ┌─────────────────────────┐  │
-│  │  File Manager   │  │   Controller Client     │  │
-│  └─────────────────┘  └─────────────────────────┘  │
-└─────────────────────────────────────────────────────┘
+
+## Execution Modes
+
+### Screen/Tmux (Local)
+
+The default execution mode using terminal multiplexers:
+
+- **Screen** - Preferred, widely available on Linux
+- **Tmux** - Alternative if Screen is unavailable
+
+Servers run as detached processes with console access via:
+
+```bash
+# Attach to a server console
+sc attach <server-name>
+```
+
+### Docker
+
+Container-based execution for isolation:
+
+- Each server runs in its own container
+- Resource limits enforced by Docker
+- Better isolation between servers
+- Requires Docker to be installed
+
+Configure the runner mode when starting:
+
+```bash
+sc start --runner docker
+sc start --runner screen
 ```
 
 ## Directory Structure
 
-The ServerHost uses the following directory structure:
+<Tree>
+  <Tree.Folder name="secrets" defaultOpen>
+    <Tree.File name="network-id.key" />
+    <Tree.File name="network-secret.key" />
+    <Tree.File name="serverhost-id.key" />
+  </Tree.Folder>
+  <Tree.Folder name="workflows" defaultOpen>
+    <Tree.Folder name="internal" defaultOpen>
+      <Tree.File name="setup.yml" />
+      <Tree.File name="cleanup.yml" />
+    </Tree.Folder>
+  </Tree.Folder>
+  <Tree.Folder name="options" defaultOpen>
+    <Tree.Folder name="configurators">
+      <Tree.File name="paper_velocity.yml" />
+      <Tree.File name="velocity.yml" />
+    </Tree.Folder>
+    <Tree.File name="modrinth-platform-mappings.yml" />
+  </Tree.Folder>
+  <Tree.Folder name="templates" defaultOpen>
+    <Tree.Folder name="every" />
+    <Tree.Folder name="every_proxy" />
+    <Tree.Folder name="every_server" />
+    <Tree.Folder name="every_paper" />
+    <Tree.Folder name="every_velocity" />
+    <Tree.Folder name="_tagged">
+      <Tree.Folder name="minigames" />
+    </Tree.Folder>
+    <Tree.Folder name="cache" />
+  </Tree.Folder>
+  <Tree.Folder name="running" />
+  <Tree.Folder name="logs" />
+</Tree>
 
+## Template Hierarchy
+
+Templates are applied in order, with later templates overwriting earlier ones:
+
+<Tree>
+  <Tree.Folder name="1. every/" defaultOpen>
+    <Tree.File name="Base files for all servers" />
+  </Tree.Folder>
+  <Tree.Folder name="2. every_{type}/" defaultOpen>
+    <Tree.File name="Type-specific (e.g., every_proxy/)" />
+  </Tree.Folder>
+  <Tree.Folder name="3. every_{software}/" defaultOpen>
+    <Tree.File name="Software-specific (e.g., every_paper/)" />
+  </Tree.Folder>
+  <Tree.Folder name="4. _tagged/{tag}/" defaultOpen>
+    <Tree.File name="For each tag assigned to the group" />
+  </Tree.Folder>
+  <Tree.Folder name="5. {server-name}/" defaultOpen>
+    <Tree.File name="Server-specific templates" />
+  </Tree.Folder>
+  <Tree.Folder name="6. cache/{group}/" defaultOpen>
+    <Tree.File name="Cached files from previous runs" />
+  </Tree.Folder>
+</Tree>
+
+## Communication
+
+### NATS Messaging
+
+The Serverhost communicates with the Controller via NATS:
+
+**Inbound (from Controller):**
+- `{networkId}.serverhost.{id}.start` - Start server request
+
+**Outbound (to Controller):**
+- `{networkId}.server.{id}.status` - Server status updates
+- `{networkId}.server.{id}.logs` - Log streaming
+- `{networkId}.internal.serverhost.{id}.keep-alive` - Health checks
+
+### State Synchronization
+
+Every minute, the Serverhost:
+
+1. Fetches active servers from Controller
+2. Compares with locally running servers
+3. Stops orphaned servers not in Controller's state
+
+## Server Preparation Flow
+
+When a start request arrives:
+
+```mermaid
+flowchart TD
+    A[Receive StartServerRequest] --> B[Validate server doesn't exist]
+    B --> C[Find available port]
+    C --> D[Execute setup workflow]
+
+    subgraph Workflow["Setup Workflow"]
+        D --> E[Copy from cache]
+        E --> F[Copy 'every' templates]
+        F --> G[Copy type-specific templates]
+        G --> H[Copy software-specific templates]
+        H --> I[Copy tagged templates]
+        I --> J[Copy server-specific template]
+        J --> K[Load plugins]
+        K --> L[Apply configurator]
+    end
+
+    L --> M[Build JVM command]
+    M --> N[Launch via Screen/Docker]
+    N --> O[Report status to Controller]
 ```
-droplets/serverhost-droplet/
-├── templates/
-│   ├── definitions/     # Template definitions
-│   └── actions/         # Template actions
-├── running/             # Active server directories
-└── static/              # Static server data
-```
-
-## Template Types
-
-### Dynamic Templates
-
-Dynamic templates create fresh server instances:
-
-- Files copied from template on each start
-- Server directory deleted on stop
-- Ideal for game servers and lobbies
-
-### Static Templates
-
-Static templates maintain persistent data:
-
-- Server directory persists between restarts
-- World and player data preserved
-- Ideal for survival and creative servers
 
 ## Configuration
 
-ServerHost configuration is located at:
+Serverhost configuration via CLI parameters:
 
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--network-id` | Network identifier | From env |
+| `--controller-url` | Controller API URL | platform.simplecloud.app |
+| `--nats-url` | NATS server URL | platform.simplecloud.app |
+| `--deployment-type` | Execution mode | `local` |
+| `--port-range` | Available port range | `25565-25665` |
+| `--multiplexer` | Screen or Tmux | Auto-detect |
+
+## Monitoring
+
+### Via CLI
+
+```bash
+# Check serverhost status
+sc status serverhost
+
+# View serverhost logs
+sc logs serverhost
+
+# View specific server logs
+sc server logs <group> <id>
 ```
-droplets/serverhost-droplet/config.yml
-```
 
-Key settings:
+### Keep-Alive
 
-```yaml
-# Memory defaults
-default-min-memory: 512
-default-max-memory: 1024
+The Serverhost sends periodic keep-alive messages:
 
-# JVM settings
-jvm-arguments:
-  - "-XX:+UseG1GC"
-  - "-XX:+ParallelRefProcEnabled"
+- Reports current version
+- Receives update notifications
+- Maintains connection with Controller
 
-# Paths
-templates-path: templates
-running-path: running
-static-path: static
-```
+<Note>
+  Serverhosts automatically restart servers if the Serverhost itself restarts,
+  based on synchronization with the Controller's state.
+</Note>
 
 ## Related Topics
 
-- [Configurators](/en/concepts/serverhost/configurators) - Automatic server configuration
-- [Template Actions](/en/concepts/serverhost/template-actions) - Custom template behaviors
+- [Configurators](/en/concepts/serverhost/configurators) - Server configuration system
+- [Workflows](/en/concepts/serverhost/workflows) - Server preparation workflows

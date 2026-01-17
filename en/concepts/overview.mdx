@@ -1,100 +1,140 @@
 ---
-title: 'Overview'
-description: 'Learn about the core concepts and architecture of SimpleCloud v3'
+title: 'Architecture Overview'
+description: 'Learn about the core concepts and distributed architecture of SimpleCloud v3'
 ---
 
 ## Understanding SimpleCloud v3
 
-SimpleCloud v3 is built on a microservices architecture where each component handles a specific aspect of your Minecraft network infrastructure. This design allows for flexibility, scalability, and easy customization.
+SimpleCloud v3 is built on a distributed microservices architecture designed for scalability and reliability. The system separates orchestration (Controller) from execution (Serverhost), enabling you to scale your Minecraft infrastructure across multiple machines.
 
 ## Core Components
 
 ### Controller
 
-The [Controller](/en/concepts/controller) is the central management system that:
+The [Controller](/en/concepts/controller) is the central orchestration service that:
 
-- Orchestrates all cloud operations
-- Manages group and server configurations
-- Provides APIs for integration
-- Handles communication between components
+- Manages the desired state of your infrastructure
+- Handles groups, blueprints, servers, and persistent servers
+- Provides REST APIs for management and integration
+- Coordinates serverhosts via NATS messaging
+- Supports horizontal scaling with leader election
 
-### ServerHost
+### Serverhost
 
-The [ServerHost](/en/concepts/serverhost/overview) (also known as ServerHost Droplet) handles:
+The [Serverhost](/en/concepts/serverhost/overview) is the execution agent that:
 
-- Server lifecycle management (starting, stopping)
-- Template management and deployment
-- File operations and configurations
-- Server process monitoring
+- Runs on each machine hosting Minecraft servers
+- Manages server lifecycle (preparation, start, stop, cleanup)
+- Executes workflows for server setup
+- Supports multiple runners (Screen/Tmux, Docker)
+- Handles plugin installation and configuration
 
 ### CLI
 
-The [CLI](/en/concepts/cli) (Command Line Interface) provides:
+The [CLI](/en/concepts/cli) provides:
 
-- Interactive command execution
-- Remote access capabilities
-- Configuration management
-- Diagnostic tools
+- Interactive setup and configuration
+- Component lifecycle management
+- Group and server management
+- Context switching for multiple environments
 
-## Architecture Overview
+## Architecture Diagram
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                      Controller                          │
-│  (Central management, APIs, configuration storage)       │
-└─────────────────────────┬───────────────────────────────┘
-                          │
-          ┌───────────────┼───────────────┐
-          │               │               │
-          ▼               ▼               ▼
-    ┌───────────┐   ┌───────────┐   ┌───────────┐
-    │ ServerHost│   │ ServerHost│   │  Droplets │
-    │  (Node 1) │   │  (Node 2) │   │  (Player, │
-    └─────┬─────┘   └─────┬─────┘   │  etc.)    │
-          │               │         └───────────┘
-    ┌─────┴─────┐   ┌─────┴─────┐
-    │  Servers  │   │  Servers  │
-    │ (Minecraft)│   │ (Minecraft)│
-    └───────────┘   └───────────┘
+```mermaid
+flowchart TB
+    subgraph Controller["Controller"]
+        API["REST API\n(port 1337)"]
+        Reconciler["Reconciler\nLoop"]
+        DB["Database\n(PostgreSQL)"]
+    end
+
+    Controller -->|NATS Messaging| SH1
+    Controller -->|NATS Messaging| SH2
+    Controller -->|NATS Messaging| SH3
+
+    subgraph SH1["Serverhost (Host 1)"]
+        S1["Minecraft Servers"]
+    end
+
+    subgraph SH2["Serverhost (Host 2)"]
+        S2["Minecraft Servers"]
+    end
+
+    subgraph SH3["Serverhost (Host 3)"]
+        S3["Minecraft Servers"]
+    end
 ```
 
 ## Key Concepts
 
+### Blueprints
+
+Blueprints are server templates that define:
+
+- Minecraft version and server software (Paper, Velocity, etc.)
+- Runtime configuration (Java version, JVM arguments)
+- Workflow steps for server preparation
+- Configurator settings
+
+Blueprints are reusable - multiple groups can reference the same blueprint.
+
 ### Groups
 
-Groups are configuration blueprints that define how servers should be created. They specify:
+Groups define scalable collections of servers with:
 
-- Server software and version
-- Resource allocation (memory, ports)
-- Scaling behavior (min/max instances)
-- Template type (dynamic or static)
+- Resource allocation (memory, max players)
+- Auto-scaling rules (min/max servers, player threshold)
+- Deployment strategy (which serverhosts to use)
+- Reference to a blueprint or container image
 
 ### Servers
 
-Servers are individual running instances created from group configurations. They have:
+Servers are individual running instances:
 
-- Unique identifiers
-- Independent state management
-- Real-time monitoring
-- Automatic lifecycle management
+- Created dynamically from groups based on scaling rules
+- Have unique identifiers and assigned ports
+- Report metrics (player count, memory usage)
+- Follow a lifecycle: Queued → Preparing → Starting → Available → Stopping
 
-### Templates
+### Persistent Servers
 
-Templates define the file structure and configuration that servers use:
+Persistent servers are long-running instances that:
 
-- **Dynamic**: Fresh copy for each server, data cleared on stop
-- **Static**: Persistent data between restarts
+- Maintain state across restarts
+- Are pinned to specific serverhosts
+- Don't scale automatically
+- Ideal for survival worlds, build servers, or lobbies with persistent data
 
-### Droplets
+### Plugins
 
-Droplets are microservices that extend SimpleCloud functionality:
+Plugins can be assigned to groups or persistent servers:
 
-- Run independently from Minecraft servers
-- Handle specialized tasks (player data, resource packs)
-- Communicate via the Controller API
+- Automatic download from Modrinth, Hangar, or Spigot
+- Version and platform-aware installation
+- Cached for faster server startup
+
+## Data Flow
+
+1. **Configuration**: You define blueprints, groups, and plugins via CLI or API
+2. **Reconciliation**: Controller compares desired state with actual state every 5 seconds
+3. **Scheduling**: Controller determines which servers to start/stop and on which serverhost
+4. **Communication**: Controller sends requests to serverhosts via NATS
+5. **Execution**: Serverhost prepares and launches the server
+6. **Reporting**: Serverhost reports server status back to controller
+
+## Infrastructure
+
+SimpleCloud uses these infrastructure components:
+
+| Component | Purpose |
+|-----------|---------|
+| PostgreSQL | Persistent state storage |
+| NATS | Message broker for serverhost communication |
+| Valkey/Redis | Metrics caching (optional) |
+| ClickHouse | Log and metrics storage (optional) |
 
 ## Next Steps
 
-- [Controller](/en/concepts/controller) - Deep dive into the central management system
-- [ServerHost](/en/concepts/serverhost/overview) - Learn about server lifecycle management
-- [CLI](/en/concepts/cli) - Explore command-line capabilities
+- [Controller](/en/concepts/controller) - Deep dive into the orchestration service
+- [Serverhost](/en/concepts/serverhost/overview) - Learn about server execution
+- [CLI](/en/concepts/cli) - Explore command-line management

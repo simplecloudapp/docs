@@ -1,0 +1,314 @@
+---
+title: 'Workflows'
+description: 'Definiere Server-Vorbereitungs- und Cleanup-Prozesse mit Workflow-Schritten'
+---
+
+## Was sind Workflows?
+
+Workflows definieren die Abfolge von Aktionen, die während Server-Lifecycle-Events ausgeführt werden. Sie handhaben alles vom Kopieren von Template-Dateien über die Installation von Plugins bis zur Anwendung von Konfigurationen.
+
+## Wie Workflows funktionieren
+
+Während der Server-Vorbereitung:
+
+1. Serverhost empfängt eine Start-Anfrage vom Controller
+2. Lädt den Setup-Workflow aus `workflows/internal/setup.yml`
+3. Führt jeden Schritt der Reihe nach mit dem Server-Context aus
+4. Meldet Status zurück an den Controller
+
+Während des Cleanups:
+
+1. Server-Stop-Signal empfangen
+2. Lädt den Cleanup-Workflow aus `workflows/internal/cleanup.yml`
+3. Führt Cleanup-Schritte aus (Cache-Push, Verzeichnis-Löschung)
+
+## Workflow-Struktur
+
+Workflows sind YAML-Dateien im `workflows/` Verzeichnis:
+
+```yaml
+# workflows/internal/setup.yml
+steps:
+  - action: copy
+    from: "{{templates}}/cache/{{group}}"
+    to: "{{server-dir}}"
+
+  - action: copy
+    from: "{{templates}}/every"
+    to: "{{server-dir}}"
+
+  - action: plugins-load
+    dir: "{{server-dir}}/plugins"
+
+  - action: configurator
+    configurator: "{{configurator}}"
+    dir: "{{server-dir}}"
+```
+
+## Eingebaute Workflows
+
+### Setup Workflow
+
+Der Standard-Setup-Workflow (`workflows/internal/setup.yml`) führt aus:
+
+1. **Cache Pull** - Gecachte Dateien von vorherigen Starts kopieren
+2. **Template Copy** - Template-Hierarchie anwenden (every, type, software, tagged)
+3. **Plugin Installation** - Plugins herunterladen und installieren
+4. **Konfiguration** - Configurators für Server-Software anwenden
+
+### Cleanup Workflow
+
+Der Cleanup-Workflow (`workflows/internal/cleanup.yml`) führt aus:
+
+1. **Cache Push** - Wiederverwendbare Dateien für schnellere zukünftige Starts speichern
+2. **Verzeichnis-Löschung** - Server-Verzeichnis entfernen
+
+## Workflow-Aktionen
+
+### `copy`
+
+Kopiert Dateien oder Verzeichnisse von Quelle zu Ziel.
+
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| `from` | Pfad | Quell-Datei oder -Verzeichnis |
+| `to` | Pfad | Ziel-Datei oder -Verzeichnis |
+| `replace` | boolean | Existierende Dateien überschreiben (Standard: `true`) |
+| `create-dirs` | boolean | Elternverzeichnisse erstellen falls fehlend (Standard: `true`) |
+
+```yaml
+- action: copy
+  from: "{{templates}}/every"
+  to: "{{server-dir}}"
+  replace: true
+```
+
+### `delete`
+
+Löscht eine Datei oder ein Verzeichnis.
+
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| `path` | Pfad | Zu löschende Datei oder Verzeichnis |
+| `force` | boolean | Löschen erzwingen (Standard: `true`) |
+
+```yaml
+- action: delete
+  path: "{{server-dir}}"
+  force: true
+```
+
+### `for-each`
+
+Iteriert über eine Liste und führt verschachtelte Schritte für jedes Element aus.
+
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| `items` | Liste | Elemente zum Iterieren |
+| `as` | string | Variablenname für aktuelles Element |
+| `steps` | Liste | Schritte für jedes Element |
+
+```yaml
+- action: for-each
+  items: "{{tags}}"
+  as: "tag"
+  steps:
+    - action: copy
+      from: "{{templates}}/_tagged/{{tag}}"
+      to: "{{server-dir}}"
+```
+
+### `plugins-load`
+
+Installiert Plugins aus konfigurierten Quellen (Modrinth, Hangar, Spigot, URL).
+
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| `dir` | Pfad | Verzeichnis für Plugin-Installation |
+
+```yaml
+- action: plugins-load
+  dir: "{{server-dir}}/plugins"
+```
+
+Plugins werden auf Gruppenebene definiert und automatisch heruntergeladen basierend auf:
+- Server-Software (Paper, Velocity, etc.)
+- Minecraft-Version
+- Plattform-Kompatibilität
+
+### `configurator`
+
+Wendet einen Configurator an um Server-Dateien zu konfigurieren.
+
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| `configurator` | string | Configurator-Name (aus `options/configurators/`) |
+| `dir` | Pfad | Zu konfigurierendes Server-Verzeichnis |
+
+```yaml
+- action: configurator
+  configurator: "paper_velocity"
+  dir: "{{server-dir}}"
+```
+
+Siehe [Configurators](/de/concepts/serverhost/configurators) für mehr Details.
+
+## Platzhalter
+
+Workflows unterstützen dynamische Platzhalter, die zur Laufzeit ersetzt werden:
+
+### Server-Context
+
+| Platzhalter | Beschreibung |
+|-------------|--------------|
+| `{{server-dir}}` | Arbeitsverzeichnis des Servers |
+| `{{server-name}}` | Server-Name (z.B. `lobby-1`) |
+| `{{group}}` | Gruppenname |
+| `{{port}}` | Zugewiesener Port |
+| `{{max-players}}` | Maximale Spieleranzahl |
+| `{{memory}}` | Zugewiesener Speicher (MB) |
+
+### Pfad-Context
+
+| Platzhalter | Beschreibung |
+|-------------|--------------|
+| `{{templates}}` | Templates-Basisverzeichnis |
+| `{{running}}` | Verzeichnis laufender Server |
+| `{{cache}}` | Cache-Verzeichnis |
+
+### Blueprint-Context
+
+| Platzhalter | Beschreibung |
+|-------------|--------------|
+| `{{configurator}}` | Configurator-Name aus Blueprint |
+| `{{software}}` | Server-Software (paper, velocity, etc.) |
+| `{{minecraft-version}}` | Minecraft-Version |
+| `{{type}}` | Server-Typ (proxy, server, lobby) |
+
+### Benutzerdefinierte Properties
+
+Zugriff auf benutzerdefinierte Properties vom Server:
+
+```yaml
+- action: copy
+  from: "{{templates}}/{{$.custom-template}}"
+  to: "{{server-dir}}"
+```
+
+Das `$.` Präfix greift auf die Properties-Map des Servers zu.
+
+## Standard Setup-Ablauf
+
+Der eingebaute Setup-Workflow folgt dieser Reihenfolge:
+
+```yaml
+steps:
+  # 1. Aus Cache laden (schnellere Neustarts)
+  - action: copy
+    from: "{{templates}}/cache/{{group}}"
+    to: "{{server-dir}}"
+
+  # 2. Basis-Templates anwenden
+  - action: copy
+    from: "{{templates}}/every"
+    to: "{{server-dir}}"
+
+  # 3. Typspezifische Templates anwenden
+  - action: copy
+    from: "{{templates}}/every_{{type}}"
+    to: "{{server-dir}}"
+
+  # 4. Softwarespezifische Templates anwenden
+  - action: copy
+    from: "{{templates}}/every_{{software}}"
+    to: "{{server-dir}}"
+
+  # 5. Tagged Templates anwenden
+  - action: for-each
+    items: "{{tags}}"
+    as: "tag"
+    steps:
+      - action: copy
+        from: "{{templates}}/_tagged/{{tag}}"
+        to: "{{server-dir}}"
+
+  # 6. Serverspezifisches Template anwenden
+  - action: copy
+    from: "{{templates}}/{{server-name}}"
+    to: "{{server-dir}}"
+
+  # 7. Plugins installieren
+  - action: plugins-load
+    dir: "{{server-dir}}/plugins"
+
+  # 8. Configurator anwenden
+  - action: configurator
+    configurator: "{{configurator}}"
+    dir: "{{server-dir}}"
+```
+
+## Workflows anpassen
+
+### Standard-Workflow überschreiben
+
+Erstelle deinen eigenen Setup-Workflow:
+
+```yaml
+# workflows/internal/setup.yml
+steps:
+  - action: copy
+    from: "{{templates}}/my-base"
+    to: "{{server-dir}}"
+
+  - action: plugins-load
+    dir: "{{server-dir}}/plugins"
+
+  - action: configurator
+    configurator: "{{configurator}}"
+    dir: "{{server-dir}}"
+```
+
+### Benutzerdefinierte Schritte hinzufügen
+
+Erweitere den Workflow mit zusätzlichen Aktionen:
+
+```yaml
+steps:
+  # ... Standard-Setup-Schritte ...
+
+  # Benutzerdefiniert: Welt von Shared Storage kopieren
+  - action: copy
+    from: "/shared/worlds/{{group}}"
+    to: "{{server-dir}}/world"
+
+  # Benutzerdefiniert: Zusätzliche Ressourcen laden
+  - action: copy
+    from: "{{templates}}/shared-configs"
+    to: "{{server-dir}}/plugins"
+```
+
+## Fehlerbehebung
+
+### Workflow wird nicht ausgeführt
+
+1. Prüfe ob Workflow-Datei unter `workflows/internal/setup.yml` existiert
+2. Verifiziere YAML-Syntax
+3. Prüfe Serverhost-Logs auf Fehler
+
+### Platzhalter wird nicht ersetzt
+
+1. Stelle sicher, dass Platzhalter-Syntax korrekt ist: `{{name}}`
+2. Verifiziere, dass Property im Server-Context existiert
+3. Für benutzerdefinierte Properties, nutze `{{$.property-name}}`
+
+### Copy-Aktion schlägt fehl
+
+1. Verifiziere, dass Quellpfad existiert
+2. Prüfe Dateiberechtigungen
+3. Stelle sicher, dass `create-dirs` aktiviert ist wenn Elternverzeichnisse fehlen
+
+### Plugin-Installation schlägt fehl
+
+1. Prüfe Netzwerkverbindung zu Plugin-Quellen
+2. Verifiziere, dass Plugin für angegebene Minecraft-Version existiert
+3. Prüfe `options/modrinth-platform-mappings.yml` für Software-Mappings
