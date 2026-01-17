@@ -1,0 +1,115 @@
+---
+title: 'ServerHost Overview'
+description: 'The component responsible for managing server lifecycles and templates'
+---
+
+## What is the ServerHost?
+
+The ServerHost (ServerHost Droplet) is responsible for the actual execution and management of Minecraft servers. It handles server lifecycle operations, template deployment, and process management.
+
+## Key Responsibilities
+
+### Server Lifecycle
+
+The ServerHost manages the complete lifecycle of servers:
+
+1. **Preparation**: Setting up the server directory from templates
+2. **Starting**: Launching the Java process with correct parameters
+3. **Monitoring**: Tracking server health and state
+4. **Stopping**: Graceful shutdown and cleanup
+
+### Template Management
+
+Templates define what files and configurations a server starts with:
+
+- Copying template files to server directories
+- Applying configuration changes
+- Managing world files and plugins
+
+### Process Management
+
+Each Minecraft server runs as a separate process:
+
+- Memory allocation and JVM arguments
+- Port assignment
+- Console output capture
+- Crash detection and handling
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    ServerHost                        │
+├─────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────────────┐  │
+│  │ Template Engine │  │    Process Manager      │  │
+│  │  - Actions      │  │  - JVM Launcher         │  │
+│  │  - Configurators│  │  - Console Handler      │  │
+│  └─────────────────┘  └─────────────────────────┘  │
+│  ┌─────────────────┐  ┌─────────────────────────┐  │
+│  │  File Manager   │  │   Controller Client     │  │
+│  └─────────────────┘  └─────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+```
+
+## Directory Structure
+
+The ServerHost uses the following directory structure:
+
+```
+droplets/serverhost-droplet/
+├── templates/
+│   ├── definitions/     # Template definitions
+│   └── actions/         # Template actions
+├── running/             # Active server directories
+└── static/              # Static server data
+```
+
+## Template Types
+
+### Dynamic Templates
+
+Dynamic templates create fresh server instances:
+
+- Files copied from template on each start
+- Server directory deleted on stop
+- Ideal for game servers and lobbies
+
+### Static Templates
+
+Static templates maintain persistent data:
+
+- Server directory persists between restarts
+- World and player data preserved
+- Ideal for survival and creative servers
+
+## Configuration
+
+ServerHost configuration is located at:
+
+```
+droplets/serverhost-droplet/config.yml
+```
+
+Key settings:
+
+```yaml
+# Memory defaults
+default-min-memory: 512
+default-max-memory: 1024
+
+# JVM settings
+jvm-arguments:
+  - "-XX:+UseG1GC"
+  - "-XX:+ParallelRefProcEnabled"
+
+# Paths
+templates-path: templates
+running-path: running
+static-path: static
+```
+
+## Related Topics
+
+- [Configurators](/en/concepts/serverhost/configurators) - Automatic server configuration
+- [Template Actions](/en/concepts/serverhost/template-actions) - Custom template behaviors

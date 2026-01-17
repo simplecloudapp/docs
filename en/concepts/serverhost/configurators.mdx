@@ -1,0 +1,121 @@
+---
+title: 'Configurators'
+description: 'Automatic server configuration based on server software type'
+---
+
+## What are Configurators?
+
+Configurators are specialized components that automatically adjust server configurations based on the server software being used. They handle software-specific settings like port binding, player forwarding, and MOTD configuration.
+
+## How Configurators Work
+
+When a server starts, the ServerHost:
+
+1. Identifies the server software (Paper, Velocity, etc.)
+2. Selects the appropriate configurator
+3. Applies necessary configuration changes
+4. Starts the server with the correct settings
+
+## Available Configurators
+
+### Paper/Spigot Configurator
+
+Handles configuration for Paper, Spigot, and Bukkit-based servers:
+
+**Files Modified:**
+
+- `server.properties` - Port, MOTD, max players
+- `spigot.yml` - Bungeecord settings
+- `config/paper-global.yml` - Velocity support
+
+**Key Settings:**
+
+| Setting          | File                    | Description          |
+| ---------------- | ----------------------- | -------------------- |
+| `server-port`    | server.properties       | Server port          |
+| `max-players`    | server.properties       | Maximum players      |
+| `online-mode`    | server.properties       | Authentication mode  |
+| `bungeecord`     | spigot.yml              | BungeeCord support   |
+| `velocity`       | paper-global.yml        | Velocity support     |
+
+### Velocity Configurator
+
+Handles configuration for Velocity proxy servers:
+
+**Files Modified:**
+
+- `velocity.toml` - Main configuration
+
+**Key Settings:**
+
+| Setting         | Description                    |
+| --------------- | ------------------------------ |
+| `bind`          | Port binding                   |
+| `show-max-players` | Maximum players display     |
+| `forwarding-mode` | Player forwarding method     |
+
+### BungeeCord Configurator
+
+Handles configuration for BungeeCord proxy servers:
+
+**Files Modified:**
+
+- `config.yml` - Main configuration
+
+**Key Settings:**
+
+| Setting        | Description           |
+| -------------- | --------------------- |
+| `host`         | Binding address       |
+| `max_players`  | Maximum players       |
+| `ip_forward`   | IP forwarding         |
+
+## Configurator Selection
+
+The ServerHost automatically selects configurators based on:
+
+1. **Server type** from group configuration (SERVER or PROXY)
+2. **Server software** detected from the server JAR
+3. **Fallback** to generic configuration if no specific configurator matches
+
+## Custom Configurators
+
+For advanced use cases, you can create custom configurators by:
+
+1. Implementing the configurator interface
+2. Registering it with the ServerHost
+3. Specifying when it should be used
+
+<Note>
+  Custom configurator documentation will be available in the developer
+  documentation.
+</Note>
+
+## Configuration Placeholders
+
+Configurators use placeholders that are replaced with actual values:
+
+| Placeholder              | Description                    |
+| ------------------------ | ------------------------------ |
+| `%server-port%`          | Assigned server port           |
+| `%max-players%`          | Maximum players from group     |
+| `%forwarding-secret%`    | Velocity forwarding secret     |
+| `%server-ip%`            | Server IP address              |
+
+## Troubleshooting
+
+### Configuration Not Applied
+
+If server configurations aren't being applied:
+
+1. Check if the correct configurator is being selected
+2. Verify file permissions in the template directory
+3. Check ServerHost logs for configuration errors
+
+### Wrong Port Binding
+
+If servers bind to incorrect ports:
+
+1. Ensure the group's port range is correct
+2. Check for port conflicts with other services
+3. Verify the configurator is modifying the correct file

@@ -1,7 +1,71 @@
 ---
 title: 'Server Connection'
-description: 'Description for Server Connection'
+description: "Learn how SimpleCloud's server connection plugin handles fallback and connection logic"
 tag: 'Proxy'
 ---
 
-## Server Connection
+## Overview
+
+The server connection plugin handles the connection logic for players in your network. This plugin is essential for any Minecraft network that uses SimpleCloud. It acts as the central connection manager for your servers.
+
+<Note>
+  This plugin internally uses the server API to track online cloud servers and
+  provides interfaces for custom implementations.
+</Note>
+
+## Features
+
+The server connection plugin provides:
+
+- **Automatic Fallback**: When a server crashes or shuts down, players are automatically moved to a fallback server
+- **Connection Queue**: Manages player connections to prevent overwhelming servers during mass reconnects
+- **Server State Awareness**: Only connects players to servers in an appropriate state
+- **Customizable Behavior**: Configure fallback priorities and connection rules
+
+## Supported Software
+
+| Software   | Plugin Support | Server API Support |
+| ---------- | -------------- | ------------------ |
+| Velocity   | ✅ Full        | ✅ Yes             |
+| Bungeecord | ✅ Full        | ✅ Yes             |
+| Gate       | 🔄 Planned     | ✅ Yes             |
+
+## Quick Setup
+
+1. Download the plugin from [GitHub](https://github.com/simplecloudapp/server-connection-plugin/releases)
+2. Place it in your proxy template's plugins folder
+3. Start your proxy server
+4. Configure using `config.yml`
+
+## Configuration
+
+The plugin's configuration file (`config.yml`) supports the following options:
+
+```yaml
+# Fallback server configuration
+fallback:
+  # Groups to use as fallback servers (in priority order)
+  groups:
+    - "lobby"
+    - "hub"
+
+  # Behavior when no fallback server is available
+  no-fallback-kick-message: "<red>No fallback server available"
+
+# Connection settings
+connection:
+  # Maximum players that can connect simultaneously
+  max-concurrent-connections: 50
+
+  # Delay between connection attempts (milliseconds)
+  connection-delay: 100
+```
+
+## How It Works
+
+When a player needs to be moved (server shutdown, kick, etc.):
+
+1. The plugin checks for available fallback servers
+2. Servers are prioritized by the configured group order
+3. The player is connected to the first available server
+4. If no server is available, the configured kick message is shown

@@ -1,6 +1,116 @@
 ---
 title: 'Groups'
-description: 'Description for Groups'
+description: 'Learn how to create and manage server groups in SimpleCloud'
 ---
 
-## Groups
+## What is a Group?
+
+A server group is a configuration blueprint that defines how servers should be created and managed. Groups specify:
+
+- The server software to use (e.g., Paper, Velocity)
+- Memory allocation (minimum and maximum)
+- Player capacity
+- How many servers should run at any time
+- Whether the template is dynamic or static
+
+When you create a group, SimpleCloud uses it to automatically start and manage servers based on your configuration.
+
+## Creating a Group
+
+You can create groups either through the [Dashboard](/en/manual/setup/dashboard) or via the CLI.
+
+### Using the CLI
+
+Run the group creation wizard:
+
+```bash
+simplecloud create group
+```
+
+This starts an interactive wizard that guides you through:
+
+1. **Group Name**: A unique identifier for your group
+2. **Server Type**: Proxy or Server
+3. **Server Software**: Paper, Velocity, etc.
+4. **Memory Allocation**: Min/Max RAM
+5. **Online Count**: Min/Max servers running
+6. **Template Type**: Dynamic or Static
+
+### Using Flags
+
+For automation or quick setup, you can specify all options directly:
+
+```bash
+simplecloud create group \
+  --name lobby \
+  --type SERVER \
+  --software paper \
+  --minecraft-version 1.21.4 \
+  --software-version latest \
+  --min-memory 512 \
+  --max-memory 1024 \
+  --min-online 1 \
+  --max-online 5 \
+  --max-players 100 \
+  --port 25565 \
+  --template dynamic
+```
+
+<Note>
+  When all flags are set (except `--server-url`), the interactive setup wizard
+  will be skipped. This is useful for automated group creation.
+</Note>
+
+## Editing a Group
+
+To modify an existing group's configuration:
+
+```bash
+simplecloud edit group [name] [flags]
+```
+
+**Available Flags:**
+
+- `-P, --max-players uint`: Maximum players per server
+- `-M, --maximum-memory uint`: Maximum memory allocation (MB)
+- `-N, --maximum-online-count uint`: Maximum servers running
+- `-m, --minimum-memory uint`: Minimum memory allocation (MB)
+- `-n, --minimum-online-count uint`: Minimum servers running
+- `-p, --start-port uint`: Starting port number
+- `-r, --properties stringToString`: Custom properties (key=value)
+- `-s, --server-url string`: Server software URL (`change` or `update`)
+
+**Example:**
+
+```bash
+simplecloud edit group lobby --max-players 200 --maximum-memory 2048
+```
+
+## Deleting a Group
+
+To remove a group:
+
+```bash
+simplecloud delete group [name]
+```
+
+Use `--confirm` to skip the confirmation prompt:
+
+```bash
+simplecloud delete group lobby --confirm
+```
+
+<Warning>
+  Deleting a group will stop all running servers in that group. This action
+  cannot be undone.
+</Warning>
+
+## Viewing Groups
+
+To see all configured groups:
+
+```bash
+simplecloud info groups
+```
+
+This displays a list of all groups with their basic information including type, memory settings, and online server counts.

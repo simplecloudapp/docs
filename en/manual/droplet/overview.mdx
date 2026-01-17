@@ -1,6 +1,36 @@
 ---
 title: 'Overview'
-description: 'Description for Overview'
+description: 'Plugins extend SimpleCloud functionality directly within your Minecraft servers. They utilize the SimpleCloud API to provide enhanced features and capabilities in-game.'
 ---
 
-## Overview
+## Understanding Droplets
+
+Droplets are microservices that extend SimpleCloud's functionality without running directly on Minecraft servers. They handle non-Minecraft tasks while still providing Minecraft-related features.
+
+Key characteristics:
+
+- Run as independent services
+- Communicate with the controller via API
+- Provide specialized functionality
+- Can be started and stopped independently
+
+## Available Droplets
+
+| Droplet                                          | Description                                              |
+| ------------------------------------------------ | -------------------------------------------------------- |
+| [Player Droplet](/en/manual/droplet/player)      | Player data management and cross-server functionality    |
+| [Resourcepack Droplet](/en/manual/droplet/resourcepack) | Resource pack hosting and distribution              |
+
+## Droplets vs Plugins
+
+| Feature           | Droplets                           | Plugins                              |
+| ----------------- | ---------------------------------- | ------------------------------------ |
+| Runtime           | Independent service                | Within Minecraft server              |
+| Purpose           | Infrastructure tasks               | In-game features                     |
+| Scaling           | Can run on separate machines       | Tied to server instances             |
+| Dependencies      | SimpleCloud Controller             | SimpleCloud API + Server software    |
+
+<Note>
+  Droplets replaced v2 modules for infrastructure-level functionality, while
+  plugins handle server-side features directly.
+</Note>

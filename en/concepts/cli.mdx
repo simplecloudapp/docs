@@ -1,0 +1,181 @@
+---
+title: 'CLI'
+description: 'The command-line interface for managing your SimpleCloud installation'
+---
+
+## What is the CLI?
+
+The SimpleCloud CLI (Command Line Interface) is your primary tool for interacting with SimpleCloud. It provides commands for installation, configuration, monitoring, and management of your entire cloud infrastructure.
+
+## Installation
+
+Install the CLI using the official install script:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/theSimpleCloud/simplecloud-manifest/HEAD/install.sh)"
+```
+
+## Command Structure
+
+The CLI uses a hierarchical command structure:
+
+```bash
+simplecloud [command] [subcommand] [arguments] [flags]
+```
+
+**Aliases**: You can use `sc` as a shorthand for `simplecloud`:
+
+```bash
+sc status  # Same as: simplecloud status
+```
+
+## Core Commands
+
+### Cloud Management
+
+```bash
+# Start the cloud
+simplecloud start cloud
+
+# Stop the cloud
+simplecloud stop cloud
+
+# Check status
+simplecloud status
+
+# View logs
+simplecloud logs [component]
+```
+
+### Group Management
+
+```bash
+# Create a new group
+simplecloud create group
+
+# List all groups
+simplecloud info groups
+
+# Edit a group
+simplecloud edit group [name] [flags]
+
+# Delete a group
+simplecloud delete group [name]
+```
+
+### Server Management
+
+```bash
+# Start a server
+simplecloud start server [group]
+
+# Stop a server
+simplecloud stop server [group] [id]
+
+# List all servers
+simplecloud info servers
+
+# View server details
+simplecloud info server [group] [id]
+```
+
+### Maintenance
+
+```bash
+# Update the CLI
+simplecloud upgrade cli
+
+# Run migrations
+simplecloud migrate [version]
+
+# Access the dashboard
+simplecloud login dashboard
+```
+
+## Interactive Mode
+
+Many commands support interactive mode when run without arguments:
+
+```bash
+# Interactive group creation
+simplecloud create group
+
+# Interactive server start
+simplecloud start server
+```
+
+The CLI will prompt you for required information with helpful defaults.
+
+## Flag Reference
+
+### Global Flags
+
+| Flag          | Description              |
+| ------------- | ------------------------ |
+| `--help, -h`  | Show help for a command  |
+| `--confirm`   | Skip confirmation prompts|
+
+### Create Group Flags
+
+| Flag                  | Description                   |
+| --------------------- | ----------------------------- |
+| `--name`              | Group name                    |
+| `--type`              | SERVER or PROXY               |
+| `--software`          | paper, velocity, etc.         |
+| `--minecraft-version` | Minecraft version             |
+| `--min-memory`        | Minimum memory (MB)           |
+| `--max-memory`        | Maximum memory (MB)           |
+| `--min-online`        | Minimum online count          |
+| `--max-online`        | Maximum online count          |
+| `--max-players`       | Maximum players per server    |
+| `--port`              | Starting port                 |
+| `--template`          | dynamic or static             |
+
+## Remote Access
+
+The CLI can connect to remote SimpleCloud installations:
+
+```bash
+# Connect to remote instance
+simplecloud connect [host:port]
+
+# Disconnect
+simplecloud disconnect
+```
+
+<Note>
+  Remote access requires proper authentication. Contact your server
+  administrator for connection details.
+</Note>
+
+## Configuration
+
+CLI configuration is stored in your home directory:
+
+```
+~/.simplecloud/
+├── config.yml      # CLI settings
+└── credentials/    # Authentication data
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Command not found:**
+```bash
+# Ensure CLI is in your PATH
+export PATH="$PATH:$HOME/.simplecloud/bin"
+```
+
+**Connection refused:**
+```bash
+# Check if the controller is running
+simplecloud status
+```
+
+**Permission denied:**
+```bash
+# Ensure proper file permissions
+chmod +x ~/.simplecloud/bin/simplecloud
+```

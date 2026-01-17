@@ -1,6 +1,46 @@
 ---
 title: 'Player Droplet'
-description: 'Description for Player Droplet'
+description: 'Manage player data across your network with the Player Droplet'
 ---
 
-## Player Droplet
+## Overview
+
+The Player Droplet provides centralized player data management across your entire network. It tracks player connections, maintains player history, and provides APIs for player-related operations.
+
+Key features:
+
+- Cross-server player tracking
+- Player data persistence
+- Connection history
+- First/last login tracking
+- Online player queries
+
+## Installation
+
+The Player Droplet is typically installed during the SimpleCloud setup process. If you need to install it manually:
+
+```bash
+simplecloud install droplet player
+```
+
+## Player Data
+
+The Player Droplet tracks the following information:
+
+| Field             | Description                      |
+| ----------------- | -------------------------------- |
+| UUID              | Player's unique identifier       |
+| Name              | Current player username          |
+| First Login       | Timestamp of first connection    |
+| Last Login        | Timestamp of most recent login   |
+| Connected Server  | Current server (if online)       |
+| Online Status     | Whether the player is online     |
+
+## API Integration
+
+Developers can interact with the Player Droplet through the Player API. See the [Developer Documentation](/en/developers/droplets/player/initialization) for implementation details.
+
+<Note>
+  The Player Droplet must be running for player-related API calls to work.
+  Ensure it's started when your cloud initializes.
+</Note>

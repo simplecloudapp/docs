@@ -53,6 +53,7 @@
                 "group": "Plugins",
                 "pages": [
                   "en/manual/plugin/overview",
+                  "en/manual/plugin/server-registration",
                   "en/manual/plugin/server-connection",
                   "en/manual/plugin/cloud-command",
                   "en/manual/plugin/proxy-essentials",
@@ -81,7 +82,17 @@
               {
                 "group": "Core Concepts",
                 "pages": [
-                  "en/concepts/overview"
+                  "en/concepts/overview",
+                  "en/concepts/controller",
+                  "en/concepts/cli"
+                ]
+              },
+              {
+                "group": "Server Host",
+                "pages": [
+                  "en/concepts/serverhost/overview",
+                  "en/concepts/serverhost/configurators",
+                  "en/concepts/serverhost/template-actions"
                 ]
               }
             ]
@@ -93,6 +104,32 @@
                 "group": "Developer Guide",
                 "pages": [
                   "en/developer/overview"
+                ]
+              },
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "en/developer/getting-started/velocity",
+                  "en/developer/getting-started/bungeecord",
+                  "en/developer/getting-started/paper",
+                  "en/developer/getting-started/other"
+                ]
+              },
+              {
+                "group": "Controller API",
+                "pages": [
+                  "en/developer/controller/initialization",
+                  "en/developer/controller/groups",
+                  "en/developer/controller/servers",
+                  "en/developer/controller/events"
+                ]
+              },
+              {
+                "group": "Player API",
+                "pages": [
+                  "en/developer/droplets/player/initialization",
+                  "en/developer/droplets/player/player-management",
+                  "en/developer/droplets/player/adventure-integration"
                 ]
               }
             ]
@@ -166,6 +203,7 @@
                 "group": "Plugins",
                 "pages": [
                   "de/manual/plugin/overview",
+                  "de/manual/plugin/server-registration",
                   "de/manual/plugin/server-connection",
                   "de/manual/plugin/cloud-command",
                   "de/manual/plugin/proxy-essentials",
@@ -194,7 +232,17 @@
               {
                 "group": "Core Concepts",
                 "pages": [
-                  "de/concepts/overview"
+                  "de/concepts/overview",
+                  "de/concepts/controller",
+                  "de/concepts/cli"
+                ]
+              },
+              {
+                "group": "Server Host",
+                "pages": [
+                  "de/concepts/serverhost/overview",
+                  "de/concepts/serverhost/configurators",
+                  "de/concepts/serverhost/template-actions"
                 ]
               }
             ]
@@ -206,6 +254,32 @@
                 "group": "Developer Guide",
                 "pages": [
                   "de/developer/overview"
+                ]
+              },
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "de/developer/getting-started/velocity",
+                  "de/developer/getting-started/bungeecord",
+                  "de/developer/getting-started/paper",
+                  "de/developer/getting-started/other"
+                ]
+              },
+              {
+                "group": "Controller API",
+                "pages": [
+                  "de/developer/controller/initialization",
+                  "de/developer/controller/groups",
+                  "de/developer/controller/servers",
+                  "de/developer/controller/events"
+                ]
+              },
+              {
+                "group": "Player API",
+                "pages": [
+                  "de/developer/droplets/player/initialization",
+                  "de/developer/droplets/player/player-management",
+                  "de/developer/droplets/player/adventure-integration"
                 ]
               }
             ]

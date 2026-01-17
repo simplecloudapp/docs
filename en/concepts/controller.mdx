@@ -1,0 +1,118 @@
+---
+title: 'Controller'
+description: 'The central management system that orchestrates your SimpleCloud network'
+---
+
+## What is the Controller?
+
+The Controller is the brain of SimpleCloud - a central management system that coordinates all aspects of your Minecraft network. It maintains the state of all groups and servers, provides APIs for integration, and handles communication between all components.
+
+## Key Responsibilities
+
+### State Management
+
+The Controller maintains the authoritative state of:
+
+- All configured groups and their settings
+- Running server instances and their status
+- Connected ServerHost nodes
+- Active droplets and their configurations
+
+### API Services
+
+The Controller exposes several APIs:
+
+- **gRPC API**: High-performance communication for internal components
+- **REST API**: HTTP-based access for dashboards and external integrations
+- **Event System**: Real-time notifications of state changes
+
+### Orchestration
+
+The Controller handles:
+
+- Server scheduling and placement decisions
+- Load balancing across ServerHost nodes
+- Automatic scaling based on group configurations
+- Failover and recovery procedures
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│                 Controller                   │
+├─────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────────────┐  │
+│  │ State Store │  │    API Services     │  │
+│  │  (Groups,   │  │  (gRPC, REST, WS)   │  │
+│  │   Servers)  │  └─────────────────────┘  │
+│  └─────────────┘                            │
+│  ┌─────────────┐  ┌─────────────────────┐  │
+│  │   Scheduler │  │   Event Dispatcher  │  │
+│  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────┘
+```
+
+## Configuration
+
+The Controller's configuration is stored in the installation directory:
+
+```
+components/
+└── controller/
+    └── config.yml
+```
+
+Key configuration options:
+
+```yaml
+# API Settings
+api:
+  grpc-port: 5816
+  rest-port: 8080
+
+# Database Settings
+database:
+  type: sqlite  # or mysql, postgresql
+  path: data/controller.db
+
+# Cluster Settings
+cluster:
+  node-id: primary
+  heartbeat-interval: 5000
+```
+
+## Accessing the Controller
+
+### Via CLI
+
+```bash
+# Check controller status
+simplecloud status
+
+# View controller logs
+simplecloud logs controller
+```
+
+### Via API
+
+The Controller API can be accessed by:
+
+- Internal components using gRPC
+- The Dashboard using REST/WebSocket
+- Custom integrations using the provided SDKs
+
+See the [Developer Documentation](/en/developers/controller/initialization) for API usage details.
+
+## High Availability
+
+For production deployments, the Controller supports:
+
+- **Persistence**: All state is persisted to prevent data loss
+- **Recovery**: Automatic state recovery after restarts
+- **Monitoring**: Health checks and metrics endpoints
+
+<Note>
+  The Controller must be running for your cloud to function. ServerHost nodes
+  and running servers will continue operating if the Controller temporarily
+  goes offline, but no new servers can be started until it's back online.
+</Note>

@@ -1,6 +1,100 @@
 ---
 title: 'Overview'
-description: 'Description for Overview'
+description: 'Learn about the core concepts and architecture of SimpleCloud v3'
 ---
 
-## Overview
+## Understanding SimpleCloud v3
+
+SimpleCloud v3 is built on a microservices architecture where each component handles a specific aspect of your Minecraft network infrastructure. This design allows for flexibility, scalability, and easy customization.
+
+## Core Components
+
+### Controller
+
+The [Controller](/en/concepts/controller) is the central management system that:
+
+- Orchestrates all cloud operations
+- Manages group and server configurations
+- Provides APIs for integration
+- Handles communication between components
+
+### ServerHost
+
+The [ServerHost](/en/concepts/serverhost/overview) (also known as ServerHost Droplet) handles:
+
+- Server lifecycle management (starting, stopping)
+- Template management and deployment
+- File operations and configurations
+- Server process monitoring
+
+### CLI
+
+The [CLI](/en/concepts/cli) (Command Line Interface) provides:
+
+- Interactive command execution
+- Remote access capabilities
+- Configuration management
+- Diagnostic tools
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      Controller                          │
+│  (Central management, APIs, configuration storage)       │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+          ┌───────────────┼───────────────┐
+          │               │               │
+          ▼               ▼               ▼
+    ┌───────────┐   ┌───────────┐   ┌───────────┐
+    │ ServerHost│   │ ServerHost│   │  Droplets │
+    │  (Node 1) │   │  (Node 2) │   │  (Player, │
+    └─────┬─────┘   └─────┬─────┘   │  etc.)    │
+          │               │         └───────────┘
+    ┌─────┴─────┐   ┌─────┴─────┐
+    │  Servers  │   │  Servers  │
+    │ (Minecraft)│   │ (Minecraft)│
+    └───────────┘   └───────────┘
+```
+
+## Key Concepts
+
+### Groups
+
+Groups are configuration blueprints that define how servers should be created. They specify:
+
+- Server software and version
+- Resource allocation (memory, ports)
+- Scaling behavior (min/max instances)
+- Template type (dynamic or static)
+
+### Servers
+
+Servers are individual running instances created from group configurations. They have:
+
+- Unique identifiers
+- Independent state management
+- Real-time monitoring
+- Automatic lifecycle management
+
+### Templates
+
+Templates define the file structure and configuration that servers use:
+
+- **Dynamic**: Fresh copy for each server, data cleared on stop
+- **Static**: Persistent data between restarts
+
+### Droplets
+
+Droplets are microservices that extend SimpleCloud functionality:
+
+- Run independently from Minecraft servers
+- Handle specialized tasks (player data, resource packs)
+- Communicate via the Controller API
+
+## Next Steps
+
+- [Controller](/en/concepts/controller) - Deep dive into the central management system
+- [ServerHost](/en/concepts/serverhost/overview) - Learn about server lifecycle management
+- [CLI](/en/concepts/cli) - Explore command-line capabilities

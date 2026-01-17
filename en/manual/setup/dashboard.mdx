@@ -1,6 +1,62 @@
 ---
 title: 'Dashboard'
-description: 'Description for Dashboard'
+description: 'Access and manage your Minecraft network with the SimpleCloud Dashboard'
 ---
 
-## Dashboard
+## What is the Dashboard?
+
+The SimpleCloud Dashboard is a user-friendly web interface that lets you manage your Minecraft server network from any modern web browser.
+
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/dashboard/serveroverview.png?raw=true" alt="SimpleCloud Dashboard" />
+</Frame>
+
+With the dashboard, you can:
+
+- Create and manage server groups
+- Start, stop, and monitor servers
+- View logs and player activity
+- Manage your network's resources
+
+## Accessing the Dashboard
+
+To get a secure dashboard login link, run the following command:
+
+```bash
+simplecloud login dashboard
+```
+
+This generates a unique authentication link for secure access.
+
+<Warning>
+  This link contains authentication credentials and should NOT be shared with
+  others. Each user should generate their own login link.
+</Warning>
+
+## Creating a Server Group
+
+After logging in, you can create a new server group by navigating to the Groups section.
+
+<Steps>
+<Step title="Navigate to Groups">
+  Click on the **Groups** tab to view existing groups or create a new one
+</Step>
+<Step title="Create a New Group">
+  Click the **Create Group** button
+</Step>
+<Step title="Select Group Type">
+  Choose your group type: **Proxy** (e.g., Velocity, Bungeecord) or **Server** (e.g., Paper, Spigot)
+</Step>
+<Step title="Enter Server URL">
+  Provide a download URL for your server software, or use the search feature to find official software
+</Step>
+<Step title="Configure Server">
+  Set the port, memory allocation, online count range, and other configuration options
+</Step>
+<Step title="Set Template Type">
+  Choose whether your template should be dynamic or static
+</Step>
+<Step title="Finish">
+  Review your settings and click **Create** to finish the setup
+</Step>
+</Steps>

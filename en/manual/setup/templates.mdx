@@ -1,6 +1,96 @@
 ---
 title: 'Templates'
-description: 'Description for Templates'
+description: 'Understand how SimpleCloud templates work to manage server files and configurations'
 ---
 
-## Templates
+## Understanding Templates
+
+Templates are the file structures that get copied to new server instances. They contain your server's plugins, configurations, and world files.
+
+When SimpleCloud starts a server, it copies the template files to the server's running directory and applies any necessary configurations.
+
+## Template Types
+
+### Dynamic Templates
+
+Dynamic templates are designed for servers that don't need persistent data:
+
+- Files are copied fresh for each new server
+- Server data is deleted when the server stops
+- Ideal for minigames, lobbies, and temporary servers
+- Changes to the template affect all future server starts
+
+**Use Cases:**
+
+- Game servers (BedWars, SkyWars, etc.)
+- Lobby servers
+- Any server where you want a clean state on restart
+
+### Static Templates
+
+Static templates maintain persistent data:
+
+- Each server gets its own persistent directory
+- Data survives server restarts
+- Ideal for survival servers, creative servers, or any server with persistent worlds
+
+**Use Cases:**
+
+- Survival worlds
+- Creative servers
+- Servers with persistent player data
+- Build servers
+
+## Template Location
+
+Templates are stored in the `templates/` directory of your SimpleCloud installation:
+
+```
+templates/
+├── proxy/
+│   └── plugins/
+├── lobby/
+│   ├── plugins/
+│   └── world/
+└── survival/
+    ├── plugins/
+    ├── world/
+    └── world_nether/
+```
+
+## Working with Templates
+
+### Adding Plugins
+
+To add a plugin to all servers in a group:
+
+1. Navigate to your template directory
+2. Place the plugin JAR in the `plugins/` folder
+3. Restart existing servers or let new ones start with the plugin
+
+**Example:**
+
+```bash
+cp my-plugin.jar templates/lobby/plugins/
+```
+
+### Configuring Plugins
+
+Plugin configurations should be placed in the template:
+
+1. Start a server once to generate default configs
+2. Copy the configs back to your template
+3. Edit as needed
+
+### World Files
+
+For static templates, world files are managed per-server. For dynamic templates:
+
+1. Generate or copy your world to the template
+2. All new servers will start with this world
+3. Changes in running servers are lost on restart
+
+<Note>
+  For dynamic templates, consider using a world management plugin if you need
+  to reset or rotate worlds automatically.
+</Note>
