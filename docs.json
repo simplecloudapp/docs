@@ -132,6 +132,13 @@
                   "en/developer/droplets/player/player-management",
                   "en/developer/droplets/player/adventure-integration"
                 ]
+              },
+              {
+                "group": "REST API Reference",
+                "openapi": {
+                  "source": "https://controller.platform.simplecloud.app/swagger/doc.json",
+                  "directory": "en/developer/api-reference"
+                }
               }
             ]
           },
