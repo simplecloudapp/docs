@@ -5,7 +5,7 @@ description: 'The command-line interface for managing your SimpleCloud installat
 
 ## What is the CLI?
 
-The SimpleCloud CLI (Command Line Interface) is your primary tool for interacting with SimpleCloud. It provides commands for installation, configuration, monitoring, and management of your entire cloud infrastructure.
+The SimpleCloud CLI is your primary tool for managing your cloud infrastructure. It provides commands for authentication, setup, component management, and server operations.
 
 ## Installation
 
@@ -17,165 +17,488 @@ Install the CLI using the official install script:
 
 ## Command Structure
 
-The CLI uses a hierarchical command structure:
+```bash
+sc <command> [subcommand] [arguments] [options]
+```
+
+## Global Options
+
+| Option | Description |
+|--------|-------------|
+| `-c, --context` | Override the active context |
+| `-h, --help` | Show help |
+| `-v, --version` | Show version number |
+
+---
+
+## Authentication
+
+### Login
+
+Authenticate with SimpleCloud.
 
 ```bash
-simplecloud [command] [subcommand] [arguments] [flags]
+sc login
 ```
 
-**Aliases**: You can use `sc` as a shorthand for `simplecloud`:
+| Option | Description |
+|--------|-------------|
+| `--no-browser` | Don't open browser automatically |
+| `--code` | Use a pre-approved code from the dashboard |
+
+### Logout
+
+Log out from SimpleCloud.
 
 ```bash
-sc status  # Same as: simplecloud status
+sc logout
 ```
 
-## Core Commands
+### Who Am I
 
-### Cloud Management
+Show current user information.
 
 ```bash
-# Start the cloud
-simplecloud start cloud
-
-# Stop the cloud
-simplecloud stop cloud
-
-# Check status
-simplecloud status
-
-# View logs
-simplecloud logs [component]
+sc whoami
 ```
 
-### Group Management
+---
+
+## Setup & Installation
+
+### Setup
+
+Set up SimpleCloud: configure context, install dependencies, and download serverhost.
 
 ```bash
-# Create a new group
-simplecloud create group
-
-# List all groups
-simplecloud info groups
-
-# Edit a group
-simplecloud edit group [name] [flags]
-
-# Delete a group
-simplecloud delete group [name]
+sc setup
 ```
 
-### Server Management
+| Option | Description |
+|--------|-------------|
+| `-o, --org` | Organization ID or slug (skips interactive selection) |
+| `--code` | Use a pre-approved code from the dashboard |
+
+### Install Components
+
+Install components from the component registry.
 
 ```bash
-# Start a server
-simplecloud start server [group]
-
-# Stop a server
-simplecloud stop server [group] [id]
-
-# List all servers
-simplecloud info servers
-
-# View server details
-simplecloud info server [group] [id]
+sc install [components..]
 ```
 
-### Maintenance
+### Update Components
+
+Update installed components to latest versions.
 
 ```bash
-# Update the CLI
-simplecloud upgrade cli
-
-# Run migrations
-simplecloud migrate [version]
-
-# Access the dashboard
-simplecloud login dashboard
+sc update [components..]
 ```
 
-## Interactive Mode
+### Upgrade CLI
 
-Many commands support interactive mode when run without arguments:
+Upgrade the CLI to the latest version.
 
 ```bash
-# Interactive group creation
-simplecloud create group
-
-# Interactive server start
-simplecloud start server
+sc upgrade
 ```
 
-The CLI will prompt you for required information with helpful defaults.
+---
 
-## Flag Reference
+## Component Lifecycle
 
-### Global Flags
+### Start
 
-| Flag          | Description              |
-| ------------- | ------------------------ |
-| `--help, -h`  | Show help for a command  |
-| `--confirm`   | Skip confirmation prompts|
-
-### Create Group Flags
-
-| Flag                  | Description                   |
-| --------------------- | ----------------------------- |
-| `--name`              | Group name                    |
-| `--type`              | SERVER or PROXY               |
-| `--software`          | paper, velocity, etc.         |
-| `--minecraft-version` | Minecraft version             |
-| `--min-memory`        | Minimum memory (MB)           |
-| `--max-memory`        | Maximum memory (MB)           |
-| `--min-online`        | Minimum online count          |
-| `--max-online`        | Maximum online count          |
-| `--max-players`       | Maximum players per server    |
-| `--port`              | Starting port                 |
-| `--template`          | dynamic or static             |
-
-## Remote Access
-
-The CLI can connect to remote SimpleCloud installations:
+Start SimpleCloud components.
 
 ```bash
-# Connect to remote instance
-simplecloud connect [host:port]
-
-# Disconnect
-simplecloud disconnect
+sc start [components..]
 ```
 
-<Note>
-  Remote access requires proper authentication. Contact your server
-  administrator for connection details.
-</Note>
+| Option | Description |
+|--------|-------------|
+| `--runner` | Override runner type (`screen`, `docker`, `native`) |
+| `--configure` | Configure the default runner |
+| `--skip-version-check` | Skip version check before starting |
+| `--update` | Auto-update outdated components |
 
-## Configuration
+### Stop
 
-CLI configuration is stored in your home directory:
+Stop SimpleCloud components.
 
-```
-~/.simplecloud/
-├── config.yml      # CLI settings
-└── credentials/    # Authentication data
-```
-
-## Troubleshooting
-
-### Common Issues
-
-**Command not found:**
 ```bash
-# Ensure CLI is in your PATH
-export PATH="$PATH:$HOME/.simplecloud/bin"
+sc stop [components..]
 ```
 
-**Connection refused:**
+### Restart
+
+Restart SimpleCloud components (stop then start).
+
 ```bash
-# Check if the controller is running
-simplecloud status
+sc restart [components..]
 ```
 
-**Permission denied:**
+### Status
+
+Check status of SimpleCloud components.
+
 ```bash
-# Ensure proper file permissions
-chmod +x ~/.simplecloud/bin/simplecloud
+sc status [components..]
 ```
+
+### Logs
+
+View logs for a component.
+
+```bash
+sc logs <component>
+```
+
+| Option | Description |
+|--------|-------------|
+| `-n, --lines` | Number of lines to show (default: 100) |
+
+### Attach
+
+Attach to a running component console.
+
+```bash
+sc attach <component>
+```
+
+---
+
+## Context Management
+
+Manage connection contexts. Aliases: `contexts`, `ctx`
+
+### List Contexts
+
+```bash
+sc context list
+```
+
+### Use Context
+
+Switch to a context.
+
+```bash
+sc context use <name>
+```
+
+### Add Context
+
+Add a new context.
+
+```bash
+sc context add [name]
+```
+
+### Remove Context
+
+Remove a context.
+
+```bash
+sc context remove <name>
+```
+
+### Current Context
+
+Show the current context.
+
+```bash
+sc context current
+```
+
+---
+
+## Group Management
+
+Manage server groups. Alias: `groups`
+
+### List Groups
+
+```bash
+sc group list
+```
+
+### Create Group
+
+Create a new group with interactive wizard.
+
+```bash
+sc group create
+```
+
+| Option | Description |
+|--------|-------------|
+| `-y, --auto-retry` | Automatically retry with previous answers |
+
+### Group Info
+
+Show group information.
+
+```bash
+sc group info <group>
+```
+
+### Start Server in Group
+
+Start a server in the group.
+
+```bash
+sc group start <group>
+```
+
+### Update Group
+
+Update group settings.
+
+```bash
+sc group update <group>
+```
+
+| Option | Description |
+|--------|-------------|
+| `--name` | New group name |
+| `--type` | Group type (`SERVER`, `PROXY`, `LOBBY`) |
+| `--active` | Set active status |
+| `--max-memory` | Maximum memory in MB |
+| `--min-memory` | Minimum memory in MB |
+| `--max-players` | Maximum players |
+| `--scaling-min` | Minimum servers for scaling |
+| `--scaling-max` | Maximum servers for scaling |
+
+### Delete Group
+
+Delete a group.
+
+```bash
+sc group delete <group>
+```
+
+### Group Plugins
+
+Manage plugins for a group.
+
+```bash
+# Add plugins to a group
+sc group plugin add <group> [query]
+
+# List plugins for a group
+sc group plugin list <group>
+
+# Remove a plugin from a group
+sc group plugin remove <group> <plugin>
+```
+
+---
+
+## Server Management
+
+Manage running servers. Alias: `servers`
+
+### List Servers
+
+```bash
+sc server list
+```
+
+### Server Info
+
+Show server information.
+
+```bash
+sc server info <server> [numerical-id]
+```
+
+### Stop Server
+
+Stop a server.
+
+```bash
+sc server stop <server> [numerical-id]
+```
+
+### Server Logs
+
+View server logs.
+
+```bash
+sc server logs <server> [numerical-id]
+```
+
+---
+
+## Blueprint Management
+
+Manage server blueprints. Aliases: `blueprints`, `bp`, `bps`
+
+### List Blueprints
+
+```bash
+sc blueprint list
+```
+
+### Blueprint Info
+
+Show blueprint information.
+
+```bash
+sc blueprint info <blueprint>
+```
+
+### Update Blueprint
+
+Update blueprint settings.
+
+```bash
+sc blueprint update <blueprint>
+```
+
+### Delete Blueprint
+
+Delete a blueprint.
+
+```bash
+sc blueprint delete <blueprint>
+```
+
+---
+
+## Persistent Server Management
+
+Manage persistent servers. Aliases: `pserver`, `pservers`
+
+### List Persistent Servers
+
+```bash
+sc persistent-server list
+```
+
+### Create Persistent Server
+
+Create a new persistent server with interactive wizard.
+
+```bash
+sc persistent-server create
+```
+
+### Persistent Server Info
+
+Show persistent server information.
+
+```bash
+sc persistent-server info <server>
+```
+
+### Update Persistent Server
+
+Update persistent server settings.
+
+```bash
+sc persistent-server update <server>
+```
+
+### Delete Persistent Server
+
+Delete a persistent server.
+
+```bash
+sc persistent-server delete <server>
+```
+
+### Persistent Server Plugins
+
+Manage plugins for a persistent server.
+
+```bash
+# Add plugins
+sc persistent-server plugin add <server> [query]
+
+# List plugins
+sc persistent-server plugin list <server>
+
+# Remove a plugin
+sc persistent-server plugin remove <server> <plugin>
+```
+
+---
+
+## Network Management
+
+Manage network configuration. Aliases: `networks`, `net`
+
+### Register Network
+
+Register a new network.
+
+```bash
+sc network register
+```
+
+### Verify Network
+
+Verify network credentials.
+
+```bash
+sc network verify
+```
+
+---
+
+## Serverhost Management
+
+Manage server hosts. Aliases: `serverhosts`, `host`, `hosts`
+
+### Add Serverhost
+
+Add a new serverhost with interactive wizard.
+
+```bash
+sc serverhost add
+```
+
+### Register Serverhost
+
+Register a new serverhost.
+
+```bash
+sc serverhost register
+```
+
+### Verify Serverhost
+
+Verify a serverhost.
+
+```bash
+sc serverhost verify <id>
+```
+
+---
+
+## Shell Completion
+
+Generate shell completion scripts.
+
+```bash
+sc completion
+```
+
+---
+
+## Quick Reference
+
+| Task | Command |
+|------|---------|
+| Set up SimpleCloud | `sc setup` |
+| Start all components | `sc start` |
+| Check status | `sc status` |
+| View logs | `sc logs <component>` |
+| Create a group | `sc group create` |
+| List groups | `sc group list` |
+| Start a server | `sc group start <group>` |
+| List servers | `sc server list` |
+| Stop a server | `sc server stop <name> [id]` |
+| Attach to console | `sc attach <component>` |
+| Switch context | `sc context use <name>` |

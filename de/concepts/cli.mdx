@@ -1,8 +1,504 @@
 ---
 title: 'CLI'
-description: 'Die SimpleCloud Kommandozeile'
+description: 'Die Kommandozeile zur Verwaltung deiner SimpleCloud-Installation'
 ---
 
-<Note>
-  Diese Seite wird derzeit übersetzt.
-</Note>
+## Was ist die CLI?
+
+Die SimpleCloud CLI ist dein primäres Werkzeug zur Verwaltung deiner Cloud-Infrastruktur. Sie bietet Befehle für Authentifizierung, Setup, Komponenten-Management und Server-Operationen.
+
+## Installation
+
+Installiere die CLI mit dem offiziellen Install-Script:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/simplecloudapp/simplecloud-manifest/HEAD/install.sh)"
+```
+
+## Befehlsstruktur
+
+```bash
+sc <befehl> [unterbefehl] [argumente] [optionen]
+```
+
+## Globale Optionen
+
+| Option | Beschreibung |
+|--------|--------------|
+| `-c, --context` | Aktiven Context überschreiben |
+| `-h, --help` | Hilfe anzeigen |
+| `-v, --version` | Versionsnummer anzeigen |
+
+---
+
+## Authentifizierung
+
+### Login
+
+Bei SimpleCloud authentifizieren.
+
+```bash
+sc login
+```
+
+| Option | Beschreibung |
+|--------|--------------|
+| `--no-browser` | Browser nicht automatisch öffnen |
+| `--code` | Vorab genehmigten Code vom Dashboard verwenden |
+
+### Logout
+
+Von SimpleCloud abmelden.
+
+```bash
+sc logout
+```
+
+### Who Am I
+
+Aktuelle Benutzerinformationen anzeigen.
+
+```bash
+sc whoami
+```
+
+---
+
+## Setup & Installation
+
+### Setup
+
+SimpleCloud einrichten: Context konfigurieren, Dependencies installieren und Serverhost herunterladen.
+
+```bash
+sc setup
+```
+
+| Option | Beschreibung |
+|--------|--------------|
+| `-o, --org` | Organisations-ID oder Slug (überspringt interaktive Auswahl) |
+| `--code` | Vorab genehmigten Code vom Dashboard verwenden |
+
+### Komponenten installieren
+
+Komponenten aus der Component Registry installieren.
+
+```bash
+sc install [komponenten..]
+```
+
+### Komponenten aktualisieren
+
+Installierte Komponenten auf neueste Version aktualisieren.
+
+```bash
+sc update [komponenten..]
+```
+
+### CLI upgraden
+
+Die CLI auf die neueste Version upgraden.
+
+```bash
+sc upgrade
+```
+
+---
+
+## Komponenten-Lifecycle
+
+### Start
+
+SimpleCloud-Komponenten starten.
+
+```bash
+sc start [komponenten..]
+```
+
+| Option | Beschreibung |
+|--------|--------------|
+| `--runner` | Runner-Typ überschreiben (`screen`, `docker`, `native`) |
+| `--configure` | Standard-Runner konfigurieren |
+| `--skip-version-check` | Versionsprüfung vor dem Start überspringen |
+| `--update` | Veraltete Komponenten automatisch aktualisieren |
+
+### Stop
+
+SimpleCloud-Komponenten stoppen.
+
+```bash
+sc stop [komponenten..]
+```
+
+### Restart
+
+SimpleCloud-Komponenten neu starten (Stop dann Start).
+
+```bash
+sc restart [komponenten..]
+```
+
+### Status
+
+Status von SimpleCloud-Komponenten prüfen.
+
+```bash
+sc status [komponenten..]
+```
+
+### Logs
+
+Logs einer Komponente anzeigen.
+
+```bash
+sc logs <komponente>
+```
+
+| Option | Beschreibung |
+|--------|--------------|
+| `-n, --lines` | Anzahl der anzuzeigenden Zeilen (Standard: 100) |
+
+### Attach
+
+An eine laufende Komponenten-Konsole anhängen.
+
+```bash
+sc attach <komponente>
+```
+
+---
+
+## Context-Verwaltung
+
+Verbindungs-Contexts verwalten. Aliase: `contexts`, `ctx`
+
+### Contexts auflisten
+
+```bash
+sc context list
+```
+
+### Context verwenden
+
+Zu einem Context wechseln.
+
+```bash
+sc context use <name>
+```
+
+### Context hinzufügen
+
+Neuen Context hinzufügen.
+
+```bash
+sc context add [name]
+```
+
+### Context entfernen
+
+Context entfernen.
+
+```bash
+sc context remove <name>
+```
+
+### Aktueller Context
+
+Aktuellen Context anzeigen.
+
+```bash
+sc context current
+```
+
+---
+
+## Gruppen-Verwaltung
+
+Server-Gruppen verwalten. Alias: `groups`
+
+### Gruppen auflisten
+
+```bash
+sc group list
+```
+
+### Gruppe erstellen
+
+Neue Gruppe mit interaktivem Wizard erstellen.
+
+```bash
+sc group create
+```
+
+| Option | Beschreibung |
+|--------|--------------|
+| `-y, --auto-retry` | Automatisch mit vorherigen Antworten wiederholen |
+
+### Gruppen-Info
+
+Gruppeninformationen anzeigen.
+
+```bash
+sc group info <gruppe>
+```
+
+### Server in Gruppe starten
+
+Server in der Gruppe starten.
+
+```bash
+sc group start <gruppe>
+```
+
+### Gruppe aktualisieren
+
+Gruppeneinstellungen aktualisieren.
+
+```bash
+sc group update <gruppe>
+```
+
+| Option | Beschreibung |
+|--------|--------------|
+| `--name` | Neuer Gruppenname |
+| `--type` | Gruppentyp (`SERVER`, `PROXY`, `LOBBY`) |
+| `--active` | Aktiv-Status setzen |
+| `--max-memory` | Maximaler Speicher in MB |
+| `--min-memory` | Minimaler Speicher in MB |
+| `--max-players` | Maximale Spieler |
+| `--scaling-min` | Minimale Server für Skalierung |
+| `--scaling-max` | Maximale Server für Skalierung |
+
+### Gruppe löschen
+
+Gruppe löschen.
+
+```bash
+sc group delete <gruppe>
+```
+
+### Gruppen-Plugins
+
+Plugins für eine Gruppe verwalten.
+
+```bash
+# Plugins zu einer Gruppe hinzufügen
+sc group plugin add <gruppe> [suche]
+
+# Plugins einer Gruppe auflisten
+sc group plugin list <gruppe>
+
+# Plugin von einer Gruppe entfernen
+sc group plugin remove <gruppe> <plugin>
+```
+
+---
+
+## Server-Verwaltung
+
+Laufende Server verwalten. Alias: `servers`
+
+### Server auflisten
+
+```bash
+sc server list
+```
+
+### Server-Info
+
+Serverinformationen anzeigen.
+
+```bash
+sc server info <server> [numerische-id]
+```
+
+### Server stoppen
+
+Server stoppen.
+
+```bash
+sc server stop <server> [numerische-id]
+```
+
+### Server-Logs
+
+Server-Logs anzeigen.
+
+```bash
+sc server logs <server> [numerische-id]
+```
+
+---
+
+## Blueprint-Verwaltung
+
+Server-Blueprints verwalten. Aliase: `blueprints`, `bp`, `bps`
+
+### Blueprints auflisten
+
+```bash
+sc blueprint list
+```
+
+### Blueprint-Info
+
+Blueprint-Informationen anzeigen.
+
+```bash
+sc blueprint info <blueprint>
+```
+
+### Blueprint aktualisieren
+
+Blueprint-Einstellungen aktualisieren.
+
+```bash
+sc blueprint update <blueprint>
+```
+
+### Blueprint löschen
+
+Blueprint löschen.
+
+```bash
+sc blueprint delete <blueprint>
+```
+
+---
+
+## Persistent-Server-Verwaltung
+
+Persistente Server verwalten. Aliase: `pserver`, `pservers`
+
+### Persistente Server auflisten
+
+```bash
+sc persistent-server list
+```
+
+### Persistenten Server erstellen
+
+Neuen persistenten Server mit interaktivem Wizard erstellen.
+
+```bash
+sc persistent-server create
+```
+
+### Persistent-Server-Info
+
+Informationen zum persistenten Server anzeigen.
+
+```bash
+sc persistent-server info <server>
+```
+
+### Persistenten Server aktualisieren
+
+Einstellungen des persistenten Servers aktualisieren.
+
+```bash
+sc persistent-server update <server>
+```
+
+### Persistenten Server löschen
+
+Persistenten Server löschen.
+
+```bash
+sc persistent-server delete <server>
+```
+
+### Persistent-Server-Plugins
+
+Plugins für einen persistenten Server verwalten.
+
+```bash
+# Plugins hinzufügen
+sc persistent-server plugin add <server> [suche]
+
+# Plugins auflisten
+sc persistent-server plugin list <server>
+
+# Plugin entfernen
+sc persistent-server plugin remove <server> <plugin>
+```
+
+---
+
+## Netzwerk-Verwaltung
+
+Netzwerkkonfiguration verwalten. Aliase: `networks`, `net`
+
+### Netzwerk registrieren
+
+Neues Netzwerk registrieren.
+
+```bash
+sc network register
+```
+
+### Netzwerk verifizieren
+
+Netzwerk-Credentials verifizieren.
+
+```bash
+sc network verify
+```
+
+---
+
+## Serverhost-Verwaltung
+
+Server-Hosts verwalten. Aliase: `serverhosts`, `host`, `hosts`
+
+### Serverhost hinzufügen
+
+Neuen Serverhost mit interaktivem Wizard hinzufügen.
+
+```bash
+sc serverhost add
+```
+
+### Serverhost registrieren
+
+Neuen Serverhost registrieren.
+
+```bash
+sc serverhost register
+```
+
+### Serverhost verifizieren
+
+Serverhost verifizieren.
+
+```bash
+sc serverhost verify <id>
+```
+
+---
+
+## Shell-Completion
+
+Shell-Completion-Scripts generieren.
+
+```bash
+sc completion
+```
+
+---
+
+## Kurzreferenz
+
+| Aufgabe | Befehl |
+|---------|--------|
+| SimpleCloud einrichten | `sc setup` |
+| Alle Komponenten starten | `sc start` |
+| Status prüfen | `sc status` |
+| Logs anzeigen | `sc logs <komponente>` |
+| Gruppe erstellen | `sc group create` |
+| Gruppen auflisten | `sc group list` |
+| Server starten | `sc group start <gruppe>` |
+| Server auflisten | `sc server list` |
+| Server stoppen | `sc server stop <name> [id]` |
+| An Konsole anhängen | `sc attach <komponente>` |
+| Context wechseln | `sc context use <name>` |
