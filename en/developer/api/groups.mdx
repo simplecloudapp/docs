@@ -1,0 +1,108 @@
+---
+title: 'Groups API'
+description: 'Manage server groups programmatically'
+---
+
+The Groups API lets you create, query, update, and delete server groups. Access it via `api.group()`.
+
+## Get Groups
+
+```java
+// Get all groups
+api.group().getAllGroups()
+    .thenAccept(groups -> groups.forEach(g -> System.out.println(g.getName())));
+
+// Get all groups with query filters
+api.group().getAllGroups(new GroupQuery())
+    .thenAccept(groups -> { ... });
+
+// Get group by name
+api.group().getGroupByName("lobby")
+    .thenAccept(group -> System.out.println(group.getId()));
+
+// Get group by ID
+api.group().getGroupById("group-uuid")
+    .thenAccept(group -> System.out.println(group.getName()));
+```
+
+## Create Group
+
+```java
+CreateGroupRequest request = CreateGroupRequest.builder()
+    .name("bedwars")
+    .type(GroupServerType.SERVER)
+    .minMemory(512)
+    .maxMemory(1024)
+    .maxPlayers(16)
+    .minOnlineCount(1)
+    .maxOnlineCount(10)
+    .build();
+
+api.group().createGroup(request)
+    .thenAccept(group -> System.out.println("Created: " + group.getId()));
+```
+
+## Update Group
+
+```java
+UpdateGroupRequest update = UpdateGroupRequest.builder()
+    .maxPlayers(32)
+    .maxOnlineCount(20)
+    .build();
+
+api.group().updateGroup("group-uuid", update)
+    .thenAccept(group -> System.out.println("Updated: " + group.getName()));
+```
+
+## Delete Group
+
+```java
+api.group().deleteGroup("group-uuid")
+    .thenAccept(success -> System.out.println("Deleted: " + success));
+```
+
+<Warning>
+  Deleting a group doesn't stop running servers. Stop servers first if needed.
+</Warning>
+
+## Group Properties
+
+Groups support custom key-value properties for metadata:
+
+```java
+// Add or update properties (merges with existing)
+Map<String, String> props = Map.of(
+    "gameMode", "ADVENTURE",
+    "region", "eu-west"
+);
+api.group().updateGroupProperties("group-uuid", props);
+
+// Remove specific properties
+api.group().deleteGroupProperties("group-uuid", List.of("region"));
+```
+
+Properties are available in servers as environment variables prefixed with `SIMPLECLOUD_`.
+
+## Group Model
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `String` | Unique identifier |
+| `name` | `String` | Group name |
+| `type` | `GroupServerType` | `SERVER` or `PROXY` |
+| `minMemory` | `int` | Minimum memory (MB) |
+| `maxMemory` | `int` | Maximum memory (MB) |
+| `maxPlayers` | `int` | Player limit per server |
+| `minOnlineCount` | `int` | Minimum servers running |
+| `maxOnlineCount` | `int` | Maximum servers allowed |
+| `properties` | `Map<String, String>` | Custom metadata |
+| `scalingConfig` | `ScalingConfig` | Auto-scaling settings |
+| `deploymentConfig` | `DeploymentConfig` | Host deployment settings |
+| `sourceConfig` | `SourceConfig` | Blueprint or image source |
+
+## GroupServerType
+
+| Value | Description |
+|-------|-------------|
+| `SERVER` | Game server (Paper, Spigot, etc.) |
+| `PROXY` | Proxy server (Velocity, BungeeCord) |

@@ -1,6 +1,105 @@
 ---
-title: 'Overview'
-description: 'Description for Overview'
+title: 'Cloud API'
+description: 'Baue Integrationen mit SimpleCloud über unsere Java/Kotlin API'
 ---
 
-## Overview
+Die Cloud API ist eine Java-Bibliothek zur programmatischen Interaktion mit deinem SimpleCloud-Netzwerk. Verwende sie zum Verwalten von Gruppen, Servern, Spielern und zur Reaktion auf Events in Echtzeit.
+
+## API-Architektur
+
+```
+CloudApi
+├── group()      → GroupApi      - Gruppen erstellen, lesen, aktualisieren, löschen
+├── server()     → ServerApi     - Server starten, stoppen, abfragen
+├── player()     → PlayerApi     - Spielerdaten, Verbindungen, Messaging
+└── event()      → EventApi      - Echtzeit-Events abonnieren
+                    ├── group()
+                    ├── server()
+                    ├── persistentServer()
+                    └── blueprint()
+```
+
+## Wichtige Features
+
+- **Async-first Design** - Alle Operationen geben `CompletableFuture` (Java) oder Suspend-Funktionen (Kotlin) zurück
+- **Typsichere Modelle** - Stark typisierte Domain-Objekte für Gruppen, Server, Spieler
+- **Echtzeit-Events** - Änderungen über NATS-Messaging abonnieren
+- **Adventure-Integration** - Spieler implementieren Adventure's `Audience` für Rich-Text-Messaging
+- **Umgebungs-bewusst** - Auto-Konfiguration aus `SIMPLECLOUD_*` Umgebungsvariablen
+
+## Schnellbeispiel
+
+<Tabs>
+<Tab title="Java">
+
+```java
+// API initialisieren
+CloudApi api = CloudApi.create();
+
+// Alle Server in einer Gruppe abrufen
+api.server().getServersByGroup("lobby").thenAccept(servers -> {
+    System.out.println("Lobby-Server: " + servers.size());
+});
+
+// Neuen Server starten
+api.server().startServer(new StartServerRequest("group-id", "lobby"))
+    .thenAccept(server -> System.out.println("Gestartet: " + server.getServerId()));
+
+// Nachricht an Spieler senden (Adventure-Integration)
+api.player().get(playerUUID).thenAccept(player -> {
+    if (player != null) {
+        player.sendMessage(Component.text("Willkommen!").color(NamedTextColor.GREEN));
+    }
+});
+
+// Server-Events abonnieren
+Subscription sub = api.event().server().onStarted(event -> {
+    System.out.println("Server gestartet: " + event.getServerId());
+});
+```
+
+</Tab>
+<Tab title="Kotlin">
+
+```kotlin
+// API initialisieren
+val api = CloudApi.create()
+
+// Alle Server in einer Gruppe abrufen
+val servers = api.server().getServersByGroup("lobby").await()
+println("Lobby-Server: ${servers.size}")
+
+// Neuen Server starten
+val server = api.server().startServer(StartServerRequest("group-id", "lobby")).await()
+println("Gestartet: ${server.serverId}")
+
+// Nachricht an Spieler senden (Adventure-Integration)
+api.player().get(playerUUID).await()?.let { player ->
+    player.sendMessage(Component.text("Willkommen!").color(NamedTextColor.GREEN))
+}
+
+// Server-Events abonnieren
+val sub = api.event().server().onStarted { event ->
+    println("Server gestartet: ${event.serverId}")
+}
+```
+
+</Tab>
+</Tabs>
+
+## Nächste Schritte
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/de/developer/installation">
+    Cloud API zu deinem Projekt hinzufügen
+  </Card>
+  <Card title="Servers API" icon="server" href="/de/developer/api/servers">
+    Server-Instanzen verwalten
+  </Card>
+  <Card title="Players API" icon="users" href="/de/developer/api/players">
+    Spielerdaten und Messaging
+  </Card>
+  <Card title="Events API" icon="bell" href="/de/developer/api/events">
+    Auf Echtzeit-Änderungen reagieren
+  </Card>
+</CardGroup>

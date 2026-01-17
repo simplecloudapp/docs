@@ -1,0 +1,223 @@
+---
+title: 'Handle Events in Real-Time'
+description: 'React to server, group, and player changes with the Events API'
+---
+
+This guide shows patterns for handling real-time events in your plugins.
+
+## Basic Event Handling
+
+### Subscribe to Events
+
+```java
+// Subscribe returns a Subscription object
+Subscription sub = api.event().server().onStarted(event -> {
+    System.out.println("Server started: " + event.getServerId());
+});
+
+// Remember to close when done
+sub.close();
+```
+
+### Plugin Lifecycle Management
+
+```java
+public class MyPlugin extends JavaPlugin {
+    private CloudApi api;
+    private final List<Subscription> subscriptions = new ArrayList<>();
+
+    @Override
+    public void onEnable() {
+        api = CloudApi.create();
+        registerEvents();
+    }
+
+    @Override
+    public void onDisable() {
+        // Clean up all subscriptions
+        subscriptions.forEach(Subscription::close);
+        subscriptions.clear();
+    }
+
+    private void registerEvents() {
+        subscriptions.add(api.event().server().onStarted(this::onServerStarted));
+        subscriptions.add(api.event().server().onStopped(this::onServerStopped));
+        subscriptions.add(api.event().group().onUpdated(this::onGroupUpdated));
+    }
+
+    private void onServerStarted(ServerStartedEvent event) {
+        getLogger().info("Server started: " + event.getServerId());
+    }
+
+    private void onServerStopped(ServerStoppedEvent event) {
+        getLogger().info("Server stopped: " + event.getServerId());
+    }
+
+    private void onGroupUpdated(GroupUpdatedEvent event) {
+        getLogger().info("Group updated: " + event.getServerGroupId());
+    }
+}
+```
+
+## Common Event Patterns
+
+### Auto-Start Servers When Group Empty
+
+```java
+public void setupAutoStart(String groupName, int minimum) {
+    api.event().server().onStopped(event -> {
+        if (!event.getGroupName().equals(groupName)) return;
+
+        api.server().getServersByGroup(groupName).thenAccept(servers -> {
+            long running = servers.stream()
+                .filter(s -> s.getState() != ServerState.STOPPING)
+                .count();
+
+            if (running < minimum) {
+                api.group().getGroupByName(groupName).thenAccept(group -> {
+                    if (group != null) {
+                        api.server().startServer(new StartServerRequest(group.getId(), groupName));
+                    }
+                });
+            }
+        });
+    });
+}
+```
+
+### Log All State Changes
+
+```java
+public void setupStateLogging() {
+    api.event().server().onStateChanged(event -> {
+        String message = String.format("[%s] %s → %s",
+            event.getServerId(),
+            event.getOldState(),
+            event.getNewState());
+
+        // Log to file, database, or external service
+        logger.info(message);
+    });
+}
+```
+
+### Notify Staff on Server Crash
+
+```java
+public void setupCrashNotifications() {
+    api.event().server().onStopped(event -> {
+        api.server().getServerById(event.getServerId()).thenAccept(server -> {
+            // If server stopped unexpectedly (not graceful shutdown)
+            // This is a simplified check - adjust based on your needs
+
+            notifyStaff(Component.text("[Alert] Server stopped: " + event.getServerId())
+                .color(NamedTextColor.RED));
+        });
+    });
+}
+
+private void notifyStaff(Component message) {
+    api.player().getOnlinePlayers().thenAccept(players -> {
+        players.stream()
+            .filter(p -> hasStaffPermission(p))
+            .forEach(p -> p.sendMessage(message));
+    });
+}
+```
+
+### Sync Data When Server Starts
+
+```java
+public void setupDataSync() {
+    api.event().server().onStateChanged(event -> {
+        if (event.getNewState() == ServerState.AVAILABLE) {
+            // Server is ready, sync data
+            syncDataToServer(event.getServerId());
+        }
+    });
+}
+
+private void syncDataToServer(String serverId) {
+    // Your data synchronization logic
+    System.out.println("Syncing data to: " + serverId);
+}
+```
+
+## Filtering Events
+
+### Filter by Group
+
+```java
+public void watchGroup(String groupName) {
+    api.event().server().onStarted(event -> {
+        if (event.getGroupName().equals(groupName)) {
+            handleGroupServerStart(event);
+        }
+    });
+}
+```
+
+### Filter by Server Type
+
+```java
+public void watchProxies() {
+    api.event().server().onStarted(event -> {
+        api.group().getGroupByName(event.getGroupName()).thenAccept(group -> {
+            if (group != null && group.getType() == GroupServerType.PROXY) {
+                handleProxyStart(event);
+            }
+        });
+    });
+}
+```
+
+## One-Time Events
+
+### Wait for Specific Server
+
+```java
+public CompletableFuture<Void> waitForServer(String serverId) {
+    CompletableFuture<Void> future = new CompletableFuture<>();
+
+    Subscription sub = api.event().server().onStateChanged(event -> {
+        if (event.getServerId().equals(serverId) &&
+            event.getNewState() == ServerState.AVAILABLE) {
+            future.complete(null);
+        }
+    });
+
+    // Clean up subscription when future completes
+    future.whenComplete((result, error) -> sub.close());
+
+    return future;
+}
+
+// Usage
+waitForServer("lobby-1").thenRun(() -> {
+    System.out.println("Server is ready!");
+});
+```
+
+### Timeout Handling
+
+```java
+public CompletableFuture<Void> waitForServerWithTimeout(String serverId, Duration timeout) {
+    CompletableFuture<Void> future = new CompletableFuture<>();
+
+    Subscription sub = api.event().server().onStateChanged(event -> {
+        if (event.getServerId().equals(serverId) &&
+            event.getNewState() == ServerState.AVAILABLE) {
+            future.complete(null);
+        }
+    });
+
+    // Timeout after duration
+    CompletableFuture.delayedExecutor(timeout.toMillis(), TimeUnit.MILLISECONDS)
+        .execute(() -> future.completeExceptionally(
+            new TimeoutException("Server did not start in time")));
+
+    future.whenComplete((result, error) -> sub.close());
+
+    return future;
+}
+```

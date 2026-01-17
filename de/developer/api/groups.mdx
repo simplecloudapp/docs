@@ -1,0 +1,101 @@
+---
+title: 'Groups API'
+description: 'Server-Gruppen programmatisch verwalten'
+---
+
+Die Groups API ermöglicht das Erstellen, Abfragen, Aktualisieren und Löschen von Server-Gruppen. Zugriff über `api.group()`.
+
+## Gruppen abrufen
+
+```java
+// Alle Gruppen abrufen
+api.group().getAllGroups()
+    .thenAccept(groups -> groups.forEach(g -> System.out.println(g.getName())));
+
+// Gruppe nach Namen
+api.group().getGroupByName("lobby")
+    .thenAccept(group -> System.out.println(group.getId()));
+
+// Gruppe nach ID
+api.group().getGroupById("group-uuid")
+    .thenAccept(group -> System.out.println(group.getName()));
+```
+
+## Gruppe erstellen
+
+```java
+CreateGroupRequest request = CreateGroupRequest.builder()
+    .name("bedwars")
+    .type(GroupServerType.SERVER)
+    .minMemory(512)
+    .maxMemory(1024)
+    .maxPlayers(16)
+    .minOnlineCount(1)
+    .maxOnlineCount(10)
+    .build();
+
+api.group().createGroup(request)
+    .thenAccept(group -> System.out.println("Erstellt: " + group.getId()));
+```
+
+## Gruppe aktualisieren
+
+```java
+UpdateGroupRequest update = UpdateGroupRequest.builder()
+    .maxPlayers(32)
+    .maxOnlineCount(20)
+    .build();
+
+api.group().updateGroup("group-uuid", update)
+    .thenAccept(group -> System.out.println("Aktualisiert: " + group.getName()));
+```
+
+## Gruppe löschen
+
+```java
+api.group().deleteGroup("group-uuid")
+    .thenAccept(success -> System.out.println("Gelöscht: " + success));
+```
+
+<Warning>
+  Das Löschen einer Gruppe stoppt laufende Server nicht. Stoppe Server zuerst wenn nötig.
+</Warning>
+
+## Gruppen-Properties
+
+Gruppen unterstützen eigene Key-Value-Properties für Metadaten:
+
+```java
+// Properties hinzufügen oder aktualisieren (merged mit bestehenden)
+Map<String, String> props = Map.of(
+    "gameMode", "ADVENTURE",
+    "region", "eu-west"
+);
+api.group().updateGroupProperties("group-uuid", props);
+
+// Bestimmte Properties entfernen
+api.group().deleteGroupProperties("group-uuid", List.of("region"));
+```
+
+Properties sind in Servern als Umgebungsvariablen mit `SIMPLECLOUD_` Präfix verfügbar.
+
+## Group Model
+
+| Property | Typ | Beschreibung |
+|----------|-----|--------------|
+| `id` | `String` | Eindeutige Kennung |
+| `name` | `String` | Gruppenname |
+| `type` | `GroupServerType` | `SERVER` oder `PROXY` |
+| `minMemory` | `int` | Minimaler Speicher (MB) |
+| `maxMemory` | `int` | Maximaler Speicher (MB) |
+| `maxPlayers` | `int` | Spielerlimit pro Server |
+| `minOnlineCount` | `int` | Minimale laufende Server |
+| `maxOnlineCount` | `int` | Maximale erlaubte Server |
+| `properties` | `Map<String, String>` | Eigene Metadaten |
+
+## GroupServerType
+
+| Wert | Beschreibung |
+|------|--------------|
+| `SERVER` | Game-Server (Paper, Spigot, etc.) |
+| `PROXY` | Proxy-Server (Velocity, BungeeCord) |

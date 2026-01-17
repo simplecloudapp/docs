@@ -1,0 +1,159 @@
+---
+title: 'Events in Echtzeit behandeln'
+description: 'Auf Server-, Gruppen- und Spieler-Änderungen mit der Events API reagieren'
+---
+
+Diese Anleitung zeigt Muster für die Echtzeit-Event-Behandlung in deinen Plugins.
+
+## Einfache Event-Behandlung
+
+### Events abonnieren
+
+```java
+// Subscribe gibt ein Subscription-Objekt zurück
+Subscription sub = api.event().server().onStarted(event -> {
+    System.out.println("Server gestartet: " + event.getServerId());
+});
+
+// Schließen wenn fertig
+sub.close();
+```
+
+### Plugin-Lebenszyklus-Verwaltung
+
+```java
+public class MeinPlugin extends JavaPlugin {
+    private CloudApi api;
+    private final List<Subscription> subscriptions = new ArrayList<>();
+
+    @Override
+    public void onEnable() {
+        api = CloudApi.create();
+        registerEvents();
+    }
+
+    @Override
+    public void onDisable() {
+        subscriptions.forEach(Subscription::close);
+        subscriptions.clear();
+    }
+
+    private void registerEvents() {
+        subscriptions.add(api.event().server().onStarted(this::onServerStarted));
+        subscriptions.add(api.event().server().onStopped(this::onServerStopped));
+        subscriptions.add(api.event().group().onUpdated(this::onGroupUpdated));
+    }
+
+    private void onServerStarted(ServerStartedEvent event) {
+        getLogger().info("Server gestartet: " + event.getServerId());
+    }
+
+    private void onServerStopped(ServerStoppedEvent event) {
+        getLogger().info("Server gestoppt: " + event.getServerId());
+    }
+
+    private void onGroupUpdated(GroupUpdatedEvent event) {
+        getLogger().info("Gruppe aktualisiert: " + event.getServerGroupId());
+    }
+}
+```
+
+## Gängige Event-Muster
+
+### Auto-Start wenn Gruppe leer
+
+```java
+public void setupAutoStart(String groupName, int minimum) {
+    api.event().server().onStopped(event -> {
+        if (!event.getGroupName().equals(groupName)) return;
+
+        api.server().getServersByGroup(groupName).thenAccept(servers -> {
+            long running = servers.stream()
+                .filter(s -> s.getState() != ServerState.STOPPING)
+                .count();
+
+            if (running < minimum) {
+                api.group().getGroupByName(groupName).thenAccept(group -> {
+                    if (group != null) {
+                        api.server().startServer(new StartServerRequest(group.getId(), groupName));
+                    }
+                });
+            }
+        });
+    });
+}
+```
+
+### Alle Status-Änderungen loggen
+
+```java
+public void setupStateLogging() {
+    api.event().server().onStateChanged(event -> {
+        String message = String.format("[%s] %s → %s",
+            event.getServerId(),
+            event.getOldState(),
+            event.getNewState());
+
+        logger.info(message);
+    });
+}
+```
+
+### Staff bei Server-Crash benachrichtigen
+
+```java
+public void setupCrashNotifications() {
+    api.event().server().onStopped(event -> {
+        notifyStaff(Component.text("[Alert] Server gestoppt: " + event.getServerId())
+            .color(NamedTextColor.RED));
+    });
+}
+
+private void notifyStaff(Component message) {
+    api.player().getOnlinePlayers().thenAccept(players -> {
+        players.stream()
+            .filter(p -> hasStaffPermission(p))
+            .forEach(p -> p.sendMessage(message));
+    });
+}
+```
+
+## Events filtern
+
+### Nach Gruppe filtern
+
+```java
+public void watchGroup(String groupName) {
+    api.event().server().onStarted(event -> {
+        if (event.getGroupName().equals(groupName)) {
+            handleGroupServerStart(event);
+        }
+    });
+}
+```
+
+## Einmalige Events
+
+### Auf bestimmten Server warten
+
+```java
+public CompletableFuture<Void> waitForServer(String serverId) {
+    CompletableFuture<Void> future = new CompletableFuture<>();
+
+    Subscription sub = api.event().server().onStateChanged(event -> {
+        if (event.getServerId().equals(serverId) &&
+            event.getNewState() == ServerState.AVAILABLE) {
+            future.complete(null);
+        }
+    });
+
+    future.whenComplete((result, error) -> sub.close());
+
+    return future;
+}
+
+// Verwendung
+waitForServer("lobby-1").thenRun(() -> {
+    System.out.println("Server ist bereit!");
+});
+```

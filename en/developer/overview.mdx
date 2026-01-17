@@ -1,40 +1,105 @@
 ---
-title: 'Overview'
-description: 'Overview of the Developer Guide for SimpleCloud'
+title: 'Cloud API'
+description: 'Build integrations with SimpleCloud using our Java/Kotlin API'
 ---
 
-## What's Inside
+The Cloud API is a Java library for interacting with your SimpleCloud network programmatically. Use it to manage groups, servers, players, and react to events in real-time.
 
-Welcome to the SimpleCloud Developer Documentation! This guide will help you understand how to integrate with and extend SimpleCloud's functionality in your projects.
+## API Architecture
 
-Our developer documentation is organized into several key sections:
+```
+CloudApi
+├── group()      → GroupApi      - Create, read, update, delete groups
+├── server()     → ServerApi     - Start, stop, query servers
+├── player()     → PlayerApi     - Player data, connections, messaging
+└── event()      → EventApi      - Subscribe to real-time events
+                    ├── group()
+                    ├── server()
+                    ├── persistentServer()
+                    └── blueprint()
+```
 
-### Getting Started
+## Key Features
 
-Start your journey with SimpleCloud development by following our platform-specific guides for:
+- **Async-first design** - All operations return `CompletableFuture` (Java) or suspend functions (Kotlin)
+- **Type-safe models** - Strongly typed domain objects for Groups, Servers, Players
+- **Real-time events** - Subscribe to changes via NATS messaging
+- **Adventure integration** - Players implement Adventure's `Audience` for rich text messaging
+- **Environment-aware** - Auto-configuration from `SIMPLECLOUD_*` environment variables
 
-- [Paper/Spigot servers](/en/developer/getting-started/paper)
-- [Velocity proxy](/en/developer/getting-started/velocity)
-- [BungeeCord proxy](/en/developer/getting-started/bungeecord)
-- [Other platforms](/en/developer/getting-started/other)
+## Quick Example
 
-### Controller API
+<Tabs>
+<Tab title="Java">
 
-The Controller API is the heart of SimpleCloud, allowing you to:
+```java
+// Initialize the API
+CloudApi api = CloudApi.create();
 
-- [Initialize and manage the cloud system](/en/developer/controller/initialization)
-- [Create and modify server groups](/en/developer/controller/groups)
-- [Control individual server instances](/en/developer/controller/servers)
-- [Handle cloud events](/en/developer/controller/events)
+// Get all servers in a group
+api.server().getServersByGroup("lobby").thenAccept(servers -> {
+    System.out.println("Lobby servers: " + servers.size());
+});
 
-### Player API
+// Start a new server
+api.server().startServer(new StartServerRequest("group-id", "lobby"))
+    .thenAccept(server -> System.out.println("Started: " + server.getServerId()));
 
-Build powerful player-centric features using our Player API:
+// Send a message to a player (Adventure integration)
+api.player().get(playerUUID).thenAccept(player -> {
+    if (player != null) {
+        player.sendMessage(Component.text("Welcome!").color(NamedTextColor.GREEN));
+    }
+});
 
-- [Player lifecycle management](/en/developer/droplets/player/initialization)
-- [Player data handling](/en/developer/droplets/player/player-management)
-- [Adventure framework integration](/en/developer/droplets/player/adventure-integration) for rich text and UI
+// Subscribe to server events
+Subscription sub = api.event().server().onStarted(event -> {
+    System.out.println("Server started: " + event.getServerId());
+});
+```
+
+</Tab>
+<Tab title="Kotlin">
+
+```kotlin
+// Initialize the API
+val api = CloudApi.create()
+
+// Get all servers in a group
+val servers = api.server().getServersByGroup("lobby").await()
+println("Lobby servers: ${servers.size}")
+
+// Start a new server
+val server = api.server().startServer(StartServerRequest("group-id", "lobby")).await()
+println("Started: ${server.serverId}")
+
+// Send a message to a player (Adventure integration)
+api.player().get(playerUUID).await()?.let { player ->
+    player.sendMessage(Component.text("Welcome!").color(NamedTextColor.GREEN))
+}
+
+// Subscribe to server events
+val sub = api.event().server().onStarted { event ->
+    println("Server started: ${event.serverId}")
+}
+```
+
+</Tab>
+</Tabs>
 
 ## Next Steps
 
-If you're new to SimpleCloud development, we recommend starting with our **Getting Started** guides for your specific platform. For more advanced use cases, explore our Controller and Player API documentation.
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/en/developer/installation">
+    Add the Cloud API to your project
+  </Card>
+  <Card title="Servers API" icon="server" href="/en/developer/api/servers">
+    Manage server instances
+  </Card>
+  <Card title="Players API" icon="users" href="/en/developer/api/players">
+    Player data and messaging
+  </Card>
+  <Card title="Events API" icon="bell" href="/en/developer/api/events">
+    React to real-time changes
+  </Card>
+</CardGroup>

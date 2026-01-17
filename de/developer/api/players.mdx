@@ -1,0 +1,114 @@
+---
+title: 'Players API'
+description: 'Spieler verwalten und Cross-Server-Nachrichten senden'
+---
+
+Die Players API ermöglicht das Abfragen von Spielern, Transferieren zwischen Servern und Senden von Rich-Text-Nachrichten mit Adventure. Zugriff über `api.player()`.
+
+## Spieler abrufen
+
+```java
+// Spieler nach UUID
+api.player().get(uuid)
+    .thenAccept(player -> {
+        if (player != null) {
+            System.out.println(player.getName() + " auf " + player.getConnectedServerName());
+        }
+    });
+
+// Spieler nach Username
+api.player().get("Steve")
+    .thenAccept(player -> { ... });
+
+// Alle Online-Spieler
+api.player().getOnlinePlayers()
+    .thenAccept(players -> players.forEach(p ->
+        System.out.println(p.getName())));
+
+// Online-Spielerzahl
+api.player().getOnlinePlayerCount()
+    .thenAccept(count -> System.out.println("Online: " + count));
+```
+
+## Spieler-Aktionen
+
+### Spieler transferieren
+
+```java
+api.player().get(uuid).thenAccept(player -> {
+    if (player != null) {
+        player.connect("lobby-1").thenAccept(result -> {
+            switch (result) {
+                case SUCCESS -> System.out.println("Transfer erfolgreich");
+                case SERVER_NOT_FOUND -> System.out.println("Server existiert nicht");
+                case ALREADY_CONNECTED -> System.out.println("Bereits auf diesem Server");
+                case CONNECTION_FAILED -> System.out.println("Transfer fehlgeschlagen");
+            }
+        });
+    }
+});
+```
+
+### Spieler kicken
+
+```java
+player.kick(Component.text("Server wird neugestartet")
+    .color(NamedTextColor.RED));
+```
+
+## Adventure-Integration
+
+`CloudPlayer` implementiert Adventure's `Audience` Interface:
+
+### Nachrichten senden
+
+```java
+// Farbiger Text
+player.sendMessage(Component.text("Erfolg!")
+    .color(NamedTextColor.GREEN));
+
+// Klickbarer Text
+player.sendMessage(Component.text("Hier klicken")
+    .clickEvent(ClickEvent.runCommand("/help"))
+    .hoverEvent(HoverEvent.showText(Component.text("/help ausführen"))));
+```
+
+### Titles senden
+
+```java
+player.showTitle(Title.title(
+    Component.text("Willkommen!").color(NamedTextColor.GOLD),
+    Component.text("auf dem Server").color(NamedTextColor.GRAY),
+    Title.Times.times(
+        Duration.ofMillis(500),
+        Duration.ofSeconds(3),
+        Duration.ofMillis(500)
+    )
+));
+```
+
+### Action Bar senden
+
+```java
+player.sendActionBar(Component.text("⚔ Kampfmodus aktiviert")
+    .color(NamedTextColor.RED));
+```
+
+## CloudPlayer Model
+
+| Property | Typ | Beschreibung |
+|----------|-----|--------------|
+| `uniqueId` | `UUID` | Spieler-UUID |
+| `name` | `String` | Spieler-Username |
+| `connectedServerName` | `String` | Aktueller Server-Name |
+| `connectedProxyName` | `String` | Verbundener Proxy-Name |
+
+## ConnectResult
+
+| Wert | Beschreibung |
+|------|--------------|
+| `SUCCESS` | Transfer erfolgreich |
+| `SERVER_NOT_FOUND` | Zielserver existiert nicht |
+| `ALREADY_CONNECTED` | Spieler bereits auf diesem Server |
+| `PLAYER_NOT_FOUND` | Spieler ging offline |
+| `CONNECTION_FAILED` | Transfer fehlgeschlagen |

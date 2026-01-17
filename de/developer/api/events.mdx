@@ -1,0 +1,121 @@
+---
+title: 'Events API'
+description: 'Echtzeit-Events aus deinem Cloud-Netzwerk abonnieren'
+---
+
+Die Events API ermöglicht das Reagieren auf Änderungen in deinem Netzwerk in Echtzeit. Zugriff über `api.event()`.
+
+## Event-Kategorien
+
+```
+api.event()
+├── group()            → Gruppe erstellt, aktualisiert, gelöscht
+├── server()           → Server gestartet, gestoppt, Status geändert
+├── persistentServer() → Persistente Server Events
+└── blueprint()        → Blueprint erstellt, aktualisiert, gelöscht
+```
+
+## Server Events
+
+### Server gestartet
+
+```java
+Subscription sub = api.event().server().onStarted(event -> {
+    System.out.println("Server gestartet: " + event.getServerId());
+    System.out.println("Gruppe: " + event.getGroupName());
+});
+```
+
+### Server gestoppt
+
+```java
+api.event().server().onStopped(event -> {
+    System.out.println("Server gestoppt: " + event.getServerId());
+});
+```
+
+### Server-Status geändert
+
+```java
+api.event().server().onStateChanged(event -> {
+    System.out.println(event.getServerId() + ": " +
+        event.getOldState() + " → " + event.getNewState());
+});
+```
+
+## Gruppen Events
+
+```java
+// Erstellt
+api.event().group().onCreated(event -> {
+    System.out.println("Gruppe erstellt: " + event.getServerGroupId());
+});
+
+// Aktualisiert
+api.event().group().onUpdated(event -> { ... });
+
+// Gelöscht
+api.event().group().onDeleted(event -> { ... });
+```
+
+## Subscriptions verwalten
+
+Subscriptions implementieren `AutoCloseable`. Immer aufräumen wenn fertig:
+
+### Manuelles Aufräumen
+
+```java
+Subscription sub = api.event().server().onStarted(event -> { ... });
+
+// Später, beim Herunterfahren
+sub.close();
+```
+
+### Plugin-Lebenszyklus
+
+```java
+public class MeinPlugin extends JavaPlugin {
+    private final List<Subscription> subscriptions = new ArrayList<>();
+    private CloudApi api;
+
+    @Override
+    public void onEnable() {
+        api = CloudApi.create();
+        subscriptions.add(api.event().server().onStarted(this::handleServerStart));
+        subscriptions.add(api.event().server().onStopped(this::handleServerStop));
+    }
+
+    @Override
+    public void onDisable() {
+        subscriptions.forEach(Subscription::close);
+    }
+
+    private void handleServerStart(ServerStartedEvent event) {
+        getLogger().info("Server gestartet: " + event.getServerId());
+    }
+
+    private void handleServerStop(ServerStoppedEvent event) {
+        getLogger().info("Server gestoppt: " + event.getServerId());
+    }
+}
+```
+
+## Event-Referenz
+
+### Server Events
+
+| Event | Properties |
+|-------|------------|
+| `ServerStartedEvent` | `serverId`, `groupName` |
+| `ServerStoppedEvent` | `serverId`, `groupName` |
+| `ServerStateChangedEvent` | `serverId`, `oldState`, `newState` |
+| `ServerUpdatedEvent` | `serverId` |
+| `ServerDeletedEvent` | `serverId` |
+
+### Gruppen Events
+
+| Event | Properties |
+|-------|------------|
+| `GroupCreatedEvent` | `serverGroupId` |
+| `GroupUpdatedEvent` | `serverGroupId` |
+| `GroupDeletedEvent` | `serverGroupId` |

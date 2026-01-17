@@ -1,0 +1,192 @@
+---
+title: 'Manage Servers Programmatically'
+description: 'Start, stop, and monitor servers with the Cloud API'
+---
+
+This guide shows common patterns for managing servers programmatically.
+
+## Start Servers on Demand
+
+### Start Single Server
+
+```java
+public CompletableFuture<Server> startServer(String groupName) {
+    return api.group().getGroupByName(groupName)
+        .thenCompose(group -> {
+            if (group == null) {
+                return CompletableFuture.failedFuture(
+                    new IllegalArgumentException("Group not found: " + groupName));
+            }
+            return api.server().startServer(new StartServerRequest(group.getId(), groupName));
+        });
+}
+```
+
+### Start Multiple Servers
+
+```java
+public void ensureMinimumServers(String groupName, int minimum) {
+    api.server().getServersByGroup(groupName).thenAccept(servers -> {
+        long running = servers.stream()
+            .filter(s -> s.getState() != ServerState.STOPPING)
+            .count();
+
+        if (running < minimum) {
+            int toStart = (int) (minimum - running);
+            api.group().getGroupByName(groupName).thenAccept(group -> {
+                if (group == null) return;
+
+                for (int i = 0; i < toStart; i++) {
+                    api.server().startServer(new StartServerRequest(group.getId(), groupName))
+                        .thenAccept(server -> System.out.println("Started: " + server.getServerId()));
+                }
+            });
+        }
+    });
+}
+```
+
+## Stop Servers
+
+### Stop Single Server
+
+```java
+public void stopServer(String serverId) {
+    api.server().stopServer(serverId)
+        .thenAccept(success -> System.out.println("Stopped: " + success));
+}
+```
+
+### Stop Empty Servers
+
+```java
+public void stopEmptyServers(String groupName, int keepMinimum) {
+    api.server().getServersByGroup(groupName).thenAccept(servers -> {
+        List<Server> emptyServers = servers.stream()
+            .filter(s -> s.getState() == ServerState.AVAILABLE)
+            .filter(s -> s.getPlayerCount() == 0)
+            .sorted(Comparator.comparingLong(Server::getNumericalId).reversed())
+            .toList();
+
+        // Keep minimum servers running
+        int toStop = Math.max(0, emptyServers.size() - keepMinimum);
+
+        emptyServers.stream()
+            .limit(toStop)
+            .forEach(server -> api.server().stopServer(server.getServerId()));
+    });
+}
+```
+
+### Graceful Shutdown with Player Evacuation
+
+```java
+public void gracefulStop(String serverId, String fallbackServer) {
+    api.server().getServerById(serverId).thenAccept(server -> {
+        if (server == null) return;
+
+        // Evacuate players first
+        api.player().getOnlinePlayers().thenAccept(players -> {
+            List<CompletableFuture<CloudPlayer.ConnectResult>> transfers = players.stream()
+                .filter(p -> p.getConnectedServerName().equals(serverId))
+                .map(player -> {
+                    player.sendMessage(Component.text("Server shutting down...")
+                        .color(NamedTextColor.YELLOW));
+                    return player.connect(fallbackServer);
+                })
+                .toList();
+
+            // Wait for all transfers, then stop
+            CompletableFuture.allOf(transfers.toArray(new CompletableFuture[0]))
+                .thenRun(() -> api.server().stopServer(serverId));
+        });
+    });
+}
+```
+
+## Monitor Servers
+
+### Watch Server Count
+
+```java
+public void monitorServerCount(String groupName) {
+    api.event().server().onStarted(event -> {
+        if (event.getGroupName().equals(groupName)) {
+            updateServerCount(groupName);
+        }
+    });
+
+    api.event().server().onStopped(event -> {
+        if (event.getGroupName().equals(groupName)) {
+            updateServerCount(groupName);
+        }
+    });
+}
+
+private void updateServerCount(String groupName) {
+    api.server().getServersByGroup(groupName).thenAccept(servers -> {
+        System.out.println(groupName + " servers: " + servers.size());
+    });
+}
+```
+
+### Track Server States
+
+```java
+public void trackServerStates() {
+    api.event().server().onStateChanged(event -> {
+        System.out.println(event.getServerId() + ": " +
+            event.getOldState() + " → " + event.getNewState());
+
+        // React to state changes
+        if (event.getNewState() == ServerState.AVAILABLE) {
+            System.out.println("Server ready for players: " + event.getServerId());
+        }
+    });
+}
+```
+
+## Update Server Properties
+
+### Set Game Mode
+
+```java
+public void setServerGameMode(String serverId, String mode) {
+    api.server().updateServerProperties(serverId, Map.of("gameMode", mode))
+        .thenAccept(server -> System.out.println("Updated: " + server.getServerId()));
+}
+```
+
+### Mark Server as Joinable
+
+```java
+public void setJoinable(String serverId, boolean joinable) {
+    api.server().updateServerProperties(serverId, Map.of("joinable", String.valueOf(joinable)));
+}
+```
+
+## Find Servers
+
+### Find Server with Lowest Player Count
+
+```java
+public CompletableFuture<Server> findBestServer(String groupName) {
+    return api.server().getServersByGroup(groupName)
+        .thenApply(servers -> servers.stream()
+            .filter(s -> s.getState() == ServerState.AVAILABLE || s.getState() == ServerState.INGAME)
+            .filter(s -> s.getPlayerCount() < s.getMaxPlayers())
+            .min(Comparator.comparingInt(Server::getPlayerCount))
+            .orElse(null));
+}
+```
+
+### Find Servers by Property
+
+```java
+public CompletableFuture<List<Server>> findByProperty(String groupName, String key, String value) {
+    return api.server().getServersByGroup(groupName)
+        .thenApply(servers -> servers.stream()
+            .filter(s -> value.equals(s.getProperties().get(key)))
+            .toList());
+}
+```

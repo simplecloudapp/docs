@@ -1,0 +1,165 @@
+---
+title: 'Players API'
+description: 'Manage players and send cross-server messages'
+---
+
+The Players API lets you query players, transfer them between servers, and send rich-text messages using Adventure. Access it via `api.player()`.
+
+## Get Players
+
+```java
+// Get player by UUID
+api.player().get(uuid)
+    .thenAccept(player -> {
+        if (player != null) {
+            System.out.println(player.getName() + " on " + player.getConnectedServerName());
+        }
+    });
+
+// Get player by username
+api.player().get("Steve")
+    .thenAccept(player -> { ... });
+
+// Get all online players
+api.player().getOnlinePlayers()
+    .thenAccept(players -> players.forEach(p ->
+        System.out.println(p.getName())));
+
+// Get online player count
+api.player().getOnlinePlayerCount()
+    .thenAccept(count -> System.out.println("Online: " + count));
+```
+
+## Player Actions
+
+### Transfer Player
+
+```java
+api.player().get(uuid).thenAccept(player -> {
+    if (player != null) {
+        player.connect("lobby-1").thenAccept(result -> {
+            switch (result) {
+                case SUCCESS -> System.out.println("Transferred!");
+                case SERVER_NOT_FOUND -> System.out.println("Server doesn't exist");
+                case ALREADY_CONNECTED -> System.out.println("Already on that server");
+                case CONNECTION_FAILED -> System.out.println("Connection failed");
+            }
+        });
+    }
+});
+```
+
+### Kick Player
+
+```java
+player.kick(Component.text("Server restarting")
+    .color(NamedTextColor.RED));
+```
+
+## Adventure Integration
+
+`CloudPlayer` implements Adventure's `Audience` interface, giving you access to all Adventure messaging features:
+
+### Send Messages
+
+```java
+// Plain text
+player.sendMessage(Component.text("Hello!"));
+
+// Colored text
+player.sendMessage(Component.text("Success!")
+    .color(NamedTextColor.GREEN));
+
+// Styled text
+player.sendMessage(Component.text("Important")
+    .color(NamedTextColor.GOLD)
+    .decorate(TextDecoration.BOLD));
+
+// Clickable text
+player.sendMessage(Component.text("Click here")
+    .clickEvent(ClickEvent.runCommand("/help"))
+    .hoverEvent(HoverEvent.showText(Component.text("Run /help"))));
+```
+
+### Send Titles
+
+```java
+player.showTitle(Title.title(
+    Component.text("Welcome!").color(NamedTextColor.GOLD),
+    Component.text("to the server").color(NamedTextColor.GRAY),
+    Title.Times.times(
+        Duration.ofMillis(500),   // fade in
+        Duration.ofSeconds(3),    // stay
+        Duration.ofMillis(500)    // fade out
+    )
+));
+```
+
+### Send Action Bar
+
+```java
+player.sendActionBar(Component.text("⚔ Combat Mode Enabled")
+    .color(NamedTextColor.RED));
+```
+
+### Play Sounds
+
+```java
+player.playSound(Sound.sound(
+    Key.key("entity.experience_orb.pickup"),
+    Sound.Source.PLAYER,
+    1.0f,  // volume
+    1.0f   // pitch
+));
+```
+
+### Boss Bars
+
+```java
+BossBar bar = BossBar.bossBar(
+    Component.text("Event Progress"),
+    0.5f,  // progress (0.0 to 1.0)
+    BossBar.Color.PURPLE,
+    BossBar.Overlay.PROGRESS
+);
+
+player.showBossBar(bar);
+
+// Update progress
+bar.progress(0.75f);
+
+// Remove when done
+player.hideBossBar(bar);
+```
+
+## CloudPlayer Model
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `uniqueId` | `UUID` | Player's UUID |
+| `name` | `String` | Player's username |
+| `connectedServerName` | `String` | Current server name |
+| `connectedProxyName` | `String` | Connected proxy name |
+
+## ConnectResult
+
+| Value | Description |
+|-------|-------------|
+| `SUCCESS` | Transfer successful |
+| `SERVER_NOT_FOUND` | Target server doesn't exist |
+| `ALREADY_CONNECTED` | Player already on that server |
+| `PLAYER_NOT_FOUND` | Player went offline |
+| `CONNECTION_FAILED` | Transfer failed |
+
+## Broadcast to All Players
+
+```java
+api.player().getOnlinePlayers().thenAccept(players -> {
+    Component message = Component.text("[Announcement] ")
+        .color(NamedTextColor.GOLD)
+        .append(Component.text("Server restarting in 5 minutes")
+            .color(NamedTextColor.WHITE));
+
+    players.forEach(player -> player.sendMessage(message));
+});
+```

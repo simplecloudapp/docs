@@ -1,0 +1,151 @@
+---
+title: 'Transfer Players Between Servers'
+description: 'Move players across your network programmatically'
+---
+
+This guide shows how to transfer players between servers, with proper error handling and user feedback.
+
+## Basic Transfer
+
+```java
+public void transferPlayer(UUID playerUuid, String targetServer) {
+    api.player().get(playerUuid).thenAccept(player -> {
+        if (player == null) {
+            System.out.println("Player not found or offline");
+            return;
+        }
+
+        player.connect(targetServer).thenAccept(result -> {
+            switch (result) {
+                case SUCCESS -> System.out.println("Transfer successful");
+                case SERVER_NOT_FOUND -> System.out.println("Server doesn't exist");
+                case ALREADY_CONNECTED -> System.out.println("Already on that server");
+                case CONNECTION_FAILED -> System.out.println("Transfer failed");
+            }
+        });
+    });
+}
+```
+
+## Transfer to Best Server in Group
+
+Find the server with the most available slots:
+
+```java
+public void transferToGroup(UUID playerUuid, String groupName) {
+    api.server().getServersByGroup(groupName).thenAccept(servers -> {
+        // Find server with most available space
+        Server bestServer = servers.stream()
+            .filter(s -> s.getState() == ServerState.AVAILABLE || s.getState() == ServerState.INGAME)
+            .filter(s -> s.getPlayerCount() < s.getMaxPlayers())
+            .max(Comparator.comparingInt(s -> s.getMaxPlayers() - s.getPlayerCount()))
+            .orElse(null);
+
+        if (bestServer == null) {
+            System.out.println("No available servers in group");
+            return;
+        }
+
+        api.player().get(playerUuid).thenAccept(player -> {
+            if (player != null) {
+                player.connect(bestServer.getServerId());
+            }
+        });
+    });
+}
+```
+
+## Transfer with User Feedback
+
+Send messages to the player during transfer:
+
+```java
+public void transferWithFeedback(UUID playerUuid, String targetServer) {
+    api.player().get(playerUuid).thenCompose(player -> {
+        if (player == null) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        // Notify player
+        player.sendMessage(Component.text("Connecting to " + targetServer + "...")
+            .color(NamedTextColor.YELLOW));
+
+        return player.connect(targetServer).thenApply(result -> {
+            if (result != CloudPlayer.ConnectResult.SUCCESS) {
+                player.sendMessage(Component.text("Failed to connect: " + result)
+                    .color(NamedTextColor.RED));
+            }
+            return result;
+        });
+    });
+}
+```
+
+## Transfer All Players from Server
+
+Evacuate all players before server shutdown:
+
+```java
+public void evacuateServer(String serverId, String targetServer) {
+    api.server().getServerById(serverId).thenAccept(server -> {
+        if (server == null) return;
+
+        api.player().getOnlinePlayers().thenAccept(players -> {
+            players.stream()
+                .filter(p -> p.getConnectedServerName().equals(server.getServerId()))
+                .forEach(player -> {
+                    player.sendMessage(Component.text("Server shutting down, transferring...")
+                        .color(NamedTextColor.GOLD));
+                    player.connect(targetServer);
+                });
+        });
+    });
+}
+```
+
+## Start Server if None Available
+
+Start a new server and transfer the player:
+
+```java
+public void transferOrStartServer(UUID playerUuid, String groupName) {
+    api.server().getServersByGroup(groupName).thenAccept(servers -> {
+        Server available = servers.stream()
+            .filter(s -> s.getState() == ServerState.AVAILABLE)
+            .filter(s -> s.getPlayerCount() < s.getMaxPlayers())
+            .findFirst()
+            .orElse(null);
+
+        if (available != null) {
+            // Transfer to existing server
+            api.player().get(playerUuid).thenAccept(player -> {
+                if (player != null) player.connect(available.getServerId());
+            });
+        } else {
+            // Start new server, then transfer
+            api.group().getGroupByName(groupName).thenAccept(group -> {
+                if (group == null) return;
+
+                api.server().startServer(new StartServerRequest(group.getId(), groupName))
+                    .thenAccept(newServer -> {
+                        // Wait for server to be ready
+                        waitForServerReady(newServer.getServerId(), () -> {
+                            api.player().get(playerUuid).thenAccept(player -> {
+                                if (player != null) player.connect(newServer.getServerId());
+                            });
+                        });
+                    });
+            });
+        }
+    });
+}
+
+private void waitForServerReady(String serverId, Runnable callback) {
+    api.event().server().onStateChanged(event -> {
+        if (event.getServerId().equals(serverId) &&
+            event.getNewState() == ServerState.AVAILABLE) {
+            callback.run();
+        }
+    });
+}
+```

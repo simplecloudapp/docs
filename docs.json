@@ -102,35 +102,27 @@
             "tab": "Developer",
             "groups": [
               {
-                "group": "Developer Guide",
-                "pages": [
-                  "en/developer/overview"
-                ]
-              },
-              {
                 "group": "Getting Started",
                 "pages": [
-                  "en/developer/getting-started/velocity",
-                  "en/developer/getting-started/bungeecord",
-                  "en/developer/getting-started/paper",
-                  "en/developer/getting-started/other"
+                  "en/developer/overview",
+                  "en/developer/installation"
                 ]
               },
               {
-                "group": "Controller API",
+                "group": "Cloud API",
                 "pages": [
-                  "en/developer/controller/initialization",
-                  "en/developer/controller/groups",
-                  "en/developer/controller/servers",
-                  "en/developer/controller/events"
+                  "en/developer/api/groups",
+                  "en/developer/api/servers",
+                  "en/developer/api/players",
+                  "en/developer/api/events"
                 ]
               },
               {
-                "group": "Player API",
+                "group": "Guides",
                 "pages": [
-                  "en/developer/droplets/player/initialization",
-                  "en/developer/droplets/player/player-management",
-                  "en/developer/droplets/player/adventure-integration"
+                  "en/developer/guides/player-transfer",
+                  "en/developer/guides/server-management",
+                  "en/developer/guides/event-handling"
                 ]
               },
               {
@@ -259,35 +251,27 @@
             "tab": "Developer",
             "groups": [
               {
-                "group": "Developer Guide",
-                "pages": [
-                  "de/developer/overview"
-                ]
-              },
-              {
                 "group": "Getting Started",
                 "pages": [
-                  "de/developer/getting-started/velocity",
-                  "de/developer/getting-started/bungeecord",
-                  "de/developer/getting-started/paper",
-                  "de/developer/getting-started/other"
+                  "de/developer/overview",
+                  "de/developer/installation"
                 ]
               },
               {
-                "group": "Controller API",
+                "group": "Cloud API",
                 "pages": [
-                  "de/developer/controller/initialization",
-                  "de/developer/controller/groups",
-                  "de/developer/controller/servers",
-                  "de/developer/controller/events"
+                  "de/developer/api/groups",
+                  "de/developer/api/servers",
+                  "de/developer/api/players",
+                  "de/developer/api/events"
                 ]
               },
               {
-                "group": "Player API",
+                "group": "Guides",
                 "pages": [
-                  "de/developer/droplets/player/initialization",
-                  "de/developer/droplets/player/player-management",
-                  "de/developer/droplets/player/adventure-integration"
+                  "de/developer/guides/player-transfer",
+                  "de/developer/guides/server-management",
+                  "de/developer/guides/event-handling"
                 ]
               }
             ]
