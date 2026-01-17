@@ -144,26 +144,14 @@ sc start --runner screen
 
 Templates werden der Reihe nach angewendet, wobei spätere Templates frühere überschreiben:
 
-<Tree>
-  <Tree.Folder name="1. every/" defaultOpen>
-    <Tree.File name="Basisdateien für alle Server" />
-  </Tree.Folder>
-  <Tree.Folder name="2. every_{type}/" defaultOpen>
-    <Tree.File name="Typspezifisch (z.B. every_proxy/)" />
-  </Tree.Folder>
-  <Tree.Folder name="3. every_{software}/" defaultOpen>
-    <Tree.File name="Softwarespezifisch (z.B. every_paper/)" />
-  </Tree.Folder>
-  <Tree.Folder name="4. _tagged/{tag}/" defaultOpen>
-    <Tree.File name="Für jeden Tag der Gruppe" />
-  </Tree.Folder>
-  <Tree.Folder name="5. {server-name}/" defaultOpen>
-    <Tree.File name="Serverspezifische Templates" />
-  </Tree.Folder>
-  <Tree.Folder name="6. cache/{group}/" defaultOpen>
-    <Tree.File name="Gecachte Dateien von vorherigen Starts" />
-  </Tree.Folder>
-</Tree>
+| Reihenfolge | Verzeichnis | Beschreibung |
+|-------------|-------------|--------------|
+| 1 | `every/` | Basisdateien für alle Server |
+| 2 | `every_{type}/` | Typspezifisch (z.B. `every_proxy/`) |
+| 3 | `every_{software}/` | Softwarespezifisch (z.B. `every_paper/`) |
+| 4 | `_tagged/{tag}/` | Für jeden Tag der Gruppe |
+| 5 | `{server-name}/` | Serverspezifische Templates |
+| 6 | `cache/{group}/` | Gecachte Dateien von vorherigen Starts |
 
 ## Kommunikation
 

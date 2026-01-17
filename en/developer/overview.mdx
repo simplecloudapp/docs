@@ -7,17 +7,21 @@ The Cloud API is a Java library for interacting with your SimpleCloud network pr
 
 ## API Architecture
 
-```
-CloudApi
-├── group()      → GroupApi      - Create, read, update, delete groups
-├── server()     → ServerApi     - Start, stop, query servers
-├── player()     → PlayerApi     - Player data, connections, messaging
-└── event()      → EventApi      - Subscribe to real-time events
-                    ├── group()
-                    ├── server()
-                    ├── persistentServer()
-                    └── blueprint()
-```
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `api.group()` | `GroupApi` | Create, read, update, delete groups |
+| `api.server()` | `ServerApi` | Start, stop, query servers |
+| `api.player()` | `PlayerApi` | Player data, connections, messaging |
+| `api.event()` | `EventApi` | Subscribe to real-time events |
+
+### Event API Subcategories
+
+| Method | Description |
+|--------|-------------|
+| `api.event().group()` | Group lifecycle events |
+| `api.event().server()` | Server lifecycle events |
+| `api.event().persistentServer()` | Persistent server events |
+| `api.event().blueprint()` | Blueprint lifecycle events |
 
 ## Key Features
 

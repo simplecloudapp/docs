@@ -7,17 +7,21 @@ Die Cloud API ist eine Java-Bibliothek zur programmatischen Interaktion mit dein
 
 ## API-Architektur
 
-```
-CloudApi
-├── group()      → GroupApi      - Gruppen erstellen, lesen, aktualisieren, löschen
-├── server()     → ServerApi     - Server starten, stoppen, abfragen
-├── player()     → PlayerApi     - Spielerdaten, Verbindungen, Messaging
-└── event()      → EventApi      - Echtzeit-Events abonnieren
-                    ├── group()
-                    ├── server()
-                    ├── persistentServer()
-                    └── blueprint()
-```
+| Methode | Gibt zurück | Beschreibung |
+|---------|-------------|--------------|
+| `api.group()` | `GroupApi` | Gruppen erstellen, lesen, aktualisieren, löschen |
+| `api.server()` | `ServerApi` | Server starten, stoppen, abfragen |
+| `api.player()` | `PlayerApi` | Spielerdaten, Verbindungen, Messaging |
+| `api.event()` | `EventApi` | Echtzeit-Events abonnieren |
+
+### Event API Unterkategorien
+
+| Methode | Beschreibung |
+|---------|--------------|
+| `api.event().group()` | Gruppen-Lifecycle-Events |
+| `api.event().server()` | Server-Lifecycle-Events |
+| `api.event().persistentServer()` | Persistente Server-Events |
+| `api.event().blueprint()` | Blueprint-Lifecycle-Events |
 
 ## Wichtige Features
 

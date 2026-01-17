@@ -30,8 +30,18 @@ Persistente Server sind Einzel-Instanzen, die nicht skalieren:
 
 Jeder Server durchläuft diese Zustände:
 
-```
-QUEUED → PREPARING → STARTING → AVAILABLE ↔ INGAME → STOPPING → STOPPED
+```mermaid
+stateDiagram-v2
+    [*] --> QUEUED
+    QUEUED --> PREPARING
+    PREPARING --> STARTING
+    STARTING --> AVAILABLE
+    AVAILABLE --> INGAME : Spieler beitreten
+    INGAME --> AVAILABLE : Spieler verlassen
+    AVAILABLE --> STOPPING
+    INGAME --> STOPPING
+    STOPPING --> STOPPED
+    STOPPED --> [*]
 ```
 
 | Zustand | Beschreibung |

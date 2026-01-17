@@ -7,13 +7,12 @@ The Events API lets you react to changes in your network in real-time. Access it
 
 ## Event Categories
 
-```
-api.event()
-├── group()            → Group created, updated, deleted
-├── server()           → Server started, stopped, state changed
-├── persistentServer() → Persistent server events
-└── blueprint()        → Blueprint created, updated, deleted
-```
+| Method | Events |
+|--------|--------|
+| `api.event().group()` | Group created, updated, deleted |
+| `api.event().server()` | Server started, stopped, state changed |
+| `api.event().persistentServer()` | Persistent server events |
+| `api.event().blueprint()` | Blueprint created, updated, deleted |
 
 ## Server Events
 

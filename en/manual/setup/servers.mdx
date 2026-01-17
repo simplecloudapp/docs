@@ -30,8 +30,18 @@ Persistent servers are single instances that don't scale:
 
 Every server progresses through these states:
 
-```
-QUEUED → PREPARING → STARTING → AVAILABLE ↔ INGAME → STOPPING → STOPPED
+```mermaid
+stateDiagram-v2
+    [*] --> QUEUED
+    QUEUED --> PREPARING
+    PREPARING --> STARTING
+    STARTING --> AVAILABLE
+    AVAILABLE --> INGAME : Players join
+    INGAME --> AVAILABLE : Players leave
+    AVAILABLE --> STOPPING
+    INGAME --> STOPPING
+    STOPPING --> STOPPED
+    STOPPED --> [*]
 ```
 
 | State | Description |
