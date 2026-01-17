@@ -1,98 +1,45 @@
 ---
 title: 'FAQ'
-description: 'Frequently asked questions about SimpleCloud and how to use it'
+description: 'Frequently asked questions about SimpleCloud'
 ---
 
-## What is SimpleCloud and what features does it offer?
+<AccordionGroup>
+  <Accordion title="What is SimpleCloud?">
+    SimpleCloud is a management system for Minecraft server networks. It handles auto-scaling, server deployment, and infrastructure management through a dashboard and CLI.
 
-SimpleCloud v3 is a management ecosystem for Minecraft server networks, designed to easily create Minecraft networks, automatically scale them up and down, and create both simple and complex blueprints (templates) for Minecraft servers.
+    Learn more in our [Overview](/en/manual/introduction/overview).
+  </Accordion>
 
-Key features include:
+  <Accordion title="Is SimpleCloud free?">
+    Yes, completely free and open-source. No premium features, subscriptions, or hidden costs.
+  </Accordion>
 
-- User-friendly CLI and dashboard for managing infrastructure both locally and remotely
-- Cloud-independent crash handling ensuring your servers keep running even if the cloud system restarts
-- Component-based architecture for customizing your own infrastructure
-- Support for Docker
-- Extensions through plugins and droplets
+  <Accordion title="Who is SimpleCloud for?">
+    Anyone running a Minecraft network - from small servers for friends to large public networks. It scales with your needs.
+  </Accordion>
 
-## Who is SimpleCloud suitable for?
+  <Accordion title="What operating systems are supported?">
+    Linux is recommended for production. macOS works for development. Windows support is coming soon.
+  </Accordion>
 
-SimpleCloud is suitable for anyone who wants to run a Minecraft server network, from small personal servers to large public networks. It's designed to be accessible for beginners while offering the power and flexibility that experienced server administrators need.
+  <Accordion title="What server software is supported?">
+    All Java Edition servers: Paper, Spigot, Velocity, BungeeCord, Fabric, Forge, and custom implementations.
+  </Accordion>
 
-Whether you're running a small server for friends or managing a commercial Minecraft network, SimpleCloud scales to your needs and grows with your ambitions.
+  <Accordion title="Do I need technical knowledge?">
+    Basic command line and networking knowledge helps, but our [Installation guide](/en/manual/setup/installation) walks you through everything step by step.
+  </Accordion>
 
-## Can SimpleCloud be used for free?
+  <Accordion title="Is Docker or Kubernetes supported?">
+    Docker support is in development. Kubernetes is not planned - tools like [Agones](https://agones.dev/) are better suited for that use case.
+  </Accordion>
 
-Yes, SimpleCloud is completely free and open-source. There are no premium features, subscriptions, or hidden costs. Everything we build is freely available to the community.
+  <Accordion title="Is there an API?">
+    Yes - we provide a Cloud API for Java/Kotlin plugins and a REST API for web integrations. See our [Developer documentation](/en/developer/overview).
+  </Accordion>
 
-Our project is developed by passionate Minecraft enthusiasts who believe in creating accessible tools for everyone.
-
-## How can I install SimpleCloud?
-
-Installing SimpleCloud is straightforward with our CLI:
-
-1. Install the CLI:
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/theSimpleCloud/SimpleCloud/main/install.sh)"
-```
-
-2. Start SimpleCloud Setup:
-
-```bash
-simplecloud setup
-```
-
-For detailed installation instructions, check our [Installation Guide](/en/manual/setup/installation).
-
-## Which systems does SimpleCloud support?
-
-SimpleCloud primarily supports Linux-based operating systems, as they provide the best environment for running Minecraft servers. While our CLI can be installed on Windows, we strongly recommend using Linux for production deployments.
-
-For Minecraft server software, SimpleCloud supports all Java Edition server types, including:
-
-- Paper, Spigot, and Bukkit
-- Velocity and Waterfall proxies
-- Vanilla Minecraft
-- Forge and Fabric modded servers
-- Custom server implementations
-
-## Do I need any special technical knowledge?
-
-SimpleCloud is designed to be user-friendly, but basic server administration knowledge is helpful. You should be comfortable with:
-
-- Using a command line interface
-- Basic networking concepts
-- Minecraft server configuration
-
-Our documentation is comprehensive and beginner-friendly, walking you through each step of the process. If you're new to server administration, you'll find that SimpleCloud offers a gentle learning curve.
-
-## Is Kubernetes or Docker supported?
-
-We are currently working on proper Docker support for SimpleCloud. Kubernetes will not be supported, because there are already other tools that are better suited for that, like [Agones](https://agones.dev/).
-
-## Is there an API for integrating SimpleCloud?
-
-Yes, SimpleCloud provides comprehensive APIs for integration:
-
-- **Java/Kotlin API**: For developing plugins and extensions
-- **gRPC API**: For integrating with other services and languages
-- **REST API**: For web-based integrations and dashboard functionality
-
-Our APIs are well-documented and designed to be developer-friendly, allowing you to extend SimpleCloud's functionality to meet your specific needs.
-
-## How can I get support if I have problems with SimpleCloud?
-
-We offer several support channels:
-
-- **Discord Community**: Join our [Discord server](https://discord.simplecloud.app) for real-time help
-- **GitHub Issues**: Report bugs or request features on our [GitHub repository](https://github.com/simplecloudapp)
-- **Documentation**: Comprehensive guides and tutorials available on this site
-
-Our community is active and helpful, and our development team regularly participates in support discussions.
-
-## Is there a dashboard for SimpleCloud v3?
-
-Yes, SimpleCloud v3 includes a web-based dashboard that provides a graphical interface for managing your cloud. The dashboard offers all the functionality of the CLI in a visual format, making it easier to monitor and manage your server network.
-
-The dashboard can be installed as a droplet and accessed from any device with a web browser, giving you flexibility in how you manage your infrastructure.
+  <Accordion title="How do I get support?">
+    - [Discord](https://discord.simplecloud.app) - Real-time community help
+    - [GitHub](https://github.com/simplecloudapp) - Bug reports and feature requests
+  </Accordion>
+</AccordionGroup>

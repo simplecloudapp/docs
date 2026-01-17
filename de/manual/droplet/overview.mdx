@@ -1,6 +1,36 @@
 ---
-title: 'Overview'
-description: 'Description for Overview'
+title: 'Droplets'
+description: 'Droplets sind Microservices, die SimpleCloud mit Infrastruktur-Level-Funktionalität erweitern'
 ---
 
-## Overview
+Droplets sind Microservices, die SimpleCloud's Funktionalität erweitern, ohne innerhalb von Minecraft-Servern zu laufen. Sie übernehmen Infrastruktur-Aufgaben wie Spielerdaten-Management oder Resource-Pack-Hosting als unabhängige Dienste.
+
+## Warum Droplets?
+
+Manche Features gehören nicht in einen Minecraft-Server:
+
+- **Spielerdaten** müssen zugänglich sein, auch wenn Server neustarten oder skalieren
+- **Resource Packs** sollten zentral gehostet werden, nicht auf jedem Game-Server
+- **Cross-Server Funktionalität** erfordert einen Dienst, der über einzelne Server-Instanzen hinaus besteht
+
+Droplets lösen das, indem sie als unabhängige Dienste laufen, die mit dem Controller kommunizieren.
+
+## Verfügbare Droplets
+
+| Droplet | Beschreibung |
+|---------|--------------|
+| [Player](/de/manual/droplet/player) | Spielerdaten-Management, Online-Status, Cross-Server Messaging |
+| [Resourcepack](/de/manual/droplet/resourcepack) | Resource Packs hosten und an Spieler verteilen |
+
+## Droplets vs Plugins
+
+| | Droplets | Plugins |
+|---|----------|---------|
+| **Läuft auf** | Unabhängiger Dienst | Innerhalb des Minecraft-Servers |
+| **Zweck** | Infrastruktur-Aufgaben | In-Game Features |
+| **Lebenszyklus** | Überlebt Server-Neustarts | An Server-Instanz gebunden |
+| **Verwenden wenn** | Daten Server überleben müssen | Feature Server-Zugriff braucht |
+
+<Note>
+  Droplets haben v2 Module für Infrastruktur-Level-Funktionalität ersetzt. Plugins übernehmen Server-seitige Features direkt.
+</Note>

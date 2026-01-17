@@ -1,96 +1,80 @@
 ---
 title: 'Templates'
-description: 'Understand how SimpleCloud templates work to manage server files and configurations'
+description: 'Templates define the files, plugins, and configurations that get copied to new servers'
 ---
 
-## Understanding Templates
+Templates are the file structures that get copied to new server instances. They contain your server's plugins, configurations, and any default world files.
 
-Templates are the file structures that get copied to new server instances. They contain your server's plugins, configurations, and world files.
+## How Templates Work
 
-When SimpleCloud starts a server, it copies the template files to the server's running directory and applies any necessary configurations.
+When SimpleCloud starts a server from a group:
 
-## Template Types
+1. Template files are copied to the server's runtime directory
+2. Configurations are applied (ports, memory, properties)
+3. The server process starts
 
-### Dynamic Templates
+Each new server gets a fresh copy of the template. When the server stops, its runtime directory is cleaned up.
 
-Dynamic templates are designed for servers that don't need persistent data:
-
-- Files are copied fresh for each new server
-- Server data is deleted when the server stops
-- Ideal for minigames, lobbies, and temporary servers
-- Changes to the template affect all future server starts
-
-**Use Cases:**
-
-- Game servers (BedWars, SkyWars, etc.)
-- Lobby servers
-- Any server where you want a clean state on restart
-
-### Static Templates
-
-Static templates maintain persistent data:
-
-- Each server gets its own persistent directory
-- Data survives server restarts
-- Ideal for survival servers, creative servers, or any server with persistent worlds
-
-**Use Cases:**
-
-- Survival worlds
-- Creative servers
-- Servers with persistent player data
-- Build servers
+<Note>
+  Need persistent data that survives restarts? Use a [Persistent Server](/en/manual/setup/persistent-servers) instead of a group.
+</Note>
 
 ## Template Location
 
-Templates are stored in the `templates/` directory of your SimpleCloud installation:
+Templates are stored in the `templates/` directory:
 
 ```
 templates/
-├── proxy/
+├── velocity/
 │   └── plugins/
 ├── lobby/
 │   ├── plugins/
 │   └── world/
-└── survival/
+└── bedwars/
     ├── plugins/
-    ├── world/
-    └── world_nether/
+    └── world/
 ```
 
-## Working with Templates
+Each group has its own template folder named after the group.
+
+## Managing Templates
 
 ### Adding Plugins
 
-To add a plugin to all servers in a group:
-
-1. Navigate to your template directory
-2. Place the plugin JAR in the `plugins/` folder
-3. Restart existing servers or let new ones start with the plugin
-
-**Example:**
+Place plugin JARs in the template's `plugins/` folder:
 
 ```bash
 cp my-plugin.jar templates/lobby/plugins/
 ```
 
+New servers will include the plugin. Existing servers need a restart.
+
 ### Configuring Plugins
 
-Plugin configurations should be placed in the template:
-
 1. Start a server once to generate default configs
-2. Copy the configs back to your template
-3. Edit as needed
+2. Stop the server
+3. Copy configs from the runtime directory back to your template
+4. Edit as needed
 
 ### World Files
 
-For static templates, world files are managed per-server. For dynamic templates:
+Place world folders in the template for a default map:
 
-1. Generate or copy your world to the template
-2. All new servers will start with this world
-3. Changes in running servers are lost on restart
+```
+templates/bedwars/
+├── plugins/
+└── world/
+    ├── level.dat
+    └── region/
+```
 
-<Note>
-  For dynamic templates, consider using a world management plugin if you need
-  to reset or rotate worlds automatically.
-</Note>
+Every new server starts with this world. Changes made during gameplay are lost when the server stops - this is useful for minigames that need a fresh map each round.
+
+## When to Use Templates vs Persistent Servers
+
+| Scenario | Use |
+|----------|-----|
+| Minigames (BedWars, SkyWars) | Template - fresh map each game |
+| Lobby servers | Template - no persistent data needed |
+| Proxies | Template - configuration only |
+| Skyblock, SMP, Citybuild | [Persistent Server](/en/manual/setup/persistent-servers) - keeps world data |

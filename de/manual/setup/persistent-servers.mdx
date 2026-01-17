@@ -1,0 +1,102 @@
+---
+title: 'Persistente Server'
+description: 'Erstelle dauerhaft laufende Server-Instanzen, die ihren Zustand zwischen Neustarts behalten'
+---
+
+Persistente Server sind einzelne, dauerhaft laufende Server-Instanzen. Verwende sie für Server, die ihre Welt und Daten zwischen Neustarts behalten müssen - wie Citybuild, Skyblock, SMP oder Build-Server.
+
+Für Server, die basierend auf Spielerbedarf skalieren sollen, verwende stattdessen [Gruppen](/de/manual/setup/groups).
+
+## Persistenten Server erstellen
+
+<Steps>
+  <Step title="Zu Servers navigieren">
+    Klicke auf **Servers** in der Navigation, um deine bestehenden persistenten Server anzuzeigen. Klicke auf **New Server** oben rechts.
+  </Step>
+  <Step title="Grundlagen konfigurieren">
+    - **Name**: Gib einen eindeutigen Namen für deinen Server ein (z.B. "Hub", "Proxy", "Lobby")
+    - **Type**: Wähle **Server** für Game-Server oder **Proxy** für Load-Balancer
+    - **Server Host**: Wähle welcher Host diesen Server ausführen soll
+    - **Activate on creation**: Aktivieren, um den Server direkt nach Erstellung zu starten
+  </Step>
+  <Step title="Software auswählen">
+    - **Software**: Wähle deine Server-Software (Paper, Spigot, Purpur, Fabric, Velocity, etc.)
+    - **Version**: Wähle die Minecraft/Software-Version
+    - **Custom URL**: Alternativ eine direkte Download-URL für eigene Server-JARs angeben
+    - **Configurator**: Wähle wie dein Server konfiguriert werden soll (erscheint bei Server-Typ)
+  </Step>
+  <Step title="Ressourcen festlegen">
+    - **Memory**: Nutze ein Preset oder setze eigene min/max Speicherzuweisung (in MB)
+    - **Max Players**: Maximale Spieleranzahl auf diesem Server
+  </Step>
+  <Step title="Netzwerk (nur Proxy)">
+    Für Proxy-Server konfiguriere den **Port** für eingehende Spieler-Verbindungen.
+  </Step>
+  <Step title="Plugins hinzufügen (Optional)">
+    Suche und wähle Plugins von Modrinth zur automatischen Installation. Du kannst auch später Plugins in den Server-Einstellungen hinzufügen.
+  </Step>
+  <Step title="Überprüfen und Erstellen">
+    Überprüfe deine Konfigurations-Zusammenfassung und klicke **Create Server** zum Abschließen.
+  </Step>
+</Steps>
+
+## Server-Status
+
+| Status | Bedeutung |
+|--------|-----------|
+| **Active** | Server ist aktiviert und läuft (oder bereit zum Starten) |
+| **Inactive** | Server ist deaktiviert - in den allgemeinen Einstellungen aktivieren zum Starten |
+
+## Server-Einstellungen
+
+### Allgemeine Einstellungen
+
+- **Active Toggle**: Server aktivieren oder deaktivieren
+- **Memory**: Min/max Speicherzuweisung anpassen
+- **Max Players**: Spielerlimit ändern
+- **Tags**: Organisatorische Tags zum Filtern hinzufügen
+
+### Deployment-Einstellungen
+
+Zeigt den zugewiesenen Server-Host. Anders als bei Gruppen laufen persistente Server auf einem einzelnen Host, der bei der Erstellung festgelegt wird.
+
+### Blueprint-Einstellungen
+
+Das zugrunde liegende Server-Template bearbeiten:
+
+- Aktuelle Software und Version anzeigen
+- Configurator-Einstellungen ändern
+- JVM-Optionen und Laufzeit-Argumente bearbeiten
+
+### Properties-Einstellungen
+
+Eigene Key-Value-Eigenschaften zum Server hinzufügen:
+
+- Properties sind Metadaten, die du für eigene Zwecke definierst
+- Greife in deinen Plugins über die [Cloud API](/de/developer/controller/servers) darauf zu
+- Verfügbar als Umgebungsvariablen (mit `SIMPLECLOUD_` Präfix)
+- Anwendungsfälle: Server-Typ-Identifikatoren, eigene Einstellungen für deine Plugins
+
+### Workflows-Einstellungen
+
+Aufgaben mit Workflows automatisieren:
+
+- **Manual Workflows**: Bei Bedarf auslösen
+- **On Start Workflows**: Beim Server-Start ausführen
+- **On Stop Workflows**: Beim Server-Stop ausführen
+
+### Plugins-Einstellungen
+
+Plugins für den Server verwalten:
+
+- Plugins von Modrinth, GitHub oder direkten URLs hinzufügen
+- Installierte Plugins mit Quell-Informationen anzeigen
+- Plugins vom Server entfernen
+
+### Danger Zone
+
+Server permanent löschen:
+
+- Entfernt den Server und seine Konfiguration
+- Server zuerst stoppen vor dem Löschen
+- Erfordert Bestätigung durch Eingabe des Server-Namens

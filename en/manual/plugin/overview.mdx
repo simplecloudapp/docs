@@ -1,108 +1,64 @@
 ---
-title: 'Overview'
-description: 'Plugins extend SimpleCloud functionality directly within your Minecraft servers. They utilize the SimpleCloud API to provide enhanced features and capabilities in-game.'
+title: 'Plugins'
+description: 'Plugins extend SimpleCloud functionality directly within your Minecraft servers'
 ---
 
-## Understanding Plugins
+Plugins are server-side extensions that run inside your Minecraft servers. They use the Cloud API to interact with your network infrastructure.
 
-SimpleCloud plugins are server-side extensions that:
+## Official Plugins
 
-- Integrate directly with your Minecraft servers
-- Provide in-game functionality and features
-- Use the SimpleCloud API for cloud integration
-- Support various server platforms (Velocity, Paper, etc.)
+| Plugin | Platform | Description |
+|--------|----------|-------------|
+| [Server Registration](/en/manual/plugin/server-registration) | Proxy | Registers servers with the proxy |
+| [Server Connection](/en/manual/plugin/server-connection) | Proxy | Handles player connections between servers |
+| [Cloud Command](/en/manual/plugin/cloud-command) | Both | In-game cloud management commands |
+| [Proxy Essentials](/en/manual/plugin/proxy-essentials) | Proxy | Hub command, maintenance mode, MOTD |
+| [Notify](/en/manual/plugin/notify) | Both | Server start/stop notifications |
+| [Prefixes](/en/manual/plugin/prefixes) | Server | Player prefix management |
+| [Signs](/en/manual/plugin/signs) | Server | Dynamic server status signs |
+| [NPCs](/en/manual/plugin/npcs) | Server | Clickable server selector NPCs |
+| [Placeholders](/en/manual/plugin/placeholders) | Server | PlaceholderAPI integration |
 
-## Managing Plugins via CLI
+## Installing Plugins
 
-SimpleCloud provides CLI commands to manage plugins in your local installation:
+### Via Dashboard
 
-```bash
-sc local plugins [command]
-```
+When creating or editing a group, you can add plugins from the Plugins settings. Search for plugins and they'll be automatically installed on all servers in that group.
 
-Available commands:
-
-- `list` - Shows all installed plugins and their locations
-- `add <plugin-name>` - Adds a specific plugin to your installation
-- `add --all` - Adds all available plugins
-- `remove <plugin-name>` - Removes a plugin from your installation
-- `remove --all` - Removes all installed plugins
-
-Example usage:
+### Via CLI
 
 ```bash
-# List all installed plugins
+# List installed plugins
 sc local plugins list
 
-# Add a specific plugin
+# Add a plugin
 sc local plugins add proxy-essentials
 
 # Add all available plugins
 sc local plugins add --all
 
-# Remove a specific plugin
+# Remove a plugin
 sc local plugins remove proxy-essentials
 ```
 
-<Note>
-  The CLI plugin management is only available for local installations and
-  supports official SimpleCloud plugins.
-</Note>
+### Manually
 
-### Available CLI Plugins
-
-The following plugins can be managed through the CLI:
-
-**Core Plugins**
-
-- `cloud-api` - SimpleCloud API plugin, all plugins depend on it
-
-**Proxy Plugins**
-
-- `proxy-essentials` - Great to have proxy features
-- `server-connection` - Server connection handling
-- `server-registration` - Server registration management
-- `cloud-command` - In-game cloud commands
-- `notify` - Server notifications
-
-**Server Plugins**
-
-- `placeholder` - Dynamic text placeholders
-- `signs` - Dynamic server status signs
-- `npcs` - Server information NPCs
-
-Example: To add the proxy essentials plugin, run:
+Place plugin JARs in your template's `plugins/` folder:
 
 ```bash
-sc local plugins add proxy-essentials
+cp my-plugin.jar templates/lobby/plugins/
 ```
 
-## Plugins vs v2 Modules
+## Plugins vs Droplets
 
-In SimpleCloud v3, we've simplified our extension system:
+| | Plugins | Droplets |
+|---|---------|----------|
+| **Runs on** | Inside Minecraft server | Independent service |
+| **Purpose** | In-game features | Infrastructure tasks |
+| **Examples** | Signs, NPCs, commands | Player data, resource packs |
 
-- Most v2 modules providing in-game functionality are now plugins
-- Plugins focus on server-side features (e.g., signs, NPCs)
-- Infrastructure features are handled by [droplets](/en/manual/droplet/overview)
+For infrastructure-level features, see [Droplets](/en/manual/droplet/overview).
 
 <Note>
-  Have ideas for new plugins? Share them on our
-  [Discord](https://discord.simplecloud.app) or contribute on
-  [GitHub](https://github.com/simplecloudapp)!
+  Have ideas for new plugins? Share them on our [Discord](https://discord.simplecloud.app) or contribute on [GitHub](https://github.com/simplecloudapp).
 </Note>
-
-## Official Plugins
-
-SimpleCloud provides several official plugins:
-
-| Plugin                                                     | Description                         |
-| ---------------------------------------------------------- | ----------------------------------- |
-| [Server Registration](/en/manual/plugin/server-registration) | Server registration and management  |
-| [Server Connection](/en/manual/plugin/server-connection)     | Enhanced server connection handling |
-| [Cloud Command](/en/manual/plugin/cloud-command)             | In-game cloud commands              |
-| [Proxy Essentials](/en/manual/plugin/proxy-essentials)       | Essential proxy features            |
-| [Notify](/en/manual/plugin/notify)                           | Server notifications                |
-| [Prefixes](/en/manual/plugin/prefixes)                       | Player prefix management            |
-| [Signs](/en/manual/plugin/signs)                             | Dynamic server status signs         |
-| [NPCs](/en/manual/plugin/npcs)                               | Server information NPCs             |
-| [Placeholders](/en/manual/plugin/placeholders)               | Dynamic text placeholders           |

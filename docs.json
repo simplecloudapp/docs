@@ -194,6 +194,7 @@
                 "pages": [
                   "de/manual/setup/installation",
                   "de/manual/setup/groups",
+                  "de/manual/setup/persistent-servers",
                   "de/manual/setup/servers",
                   "de/manual/setup/templates"
                 ]

@@ -1,6 +1,50 @@
 ---
-title: 'Faq'
-description: 'Description for Faq'
+title: 'FAQ'
+description: 'Häufig gestellte Fragen zu SimpleCloud'
 ---
 
-## Faq
+<AccordionGroup>
+  <Accordion title="Was ist SimpleCloud?">
+    SimpleCloud ist ein Management-System für Minecraft Server-Netzwerke mit Auto-Scaling, einem Dashboard und Entwickler-APIs.
+
+    Mehr erfahren in der [Übersicht](/de/manual/introduction/overview).
+  </Accordion>
+
+  <Accordion title="Welche Minecraft-Versionen werden unterstützt?">
+    SimpleCloud unterstützt alle Server-Software, die als Java-Prozess läuft - Paper, Spigot, Purpur, Velocity, BungeeCord, und mehr.
+
+    Blueprints für gängige Plattformen findest du in der [Gruppen-Dokumentation](/de/manual/setup/groups).
+  </Accordion>
+
+  <Accordion title="Brauche ich einen dedizierten Server?">
+    SimpleCloud läuft auf jedem Linux-System oder macOS (Entwicklung). Für Produktion wird ein dedizierter Server oder VPS empfohlen.
+
+    Siehe [Installation](/de/manual/setup/installation) für Details.
+  </Accordion>
+
+  <Accordion title="Wie funktioniert Auto-Scaling?">
+    Gruppen starten automatisch Server wenn Spieler beitreten und fahren inaktive Server herunter. Du konfigurierst Mindest-/Höchstzahlen und der Controller verwaltet den Rest.
+
+    Mehr unter [Gruppen](/de/manual/setup/groups).
+  </Accordion>
+
+  <Accordion title="Kann ich meine Weltdaten behalten?">
+    Ja - verwende einen [Persistenten Server](/de/manual/setup/persistent-servers) anstelle einer Gruppe. Diese behalten ihre Daten zwischen Neustarts.
+  </Accordion>
+
+  <Accordion title="Was ist der Unterschied zwischen Plugins und Droplets?">
+    Plugins laufen innerhalb von Minecraft-Servern für In-Game-Features. Droplets sind unabhängige Dienste für Infrastruktur-Aufgaben.
+
+    Siehe [Plugins](/de/manual/plugin/overview) und [Droplets](/de/manual/droplet/overview).
+  </Accordion>
+
+  <Accordion title="Wie aktualisiere ich SimpleCloud?">
+    Updates werden automatisch heruntergeladen. Das CLI wird bei jedem Start aktualisiert, andere Komponenten beim Neustart.
+
+    Mehr unter [Updates](/de/manual/introduction/updates).
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  Deine Frage nicht dabei? Tritt unserem [Discord](https://discord.simplecloud.app) bei.
+</Note>

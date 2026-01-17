@@ -1,6 +1,80 @@
 ---
 title: 'Templates'
-description: 'Description for Templates'
+description: 'Templates definieren die Dateien, Plugins und Konfigurationen, die auf neue Server kopiert werden'
 ---
 
-## Templates
+Templates sind die Dateistrukturen, die auf neue Server-Instanzen kopiert werden. Sie enthalten die Plugins, Konfigurationen und Standard-Weltdateien deines Servers.
+
+## Wie Templates funktionieren
+
+Wenn SimpleCloud einen Server aus einer Gruppe startet:
+
+1. Template-Dateien werden in das Laufzeitverzeichnis des Servers kopiert
+2. Konfigurationen werden angewendet (Ports, Speicher, Eigenschaften)
+3. Der Server-Prozess startet
+
+Jeder neue Server bekommt eine frische Kopie des Templates. Wenn der Server stoppt, wird sein Laufzeitverzeichnis aufgeräumt.
+
+<Note>
+  Brauchst du persistente Daten, die Neustarts überleben? Verwende einen [Persistenten Server](/de/manual/setup/persistent-servers) anstelle einer Gruppe.
+</Note>
+
+## Template-Speicherort
+
+Templates werden im `templates/` Verzeichnis gespeichert:
+
+```
+templates/
+├── velocity/
+│   └── plugins/
+├── lobby/
+│   ├── plugins/
+│   └── world/
+└── bedwars/
+    ├── plugins/
+    └── world/
+```
+
+Jede Gruppe hat ihren eigenen Template-Ordner, der nach der Gruppe benannt ist.
+
+## Templates verwalten
+
+### Plugins hinzufügen
+
+Lege Plugin-JARs in den `plugins/` Ordner des Templates:
+
+```bash
+cp mein-plugin.jar templates/lobby/plugins/
+```
+
+Neue Server werden das Plugin enthalten. Bestehende Server brauchen einen Neustart.
+
+### Plugins konfigurieren
+
+1. Starte einen Server einmal, um Standard-Configs zu generieren
+2. Stoppe den Server
+3. Kopiere Configs vom Laufzeitverzeichnis zurück in dein Template
+4. Bearbeite nach Bedarf
+
+### Weltdateien
+
+Lege Welt-Ordner im Template für eine Standard-Map ab:
+
+```
+templates/bedwars/
+├── plugins/
+└── world/
+    ├── level.dat
+    └── region/
+```
+
+Jeder neue Server startet mit dieser Welt. Änderungen während des Spielens gehen verloren wenn der Server stoppt - das ist nützlich für Minigames, die jede Runde eine frische Map brauchen.
+
+## Wann Templates vs Persistente Server verwenden
+
+| Szenario | Verwende |
+|----------|----------|
+| Minigames (BedWars, SkyWars) | Template - frische Map jedes Spiel |
+| Lobby-Server | Template - keine persistenten Daten nötig |
+| Proxies | Template - nur Konfiguration |
+| Skyblock, SMP, Citybuild | [Persistenter Server](/de/manual/setup/persistent-servers) - behält Weltdaten |
