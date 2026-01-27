@@ -299,3 +299,68 @@ On each restart of a persistent server:
 | Lobby servers | Group - no persistent data needed |
 | Proxies | Group - configuration only |
 | Skyblock, SMP, Citybuild | [Persistent Server](/en/manual/setup/persistent-servers) - keeps world data |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Template changes not applied">
+    **Symptom:** New servers don't include your template changes.
+
+    **Solution:**
+    1. Verify files are in the correct template directory
+    2. Check if a later template is overwriting (hierarchy order)
+    3. Clear cache: `rm -rf templates/cache/{group}/`
+    4. Start a new server (running servers don't update)
+  </Accordion>
+
+  <Accordion title="Existing servers don't get updates">
+    **Symptom:** Template changes only affect new servers, not existing ones.
+
+    **Cause:** Templates are applied at server creation, not during runtime.
+
+    **Solution:**
+    - **Group servers:** Stop the old server, start a new one
+    - **Persistent servers:** Manually update files or delete specific files so templates can replace them
+  </Accordion>
+
+  <Accordion title="Plugin not loading">
+    **Symptom:** Plugin in template doesn't load on server.
+
+    **Solution:**
+    1. Check file permissions on the JAR
+    2. Verify the file exists in server's `plugins/` directory
+    3. Check server logs for load errors
+    4. Verify plugin compatibility with server software
+  </Accordion>
+
+  <Accordion title="Cache causing outdated files">
+    **Symptom:** Updated plugins or configs not applying to servers.
+
+    **Cause:** Old files cached in `templates/cache/{group}/`.
+
+    **Solution:**
+    ```bash
+    rm -rf templates/cache/{group}/
+    ```
+    New servers will rebuild from templates.
+  </Accordion>
+
+  <Accordion title="Tagged templates not applied">
+    **Symptom:** Files from `_tagged/` folder not appearing on servers.
+
+    **Solution:**
+    1. Verify tag is assigned to the group in settings
+    2. Check folder name matches exactly (case-sensitive)
+    3. Ensure workflow includes `for-each` step for tags
+  </Accordion>
+
+  <Accordion title="Files being overwritten unexpectedly">
+    **Symptom:** Your config keeps getting replaced by another template.
+
+    **Cause:** Template hierarchy applies in order: `every/` → `every_{type}/` → `every_{software}/` → `_tagged/` → `{group}/`
+
+    **Solution:**
+    - Move your file to a more specific template level
+    - Or use `replace: false` in a custom workflow step
+  </Accordion>
+</AccordionGroup>

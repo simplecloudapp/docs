@@ -91,3 +91,76 @@ To add others to your network:
 1. Go to **Settings** → **Members**
 2. Click **Invite Member**
 3. Enter their email and choose their role
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="curl: command not found">
+    **Symptom:** Install script fails because curl is not installed.
+
+    **Solution:** Install curl for your system:
+    ```bash
+    # Debian/Ubuntu
+    sudo apt install curl
+
+    # CentOS/RHEL
+    sudo yum install curl
+
+    # macOS
+    brew install curl
+    ```
+  </Accordion>
+
+  <Accordion title="Permission denied during install">
+    **Symptom:** Install script fails with permission errors.
+
+    **Cause:** Script needs write access to `/usr/local/bin`.
+
+    **Solution:**
+    - Run with sudo: `sudo /bin/bash -c "$(curl -fsSL ...)"`
+    - Or install to a user directory and add to PATH
+  </Accordion>
+
+  <Accordion title="Network timeout or connection refused">
+    **Symptom:** Install script hangs or fails to download.
+
+    **Cause:** Firewall blocking outbound connections.
+
+    **Solution:** Allow HTTPS (port 443) to:
+    - `raw.githubusercontent.com`
+    - `github.com`
+  </Accordion>
+
+  <Accordion title="Setup code not working">
+    **Symptom:** `simplecloud setup --code=...` fails with invalid code error.
+
+    **Cause:** Code expired or copied incorrectly.
+
+    **Solution:**
+    1. Generate a fresh code from the dashboard
+    2. Copy the entire code without extra spaces
+    3. Run the command immediately (codes expire quickly)
+  </Accordion>
+
+  <Accordion title="Server host not appearing in dashboard">
+    **Symptom:** Setup completes but host doesn't show in dashboard.
+
+    **Solution:**
+    1. Check terminal for setup errors
+    2. Verify serverhost is running: `sc status serverhost`
+    3. Check network connectivity to SimpleCloud
+    4. Review logs: `sc logs serverhost`
+  </Accordion>
+
+  <Accordion title="Requirements check failed">
+    **Symptom:** Setup fails because required software is missing.
+
+    **Solution:** Install missing requirements:
+
+    | Requirement | Install Command |
+    |-------------|-----------------|
+    | Java 21+ | `sudo apt install openjdk-21-jdk` |
+    | screen/tmux | `sudo apt install screen` |
+    | Docker | [docs.docker.com/engine/install](https://docs.docker.com/engine/install/) |
+  </Accordion>
+</AccordionGroup>

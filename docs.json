@@ -43,6 +43,13 @@
                 ]
               },
               {
+                "group": "Configuration",
+                "pages": [
+                  "en/manual/configuration/configurators",
+                  "en/manual/configuration/workflows"
+                ]
+              },
+              {
                 "group": "Droplets",
                 "pages": [
                   "en/manual/droplet/overview",
@@ -74,26 +81,15 @@
                   "en/manual/guide/multi-root",
                   "en/manual/guide/self-hosted-dashboard"
                 ]
-              }
-            ]
-          },
-          {
-            "tab": "Concepts",
-            "groups": [
-              {
-                "group": "Core Concepts",
-                "pages": [
-                  "en/concepts/overview",
-                  "en/concepts/controller",
-                  "en/concepts/cli"
-                ]
               },
               {
-                "group": "Server Host",
+                "group": "Architecture",
+                "expanded": false,
                 "pages": [
-                  "en/concepts/serverhost/overview",
-                  "en/concepts/serverhost/configurators",
-                  "en/concepts/serverhost/workflows"
+                  "en/manual/architecture/overview",
+                  "en/manual/architecture/controller",
+                  "en/manual/architecture/serverhost",
+                  "en/manual/architecture/cli"
                 ]
               }
             ]
@@ -192,6 +188,13 @@
                 ]
               },
               {
+                "group": "Configuration",
+                "pages": [
+                  "de/manual/configuration/configurators",
+                  "de/manual/configuration/workflows"
+                ]
+              },
+              {
                 "group": "Droplets",
                 "pages": [
                   "de/manual/droplet/overview",
@@ -223,26 +226,15 @@
                   "de/manual/guide/multi-root",
                   "de/manual/guide/self-hosted-dashboard"
                 ]
-              }
-            ]
-          },
-          {
-            "tab": "Concepts",
-            "groups": [
-              {
-                "group": "Core Concepts",
-                "pages": [
-                  "de/concepts/overview",
-                  "de/concepts/controller",
-                  "de/concepts/cli"
-                ]
               },
               {
-                "group": "Server Host",
+                "group": "Architecture",
+                "expanded": false,
                 "pages": [
-                  "de/concepts/serverhost/overview",
-                  "de/concepts/serverhost/configurators",
-                  "de/concepts/serverhost/workflows"
+                  "de/manual/architecture/overview",
+                  "de/manual/architecture/controller",
+                  "de/manual/architecture/serverhost",
+                  "de/manual/architecture/cli"
                 ]
               }
             ]

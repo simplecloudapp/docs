@@ -194,3 +194,51 @@ The API reads these environment variables by default:
     ```
   </Accordion>
 </AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Dependency not found">
+    **Symptom:** Gradle/Maven can't resolve `app.simplecloud.api:api`.
+
+    **Solution:**
+    1. Add both repositories:
+       - `https://repo.simplecloud.app/snapshots`
+       - `https://buf.build/gen/maven`
+    2. Refresh: `gradle --refresh-dependencies` or `mvn -U clean install`
+    3. Check network access to repository URLs
+  </Accordion>
+
+  <Accordion title="NoClassDefFoundError at runtime">
+    **Symptom:** Plugin fails with `ClassNotFoundException` for SimpleCloud classes.
+
+    **Cause:** API shaded into JAR or plugin load order wrong.
+
+    **Solution:**
+    1. Don't shade the API - use `compileOnly` scope
+    2. Add `simplecloud-api` to plugin descriptor dependencies
+    3. Verify SimpleCloud API plugin loads before yours
+  </Accordion>
+
+  <Accordion title="API initialization fails">
+    **Symptom:** `CloudApi.create()` throws exception.
+
+    **If connection refused:**
+    - Verify server runs inside SimpleCloud
+    - Check environment variables are set
+    - For standalone apps, verify controller/NATS URLs
+
+    **If authentication failed:**
+    - Check `SIMPLECLOUD_NETWORK_ID` is correct
+    - Check `SIMPLECLOUD_NETWORK_SECRET` matches
+  </Accordion>
+
+  <Accordion title="Version conflicts">
+    **Symptom:** Errors about incompatible API versions.
+
+    **Solution:**
+    1. Use `compileOnly` scope (not `implementation`)
+    2. Check other plugins for bundled API versions
+    3. Match API version to your SimpleCloud installation
+  </Accordion>
+</AccordionGroup>

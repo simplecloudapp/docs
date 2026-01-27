@@ -146,3 +146,66 @@ Permanently delete the group:
 - Does not delete running servers (stop them first)
 - Requires confirmation by typing the group name
 
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Servers stuck in QUEUED">
+    **Symptom:** Servers stay in QUEUED and never start.
+
+    **Cause:** No serverhost available or has capacity.
+
+    **Solution:**
+    1. Check serverhost status: `sc status serverhost`
+    2. Verify deployment settings allow at least one host
+    3. Check host memory isn't exhausted
+    4. Review logs: `sc logs controller`
+  </Accordion>
+
+  <Accordion title="Group shows Down status">
+    **Symptom:** Group status is "Down" with no servers running.
+
+    **Cause:** Group not configured to start servers.
+
+    **Solution:**
+    1. Enable the group (Active toggle in general settings)
+    2. Set min servers to at least 1
+    3. Enable at least one serverhost in deployment settings
+    4. Verify host has enough free memory
+  </Accordion>
+
+  <Accordion title="Servers not scaling up">
+    **Symptom:** Players join but new servers don't start.
+
+    **Cause:** Scaling threshold not reached or max servers hit.
+
+    **Solution:**
+    1. Check scaling mode matches your needs (Slots vs Servers)
+    2. Lower the threshold (default 0.8 = 80% full)
+    3. Increase max servers limit
+    4. Verify servers are reporting player counts
+  </Accordion>
+
+  <Accordion title="Servers scaling down too fast">
+    **Symptom:** Servers stop while players are online.
+
+    **Cause:** Idle timeout too short or threshold misconfigured.
+
+    **Solution:**
+    1. Increase idle time (e.g., "5m" instead of "1m")
+    2. Raise the player threshold
+    3. Increase min servers to keep a baseline
+  </Accordion>
+
+  <Accordion title="Servers stuck in PREPARING">
+    **Symptom:** Servers stay in PREPARING and never reach STARTING.
+
+    **Cause:** Workflow failing during server setup.
+
+    **Solution:**
+    1. Check serverhost logs: `sc logs serverhost`
+    2. Verify template directories exist
+    3. Check disk space
+    4. Test plugin downloads manually
+  </Accordion>
+</AccordionGroup>
+

@@ -1,0 +1,164 @@
+---
+title: 'Controller'
+description: 'Der zentrale Orchestrierungsdienst, der deine SimpleCloud-Infrastruktur verwaltet'
+---
+
+## Was macht der Controller?
+
+Der Controller koordiniert deine SimpleCloud-Infrastruktur. Er verfolgt, welche Server laufen sollten, entscheidet basierend auf Scaling-Regeln wann Server gestartet oder gestoppt werden, und sendet Anweisungen an Serverhosts via NATS-Messaging.
+
+## Wann ist das wichtig?
+
+Das Verständnis des Controllers hilft bei:
+
+- **Debugging von Server-Startproblemen** - Warum startet mein Server nicht? Ist er in der Warteschlange? Läuft der Reconciler?
+- **Einrichtung von Hochverfügbarkeit** - Mehrere Controller erfordern Verständnis der Leader Election
+- **Verstehen des Scaling-Verhaltens** - Warum wurde ein Server gestartet oder gestoppt? Wie entscheidet die Reconciliation Loop?
+
+## Zustandsverwaltung
+
+Der Controller verwaltet den autoritativen Zustand deines Netzwerks:
+
+| Entität | Beschreibung |
+|---------|--------------|
+| Networks | Registrierte Minecraft-Netzwerke mit Credentials |
+| Blueprints | Server-Konfigurationsvorlagen |
+| Groups | Skalierbare Server-Sammlungen mit Auto-Scaling-Regeln |
+| Servers | Laufende Server-Instanzen und deren Status |
+| Persistent Servers | Langlebige dedizierte Server |
+| Serverhosts | Verbundene Ausführungsagenten |
+| Plugins | Plugin-Definitionen und Zuweisungen |
+
+## Reconciliation Loop
+
+Alle 5 Sekunden führt der Controller folgende Schritte aus:
+
+1. Vergleicht gewünschten Zustand (deine Konfiguration) mit aktuellem Zustand (laufende Server)
+2. Bestimmt, welche Server gestartet oder gestoppt werden müssen
+3. Wählt Serverhosts basierend auf Kapazität und Präferenzen
+4. Sendet Start/Stop-Befehle via NATS
+
+Diese Schleife stellt sicher, dass deine Infrastruktur deiner Konfiguration entspricht, auch nach Ausfällen oder manuellen Änderungen.
+
+## Auto-Scaling
+
+### Slot-basierte Skalierung
+
+Skalierung basierend auf verfügbaren Spieler-Slots:
+
+```yaml
+scaling:
+  mode: SLOTS
+  min_servers: 1
+  max_servers: 5
+  player_threshold: 0.8  # Skaliert hoch bei 80% Auslastung
+```
+
+### Server-basierte Skalierung
+
+Feste Anzahl von Servern beibehalten:
+
+```yaml
+scaling:
+  mode: SERVER
+  min_servers: 2
+  max_servers: 2
+```
+
+## Hochverfügbarkeit
+
+Für Produktionsumgebungen kannst du mehrere Controller-Instanzen betreiben:
+
+- **Leader Election** nutzt datenbankgestützte Konsensbildung mit 30-Sekunden-Lease
+- Nur der Leader führt Netzwerkzuweisungen und Reconciliation durch
+- Alle Instanzen können API-Anfragen bedienen
+- Automatisches Failover bei Ausfall des Leaders
+
+### Infrastruktur-Anforderungen
+
+| Komponente | Zweck | Erforderlich |
+|------------|-------|--------------|
+| PostgreSQL | Zustandspersistenz | Ja |
+| NATS | Serverhost-Messaging | Ja |
+| Valkey/Redis | Metriken-Caching | Optional |
+| ClickHouse | Log-Speicherung | Optional |
+
+## Fehlerbehebung
+
+<AccordionGroup>
+  <Accordion title="Controller startet nicht">
+    **Symptom:** Controller-Prozess beendet sich sofort oder kann Port nicht binden.
+
+    **Lösung:**
+    1. PostgreSQL prüfen: `systemctl status postgresql`
+    2. NATS erreichbar: `nc -zv localhost 4222`
+    3. Logs prüfen: `sc logs controller`
+    4. Port 1337 frei: `lsof -i :1337`
+  </Accordion>
+
+  <Accordion title="Server bleiben in QUEUED">
+    **Symptom:** Server bleiben im QUEUED-Status und starten nie.
+
+    **Ursache:** Kein Serverhost verfügbar oder hat Kapazität.
+
+    **Lösung:**
+    1. Serverhost-Status prüfen: `sc status serverhost`
+    2. Verfügbaren Speicher der Hosts prüfen
+    3. Deployment-Einstellungen prüfen
+    4. Logs prüfen: `sc logs controller`
+  </Accordion>
+
+  <Accordion title="Scaling funktioniert nicht">
+    **Symptom:** Server skalieren nicht hoch wenn Spieler beitreten oder runter wenn leer.
+
+    **Ursache:** Reconciliation triggert nicht oder Metriken fehlen.
+
+    **Lösung:**
+    1. Controller ist Leader: "became leader" in Logs suchen
+    2. Gruppen-Scaling-Config prüfen (min/max Server, Schwellenwert)
+    3. Server melden Spielerzahlen
+    4. Reconciliation-Logs auf Fehler prüfen
+  </Accordion>
+
+  <Accordion title="API gibt 401/403 zurück">
+    **Symptom:** API-Aufrufe schlagen mit Authentifizierungsfehlern fehl.
+
+    **Lösung:**
+    1. `X-Network-ID` Header prüfen
+    2. `X-Network-Secret` Header prüfen
+    3. Credentials im `secrets/` Verzeichnis prüfen
+  </Accordion>
+
+  <Accordion title="API gibt 500 zurück">
+    **Symptom:** API-Aufrufe schlagen mit internem Serverfehler fehl.
+
+    **Lösung:**
+    1. Controller-Logs auf Stack-Traces prüfen
+    2. PostgreSQL-Verbindung prüfen
+    3. Festplattenspeicher und RAM prüfen
+  </Accordion>
+</AccordionGroup>
+
+## CLI-Zugriff
+
+```bash
+# Controller-Status prüfen
+sc status
+
+# Controller-Logs anzeigen
+sc logs controller
+
+# An Controller-Konsole anhängen
+sc attach controller
+```
+
+<Note>
+  Der Controller muss laufen, damit neue Server starten können. Bestehende Server
+  laufen weiter, wenn der Controller temporär offline ist.
+</Note>
+
+## Verwandte Themen
+
+- [Developer API](/de/developer/overview) - Vollständige API-Dokumentation
+- [Server](/de/manual/setup/servers) - Server-Lebenszyklus und Zustände
+- [Architektur-Übersicht](/de/manual/architecture/overview) - System-Architekturdiagramm

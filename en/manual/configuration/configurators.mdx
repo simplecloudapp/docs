@@ -221,20 +221,33 @@ features:
 
 ## Troubleshooting
 
-### Configuration Not Applied
+<AccordionGroup>
+  <Accordion title="Configuration not applied">
+    **Symptom:** Server starts with default config instead of configured values.
 
-1. Check the configurator name matches the blueprint
-2. Verify the file path is correct
-3. Check serverhost logs for errors
+    **Solution:**
+    1. Verify configurator name in blueprint matches file name
+    2. Check file path is correct relative to server directory
+    3. Review serverhost logs: `sc logs serverhost`
+  </Accordion>
 
-### Placeholder Not Replaced
+  <Accordion title="Placeholder not replaced">
+    **Symptom:** Config contains literal `{{port}}` instead of actual port.
 
-1. Ensure placeholder syntax is correct: `{{name}}`
-2. Check if the property exists on the server
-3. For custom properties, use `{{$.property-name}}`
+    **Solution:**
+    1. Check syntax: `{{name}}` (double braces, no spaces)
+    2. Verify the property exists on the server
+    3. For custom properties use: `{{$.property-name}}`
+  </Accordion>
 
-### Wrong File Format
+  <Accordion title="Wrong file format error">
+    **Symptom:** Configurator fails to parse the config file.
 
-1. Verify the `format` field matches the actual file type
-2. Check for syntax errors in the template
+    **Cause:** Format field doesn't match actual file type.
+
+    **Solution:**
+    1. Verify `format` matches file extension (yaml, json, properties, toml)
+    2. Check the template file for syntax errors
+  </Accordion>
+</AccordionGroup>
 3. Ensure the file exists in the server directory

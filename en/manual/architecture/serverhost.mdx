@@ -142,16 +142,7 @@ sc start --runner screen
 
 ## Template Hierarchy
 
-Templates are applied in order, with later templates overwriting earlier ones:
-
-| Order | Directory | Description |
-|-------|-----------|-------------|
-| 1 | `every/` | Base files for all servers |
-| 2 | `every_{type}/` | Type-specific (e.g., `every_proxy/`) |
-| 3 | `every_{software}/` | Software-specific (e.g., `every_paper/`) |
-| 4 | `_tagged/{tag}/` | For each tag assigned to the group |
-| 5 | `{server-name}/` | Server-specific templates |
-| 6 | `cache/{group}/` | Cached files from previous runs |
+Templates are applied in a specific order, with later templates overwriting earlier ones. See [Templates](/en/manual/setup/templates) for full details and examples.
 
 ## Communication
 
@@ -244,5 +235,5 @@ The Serverhost sends periodic keep-alive messages:
 
 ## Related Topics
 
-- [Configurators](/en/concepts/serverhost/configurators) - Server configuration system
-- [Workflows](/en/concepts/serverhost/workflows) - Server preparation workflows
+- [Configurators](/en/manual/configuration/configurators) - Server configuration system
+- [Workflows](/en/manual/configuration/workflows) - Server preparation workflows

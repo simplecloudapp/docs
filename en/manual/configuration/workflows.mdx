@@ -151,7 +151,7 @@ Applies a configurator to configure server files.
   dir: "{{server-dir}}"
 ```
 
-See [Configurators](/en/concepts/serverhost/configurators) for more details.
+See [Configurators](/en/manual/configuration/configurators) for more details.
 
 ## Placeholders
 
@@ -289,26 +289,40 @@ steps:
 
 ## Troubleshooting
 
-### Workflow Not Executing
+<AccordionGroup>
+  <Accordion title="Workflow not executing">
+    **Symptom:** Server starts but workflow steps don't run.
 
-1. Check workflow file exists at `workflows/internal/setup.yml`
-2. Verify YAML syntax is valid
-3. Check serverhost logs for errors
+    **Solution:**
+    1. Verify file exists: `workflows/internal/setup.yml`
+    2. Validate YAML syntax (use a linter)
+    3. Check serverhost logs: `sc logs serverhost`
+  </Accordion>
 
-### Placeholder Not Replaced
+  <Accordion title="Placeholder not replaced">
+    **Symptom:** Files contain literal `{{name}}` instead of values.
 
-1. Ensure placeholder syntax is correct: `{{name}}`
-2. Verify the property exists in the server context
-3. For custom properties, use `{{$.property-name}}`
+    **Solution:**
+    1. Check syntax: `{{name}}` (double braces, no spaces)
+    2. Verify property exists in server context
+    3. For custom properties use: `{{$.property-name}}`
+  </Accordion>
 
-### Copy Action Fails
+  <Accordion title="Copy action fails">
+    **Symptom:** Workflow fails at copy step.
 
-1. Verify source path exists
-2. Check file permissions
-3. Ensure `create-dirs` is enabled if parent directories don't exist
+    **Solution:**
+    1. Verify source path exists
+    2. Check file permissions
+    3. Add `create-dirs: true` if parent directories missing
+  </Accordion>
 
-### Plugin Installation Fails
+  <Accordion title="Plugin installation fails">
+    **Symptom:** Plugins not downloaded during workflow.
 
-1. Check network connectivity to plugin sources
-2. Verify plugin exists for the specified Minecraft version
-3. Check `options/modrinth-platform-mappings.yml` for software mappings
+    **Solution:**
+    1. Check network connectivity to Modrinth/Hangar
+    2. Verify plugin exists for your Minecraft version
+    3. Check `options/modrinth-platform-mappings.yml`
+  </Accordion>
+</AccordionGroup>
