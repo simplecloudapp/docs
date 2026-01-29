@@ -1,6 +1,6 @@
 ---
-title: 'Installation'
-description: 'Get started with SimpleCloud by creating your account and connecting your first server host'
+title: "Installation"
+description: "Get started with SimpleCloud by creating your account and connecting your first server host"
 ---
 
 Getting started with SimpleCloud takes just a few steps. The dashboard will guide you through the entire process - this page provides an overview of what to expect.
@@ -9,13 +9,14 @@ Getting started with SimpleCloud takes just a few steps. The dashboard will guid
 
 <Steps>
   <Step title="Open the Dashboard">
-    Go to the [SimpleCloud Dashboard](https://dashboard.simplecloud.app)
+    Go to the [SimpleCloud Dashboard](https://dash.simplecloud.app)
   </Step>
   <Step title="Sign In">
     Create an account or sign in using one of the following options:
 
     - **Magic Link** - Enter your email and receive a login link
     - **SSO** - Sign in with Google, Discord, or GitHub
+
   </Step>
 </Steps>
 
@@ -31,6 +32,7 @@ After signing in, you'll choose how to get started:
     4. Click **Create Network**
 
     The setup wizard will then guide you through installing the CLI and connecting your first server host.
+
   </Tab>
   <Tab title="Join Existing Network">
     1. Paste the invitation code you received
@@ -45,7 +47,7 @@ The setup wizard will display the installation command for you. Simply copy and 
 <Tabs>
   <Tab title="Linux / macOS">
     ```bash
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/simplecloudapp/simplecloud-manifest/HEAD/install.sh)"
+    /bin/bash -c "$(curl -fsSL https://get.simplecloud.app)"
     ```
 
     Verify the installation:
@@ -53,6 +55,7 @@ The setup wizard will display the installation command for you. Simply copy and 
     ```bash
     simplecloud --version
     ```
+
   </Tab>
   <Tab title="Windows">
     <Note>
@@ -72,6 +75,7 @@ A server host is the machine that will run your Minecraft servers.
     ```bash
     simplecloud setup --code=YOUR_CODE
     ```
+
   </Step>
   <Step title="Wait for Setup">
     The setup will:
@@ -109,6 +113,7 @@ To add others to your network:
     # macOS
     brew install curl
     ```
+
   </Accordion>
 
   <Accordion title="Permission denied during install">
@@ -119,6 +124,7 @@ To add others to your network:
     **Solution:**
     - Run with sudo: `sudo /bin/bash -c "$(curl -fsSL ...)"`
     - Or install to a user directory and add to PATH
+
   </Accordion>
 
   <Accordion title="Network timeout or connection refused">
@@ -129,6 +135,7 @@ To add others to your network:
     **Solution:** Allow HTTPS (port 443) to:
     - `raw.githubusercontent.com`
     - `github.com`
+
   </Accordion>
 
   <Accordion title="Setup code not working">
@@ -140,6 +147,7 @@ To add others to your network:
     1. Generate a fresh code from the dashboard
     2. Copy the entire code without extra spaces
     3. Run the command immediately (codes expire quickly)
+
   </Accordion>
 
   <Accordion title="Server host not appearing in dashboard">
@@ -150,6 +158,7 @@ To add others to your network:
     2. Verify serverhost is running: `sc status serverhost`
     3. Check network connectivity to SimpleCloud
     4. Review logs: `sc logs serverhost`
+
   </Accordion>
 
   <Accordion title="Requirements check failed">
@@ -162,5 +171,6 @@ To add others to your network:
     | Java 21+ | `sudo apt install openjdk-21-jdk` |
     | screen/tmux | `sudo apt install screen` |
     | Docker | [docs.docker.com/engine/install](https://docs.docker.com/engine/install/) |
+
   </Accordion>
 </AccordionGroup>

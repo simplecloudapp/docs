@@ -1,6 +1,6 @@
 ---
-title: 'Installation'
-description: 'Starte mit SimpleCloud, indem du dein Konto erstellst und deinen ersten Server Host verbindest'
+title: "Installation"
+description: "Starte mit SimpleCloud, indem du dein Konto erstellst und deinen ersten Server Host verbindest"
 ---
 
 Der Einstieg in SimpleCloud erfordert nur wenige Schritte. Das Dashboard fuehrt dich durch den gesamten Prozess - diese Seite bietet einen Ueberblick darueber, was dich erwartet.
@@ -9,13 +9,14 @@ Der Einstieg in SimpleCloud erfordert nur wenige Schritte. Das Dashboard fuehrt 
 
 <Steps>
   <Step title="Dashboard oeffnen">
-    Gehe zum [SimpleCloud Dashboard](https://dashboard.simplecloud.app)
+    Gehe zum [SimpleCloud Dashboard](https://dash.simplecloud.app)
   </Step>
   <Step title="Anmelden">
     Erstelle ein Konto oder melde dich an mit einer der folgenden Optionen:
 
     - **Magic Link** - Gib deine E-Mail ein und erhalte einen Login-Link
     - **SSO** - Melde dich mit Google, Discord oder GitHub an
+
   </Step>
 </Steps>
 
@@ -31,6 +32,7 @@ Nach der Anmeldung waehle, wie du starten moechtest:
     4. Klicke auf **Netzwerk erstellen**
 
     Der Setup-Assistent fuehrt dich dann durch die Installation der CLI und die Verbindung deines ersten Server Hosts.
+
   </Tab>
   <Tab title="Bestehendem Netzwerk beitreten">
     1. Fuege den Einladungscode ein, den du erhalten hast
@@ -45,7 +47,7 @@ Der Setup-Assistent zeigt dir den Installationsbefehl an. Kopiere ihn einfach un
 <Tabs>
   <Tab title="Linux / macOS">
     ```bash
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/simplecloudapp/simplecloud-manifest/HEAD/install.sh)"
+    /bin/bash -c "$(curl -fsSL https://get.simplecloud.app)"
     ```
 
     Ueberpruefe die Installation:
@@ -53,6 +55,7 @@ Der Setup-Assistent zeigt dir den Installationsbefehl an. Kopiere ihn einfach un
     ```bash
     simplecloud --version
     ```
+
   </Tab>
   <Tab title="Windows">
     <Note>
@@ -72,6 +75,7 @@ Ein Server Host ist die Maschine, die deine Minecraft-Server ausfuehren wird.
     ```bash
     simplecloud setup --code=DEIN_CODE
     ```
+
   </Step>
   <Step title="Auf Setup warten">
     Das Setup wird:

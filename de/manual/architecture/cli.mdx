@@ -1,6 +1,6 @@
 ---
-title: 'CLI'
-description: 'Die Kommandozeile zur Verwaltung deiner SimpleCloud-Installation'
+title: "CLI"
+description: "Die Kommandozeile zur Verwaltung deiner SimpleCloud-Installation"
 ---
 
 ## Was ist die CLI?
@@ -12,7 +12,7 @@ Die SimpleCloud CLI ist dein primäres Werkzeug zur Verwaltung deiner Cloud-Infr
 Installiere die CLI mit dem offiziellen Install-Script:
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/simplecloudapp/simplecloud-manifest/HEAD/install.sh)"
+/bin/bash -c "$(curl -fsSL https://get.simplecloud.app)"
 ```
 
 ## Befehlsstruktur
@@ -23,11 +23,11 @@ sc <befehl> [unterbefehl] [argumente] [optionen]
 
 ## Globale Optionen
 
-| Option | Beschreibung |
-|--------|--------------|
+| Option          | Beschreibung                  |
+| --------------- | ----------------------------- |
 | `-c, --context` | Aktiven Context überschreiben |
-| `-h, --help` | Hilfe anzeigen |
-| `-v, --version` | Versionsnummer anzeigen |
+| `-h, --help`    | Hilfe anzeigen                |
+| `-v, --version` | Versionsnummer anzeigen       |
 
 ---
 
@@ -41,10 +41,10 @@ Bei SimpleCloud authentifizieren.
 sc login
 ```
 
-| Option | Beschreibung |
-|--------|--------------|
-| `--no-browser` | Browser nicht automatisch öffnen |
-| `--code` | Vorab genehmigten Code vom Dashboard verwenden |
+| Option         | Beschreibung                                   |
+| -------------- | ---------------------------------------------- |
+| `--no-browser` | Browser nicht automatisch öffnen               |
+| `--code`       | Vorab genehmigten Code vom Dashboard verwenden |
 
 ### Logout
 
@@ -74,10 +74,10 @@ SimpleCloud einrichten: Context konfigurieren, Dependencies installieren und Ser
 sc setup
 ```
 
-| Option | Beschreibung |
-|--------|--------------|
+| Option      | Beschreibung                                                 |
+| ----------- | ------------------------------------------------------------ |
 | `-o, --org` | Organisations-ID oder Slug (überspringt interaktive Auswahl) |
-| `--code` | Vorab genehmigten Code vom Dashboard verwenden |
+| `--code`    | Vorab genehmigten Code vom Dashboard verwenden               |
 
 ### Komponenten installieren
 
@@ -115,12 +115,12 @@ SimpleCloud-Komponenten starten.
 sc start [komponenten..]
 ```
 
-| Option | Beschreibung |
-|--------|--------------|
-| `--runner` | Runner-Typ überschreiben (`screen`, `docker`, `native`) |
-| `--configure` | Standard-Runner konfigurieren |
-| `--skip-version-check` | Versionsprüfung vor dem Start überspringen |
-| `--update` | Veraltete Komponenten automatisch aktualisieren |
+| Option                 | Beschreibung                                            |
+| ---------------------- | ------------------------------------------------------- |
+| `--runner`             | Runner-Typ überschreiben (`screen`, `docker`, `native`) |
+| `--configure`          | Standard-Runner konfigurieren                           |
+| `--skip-version-check` | Versionsprüfung vor dem Start überspringen              |
+| `--update`             | Veraltete Komponenten automatisch aktualisieren         |
 
 ### Stop
 
@@ -154,8 +154,8 @@ Logs einer Komponente anzeigen.
 sc logs <komponente>
 ```
 
-| Option | Beschreibung |
-|--------|--------------|
+| Option        | Beschreibung                                    |
+| ------------- | ----------------------------------------------- |
 | `-n, --lines` | Anzahl der anzuzeigenden Zeilen (Standard: 100) |
 
 ### Attach
@@ -230,8 +230,8 @@ Neue Gruppe mit interaktivem Wizard erstellen.
 sc group create
 ```
 
-| Option | Beschreibung |
-|--------|--------------|
+| Option             | Beschreibung                                     |
+| ------------------ | ------------------------------------------------ |
 | `-y, --auto-retry` | Automatisch mit vorherigen Antworten wiederholen |
 
 ### Gruppen-Info
@@ -258,16 +258,16 @@ Gruppeneinstellungen aktualisieren.
 sc group update <gruppe>
 ```
 
-| Option | Beschreibung |
-|--------|--------------|
-| `--name` | Neuer Gruppenname |
-| `--type` | Gruppentyp (`SERVER`, `PROXY`, `LOBBY`) |
-| `--active` | Aktiv-Status setzen |
-| `--max-memory` | Maximaler Speicher in MB |
-| `--min-memory` | Minimaler Speicher in MB |
-| `--max-players` | Maximale Spieler |
-| `--scaling-min` | Minimale Server für Skalierung |
-| `--scaling-max` | Maximale Server für Skalierung |
+| Option          | Beschreibung                            |
+| --------------- | --------------------------------------- |
+| `--name`        | Neuer Gruppenname                       |
+| `--type`        | Gruppentyp (`SERVER`, `PROXY`, `LOBBY`) |
+| `--active`      | Aktiv-Status setzen                     |
+| `--max-memory`  | Maximaler Speicher in MB                |
+| `--min-memory`  | Minimaler Speicher in MB                |
+| `--max-players` | Maximale Spieler                        |
+| `--scaling-min` | Minimale Server für Skalierung          |
+| `--scaling-max` | Maximale Server für Skalierung          |
 
 ### Gruppe löschen
 
@@ -489,16 +489,16 @@ sc completion
 
 ## Kurzreferenz
 
-| Aufgabe | Befehl |
-|---------|--------|
-| SimpleCloud einrichten | `sc setup` |
-| Alle Komponenten starten | `sc start` |
-| Status prüfen | `sc status` |
-| Logs anzeigen | `sc logs <komponente>` |
-| Gruppe erstellen | `sc group create` |
-| Gruppen auflisten | `sc group list` |
-| Server starten | `sc group start <gruppe>` |
-| Server auflisten | `sc server list` |
-| Server stoppen | `sc server stop <name> [id]` |
-| An Konsole anhängen | `sc attach <komponente>` |
-| Context wechseln | `sc context use <name>` |
+| Aufgabe                  | Befehl                       |
+| ------------------------ | ---------------------------- |
+| SimpleCloud einrichten   | `sc setup`                   |
+| Alle Komponenten starten | `sc start`                   |
+| Status prüfen            | `sc status`                  |
+| Logs anzeigen            | `sc logs <komponente>`       |
+| Gruppe erstellen         | `sc group create`            |
+| Gruppen auflisten        | `sc group list`              |
+| Server starten           | `sc group start <gruppe>`    |
+| Server auflisten         | `sc server list`             |
+| Server stoppen           | `sc server stop <name> [id]` |
+| An Konsole anhängen      | `sc attach <komponente>`     |
+| Context wechseln         | `sc context use <name>`      |

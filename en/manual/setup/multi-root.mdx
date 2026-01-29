@@ -1,0 +1,311 @@
+---
+title: "Multi-Root Setup"
+description: "Run SimpleCloud across multiple machines with distributed serverhosts"
+---
+
+A multi-root setup allows you to run Minecraft servers across multiple physical or virtual machines, all managed by a single SimpleCloud controller. This guide covers adding serverhosts and synchronizing files between them.
+
+## Prerequisites
+
+- An existing SimpleCloud network with at least one serverhost
+- Additional machines to run serverhosts on
+- Root or sudo access on each machine
+
+## Part 1: Adding Serverhosts
+
+### Install SimpleCloud on Each Machine
+
+On each machine that will run a serverhost, install the SimpleCloud CLI:
+
+```bash
+/bin/bash -c "$(curl -fsSL get.simplecloud.app)"
+```
+
+### Add Serverhost to Network
+
+Use the CLI to add a new serverhost to your existing network:
+
+```bash
+sc serverhost add
+```
+
+The CLI will prompt you to:
+
+1. **Select your network** - Choose the network your controller manages
+2. **Authenticate** - Log in with your SimpleCloud account
+3. **Configure the serverhost** - Set port ranges and other options
+
+<Tip>
+  Each serverhost needs a unique identity. The CLI generates credentials
+  automatically and stores them in the `secrets/` directory.
+</Tip>
+
+### Verify Connection
+
+After adding, verify the serverhost is connected:
+
+```bash
+sc serverhost list
+```
+
+You should see all serverhosts in your network with their status.
+
+## Part 2: Synchronizing Files
+
+With multiple serverhosts, you need to keep templates and workflows synchronized. We recommend using Syncthing for automatic file synchronization.
+
+### What to Synchronize
+
+| Directory    | Purpose                            | Sync?                |
+| ------------ | ---------------------------------- | -------------------- |
+| `templates/` | Server templates, plugins, configs | Yes                  |
+| `workflows/` | Workflow definitions               | Yes                  |
+| `options/`   | Configurator settings              | Yes                  |
+| `secrets/`   | Network credentials                | No - unique per host |
+| `running/`   | Active server instances            | No - local only      |
+| `logs/`      | Serverhost logs                    | No - local only      |
+
+<Warning>
+  Never synchronize the `secrets/` directory. Each serverhost needs its own
+  unique identity credentials.
+</Warning>
+
+### Finding Your SimpleCloud Directory
+
+The installation path is user-configurable. Your serverhost directory contains:
+
+<Tree>
+  <Tree.Folder name="simplecloud" defaultOpen>
+    <Tree.Folder name="templates" defaultOpen>
+      <Tree.File name="Sync this" />
+    </Tree.Folder>
+    <Tree.Folder name="workflows" defaultOpen>
+      <Tree.File name="Sync this" />
+    </Tree.Folder>
+    <Tree.Folder name="options">
+      <Tree.File name="Sync this" />
+    </Tree.Folder>
+    <Tree.Folder name="secrets">
+      <Tree.File name="DO NOT sync" />
+    </Tree.Folder>
+    <Tree.Folder name="running" />
+  </Tree.Folder>
+</Tree>
+
+### Install Syncthing
+
+On each serverhost machine:
+
+```bash
+sudo apt update
+sudo apt install syncthing jq
+```
+
+Enable the Syncthing service:
+
+```bash
+systemctl --user enable --now syncthing.service
+```
+
+<Note>
+  If running as root, use `systemctl enable --now syncthing@root.service`
+  instead.
+</Note>
+
+### Get Device IDs
+
+Each Syncthing instance has a unique device ID:
+
+```bash
+DEVICE_ID=$(syncthing cli show system | jq -r .myID)
+echo "$DEVICE_ID"
+```
+
+Save this ID - you'll need it when configuring other serverhosts.
+
+Example output:
+
+```
+U6NJVMO-CC3K7WZ-TDLCCF6-SAGNJC4-S2CFP4J-QIF6Z7Z-WI7VO32-4QAA4AP
+```
+
+### Generate Folder IDs
+
+Create unique folder IDs for your sync folders. These must be the same across all serverhosts:
+
+```bash
+# Generate unique IDs (run once, use on all hosts)
+TEMPLATES_ID=$(dd if=/dev/random bs=1 count=1024 2>/dev/null | sha1sum | cut -d' ' -f1)
+WORKFLOWS_ID=$(dd if=/dev/random bs=1 count=1024 2>/dev/null | sha1sum | cut -d' ' -f1)
+
+echo "Templates folder ID: $TEMPLATES_ID"
+echo "Workflows folder ID: $WORKFLOWS_ID"
+```
+
+<Tip>Save these folder IDs. You'll use the same IDs on every serverhost.</Tip>
+
+### Configure Syncthing
+
+Perform these steps on each serverhost. Replace the placeholder values with your actual device IDs and paths.
+
+**Step 1: Add remote devices**
+
+On Serverhost 1, add Serverhost 2:
+
+```bash
+syncthing cli config devices add \
+    --device-id "DEVICE-ID-OF-SERVERHOST-2" \
+    --name "serverhost-2"
+```
+
+On Serverhost 2, add Serverhost 1:
+
+```bash
+syncthing cli config devices add \
+    --device-id "DEVICE-ID-OF-SERVERHOST-1" \
+    --name "serverhost-1"
+```
+
+**Step 2: Set your SimpleCloud directory**
+
+```bash
+CLOUD_DIR="/path/to/your/simplecloud"
+```
+
+**Step 3: Add templates folder**
+
+```bash
+syncthing cli config folders add \
+    --id "$TEMPLATES_ID" \
+    --label "templates" \
+    --path "$CLOUD_DIR/templates"
+
+syncthing cli config folders "$TEMPLATES_ID" devices add \
+    --device-id "DEVICE-ID-OF-OTHER-SERVERHOST"
+```
+
+**Step 4: Add workflows folder**
+
+```bash
+syncthing cli config folders add \
+    --id "$WORKFLOWS_ID" \
+    --label "workflows" \
+    --path "$CLOUD_DIR/workflows"
+
+syncthing cli config folders "$WORKFLOWS_ID" devices add \
+    --device-id "DEVICE-ID-OF-OTHER-SERVERHOST"
+```
+
+**Step 5: Repeat for additional serverhosts**
+
+For each new serverhost:
+
+- Install Syncthing
+- Get its device ID
+- Add it to all existing serverhosts
+- Add all existing devices to it
+- Configure folders with the same folder IDs
+
+### Verify Synchronization
+
+Test that synchronization works:
+
+```bash
+# On Serverhost 1
+echo "sync test" > $CLOUD_DIR/templates/sync-test.txt
+
+# Wait a few seconds, then check on Serverhost 2
+cat $CLOUD_DIR/templates/sync-test.txt
+
+# Clean up
+rm $CLOUD_DIR/templates/sync-test.txt
+```
+
+## Best Practices
+
+### Server Distribution
+
+Configure groups to specify which serverhosts can run them:
+
+| Strategy       | Use Case                                          |
+| -------------- | ------------------------------------------------- |
+| Any host       | Load balancing across all machines                |
+| Specific hosts | Dedicated hardware for resource-intensive servers |
+| Geographic     | Players connect to nearest serverhost             |
+
+### File Sync Settings
+
+| Setting            | Recommended    | Reason                             |
+| ------------------ | -------------- | ---------------------------------- |
+| Folder Type        | Send & Receive | Allows changes from any serverhost |
+| File Versioning    | Simple         | Keeps backup copies                |
+| Ignore Permissions | Enabled        | Avoids permission conflicts        |
+
+### Exclude Cache from Sync
+
+The `templates/cache/` folder contains locally generated files. Consider excluding it from synchronization to avoid unnecessary transfers.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Serverhost not appearing in list">
+    **Symptom:** After `sc serverhost add`, the host doesn't show up.
+
+    **Solutions:**
+    1. Check the serverhost is running: `sc status serverhost`
+    2. Verify network connectivity to the controller
+    3. Check credentials in `secrets/` directory exist
+    4. Review serverhost logs: `sc logs serverhost`
+
+  </Accordion>
+
+  <Accordion title="Syncthing devices not connecting">
+    **Symptom:** Devices show as "Disconnected".
+
+    **Solutions:**
+    1. Ensure firewall allows port 22000 TCP and UDP
+    2. Verify both devices have each other added
+    3. Check device IDs are correct
+    4. Confirm Syncthing is running: `systemctl --user status syncthing`
+
+  </Accordion>
+
+  <Accordion title="Files not syncing between hosts">
+    **Symptom:** Template changes don't appear on other serverhosts.
+
+    **Solutions:**
+    1. Verify folder IDs match on all hosts
+    2. Check folder is shared with correct devices
+    3. View sync status: `syncthing cli show folders`
+    4. Check for sync errors: `syncthing cli show system`
+
+  </Accordion>
+
+  <Accordion title="Servers starting on wrong host">
+    **Symptom:** Servers start on unexpected serverhosts.
+
+    **Solutions:**
+    1. Check group configuration for host restrictions
+    2. Verify all serverhosts have required templates synced
+    3. Review serverhost availability in `sc serverhost list`
+
+  </Accordion>
+
+  <Accordion title="Conflict files appearing">
+    **Symptom:** Files with `.sync-conflict` in the name appear.
+
+    **Cause:** Same file modified on multiple hosts simultaneously.
+
+    **Solutions:**
+    1. Review conflict files and choose correct version
+    2. Avoid editing same file on multiple hosts at once
+    3. Designate one host as "primary" for template editing
+
+  </Accordion>
+</AccordionGroup>
+
+## Related Topics
+
+- [Templates](/en/manual/setup/templates) - Template hierarchy and management
+- [Workflows](/en/manual/configuration/workflows) - Workflow configuration
+- [Serverhost](/en/manual/architecture/serverhost) - Serverhost architecture

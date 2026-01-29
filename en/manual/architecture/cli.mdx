@@ -1,6 +1,6 @@
 ---
-title: 'CLI'
-description: 'The command-line interface for managing your SimpleCloud installation'
+title: "CLI"
+description: "The command-line interface for managing your SimpleCloud installation"
 ---
 
 ## What is the CLI?
@@ -12,7 +12,7 @@ The SimpleCloud CLI is your primary tool for managing your cloud infrastructure.
 Install the CLI using the official install script:
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/simplecloudapp/simplecloud-manifest/HEAD/install.sh)"
+/bin/bash -c "$(curl -fsSL https://get.simplecloud.app)"
 ```
 
 ## Command Structure
@@ -23,11 +23,11 @@ sc <command> [subcommand] [arguments] [options]
 
 ## Global Options
 
-| Option | Description |
-|--------|-------------|
+| Option          | Description                 |
+| --------------- | --------------------------- |
 | `-c, --context` | Override the active context |
-| `-h, --help` | Show help |
-| `-v, --version` | Show version number |
+| `-h, --help`    | Show help                   |
+| `-v, --version` | Show version number         |
 
 ---
 
@@ -41,10 +41,10 @@ Authenticate with SimpleCloud.
 sc login
 ```
 
-| Option | Description |
-|--------|-------------|
-| `--no-browser` | Don't open browser automatically |
-| `--code` | Use a pre-approved code from the dashboard |
+| Option         | Description                                |
+| -------------- | ------------------------------------------ |
+| `--no-browser` | Don't open browser automatically           |
+| `--code`       | Use a pre-approved code from the dashboard |
 
 ### Logout
 
@@ -74,10 +74,10 @@ Set up SimpleCloud: configure context, install dependencies, and download server
 sc setup
 ```
 
-| Option | Description |
-|--------|-------------|
+| Option      | Description                                           |
+| ----------- | ----------------------------------------------------- |
 | `-o, --org` | Organization ID or slug (skips interactive selection) |
-| `--code` | Use a pre-approved code from the dashboard |
+| `--code`    | Use a pre-approved code from the dashboard            |
 
 ### Install Components
 
@@ -115,12 +115,12 @@ Start SimpleCloud components.
 sc start [components..]
 ```
 
-| Option | Description |
-|--------|-------------|
-| `--runner` | Override runner type (`screen`, `docker`, `native`) |
-| `--configure` | Configure the default runner |
-| `--skip-version-check` | Skip version check before starting |
-| `--update` | Auto-update outdated components |
+| Option                 | Description                                         |
+| ---------------------- | --------------------------------------------------- |
+| `--runner`             | Override runner type (`screen`, `docker`, `native`) |
+| `--configure`          | Configure the default runner                        |
+| `--skip-version-check` | Skip version check before starting                  |
+| `--update`             | Auto-update outdated components                     |
 
 ### Stop
 
@@ -154,8 +154,8 @@ View logs for a component.
 sc logs <component>
 ```
 
-| Option | Description |
-|--------|-------------|
+| Option        | Description                            |
+| ------------- | -------------------------------------- |
 | `-n, --lines` | Number of lines to show (default: 100) |
 
 ### Attach
@@ -230,8 +230,8 @@ Create a new group with interactive wizard.
 sc group create
 ```
 
-| Option | Description |
-|--------|-------------|
+| Option             | Description                               |
+| ------------------ | ----------------------------------------- |
 | `-y, --auto-retry` | Automatically retry with previous answers |
 
 ### Group Info
@@ -258,16 +258,16 @@ Update group settings.
 sc group update <group>
 ```
 
-| Option | Description |
-|--------|-------------|
-| `--name` | New group name |
-| `--type` | Group type (`SERVER`, `PROXY`, `LOBBY`) |
-| `--active` | Set active status |
-| `--max-memory` | Maximum memory in MB |
-| `--min-memory` | Minimum memory in MB |
-| `--max-players` | Maximum players |
-| `--scaling-min` | Minimum servers for scaling |
-| `--scaling-max` | Maximum servers for scaling |
+| Option          | Description                             |
+| --------------- | --------------------------------------- |
+| `--name`        | New group name                          |
+| `--type`        | Group type (`SERVER`, `PROXY`, `LOBBY`) |
+| `--active`      | Set active status                       |
+| `--max-memory`  | Maximum memory in MB                    |
+| `--min-memory`  | Minimum memory in MB                    |
+| `--max-players` | Maximum players                         |
+| `--scaling-min` | Minimum servers for scaling             |
+| `--scaling-max` | Maximum servers for scaling             |
 
 ### Delete Group
 
@@ -489,16 +489,16 @@ sc completion
 
 ## Quick Reference
 
-| Task | Command |
-|------|---------|
-| Set up SimpleCloud | `sc setup` |
-| Start all components | `sc start` |
-| Check status | `sc status` |
-| View logs | `sc logs <component>` |
-| Create a group | `sc group create` |
-| List groups | `sc group list` |
-| Start a server | `sc group start <group>` |
-| List servers | `sc server list` |
-| Stop a server | `sc server stop <name> [id]` |
-| Attach to console | `sc attach <component>` |
-| Switch context | `sc context use <name>` |
+| Task                 | Command                      |
+| -------------------- | ---------------------------- |
+| Set up SimpleCloud   | `sc setup`                   |
+| Start all components | `sc start`                   |
+| Check status         | `sc status`                  |
+| View logs            | `sc logs <component>`        |
+| Create a group       | `sc group create`            |
+| List groups          | `sc group list`              |
+| Start a server       | `sc group start <group>`     |
+| List servers         | `sc server list`             |
+| Stop a server        | `sc server stop <name> [id]` |
+| Attach to console    | `sc attach <component>`      |
+| Switch context       | `sc context use <name>`      |

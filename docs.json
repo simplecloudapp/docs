@@ -39,7 +39,8 @@
                   "en/manual/setup/groups",
                   "en/manual/setup/persistent-servers",
                   "en/manual/setup/servers",
-                  "en/manual/setup/templates"
+                  "en/manual/setup/templates",
+                  "en/manual/setup/multi-root"
                 ]
               },
               {
@@ -78,7 +79,6 @@
                   "en/manual/guide/permissions",
                   "en/manual/guide/testimonials",
                   "en/manual/guide/remote-access",
-                  "en/manual/guide/multi-root",
                   "en/manual/guide/self-hosted-dashboard"
                 ]
               },
@@ -99,10 +99,7 @@
             "groups": [
               {
                 "group": "Getting Started",
-                "pages": [
-                  "en/developer/overview",
-                  "en/developer/installation"
-                ]
+                "pages": ["en/developer/overview", "en/developer/installation"]
               },
               {
                 "group": "Cloud API",
@@ -244,10 +241,7 @@
             "groups": [
               {
                 "group": "Getting Started",
-                "pages": [
-                  "de/developer/overview",
-                  "de/developer/installation"
-                ]
+                "pages": ["de/developer/overview", "de/developer/installation"]
               },
               {
                 "group": "Cloud API",
@@ -286,7 +280,7 @@
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.simplecloud.app"
+      "href": "https://dash.simplecloud.app"
     }
   },
   "contextual": {
