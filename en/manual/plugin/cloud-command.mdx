@@ -6,7 +6,8 @@ tag: 'Proxy'
 
 ## Overview
 
-The Cloud Command Plugin empowers your network with in-game proxy commands, enabling efficient cloud management directly from within the game. Easily start, stop, and manage servers using commands.
+The Cloud Command Plugin empowers your network with in-game proxy commands, enabling efficient cloud management directly from within the game.  
+You can start, stop, inspect, edit, and delete servers, groups, and persistent servers directly via proxy commands.
 
 ## Supported Software
 
@@ -28,15 +29,23 @@ The Cloud Command Plugin empowers your network with in-game proxy commands, enab
 
 ## Commands
 
-| Command                            | Description                                              |
-| ---------------------------------- | -------------------------------------------------------- |
-| `/cloud start <group>`             | Starts a server from a specified group                   |
-| `/cloud stop <group> <id>`         | Stops a specific server from a specified group           |
-| `/cloud info servers [group] [id]` | Retrieves one or multiple servers from a specified group |
-| `/cloud info groups [group]`       | Retrieves one or all groups                              |
+| Command                                   | Description |
+| ----------------------------------------- | ----------- |
+| `/cloud start group <group>`              | Starts a new server from a specified group |
+| `/cloud start persistent <server>`        | Starts a persistent server |
+| `/cloud stop group <group> [id]`          | Stops a specific server or all servers of a group |
+| `/cloud stop persistent <server>`         | Stops a persistent server |
+| `/cloud info servers [group] [id]`              | Displays information about servers |
+| `/cloud info groups [group]`                    | Displays information about one or all groups |
+| `/cloud info persistent [server]`               | Displays information about persistent servers |
+| `/cloud delete group <group>`             | Deletes a server group |
+| `/cloud delete persistent <server>`       | Deletes a persistent server |
+| `/cloud edit group <group> <key> <value>`           | Edits a value of a group |
+| `/cloud edit server <group> <id> <key> <value>`     | Edits a value of a server |
+| `/cloud edit persistent <server> <key> <value>`    | Edits a value of a persistent server |
 
 <Note>
-  Use `<>` for required arguments and `[]` for optional arguments.
+  You can customize all plugin messages in the <code>messages.yml</code> file.
 </Note>
 
 <Frame>
