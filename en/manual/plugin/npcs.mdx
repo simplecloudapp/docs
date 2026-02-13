@@ -19,7 +19,7 @@ The SimpleCloud NPCs plugin allows you to create interactive NPCs on your server
 | Server Type    | Plugin Support |
 | -------------- | -------------- |
 | Paper & Forks  | ✅ Yes         |
-| Spigot & Forks | ✅ Yes         |
+| Spigot & Forks | ❌ No          |
 | Other          | ❌ No          |
 
 ## Quick Setup
@@ -40,7 +40,7 @@ You must install one of the following NPC plugins for the SimpleCloud NPCs plugi
 | [Citizens](https://citizensnpcs.co)                   | 1.19+              | ✅ Yes |
 | [FancyNpcs](https://fancyplugins.de/FancyNpcs)        | 1.19.4+            | ✅ Yes |
 | [MythicMobs](https://www.spigotmc.org/resources/5702) | 1.19+              | ✅ Yes |
-| [PlayerNPC](https://www.spigotmc.org/resources/93625) | 1.17.1 - 1.20.1    | ✅ Yes |
+| [PlayerNPC](https://www.spigotmc.org/resources/93625) | 1.17.1 - 1.20.1    | ❌ No  |
 
 <Note>
   Want to add support for another NPC plugin? Submit an issue on
@@ -65,36 +65,42 @@ Available NPC actions and their options:
 Example configuration:
 
 ```yaml
-version: "1.0"
-id: bedwars
-holograms:
-  - start-height: 2.073
-    lores:
-      - text: <group_name> - <property:server-software>
-        billboard: CENTER
-        alignment: CENTER
-      - text: waiting for <group_player_count:available> players
-        billboard: CENTER
-        alignment: CENTER
-      - text: "<server_count:ingame> Servers ingame"
+version: "3"
+id: "0"
+npc-type: GROUP
+
+hologram-configuration:
+  placeholder-name: lobby
+  holograms:
+    - start-height: 2.073
+      join-state: ""
+      lores:
+        - text: "<#38bdf8><bold><group_name>"
+          billboard: CENTER
+          alignment: CENTER
+        - text: "waiting for <#a3a3a3><group_player_count:available> players"
+          billboard: CENTER
+          alignment: CENTER
+
 actions:
   - player-interaction: LEFT_CLICK
     action: OPEN_INVENTORY
     options:
-      inventory.name: bedwars
+      inventory.name: lobby
       play.sound: block.chest.open
       sound.pitch: 3
       sound.volume: 2
+
   - player-interaction: RIGHT_CLICK
     action: TRANSFER_TO_SERVER
     options:
       server.ip: demo-server.com
       server.port: 25565
+
 options:
-  hologram.placeholder.group: lobby
-  send.message: <rainbow>Some cool text here
-  send.title: title
-  send.subtitle: some cool subtitle
+  send.message: "<rainbow>Some cool text here"
+  send.title: "title"
+  send.subtitle: "some cool subtitle"
 ```
 
 ### Feedback Options
@@ -116,27 +122,104 @@ options:
 Example inventory for server selection:
 
 ```yaml
-version: "1.0"
-id: quickjoin.bedwars
-title: <#ffffff>Bedwars
+version: "3"
+id: lobby
+npc-type: GROUP
+title: "<#ffffff>Lobbys"
 rows: 6
+
 pagination:
-  listed-group-name: bedwars
-  server-name-pattern: <group_name>-<numerical_id>
+  listed-group-name: lobby
+  listed-persistent-servers: []
+  server-name-pattern: "<group_name>-<numerical_id>"
+
   state-items:
     PREPARING: starting_pagination_item
     STARTING: starting_pagination_item
     AVAILABLE: available_pagination_item
     INGAME: ingame_pagination_item
+
+  from-slot:
+    row: 1
+    column: 1
+
+  to-slot:
+    row: 3
+    column: 7
+
+  excluded-slots:
+    - row: 1
+      column: 8
+    - row: 2
+      column: 0
+    - row: 2
+      column: 8
+    - row: 3
+      column: 0
+
+  next-page-item:
+    item: next_pagination_item
+    slot:
+      row: 4
+      column: 0
+    increments:
+      LEFT: 1
+
+  previous-page-item:
+    item: previous_pagination_item
+    slot:
+      row: 4
+      column: 0
+    increments:
+      LEFT: -1
+
+static-slots:
+  - item: red_previous_pagination_item
+    slots:
+      - row: 5
+        column: 0
+
+  - item: red_next_pagination_item
+    slots:
+      - row: 5
+        column: 8
+
 items:
+  - id: next_pagination_item
+    material: LIME_STAINED_GLASS_PANE
+    display-name: "<green>Next Page"
+    lores: []
+
+  - id: previous_pagination_item
+    material: LIME_STAINED_GLASS_PANE
+    display-name: "<green>Previous Page"
+    lores: []
+
+  - id: red_next_pagination_item
+    material: RED_STAINED_GLASS_PANE
+    display-name: "<red>Next Page"
+    lores: []
+
+  - id: red_previous_pagination_item
+    material: RED_STAINED_GLASS_PANE
+    display-name: "<red>Previous Page"
+    lores: []
+
+  - id: starting_pagination_item
+    material: ORANGE_BANNER
+    display-name: "<group_name> <numerical_id>"
+    lores: []
+
   - id: available_pagination_item
     material: LIME_BANNER
-    display-name: <group_name> <numerical_id>
+    display-name: "<group_name> <numerical_id>"
     lores:
       - "<gray>Players: <#38bdf8><online_players><dark_gray>/<#38bdf8><max_players>"
-      - ""
-      - "<gray>Version: <#a3a3a3><property:server-software> <property:minecraft-version>"
-      - "<gray>Template: <#a3a3a3><property:template-id>"
+
+  - id: ingame_pagination_item
+    material: BROWN_BANNER
+    display-name: "<group_name> <numerical_id>"
+    lores: []
 ```
 
 <Frame>
@@ -145,14 +228,23 @@ items:
 
 ## Commands
 
-| Command                                               | Description                                  |
-| ----------------------------------------------------- | -------------------------------------------- |
-| `/scnpc apply <n>`                                    | Add SimpleCloud functions to an existing NPC |
-| `/scnpc <id> interact <type> setAction <action>`      | Set click actions                            |
-| `/scnpc <id> interact <type> setOption <key> <value>` | Set click options                            |
-| `/scnpc <id> setOption <key> <value>`                 | Set global options                           |
-| `/scnpc <id> setHologramGroup <groupName>`            | Set hologram group                           |
-| `/scnpc createInventory <n> <groupName>`              | Create inventory config                      |
+| Command                                                                 | Description |
+|-------------------------------------------------------------------------|-------------|
+| `/scnpc apply <id>`                                                     | Apply NPC functions to an existing NPC |
+| `/scnpc <id> setType <type>`                                            | Set the NPC type |
+| `/scnpc <id> setHologram <name>`                                        | Set the NPC hologram |
+| `/scnpc <id> setOption <key> <value>`                                   | Set a global NPC option |
+| `/scnpc <id> getOption <key>`                                           | Get a global NPC option |
+| `/scnpc <id> removeOption <key>`                                        | Remove a global NPC option |
+| `/scnpc <id> interact <playerInteraction>`                              | Show interaction configuration |
+| `/scnpc <id> interact <playerInteraction> setAction <action>`           | Set an interaction action |
+| `/scnpc <id> interact <playerInteraction> setOption <key> <value>`      | Set an interaction option |
+| `/scnpc <id> interact <playerInteraction> getOption <key>`              | Get an interaction option |
+| `/scnpc <id> interact <playerInteraction> removeOption <key>`           | Remove an interaction option |
+| `/scnpc openInventory <name>`                                           | Open an NPC inventory |
+| `/scnpc createInventory <name> group <group>`                           | Create an inventory for a group |
+| `/scnpc createInventory <name> persistent <server>`                     | Create an inventory for persistent servers |
+| `/scnpc addInventoryPersistentServer <name> <server>`                   | Add a persistent server to an persistent inventory |
 
 ## Permissions
 
