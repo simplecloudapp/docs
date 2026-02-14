@@ -8,17 +8,11 @@ tag: 'Server'
 
 The Prefixes Plugin manages player ranks in chat and tab list displays. It integrates with LuckPerms by default but can be extended with custom implementations. The plugin uses Adventure Components and MiniMessage for text formatting.
 
-<Warning>
-  The plugin is currently taking a break, and the documentation needs a refresh.
-  Stay updated through our [Community Discord](https://discord.simplecloud.com).
-</Warning>
-
 ## Supported Software
 
 | Server Type    | API Support | LuckPerms | Plugin Support |
 | -------------- | ----------- | --------- | -------------- |
 | Paper & Forks  | ✅ Yes      | ✅ Yes    | ✅ Yes         |
-| Spigot & Forks | ✅ Yes      | ✅ Yes    | ✅ Yes         |
 | Minestom       | ✅ Yes      | ❌ No     | ❌ No          |
 
 <Note>
@@ -27,10 +21,11 @@ The Prefixes Plugin manages player ranks in chat and tab list displays. It integ
 
 ## Quick Setup
 
-1. Download the plugin from [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases)
-2. Place it in your server's plugins folder
-3. Start your server
-4. Configure using LuckPerms and `config.json`
+1. Download custom names from [GitHub](https://github.com/spacechunks/custom-names)
+2. Download the plugin from [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases)
+3. Place it in your server's plugins folder
+4. Start your server
+5. Configure using LuckPerms and `config.json`
 
 ## Configuration
 
@@ -45,7 +40,7 @@ The plugin automatically syncs with LuckPerms groups, converting them to prefix 
 # Set group suffix
 /lp group admin meta addsuffix 100 " <gray>✦"
 
-# Set team color (Spigot: use ChatColor, others: use hex)
+# Set team color
 /lp group admin meta set color #FF0000
 ```
 
