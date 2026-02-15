@@ -27,6 +27,16 @@
                 "group": "Introduction",
                 "pages": [
                   "en/manual/introduction/overview",
+                  {
+                    "group": "Architecture",
+                    "expanded": false,
+                    "root": "en/manual/introduction/architecture/overview",
+                    "pages": [
+                      "en/manual/introduction/architecture/controller",
+                      "en/manual/introduction/architecture/serverhost",
+                      "en/manual/introduction/architecture/cli"
+                    ]
+                  },
                   "en/manual/introduction/philosophy",
                   "en/manual/introduction/updates",
                   "en/manual/introduction/faq"
@@ -36,11 +46,12 @@
                 "group": "Setup",
                 "pages": [
                   "en/manual/setup/installation",
-                  "en/manual/setup/groups",
+                  "en/manual/setup/server-groups",
                   "en/manual/setup/persistent-servers",
                   "en/manual/setup/servers",
                   "en/manual/setup/templates",
-                  "en/manual/setup/multi-root"
+                  "en/manual/setup/multi-root",
+                  "en/manual/setup/self-hosting"
                 ]
               },
               {
@@ -48,14 +59,6 @@
                 "pages": [
                   "en/manual/configuration/configurators",
                   "en/manual/configuration/workflows"
-                ]
-              },
-              {
-                "group": "Droplets",
-                "pages": [
-                  "en/manual/droplet/overview",
-                  "en/manual/droplet/player",
-                  "en/manual/droplet/resourcepack"
                 ]
               },
               {
@@ -72,25 +75,6 @@
                   "en/manual/plugin/npcs",
                   "en/manual/plugin/placeholders"
                 ]
-              },
-              {
-                "group": "Guides",
-                "pages": [
-                  "en/manual/guide/permissions",
-                  "en/manual/guide/testimonials",
-                  "en/manual/guide/remote-access",
-                  "en/manual/guide/self-hosted-dashboard"
-                ]
-              },
-              {
-                "group": "Architecture",
-                "expanded": false,
-                "pages": [
-                  "en/manual/architecture/overview",
-                  "en/manual/architecture/controller",
-                  "en/manual/architecture/serverhost",
-                  "en/manual/architecture/cli"
-                ]
               }
             ]
           },
@@ -99,7 +83,10 @@
             "groups": [
               {
                 "group": "Getting Started",
-                "pages": ["en/developer/overview", "en/developer/installation"]
+                "pages": [
+                  "en/developer/overview",
+                  "en/developer/installation"
+                ]
               },
               {
                 "group": "Cloud API",
@@ -169,6 +156,16 @@
                 "group": "Introduction",
                 "pages": [
                   "de/manual/introduction/overview",
+                  {
+                    "group": "Architektur",
+                    "expanded": false,
+                    "root": "de/manual/introduction/architecture/overview",
+                    "pages": [
+                      "de/manual/introduction/architecture/controller",
+                      "de/manual/introduction/architecture/serverhost",
+                      "de/manual/introduction/architecture/cli"
+                    ]
+                  },
                   "de/manual/introduction/philosophy",
                   "de/manual/introduction/updates",
                   "de/manual/introduction/faq"
@@ -178,10 +175,12 @@
                 "group": "Setup",
                 "pages": [
                   "de/manual/setup/installation",
-                  "de/manual/setup/groups",
+                  "de/manual/setup/server-groups",
                   "de/manual/setup/persistent-servers",
                   "de/manual/setup/servers",
-                  "de/manual/setup/templates"
+                  "de/manual/setup/templates",
+                  "de/manual/setup/multi-root",
+                  "de/manual/setup/self-hosting"
                 ]
               },
               {
@@ -189,14 +188,6 @@
                 "pages": [
                   "de/manual/configuration/configurators",
                   "de/manual/configuration/workflows"
-                ]
-              },
-              {
-                "group": "Droplets",
-                "pages": [
-                  "de/manual/droplet/overview",
-                  "de/manual/droplet/player",
-                  "de/manual/droplet/resourcepack"
                 ]
               },
               {
@@ -213,26 +204,6 @@
                   "de/manual/plugin/npcs",
                   "de/manual/plugin/placeholders"
                 ]
-              },
-              {
-                "group": "Guides",
-                "pages": [
-                  "de/manual/guide/permissions",
-                  "de/manual/guide/testimonials",
-                  "de/manual/guide/remote-access",
-                  "de/manual/guide/multi-root",
-                  "de/manual/guide/self-hosted-dashboard"
-                ]
-              },
-              {
-                "group": "Architecture",
-                "expanded": false,
-                "pages": [
-                  "de/manual/architecture/overview",
-                  "de/manual/architecture/controller",
-                  "de/manual/architecture/serverhost",
-                  "de/manual/architecture/cli"
-                ]
               }
             ]
           },
@@ -241,7 +212,10 @@
             "groups": [
               {
                 "group": "Getting Started",
-                "pages": ["de/developer/overview", "de/developer/installation"]
+                "pages": [
+                  "de/developer/overview",
+                  "de/developer/installation"
+                ]
               },
               {
                 "group": "Cloud API",
