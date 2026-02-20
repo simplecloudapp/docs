@@ -90,12 +90,78 @@ Deletes a file or directory.
 | Field | Type | Description |
 |-------|------|-------------|
 | `path` | path | File or directory to delete |
-| `force` | boolean | Force deletion (default: `true`) |
+| `force` | boolean | Force deletion of non-empty directories (default: `true`) |
+| `min-age` | duration | Only delete files/directories older than this duration (e.g. `30d`, `12h`, `60m`, `90s`) |
 
 ```yaml
 - action: delete
   path: "{{server-dir}}"
   force: true
+  min-age: "7d"
+```
+
+### `compress`
+
+Compresses a file or directory into an archive.
+
+Supported formats: `.tar.gz`, `.tgz`, `.tar.bz2`, `.tbz2`, `.tar.xz`, `.txz`, `.zip`, `.tar`, `.7z`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `from` | path | Source file or directory to compress |
+| `to` | path | Destination archive path  |
+| `replace` | boolean | Overwrite existing archive (default: `true`) |
+
+```yaml
+- action: compress
+  from: "{{server-dir}}/world"
+  to: "{{cache}}/{{group}}/world.tar.gz"
+  replace: true
+```
+
+### `decompress`
+
+Extracts files from an archive to a destination directory.
+
+Supported formats: `.tar.gz`, `.tgz`, `.tar.bz2`, `.tbz2`, `.tar.xz`, `.txz`, `.zip`, `.tar`, `.7z`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `from` | path | Path to the archive file |
+| `to` | path | Destination directory to extract into |
+| `replace` | boolean | Overwrite existing files (default: `true`) |
+
+```yaml
+- action: decompress
+  from: "{{cache}}/{{group}}/world.tar.gz"
+  to: "{{server-dir}}/world"
+  replace: true
+```
+
+### `upload`
+
+Uploads a file to a remote URL via HTTP.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `from` | path | Path to the local file to upload |
+| `to` | string | Target URL |
+| `method` | string | HTTP method (default: `PUT`) |
+| `authorization-bearer` | string | Bearer token for authorization |
+
+After execution, the following context variables are set:
+
+| Variable | Description |
+|----------|-------------|
+| `upload.response.code` | HTTP response status code |
+| `upload.response.body` | HTTP response body |
+
+```yaml
+- action: upload
+  from: "{{server-dir}}/backup.tar.gz"
+  to: "https://storage.example.com/backups/{{server-name}}.tar.gz"
+  method: PUT
+  authorization-bearer: "{{$.backup-token}}"
 ```
 
 ### `for-each`
@@ -324,5 +390,24 @@ steps:
     1. Check network connectivity to Modrinth/Hangar
     2. Verify plugin exists for your Minecraft version
     3. Check `options/modrinth-platform-mappings.yml`
+  </Accordion>
+
+  <Accordion title="Compress/decompress action fails">
+    **Symptom:** Workflow fails at compress or decompress step.
+
+    **Solution:**
+    1. Verify the archive format is supported (`.tar.gz`, `.zip`, `.7z`, etc.)
+    2. Ensure the source path exists
+    3. Check available disk space at the destination
+  </Accordion>
+
+  <Accordion title="Upload action fails">
+    **Symptom:** Workflow fails at upload step.
+
+    **Solution:**
+    1. Check network connectivity to the target URL
+    2. Verify the bearer token is valid and correctly set
+    3. Inspect the response code via `upload.response.code` context variable
+    4. Ensure the source file exists and is not a directory
   </Accordion>
 </AccordionGroup>
