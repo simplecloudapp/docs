@@ -65,7 +65,6 @@
                 "group": "Plugins",
                 "pages": [
                   "en/manual/plugin/overview",
-                  "en/manual/plugin/server-registration",
                   "en/manual/plugin/server-connection",
                   "en/manual/plugin/cloud-command",
                   "en/manual/plugin/proxy-essentials",
@@ -191,7 +190,6 @@
                 "group": "Plugins",
                 "pages": [
                   "de/manual/plugin/overview",
-                  "de/manual/plugin/server-registration",
                   "de/manual/plugin/server-connection",
                   "de/manual/plugin/cloud-command",
                   "de/manual/plugin/proxy-essentials",
