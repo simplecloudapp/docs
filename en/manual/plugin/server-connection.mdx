@@ -42,23 +42,40 @@ The server connection plugin provides:
 The plugin's configuration file (`config.yml`) supports the following options:
 
 ```yaml
-# Fallback server configuration
-fallback:
-  # Groups to use as fallback servers (in priority order)
-  groups:
-    - "lobby"
-    - "hub"
+version: "1"
 
-  # Behavior when no fallback server is available
-  no-fallback-kick-message: "<red>No fallback server available"
+connections:
+  - name: "lobby"
+    server-name-matcher:
+      operation: "STARTS_WITH"
+      value: "lobby"
 
-# Connection settings
-connection:
-  # Maximum players that can connect simultaneously
-  max-concurrent-connections: 50
+network-join-targets:
+  enabled: true
+  no-target-connection-found-message: "<color:#dc2626>No lobby server is currently available."
+  target-connections:
+    - name: "lobby"
+      priority: 0
 
-  # Delay between connection attempts (milliseconds)
-  connection-delay: 100
+fallback-connections-config:
+  enabled: true
+  no-target-connection-found-message: "<color:#dc2626>You were disconnected because no fallback lobby is available."
+  target-connections:
+    - name: "lobby"
+      priority: 0
+
+commands:
+  - name: "lobby"
+    aliases:
+      - "l"
+      - "hub"
+      - "leave"
+      - "quit"
+    already-connected-message: "<color:#fbbf24>You are already connected to the lobby."
+    no-target-connection-found: "<color:#dc2626>No lobby server is available."
+    target-connections:
+      - name: "lobby"
+        priority: 0
 ```
 
 ## How It Works
