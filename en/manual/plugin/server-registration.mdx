@@ -53,8 +53,14 @@ server-name-pattern: "%GROUP%-%NUMERICAL_ID%"
 #   %ID% - Unique server ID
 #   %NUMERICAL_ID% - Numerical server ID
 
+# Persistent server naming pattern
+persistent-server-name-pattern: "%NAME%"
+# Available placeholders:
+#   %NAME% - Persistent server name
+#   %ID% - Unique server ID
+
 # Ignored server groups
-ignore-server-groups:
+ignore-server-groups-and-persistent-servers:
   - "bedwars"
   - "skywars"
 
