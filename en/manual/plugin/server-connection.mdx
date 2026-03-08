@@ -42,7 +42,7 @@ The plugin:
 
 ### config.yml
 
-The main configuration file. Controls server registration, connection groups, network join routing and fallback behavior.
+The main configuration file. Controls server registration, connections, network join routing and fallback behavior.
 
 ```yaml
 version: '1'
@@ -85,6 +85,8 @@ connections:
         value: lobby
         # If true, inverts the match result.
         negate: false
+    # Rules that must pass before a player can use this connection.
+    # See "Connection Rules" section below for details.
     rules: []
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -121,10 +123,42 @@ The `server-name-matcher` supports the following operations:
 | `CONTAINS`   | Server name contains the value                   | `hub`         |
 | `EQUALS`     | Exact match                                      | `lobby-1`     |
 | `REGEX`      | Full Java regex match                            | `lobby-\d+`   |
-| `PATTERN`    | Glob-style pattern match                         | `lobby-*`     |
+| `PATTERN`    | Glob style pattern match                         | `lobby-*`     |
 | `GREATER_THAN` | Numeric comparison                             | `5`           |
 
 Set `negate: true` to invert any operation e.g. match all servers that do **not** start with `lobby`.
+
+#### Connection Rules
+
+Connections can have rules that must pass before a player is allowed to use them. If a rule fails, the connection is skipped and the next priority is tried. There are two rule types:
+
+**Permission Rule**
+
+Checks whether a player has a specific permission.
+
+```yaml
+rules:
+  - type: PERMISSION
+    name: server.join.vip        # Permission to check
+    value: 'true'                # Expected result (true or false)
+    bypass-permission: rank.admin # Optional: skip this rule if the player has this permission
+```
+
+**Environment Variable Rule**
+
+Checks a system environment variable against a value using a matcher operation.
+
+```yaml
+rules:
+  - type: ENV
+    name: SERVER_STATE           # Environment variable name
+    value: maintenance           # Value to compare against
+    operation: EQUALS            # Any matcher operation (EQUALS, STARTS_WITH, CONTAINS, etc.)
+    negate: true                 # If true, inverts the match result
+    bypass-permission: rank.admin # Optional: skip this rule if the player has this permission
+```
+
+Rules are evaluated in order. If any rule fails and no `bypass-permission` applies, the entire connection is skipped.
 
 #### Priority & Fallback Resolution
 
@@ -160,7 +194,7 @@ commands:
         from: []
 ```
 
-Commands follow the same priority and `from` resolution logic as `network-join-targets` and `fallback`.
+Commands follow the same logic as `network-join-targets` and `fallback`.
 
 ---
 
@@ -173,16 +207,27 @@ version: '1'
 
 # ───────────────────────────────────────────────────────────────────────────────
 # Variables
-# Reusable variables that can be used throughout the messages
-# Usage: <variable_name> will be replaced with the defined value
+# Reusable variables that can be used throughout the messages.
+# Usage: <variable_name> will be replaced with the defined value.
 # ───────────────────────────────────────────────────────────────────────────────
 variables:
     prefix: "<color:#38bdf8><bold>⚡</bold></color>"
 
+# Messages shown when a player is kicked / no server is available
 kick:
-    no-fallback-servers: "<prefix> <color:#dc2626>There is no fallback server available."
-    no-target-connection: "<prefix> <color:#dc2626>You have been disconnected from the network<br>because there are no fallback servers available."
+    no-fallback-servers: "<color:#dc2626>There is no fallback server available."
+    no-target-connection: "<color:#dc2626>You have been disconnected from the network<br>because there are no fallback servers available."
+    permission-denied: "<color:#dc2626>You don't have permission to join this server."
+
+# Messages for the /connection command
+command:
+    command-usage: "<prefix> <color:#ffffff>Usage: /connection reload"
+    config-reloading: "<prefix> <color:#ffffff>Reloading Connection configurations..."
+    config-reloaded-success: "<prefix> <color:#22c55e>Successfully reloaded all Connection configurations."
+    config-reloaded-failed: "<prefix> <color:#dc2626>Failed to reload Connection configurations."
 ```
+
+All messages support [MiniMessage](https://docs.advntr.dev/minimessage/format.html) formatting. Variables defined in `variables` can be used as tags (e.g. `<prefix>`) in any message.
 
 ---
 
@@ -202,4 +247,8 @@ When a player is kicked from a server (e.g. due to a crash or shutdown), the plu
 
 ### Commands
 
-Each command in `commands.yml` resolves its `target-connections` the same way as fallback by priority, with random selection at equal priority and optional `from` filtering.
+Each command in `commands.yml` resolves its `target-connections` the same way as fallback by priority, with optional `from` filtering. If a player is already connected to a matching server, they receive the `already-connected` message instead.
+
+### Server Selection
+
+When multiple servers match a connection, the plugin always picks the server with the **fewest players** (lowest-player-count load balancing).
