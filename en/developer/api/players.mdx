@@ -132,6 +132,15 @@ bar.progress(0.75f);
 player.hideBossBar(bar);
 ```
 
+### Player List Header & Footer
+
+```java
+player.sendPlayerListHeaderAndFooter(
+    Component.text("My Server").color(NamedTextColor.GOLD),
+    Component.text("play.example.com").color(NamedTextColor.GRAY)
+);
+```
+
 For more detailed examples in both Java and Kotlin, see [Adventure Integration](/en/developer/droplets/player/adventure-integration).
 
 ## CloudPlayer Model
@@ -140,8 +149,15 @@ For more detailed examples in both Java and Kotlin, see [Adventure Integration](
 |----------|------|-------------|
 | `uniqueId` | `UUID` | Player's UUID |
 | `name` | `String` | Player's username |
+| `displayName` | `String` | Player's display name |
 | `connectedServerName` | `String` | Current server name |
 | `connectedProxyName` | `String` | Connected proxy name |
+| `online` | `boolean` | Whether the player is currently online |
+| `onlineTimeSeconds` | `long` | Accumulated online time in seconds |
+| `sessionId` | `String` | Active session ID, null if unavailable |
+| `firstSeen` | `String` | First login timestamp (ISO-8601) |
+| `lastSeen` | `String` | Last login timestamp (ISO-8601) |
+| `properties` | `Map<String, String>` | Player's properties |
 
 ## ConnectResult
 
