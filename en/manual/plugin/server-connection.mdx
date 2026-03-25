@@ -104,12 +104,12 @@ network-join-targets:
 # Defines where players are sent when their current server becomes unavailable.
 # ─────────────────────────────────────────────────────────────────────────────
 fallback:
-    enabled: true
-    target-connections:
-      - name: lobby
-        priority: 0
-        # Optional: only use this fallback if the player is coming from one of these servers.
-        from: []
+  enabled: true
+  target-connections:
+    - name: lobby
+      priority: 0
+      # Optional: only use this fallback if the player is coming from one of these servers.
+      from: []
 ```
 
 #### Matcher Operations
@@ -197,57 +197,3 @@ commands:
 Commands follow the same logic as `network-join-targets` and `fallback`.
 
 ---
-
-### messages.yml
-
-Configures all plugin messages. Supports MiniMessage formatting and reusable variables.
-
-```yaml
-version: '1'
-
-# ───────────────────────────────────────────────────────────────────────────────
-# Variables
-# Reusable variables that can be used throughout the messages.
-# Usage: <variable_name> will be replaced with the defined value.
-# ───────────────────────────────────────────────────────────────────────────────
-variables:
-    prefix: "<color:#38bdf8><bold>⚡</bold></color>"
-
-# Messages shown when a player is kicked / no server is available
-kick:
-    no-fallback-servers: "<color:#dc2626>There is no fallback server available."
-    no-target-connection: "<color:#dc2626>You have been disconnected from the network<br>because there are no fallback servers available."
-
-# Messages for the /connection command
-command:
-    command-usage: "<prefix> <color:#ffffff>Usage: /connection reload"
-    config-reloading: "<prefix> <color:#ffffff>Reloading Connection configurations..."
-    config-reloaded-success: "<prefix> <color:#22c55e>Successfully reloaded all Connection configurations."
-    config-reloaded-failed: "<prefix> <color:#dc2626>Failed to reload Connection configurations."
-```
-
-All messages support [MiniMessage](https://docs.papermc.io/adventure/minimessage/format/) formatting. Variables defined in `variables` can be used as tags (e.g. `<prefix>`) in any message.
-
----
-
-## How It Works
-
-### Server Registration
-
-When a SimpleCloud server changes its state to `AVAILABLE`, the plugin registers it on the proxy using the configured `server-name-pattern`. When a server stops, it is automatically unregistered.
-
-### Network Join
-
-When a player connects to the proxy, the plugin evaluates `network-join-targets` top down by priority and sends the player to the first available matching server.
-
-### Fallback
-
-When a player is kicked from a server (e.g. due to a crash or shutdown), the plugin evaluates `fallback.target-connections` and redirects the player. The optional `from` filter allows different fallback paths depending on which server the player was on. If no fallback server is found, the player is disconnected with the configured message from `messages.yml`.
-
-### Commands
-
-Each command in `commands.yml` resolves its `target-connections` the same way as fallback by priority, with optional `from` filtering. If a player is already connected to a matching server, they receive the `already-connected` message instead.
-
-### Server Selection
-
-When multiple servers match a connection, the plugin always picks the server with the **fewest players** (lowest-player-count load balancing).
