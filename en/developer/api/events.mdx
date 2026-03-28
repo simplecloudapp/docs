@@ -16,12 +16,20 @@ The Events API lets you react to changes in your network in real-time. Access it
 
 ## Server Events
 
+Server events fire for both group-based servers and persistent servers. When a persistent server triggers the event, `persistentServerId` is populated and `groupName` is empty. When a group server triggers the event, `groupName` is populated and `persistentServerId` is empty.
+
 ### Server Started
 
 ```java
 Subscription sub = api.event().server().onStarted(event -> {
     System.out.println("Server started: " + event.getServerId());
-    System.out.println("Group: " + event.getGroupName());
+
+    // Check whether this is a group or persistent server
+    if (event.getPersistentServerId() != null && !event.getPersistentServerId().isEmpty()) {
+        System.out.println("Persistent server: " + event.getPersistentServerId());
+    } else {
+        System.out.println("Group: " + event.getGroupName());
+    }
 });
 ```
 
@@ -174,11 +182,15 @@ public class MyPlugin extends JavaPlugin {
 
 | Event | Properties |
 |-------|------------|
-| `ServerStartedEvent` | `serverId`, `groupName` |
-| `ServerStoppedEvent` | `serverId`, `groupName` |
+| `ServerStartedEvent` | `serverId`, `groupName`, `persistentServerId` |
+| `ServerStoppedEvent` | `serverId`, `groupName`, `persistentServerId` |
 | `ServerStateChangedEvent` | `serverId`, `oldState`, `newState` |
 | `ServerUpdatedEvent` | `serverId` |
 | `ServerDeletedEvent` | `serverId` |
+
+<Note>
+`ServerStartedEvent` and `ServerStoppedEvent` fire for both group servers and persistent servers. For persistent servers, `persistentServerId` is set and `groupName` is empty. For group servers, `groupName` is set and `persistentServerId` is empty.
+</Note>
 
 ### Group Events
 

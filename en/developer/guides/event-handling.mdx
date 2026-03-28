@@ -147,6 +147,8 @@ private void syncDataToServer(String serverId) {
 
 ### Filter by Group
 
+Server events fire for both group servers and persistent servers. When filtering by group name, persistent server events have an empty `groupName` and are skipped automatically.
+
 ```java
 public void watchGroup(String groupName) {
     api.event().server().onStarted(event -> {

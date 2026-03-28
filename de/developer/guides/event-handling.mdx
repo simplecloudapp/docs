@@ -122,6 +122,8 @@ private void notifyStaff(Component message) {
 
 ### Nach Gruppe filtern
 
+Server Events werden sowohl für Gruppen-Server als auch für persistente Server ausgelöst. Beim Filtern nach Gruppenname haben persistente Server Events einen leeren `groupName` und werden automatisch übersprungen.
+
 ```java
 public void watchGroup(String groupName) {
     api.event().server().onStarted(event -> {
