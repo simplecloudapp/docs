@@ -72,6 +72,15 @@ registration:
     #     port: 25565
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Subdomain Routing
+# Routes players to a connection based on the hostname they connected with.
+# ─────────────────────────────────────────────────────────────────────────────
+address:
+  routes:
+    - subdomain: 'build.example.com'
+      target-connection: build
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Connections
 # Named groups that reference a set of servers by a name matcher.
 # These are referenced by network-join-targets, fallback and commands.yml.
