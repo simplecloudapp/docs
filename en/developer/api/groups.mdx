@@ -100,6 +100,25 @@ Properties are available in servers as environment variables prefixed with `SIMP
 | `deploymentConfig` | `DeploymentConfig` | Host deployment settings |
 | `sourceConfig` | `SourceConfig` | Blueprint or image source |
 
+## ScalingConfig
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `min_servers` | `int` | Minimum servers to keep running |
+| `max_servers` | `int` | Maximum servers allowed |
+| `scaling_mode` | `ScalingMode` | `SLOTS` or `SERVERS` |
+| `start_policy` | `StartPolicy` | When the reconciler may start new servers. Either `immediate` or `when_deleted`. Defaults to `immediate` for Server groups and `when_deleted` for Proxy groups. |
+| `available_slots` | `int` | Open slots to maintain (Slots mode) |
+| `player_threshold` | `float` | Scale-up threshold between 0 and 1 |
+| `scale_down` | `ScaleDownConfig` | Scale-down behavior settings |
+
+## StartPolicy
+
+| Value | Description |
+|-------|-------------|
+| `immediate` | Start new servers as soon as scaling rules require them (default for Server groups) |
+| `when_deleted` | Only start a new server after an existing one is deleted (default for Proxy groups) |
+
 ## GroupServerType
 
 | Value | Description |

@@ -49,6 +49,7 @@ Scale based on total available player slots:
 ```yaml
 scaling:
   mode: SLOTS
+  start_policy: immediate
   min_servers: 1
   max_servers: 5
   player_threshold: 0.8  # Scale up when 80% full
@@ -61,9 +62,21 @@ Maintain a fixed number of servers:
 ```yaml
 scaling:
   mode: SERVER
+  start_policy: immediate
   min_servers: 2
   max_servers: 2
 ```
+
+### Start policy
+
+The `start_policy` field controls when the reconciler starts new servers:
+
+| Value | Behavior | Default for |
+|-------|----------|-------------|
+| `immediate` | Start new servers as soon as scaling rules require them | Server groups |
+| `when_deleted` | Only start a new server after an existing one is deleted | Proxy groups |
+
+If omitted, the controller automatically applies `immediate` for Server groups and `when_deleted` for Proxy groups.
 
 ## High Availability
 
