@@ -93,6 +93,68 @@ Properties sind in Servern als Umgebungsvariablen mit `SIMPLECLOUD_` Präfix ver
 | `maxOnlineCount` | `int` | Maximale erlaubte Server |
 | `properties` | `Map<String, String>` | Eigene Metadaten |
 
+## Server-Start-Warteschlange
+
+Gruppen mit dem Skalierungsmodus `SERVERS` unterstützen eine manuelle Start-Warteschlange. Anstatt einen Server sofort zu starten, kannst du eine Start-Anfrage in die Warteschlange einreihen, die der Reconciler beim nächsten Tick verarbeitet. Dies ist nützlich, wenn du genau kontrollieren möchtest, wann neue Server erstellt werden, während das `max_servers`-Limit der Gruppe eingehalten wird.
+
+<Info>
+  Die Start-Warteschlange ist nur für Gruppen mit dem Skalierungsmodus `SERVERS` verfügbar. Gruppen mit dem Modus `SLOTS` unterstützen keine Warteschlangen-Starts.
+</Info>
+
+### Server-Start einreihen
+
+Du kannst einen Start über die Gruppen-ID oder den Gruppennamen (oder beides) einreihen:
+
+```java
+// Start nach Gruppenname einreihen
+api.group().queueServerStart("lobby")
+    .thenAccept(response -> System.out.println(
+        "Eingereiht: " + response.getQueuedStarts()));
+
+// Start nach Gruppen-ID einreihen
+api.group().queueServerStart("group-uuid")
+    .thenAccept(response -> System.out.println(
+        "Eingereiht: " + response.getQueuedStarts()));
+```
+
+Der Reconciler verarbeitet eingereihte Starts beim nächsten Reconciliation-Tick und versucht, einen Server zuzuweisen. Wenn die Gruppe ihr `max_servers`-Limit erreicht hat, wird der eingereihte Start als `failed` mit einem Grund markiert.
+
+### Eingereihte Starts auflisten
+
+```java
+api.group().listQueuedStarts()
+    .thenAccept(response -> {
+        System.out.println("Wartend: " + response.getQueuedStarts());
+        System.out.println("Fehlgeschlagen: " + response.getFailedStarts());
+        response.getItems().forEach(entry ->
+            System.out.println(entry.getServerGroupName() + ": " +
+                entry.getQueuedStarts() + " wartend"));
+    });
+```
+
+### Eingereihte Starts löschen
+
+Alle ausstehenden und fehlgeschlagenen Starts einer bestimmten Gruppe entfernen:
+
+```java
+api.group().clearQueuedStarts("group-uuid")
+    .thenAccept(response -> System.out.println(
+        "Warteschlange geleert für: " + response.getServerGroupName()));
+```
+
+### Start-Warteschlangen-Eintrag
+
+| Property | Typ | Beschreibung |
+|----------|-----|--------------|
+| `id` | `String` | Eindeutige Kennung des eingereihten Starts |
+| `created_at` | `String` | Zeitstempel der Einreihung (ISO 8601) |
+| `status` | `String` | `pending` oder `failed` |
+| `failure_reason` | `String?` | Grund des Fehlschlags, falls zutreffend |
+
+<Warning>
+  Fehlgeschlagene Starts werden nach 1 Stunde automatisch bereinigt. Verwende den List-Endpunkt, um auf Fehler zu prüfen und bei Bedarf neu einzureihen.
+</Warning>
+
 ## GroupServerType
 
 | Wert | Beschreibung |
