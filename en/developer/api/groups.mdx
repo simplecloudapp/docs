@@ -111,6 +111,68 @@ Properties are available in servers as environment variables prefixed with `SIMP
 | `player_threshold` | `float` | Scale-up threshold between 0 and 1 |
 | `scale_down` | `ScaleDownConfig` | Scale-down behavior settings |
 
+## Server start queue
+
+Groups using the `SERVERS` scaling mode support a manual start queue. Instead of starting a server immediately, you can enqueue a start request that the reconciler processes on its next tick. This is useful when you want to control exactly when new servers are created while still respecting the group's `max_servers` limit.
+
+<Info>
+  The start queue is only available for groups using the `SERVERS` scaling mode. Groups using `SLOTS` mode do not support queued starts.
+</Info>
+
+### Queue a server start
+
+You can queue a start by specifying either the group ID or the group name (or both):
+
+```java
+// Queue a start by group name
+api.group().queueServerStart("lobby")
+    .thenAccept(response -> System.out.println(
+        "Queued starts: " + response.getQueuedStarts()));
+
+// Queue a start by group ID
+api.group().queueServerStart("group-uuid")
+    .thenAccept(response -> System.out.println(
+        "Queued starts: " + response.getQueuedStarts()));
+```
+
+The reconciler picks up queued starts on the next reconciliation tick and attempts to allocate a server. If the group is at its `max_servers` limit, the queued start is marked as `failed` with a reason.
+
+### List queued starts
+
+```java
+api.group().listQueuedStarts()
+    .thenAccept(response -> {
+        System.out.println("Total queued: " + response.getQueuedStarts());
+        System.out.println("Total failed: " + response.getFailedStarts());
+        response.getItems().forEach(entry ->
+            System.out.println(entry.getServerGroupName() + ": " +
+                entry.getQueuedStarts() + " queued"));
+    });
+```
+
+### Clear queued starts
+
+Remove all pending and failed starts for a specific group:
+
+```java
+api.group().clearQueuedStarts("group-uuid")
+    .thenAccept(response -> System.out.println(
+        "Cleared queue for: " + response.getServerGroupName()));
+```
+
+### Start queue entry model
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `String` | Unique identifier for the queued start |
+| `created_at` | `String` | Timestamp when the start was queued (ISO 8601) |
+| `status` | `String` | Either `pending` or `failed` |
+| `failure_reason` | `String?` | Reason for failure, if applicable |
+
+<Warning>
+  Failed starts are automatically cleaned up after 1 hour. Use the list endpoint to check for failures and requeue if needed.
+</Warning>
+
 ## GroupServerType
 
 | Value | Description |
