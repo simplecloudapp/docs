@@ -113,7 +113,7 @@ Properties are available in servers as environment variables prefixed with `SIMP
 
 ## Server start queue
 
-Groups using the `SERVERS` scaling mode support a manual start queue. Instead of starting a server immediately, you can enqueue a start request that the reconciler processes on its next tick. This is useful when you want to control exactly when new servers are created while still respecting the group's `max_servers` limit.
+Groups using the `SERVERS` scaling mode support a manual start queue. Instead of starting a server immediately, you can request a queued start that the reconciler processes on its next tick. This is useful when you want to control exactly when new servers are created while still respecting the group's `max_servers` limit.
 
 <Info>
   The start queue is only available for groups using the `SERVERS` scaling mode. Groups using `SLOTS` mode do not support queued starts.
@@ -121,32 +121,40 @@ Groups using the `SERVERS` scaling mode support a manual start queue. Instead of
 
 ### Queue a server start
 
-You can queue a start by specifying either the group ID or the group name (or both):
+You can request a start by passing the server group ID directly or by resolving a `Group` first:
 
 ```java
-// Queue a start by group name
-api.group().queueServerStart("lobby")
-    .thenAccept(response -> System.out.println(
-        "Queued starts: " + response.getQueuedStarts()));
+// Request a start by server group ID
+api.group().requestServerStart("group-uuid")
+    .thenRun(() -> System.out.println("Start request accepted"));
 
-// Queue a start by group ID
-api.group().queueServerStart("group-uuid")
-    .thenAccept(response -> System.out.println(
-        "Queued starts: " + response.getQueuedStarts()));
+// Request a start using the Group overload
+api.group().getGroupByName("lobby")
+    .thenCompose(group -> {
+        if (group == null) {
+            return CompletableFuture.failedFuture(
+                new IllegalArgumentException("Group not found: lobby"));
+        }
+        return api.group().requestServerStart(group);
+    })
+    .thenRun(() -> System.out.println("Start request accepted for lobby"));
 ```
 
-The reconciler picks up queued starts on the next reconciliation tick and attempts to allocate a server. If the group is at its `max_servers` limit, the queued start is marked as `failed` with a reason.
+The reconciler picks up queued starts on the next reconciliation tick and attempts to allocate a server. If the group is at its `max_servers` limit, the queued start is marked as `FAILED` with a reason.
 
 ### List queued starts
 
 ```java
-api.group().listQueuedStarts()
-    .thenAccept(response -> {
-        System.out.println("Total queued: " + response.getQueuedStarts());
-        System.out.println("Total failed: " + response.getFailedStarts());
-        response.getItems().forEach(entry ->
-            System.out.println(entry.getServerGroupName() + ": " +
-                entry.getQueuedStarts() + " queued"));
+api.group().getServerStartQueue()
+    .thenAccept(queue -> {
+        System.out.println("Groups with queue data: " + queue.getCount());
+        System.out.println("Queued starts: " + queue.getQueuedStarts());
+        System.out.println("Failed starts: " + queue.getFailedStarts());
+
+        GroupStartQueueEntry lobby = queue.findByServerGroupName("lobby");
+        if (lobby != null) {
+            System.out.println("Lobby starts: " + lobby.getTotalStarts());
+        }
     });
 ```
 
@@ -155,19 +163,45 @@ api.group().listQueuedStarts()
 Remove all pending and failed starts for a specific group:
 
 ```java
-api.group().clearQueuedStarts("group-uuid")
-    .thenAccept(response -> System.out.println(
-        "Cleared queue for: " + response.getServerGroupName()));
+api.group().clearServerStartQueue("group-uuid")
+    .thenRun(() -> System.out.println("Cleared queue for group-uuid"));
 ```
 
-### Start queue entry model
+### Queue overview model
+
+`getServerStartQueue()` returns a `GroupStartQueue`.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `count` | `int` | Number of groups with queue data |
+| `queuedStarts` | `int` | Number of queued starts across all groups |
+| `failedStarts` | `int` | Number of failed starts across all groups |
+| `totalStarts` | `int` | Total number of queue items across all groups |
+| `items` | `List<GroupStartQueueEntry>` | Queue data grouped by server group |
+
+### Queue entry model
+
+Each `GroupStartQueueEntry` describes the queue state for one server group.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `serverGroupId` | `String?` | Server group ID |
+| `serverGroupName` | `String?` | Server group name |
+| `queuedStarts` | `int` | Number of pending starts for the group |
+| `failedStarts` | `int` | Number of failed starts for the group |
+| `totalStarts` | `int` | Total number of queue items for the group |
+| `starts` | `List<GroupStartQueueItem>` | Persisted queue items for the group |
+
+### Queue item model
+
+Each `GroupStartQueueItem` represents one persisted start request.
 
 | Property | Type | Description |
 |----------|------|-------------|
 | `id` | `String` | Unique identifier for the queued start |
-| `created_at` | `String` | Timestamp when the start was queued (ISO 8601) |
-| `status` | `String` | Either `pending` or `failed` |
-| `failure_reason` | `String?` | Reason for failure, if applicable |
+| `createdAt` | `String?` | Timestamp when the start was queued (ISO 8601) |
+| `status` | `GroupStartQueueItemStatus` | `PENDING`, `FAILED`, or `UNKNOWN` |
+| `failureReason` | `String?` | Reason for failure, if applicable |
 
 <Warning>
   Failed starts are automatically cleaned up after 1 hour. Use the list endpoint to check for failures and requeue if needed.

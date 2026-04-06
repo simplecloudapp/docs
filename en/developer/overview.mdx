@@ -45,9 +45,16 @@ api.server().getServersByGroup("lobby").thenAccept(servers -> {
     System.out.println("Lobby servers: " + servers.size());
 });
 
-// Start a new server
-api.server().startServer(new StartServerRequest("group-id", "lobby"))
-    .thenAccept(server -> System.out.println("Started: " + server.getServerId()));
+// Request a new server start for a group
+api.group().getGroupByName("lobby")
+    .thenCompose(group -> {
+        if (group == null) {
+            return CompletableFuture.failedFuture(
+                new IllegalArgumentException("Group not found: lobby"));
+        }
+        return api.group().requestServerStart(group);
+    })
+    .thenRun(() -> System.out.println("Start request accepted for lobby"));
 
 // Send a message to a player (Adventure integration)
 api.player().get(playerUUID).thenAccept(player -> {
@@ -73,9 +80,12 @@ val api = CloudApi.create()
 val servers = api.server().getServersByGroup("lobby").await()
 println("Lobby servers: ${servers.size}")
 
-// Start a new server
-val server = api.server().startServer(StartServerRequest("group-id", "lobby")).await()
-println("Started: ${server.serverId}")
+// Request a new server start for a group
+val group = api.group().getGroupByName("lobby").await()
+requireNotNull(group) { "Group not found: lobby" }
+
+api.group().requestServerStart(group).await()
+println("Start request accepted for lobby")
 
 // Send a message to a player (Adventure integration)
 api.player().get(playerUUID).await()?.let { player ->
