@@ -16,197 +16,211 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "languages": [
+    "products": [
       {
-        "language": "en",
-        "tabs": [
+        "product": "Documentation",
+        "description": "Core API description",
+        "languages": [
           {
-            "tab": "Manual",
-            "groups": [
+            "language": "en",
+            "tabs": [
               {
-                "group": "Introduction",
-                "pages": [
-                  "en/manual/introduction/overview",
+                "tab": "Manual",
+                "groups": [
                   {
-                    "group": "Architecture",
-                    "expanded": false,
-                    "root": "en/manual/introduction/architecture/overview",
+                    "group": "Introduction",
                     "pages": [
-                      "en/manual/introduction/architecture/controller",
-                      "en/manual/introduction/architecture/serverhost",
-                      "en/manual/introduction/architecture/cli"
+                      "en/manual/introduction/overview",
+                      {
+                        "group": "Architecture",
+                        "expanded": false,
+                        "root": "en/manual/introduction/architecture/overview",
+                        "pages": [
+                          "en/manual/introduction/architecture/controller",
+                          "en/manual/introduction/architecture/serverhost",
+                          "en/manual/introduction/architecture/cli"
+                        ]
+                      },
+                      "en/manual/introduction/philosophy",
+                      "en/manual/introduction/updates",
+                      "en/manual/introduction/faq"
                     ]
                   },
-                  "en/manual/introduction/philosophy",
-                  "en/manual/introduction/updates",
-                  "en/manual/introduction/faq"
+                  {
+                    "group": "Setup",
+                    "pages": [
+                      "en/manual/setup/installation",
+                      "en/manual/setup/server-groups",
+                      "en/manual/setup/persistent-servers",
+                      "en/manual/setup/servers",
+                      "en/manual/setup/templates",
+                      "en/manual/setup/multi-root",
+                      "en/manual/setup/self-hosting"
+                    ]
+                  },
+                  {
+                    "group": "Configuration",
+                    "pages": [
+                      "en/manual/configuration/configurators",
+                      "en/manual/configuration/workflows"
+                    ]
+                  },
+                  {
+                    "group": "Plugins",
+                    "pages": [
+                      "en/manual/plugin/overview",
+                      "en/manual/plugin/server-registration",
+                      "en/manual/plugin/server-connection",
+                      "en/manual/plugin/cloud-command",
+                      "en/manual/plugin/proxy-essentials",
+                      "en/manual/plugin/notify",
+                      "en/manual/plugin/prefixes",
+                      "en/manual/plugin/signs",
+                      "en/manual/plugin/npcs",
+                      "en/manual/plugin/placeholders"
+                    ]
+                  }
                 ]
               },
               {
-                "group": "Setup",
-                "pages": [
-                  "en/manual/setup/installation",
-                  "en/manual/setup/server-groups",
-                  "en/manual/setup/persistent-servers",
-                  "en/manual/setup/servers",
-                  "en/manual/setup/templates",
-                  "en/manual/setup/multi-root",
-                  "en/manual/setup/self-hosting"
-                ]
-              },
-              {
-                "group": "Configuration",
-                "pages": [
-                  "en/manual/configuration/configurators",
-                  "en/manual/configuration/workflows"
-                ]
-              },
-              {
-                "group": "Plugins",
-                "pages": [
-                  "en/manual/plugin/overview",
-                  "en/manual/plugin/server-registration",
-                  "en/manual/plugin/server-connection",
-                  "en/manual/plugin/cloud-command",
-                  "en/manual/plugin/proxy-essentials",
-                  "en/manual/plugin/notify",
-                  "en/manual/plugin/prefixes",
-                  "en/manual/plugin/signs",
-                  "en/manual/plugin/npcs",
-                  "en/manual/plugin/placeholders"
+                "tab": "Developer",
+                "groups": [
+                  {
+                    "group": "Getting Started",
+                    "pages": [
+                      "en/developer/overview",
+                      "en/developer/installation"
+                    ]
+                  },
+                  {
+                    "group": "Cloud API",
+                    "pages": [
+                      "en/developer/api/groups",
+                      "en/developer/api/servers",
+                      "en/developer/api/players",
+                      "en/developer/api/events"
+                    ]
+                  },
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "en/developer/guides/player-transfer",
+                      "en/developer/guides/server-management",
+                      "en/developer/guides/event-handling"
+                    ]
+                  },
+                  {
+                    "group": "REST API Reference",
+                    "openapi": {
+                      "source": "https://controller.platform.simplecloud.app/swagger/doc.json",
+                      "directory": "en/developer/api-reference"
+                    }
+                  }
                 ]
               }
             ]
           },
           {
-            "tab": "Developer",
-            "groups": [
+            "language": "de",
+            "tabs": [
               {
-                "group": "Getting Started",
-                "pages": [
-                  "en/developer/overview",
-                  "en/developer/installation"
+                "tab": "Manual",
+                "groups": [
+                  {
+                    "group": "Introduction",
+                    "pages": [
+                      "de/manual/introduction/overview",
+                      {
+                        "group": "Architektur",
+                        "expanded": false,
+                        "root": "de/manual/introduction/architecture/overview",
+                        "pages": [
+                          "de/manual/introduction/architecture/controller",
+                          "de/manual/introduction/architecture/serverhost",
+                          "de/manual/introduction/architecture/cli"
+                        ]
+                      },
+                      "de/manual/introduction/philosophy",
+                      "de/manual/introduction/updates",
+                      "de/manual/introduction/faq"
+                    ]
+                  },
+                  {
+                    "group": "Setup",
+                    "pages": [
+                      "de/manual/setup/installation",
+                      "de/manual/setup/server-groups",
+                      "de/manual/setup/persistent-servers",
+                      "de/manual/setup/servers",
+                      "de/manual/setup/templates",
+                      "de/manual/setup/multi-root",
+                      "de/manual/setup/self-hosting"
+                    ]
+                  },
+                  {
+                    "group": "Configuration",
+                    "pages": [
+                      "de/manual/configuration/configurators",
+                      "de/manual/configuration/workflows"
+                    ]
+                  },
+                  {
+                    "group": "Plugins",
+                    "pages": [
+                      "de/manual/plugin/overview",
+                      "de/manual/plugin/server-registration",
+                      "de/manual/plugin/server-connection",
+                      "de/manual/plugin/cloud-command",
+                      "de/manual/plugin/proxy-essentials",
+                      "de/manual/plugin/notify",
+                      "de/manual/plugin/prefixes",
+                      "de/manual/plugin/signs",
+                      "de/manual/plugin/npcs",
+                      "de/manual/plugin/placeholders"
+                    ]
+                  }
                 ]
               },
               {
-                "group": "Cloud API",
-                "pages": [
-                  "en/developer/api/groups",
-                  "en/developer/api/servers",
-                  "en/developer/api/players",
-                  "en/developer/api/events"
+                "tab": "Developer",
+                "groups": [
+                  {
+                    "group": "Getting Started",
+                    "pages": [
+                      "de/developer/overview",
+                      "de/developer/installation"
+                    ]
+                  },
+                  {
+                    "group": "Cloud API",
+                    "pages": [
+                      "de/developer/api/groups",
+                      "de/developer/api/servers",
+                      "de/developer/api/players",
+                      "de/developer/api/events"
+                    ]
+                  },
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "de/developer/guides/player-transfer",
+                      "de/developer/guides/server-management",
+                      "de/developer/guides/event-handling"
+                    ]
+                  }
                 ]
-              },
-              {
-                "group": "Guides",
-                "pages": [
-                  "en/developer/guides/player-transfer",
-                  "en/developer/guides/server-management",
-                  "en/developer/guides/event-handling"
-                ]
-              },
-              {
-                "group": "REST API Reference",
-                "openapi": {
-                  "source": "https://controller.platform.simplecloud.app/swagger/doc.json",
-                  "directory": "en/developer/api-reference"
-                }
               }
             ]
           }
         ]
       },
       {
-        "language": "de",
-        "tabs": [
-          {
-            "tab": "Manual",
-            "groups": [
-              {
-                "group": "Introduction",
-                "pages": [
-                  "de/manual/introduction/overview",
-                  {
-                    "group": "Architektur",
-                    "expanded": false,
-                    "root": "de/manual/introduction/architecture/overview",
-                    "pages": [
-                      "de/manual/introduction/architecture/controller",
-                      "de/manual/introduction/architecture/serverhost",
-                      "de/manual/introduction/architecture/cli"
-                    ]
-                  },
-                  "de/manual/introduction/philosophy",
-                  "de/manual/introduction/updates",
-                  "de/manual/introduction/faq"
-                ]
-              },
-              {
-                "group": "Setup",
-                "pages": [
-                  "de/manual/setup/installation",
-                  "de/manual/setup/server-groups",
-                  "de/manual/setup/persistent-servers",
-                  "de/manual/setup/servers",
-                  "de/manual/setup/templates",
-                  "de/manual/setup/multi-root",
-                  "de/manual/setup/self-hosting"
-                ]
-              },
-              {
-                "group": "Configuration",
-                "pages": [
-                  "de/manual/configuration/configurators",
-                  "de/manual/configuration/workflows"
-                ]
-              },
-              {
-                "group": "Plugins",
-                "pages": [
-                  "de/manual/plugin/overview",
-                  "de/manual/plugin/server-registration",
-                  "de/manual/plugin/server-connection",
-                  "de/manual/plugin/cloud-command",
-                  "de/manual/plugin/proxy-essentials",
-                  "de/manual/plugin/notify",
-                  "de/manual/plugin/prefixes",
-                  "de/manual/plugin/signs",
-                  "de/manual/plugin/npcs",
-                  "de/manual/plugin/placeholders"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Developer",
-            "groups": [
-              {
-                "group": "Getting Started",
-                "pages": [
-                  "de/developer/overview",
-                  "de/developer/installation"
-                ]
-              },
-              {
-                "group": "Cloud API",
-                "pages": [
-                  "de/developer/api/groups",
-                  "de/developer/api/servers",
-                  "de/developer/api/players",
-                  "de/developer/api/events"
-                ]
-              },
-              {
-                "group": "Guides",
-                "pages": [
-                  "de/developer/guides/player-transfer",
-                  "de/developer/guides/server-management",
-                  "de/developer/guides/event-handling"
-                ]
-              }
-            ]
-          }
-        ]
+        "product": "Changelogs",
+        "description": "Core API description"
+      },
+      {
+        "product": "Troubleshooting",
+        "description": "Core API description"
       }
     ]
   },
@@ -216,6 +230,10 @@
   },
   "navbar": {
     "links": [
+      {
+        "label": "Changelogs",
+        "href": "/changelogs/changelog"
+      },
       {
         "label": "Discord",
         "href": "https://discord.simplecloud.app"
