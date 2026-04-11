@@ -113,6 +113,18 @@
                 }
               }
             ]
+          },
+          {
+            "tab": "Changelogs",
+            "groups": [
+              {
+                "group": "Releases",
+                "pages": [
+                  "en/changelogs/platform",
+                  "en/changelogs/plugins"
+                ]
+              }
+            ]
           }
         ]
       },
@@ -202,6 +214,18 @@
                   "de/developer/guides/player-transfer",
                   "de/developer/guides/server-management",
                   "de/developer/guides/event-handling"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Changelogs",
+            "groups": [
+              {
+                "group": "Releases",
+                "pages": [
+                  "de/changelogs/platform",
+                  "de/changelogs/plugins"
                 ]
               }
             ]
