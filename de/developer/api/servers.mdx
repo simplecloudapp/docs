@@ -57,6 +57,35 @@ api.server().updateServer("server-uuid", update)
     .thenAccept(server -> System.out.println("Aktualisiert: " + server.getMaxPlayers()));
 ```
 
+## Server-Datensatz löschen
+
+Um einen Server-Datensatz direkt aus der Datenbank zu entfernen, ohne den Prozess zu stoppen oder Lifecycle-Events auszulösen, verwende den REST-API-Endpunkt `DELETE /v0/servers/database`. Dies ist nützlich, um veraltete oder verwaiste Datensätze zu bereinigen, wenn der Serverprozess bereits beendet wurde.
+
+<Warning>
+Diese Operation entfernt nur den Datenbankeintrag. Sie stoppt nicht den Serverprozess, löst keine Cleanup-Workflows aus und sendet keine Events. Verwende `stopServer` für normales Herunterfahren.
+</Warning>
+
+```bash
+curl -X DELETE "https://your-controller/v0/servers/database?server_id=SERVER_UUID" \
+  -H "X-Network-ID: your-network-id" \
+  -H "X-Network-Secret: your-network-secret"
+```
+
+**Antwort:**
+
+```json
+{
+  "server_id": "123e4567-e89b-12d3-a456-426614174000",
+  "message": "Server row deleted successfully"
+}
+```
+
+| Parameter | Ort | Erforderlich | Beschreibung |
+|-----------|-----|--------------|--------------|
+| `server_id` | Query | Ja | UUID des zu löschenden Server-Datensatzes |
+| `X-Network-ID` | Header | Ja | Deine Netzwerk-ID |
+| `X-Network-Secret` | Header | Ja | Dein Netzwerk-Secret |
+
 ## Server Model
 
 | Property | Typ | Beschreibung |
