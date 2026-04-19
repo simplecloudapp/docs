@@ -93,6 +93,7 @@
                 "pages": [
                   "en/developer/api/groups",
                   "en/developer/api/servers",
+                  "en/developer/api/persistent-servers",
                   "en/developer/api/players",
                   "en/developer/api/events"
                 ]
@@ -108,7 +109,7 @@
               {
                 "group": "REST API Reference",
                 "openapi": {
-                  "source": "https://controller.platform.simplecloud.app/swagger/doc.json",
+                  "source": "https://controller.simplecloud.app/swagger/doc.json",
                   "directory": "en/developer/api-reference"
                 }
               }
