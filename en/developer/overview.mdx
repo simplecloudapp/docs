@@ -3,16 +3,18 @@ title: 'Cloud API'
 description: 'Build integrations with SimpleCloud using our Java/Kotlin API'
 ---
 
-The Cloud API is a Java library for interacting with your SimpleCloud network programmatically. Use it to manage groups, servers, players, and react to events in real-time.
+The Cloud API is a Java library for interacting with your SimpleCloud network programmatically. Use it to manage groups, servers, players, persistent servers, and react to events in real-time.
 
 ## API Architecture
 
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `api.group()` | `GroupApi` | Create, read, update, delete groups |
-| `api.server()` | `ServerApi` | Start, stop, query servers |
+| `api.server()` | `ServerApi` | Query, stop, update server instances |
+| `api.persistentServer()` | `PersistentServerApi` | Create, read, update, delete persistent servers |
 | `api.player()` | `PlayerApi` | Player data, connections, messaging |
 | `api.event()` | `EventApi` | Subscribe to real-time events |
+| `api.cache()` | `QueryCache` | Manual cache inspection and invalidation |
 
 ### Event API Subcategories
 
@@ -25,11 +27,12 @@ The Cloud API is a Java library for interacting with your SimpleCloud network pr
 
 ## Key Features
 
-- **Async-first design** - All operations return `CompletableFuture` (Java) or suspend functions (Kotlin)
-- **Type-safe models** - Strongly typed domain objects for Groups, Servers, Players
-- **Real-time events** - Subscribe to changes via NATS messaging
-- **Adventure integration** - Players implement Adventure's `Audience` for rich text messaging
-- **Environment-aware** - Auto-configuration from `SIMPLECLOUD_*` environment variables
+- **Async-first design** All operations return `CompletableFuture`
+- **Type-safe models** Strongly typed domain objects for Groups, Servers, Players, Persistent Servers, and Blueprints
+- **Real-time events** Subscribe to changes via NATS messaging
+- **Built-in cache** TanStack Query-style stale-while-revalidate caching, auto-invalidated by events
+- **Adventure integration** Players implement Adventure's `Audience` for rich text messaging
+- **Environment-aware** Auto-configuration from `SIMPLECLOUD_*` environment variables
 
 ## Quick Example
 
@@ -47,13 +50,7 @@ api.server().getServersByGroup("lobby").thenAccept(servers -> {
 
 // Request a new server start for a group
 api.group().getGroupByName("lobby")
-    .thenCompose(group -> {
-        if (group == null) {
-            return CompletableFuture.failedFuture(
-                new IllegalArgumentException("Group not found: lobby"));
-        }
-        return api.group().requestServerStart(group);
-    })
+    .thenCompose(group -> api.group().requestServerStart(group))
     .thenRun(() -> System.out.println("Start request accepted for lobby"));
 
 // Send a message to a player (Adventure integration)
@@ -82,8 +79,6 @@ println("Lobby servers: ${servers.size}")
 
 // Request a new server start for a group
 val group = api.group().getGroupByName("lobby").await()
-requireNotNull(group) { "Group not found: lobby" }
-
 api.group().requestServerStart(group).await()
 println("Start request accepted for lobby")
 
@@ -107,8 +102,14 @@ val sub = api.event().server().onStarted { event ->
   <Card title="Installation" icon="download" href="/en/developer/installation">
     Add the Cloud API to your project
   </Card>
+  <Card title="Groups API" icon="layer-group" href="/en/developer/api/groups">
+    Manage server groups and scaling
+  </Card>
   <Card title="Servers API" icon="server" href="/en/developer/api/servers">
-    Manage server instances
+    Query and manage server instances
+  </Card>
+  <Card title="Persistent Servers API" icon="database" href="/en/developer/api/persistent-servers">
+    Long-lived server instances
   </Card>
   <Card title="Players API" icon="users" href="/en/developer/api/players">
     Player data and messaging

@@ -16,7 +16,7 @@ api.player().get(uuid)
         }
     });
 
-// Get player by username
+// Get player by username (case-insensitive)
 api.player().get("Steve")
     .thenAccept(player -> { ... });
 
@@ -42,6 +42,7 @@ api.player().get(uuid).thenAccept(player -> {
                 case SUCCESS -> System.out.println("Transferred!");
                 case SERVER_NOT_FOUND -> System.out.println("Server doesn't exist");
                 case ALREADY_CONNECTED -> System.out.println("Already on that server");
+                case PLAYER_NOT_FOUND -> System.out.println("Player went offline");
                 case CONNECTION_FAILED -> System.out.println("Connection failed");
             }
         });
@@ -55,6 +56,34 @@ api.player().get(uuid).thenAccept(player -> {
 player.kick(Component.text("Server restarting")
     .color(NamedTextColor.RED));
 ```
+
+## Player Properties
+
+Players support custom properties stored on the controller:
+
+```java
+// Update properties (merge with existing)
+api.player().updatePlayerProperties(uuid, Map.of(
+    "rank", "VIP",
+    "coins", "1500"
+)).thenAccept(props -> System.out.println("Updated: " + props));
+
+// Update a single property
+api.player().updatePlayerProperty(uuid, "rank", "MVP")
+    .thenAccept(props -> System.out.println("Updated: " + props));
+
+// Remove specific properties
+api.player().deletePlayerProperties(uuid, List.of("coins"))
+    .thenAccept(remaining -> System.out.println("Remaining: " + remaining));
+
+// Remove a single property
+api.player().deletePlayerProperty(uuid, "rank")
+    .thenAccept(remaining -> System.out.println("Remaining: " + remaining));
+```
+
+<Note>
+  Player properties use `Map<String, String>` (string values only), unlike group and server properties which use `Map<String, Object>`.
+</Note>
 
 ## Adventure Integration
 
@@ -118,7 +147,7 @@ player.playSound(Sound.sound(
 ```java
 BossBar bar = BossBar.bossBar(
     Component.text("Event Progress"),
-    0.5f,  // progress (0.0 to 1.0)
+    0.5f,
     BossBar.Color.PURPLE,
     BossBar.Overlay.PROGRESS
 );
@@ -132,7 +161,7 @@ bar.progress(0.75f);
 player.hideBossBar(bar);
 ```
 
-### Player List Header & Footer
+### Player List Header and Footer
 
 ```java
 player.sendPlayerListHeaderAndFooter(
@@ -140,34 +169,6 @@ player.sendPlayerListHeaderAndFooter(
     Component.text("play.example.com").color(NamedTextColor.GRAY)
 );
 ```
-
-For more detailed examples in both Java and Kotlin, see [Adventure Integration](/en/developer/droplets/player/adventure-integration).
-
-## CloudPlayer Model
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `uniqueId` | `UUID` | Player's UUID |
-| `name` | `String` | Player's username |
-| `displayName` | `String` | Player's display name |
-| `connectedServerName` | `String` | Current server name |
-| `connectedProxyName` | `String` | Connected proxy name |
-| `online` | `boolean` | Whether the player is currently online |
-| `onlineTimeSeconds` | `long` | Accumulated online time in seconds |
-| `sessionId` | `String` | Active session ID, null if unavailable |
-| `firstSeen` | `String` | First login timestamp (ISO-8601) |
-| `lastSeen` | `String` | Last login timestamp (ISO-8601) |
-| `properties` | `Map<String, String>` | Player's properties |
-
-## ConnectResult
-
-| Value | Description |
-|-------|-------------|
-| `SUCCESS` | Transfer successful |
-| `SERVER_NOT_FOUND` | Target server doesn't exist |
-| `ALREADY_CONNECTED` | Player already on that server |
-| `PLAYER_NOT_FOUND` | Player went offline |
-| `CONNECTION_FAILED` | Transfer failed |
 
 ## Broadcast to All Players
 
@@ -181,3 +182,59 @@ api.player().getOnlinePlayers().thenAccept(players -> {
     players.forEach(player -> player.sendMessage(message));
 });
 ```
+
+## CloudPlayer Model
+
+<ResponseField name="uniqueId" type="UUID">
+  Player's unique identifier.
+</ResponseField>
+
+<ResponseField name="name" type="String">
+  Player's username.
+</ResponseField>
+
+<ResponseField name="displayName" type="String">
+  Player's display name.
+</ResponseField>
+
+<ResponseField name="connectedServerName" type="String">
+  Name of the server the player is currently on.
+</ResponseField>
+
+<ResponseField name="connectedProxyName" type="String">
+  Name of the proxy the player is connected through.
+</ResponseField>
+
+<ResponseField name="online" type="boolean">
+  Whether the player is currently online.
+</ResponseField>
+
+<ResponseField name="onlineTimeSeconds" type="long">
+  Accumulated online time in seconds.
+</ResponseField>
+
+<ResponseField name="sessionId" type="String">
+  Active session identifier.
+</ResponseField>
+
+<ResponseField name="firstSeen" type="String">
+  ISO 8601 timestamp of the player's first login.
+</ResponseField>
+
+<ResponseField name="lastSeen" type="String">
+  ISO 8601 timestamp of the player's most recent login.
+</ResponseField>
+
+<ResponseField name="properties" type="Map<String, String>">
+  Custom player properties (immutable map; empty if none).
+</ResponseField>
+
+## ConnectResult
+
+| Value | Description |
+|-------|-------------|
+| `SUCCESS` | Transfer successful |
+| `SERVER_NOT_FOUND` | Target server does not exist |
+| `ALREADY_CONNECTED` | Player is already on that server |
+| `PLAYER_NOT_FOUND` | Player went offline before the transfer completed |
+| `CONNECTION_FAILED` | Transfer failed for an unknown reason |

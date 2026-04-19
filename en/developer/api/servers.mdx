@@ -3,7 +3,7 @@ title: 'Servers API'
 description: 'Query and manage running server instances'
 ---
 
-The Servers API lets you query, start, stop, and update running servers. Access it via `api.server()`.
+The Servers API lets you query, stop, and update running server instances. Access it via `api.server()`.
 
 ## Get Servers
 
@@ -13,137 +13,224 @@ api.server().getAllServers()
     .thenAccept(servers -> System.out.println("Total: " + servers.size()));
 
 // Get servers with query filters
-api.server().getAllServers(new ServerQuery())
-    .thenAccept(servers -> { ... });
+ServerQuery query = ServerQuery.create()
+    .filterByServerGroupName("lobby")
+    .filterByState(ServerState.AVAILABLE, ServerState.INGAME)
+    .sortBy("numerical_id")
+    .sortOrder("asc");
+api.server().getAllServers(query)
+    .thenAccept(servers -> servers.forEach(s ->
+        System.out.println(s.getServerId() + ": " + s.getState())));
 
-// Get server by ID
+// Get server by unique ID
 api.server().getServerById("server-uuid")
     .thenAccept(server -> System.out.println(server.getState()));
 
-// Get servers in a group
+// Get all servers in a group
 api.server().getServersByGroup("lobby")
     .thenAccept(servers -> servers.forEach(s ->
         System.out.println(s.getServerId() + ": " + s.getState())));
 
-// Get server by group and numerical ID (e.g., Lobby-1)
+// Get server by group name and numerical ID (e.g., Lobby-1)
 api.server().getServerByNumericalId("lobby", 1)
     .thenAccept(server -> System.out.println(server.getServerId()));
 
-// Get current server (from within a running server)
+// Get the current server (from within a running server)
 api.server().getCurrentServer()
     .thenAccept(server -> System.out.println("Running on: " + server.getServerId()));
-```
-
-## Start Server
-
-```java
-StartServerRequest request = new StartServerRequest("group-uuid", "lobby");
-
-api.server().startServer(request)
-    .thenAccept(server -> System.out.println("Started: " + server.getServerId()));
 ```
 
 ## Stop Server
 
 ```java
 api.server().stopServer("server-uuid")
-    .thenAccept(success -> System.out.println("Stopped: " + success));
+    .thenRun(() -> System.out.println("Stop initiated"));
 ```
 
 ## Update Server
 
+`UpdateServerRequest` uses setter methods. Only the fields you set are changed:
+
 ```java
-UpdateServerRequest update = UpdateServerRequest.builder()
-    .maxPlayers(64)
-    .build();
+UpdateServerRequest update = new UpdateServerRequest();
+update.setMaxPlayers(64);
+update.setState(ServerState.AVAILABLE);
 
 api.server().updateServer("server-uuid", update)
     .thenAccept(server -> System.out.println("Updated: " + server.getMaxPlayers()));
 ```
 
-## Delete server record
+## Server Properties
 
-To remove a server record directly from the database without stopping the process or publishing lifecycle events, use the REST API endpoint `DELETE /v0/servers/database`. This is useful for cleaning up stale or orphaned records when the server process has already terminated.
-
-<Warning>
-This operation only removes the database row. It does not stop the server process, trigger cleanup workflows, or emit events. Use `stopServer` for normal shutdown.
-</Warning>
-
-```bash
-curl -X DELETE "https://your-controller/v0/servers/database?server_id=SERVER_UUID" \
-  -H "X-Network-ID: your-network-id" \
-  -H "X-Network-Secret: your-network-secret"
-```
-
-**Response:**
-
-```json
-{
-  "server_id": "123e4567-e89b-12d3-a456-426614174000",
-  "message": "Server row deleted successfully"
-}
-```
-
-| Parameter | Location | Required | Description |
-|-----------|----------|----------|-------------|
-| `server_id` | Query | Yes | UUID of the server record to delete |
-| `X-Network-ID` | Header | Yes | Your network identifier |
-| `X-Network-Secret` | Header | Yes | Your network secret |
-
-## Server properties
-
-Servers inherit properties from their group, but you can override them per-instance:
+Servers support custom properties for runtime metadata:
 
 ```java
-// Add or update properties (merges with existing)
-Map<String, String> props = Map.of("map", "castle", "mode", "competitive");
-api.server().updateServerProperties("server-uuid", props);
+// Add or update properties (deep merge with existing)
+api.server().updateServerProperties("server-uuid", Map.of(
+    "map", "castle",
+    "mode", "competitive"
+)).thenAccept(props -> System.out.println("Updated: " + props));
+
+// Update a single property
+api.server().updateServerProperty("server-uuid", "map", "desert")
+    .thenAccept(props -> System.out.println("Updated: " + props));
 
 // Remove specific properties
-api.server().deleteServerProperties("server-uuid", List.of("mode"));
+api.server().deleteServerProperties("server-uuid", List.of("mode"))
+    .thenAccept(remaining -> System.out.println("Remaining: " + remaining));
+
+// Remove a single property
+api.server().deleteServerProperty("server-uuid", "mode")
+    .thenAccept(remaining -> System.out.println("Remaining: " + remaining));
 ```
+
+## ServerQuery
+
+Use `ServerQuery.create()` to build filtered queries:
+
+| Method | Description |
+|--------|-------------|
+| `filterByServerGroupId(String...)` | Filter by one or more group IDs |
+| `filterByServerGroupName(String...)` | Filter by one or more group names |
+| `filterByServerGroupTags(String...)` | Filter by group tags (matches if any tag matches) |
+| `filterByServerGroupType(GroupServerType...)` | Filter by group type (`SERVER`, `PROXY`) |
+| `filterByState(ServerState...)` | Filter by one or more server states |
+| `filterByServerhostId(String)` | Filter by the host machine ID |
+| `filterByPersistentServerId(String)` | Filter servers spawned from a specific persistent server |
+| `filterByNumericalId(Integer...)` | Filter by numerical IDs (e.g., 1, 5, 10) |
+| `sortBy(String)` | Sort field: `created_at`, `updated_at`, `numerical_id`, `state` |
+| `sortOrder(String)` | `"asc"` or `"desc"` |
 
 ## Server Model
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `serverId` | `String` | Unique identifier |
-| `groupName` | `String` | Parent group name |
-| `numericalId` | `long` | Numerical ID within group (1, 2, 3...) |
-| `state` | `ServerState` | Current lifecycle state |
-| `host` | `String` | Server host machine |
-| `ip` | `String` | IP address |
-| `port` | `int` | Server port |
-| `minMemory` | `int` | Minimum memory (MB) |
-| `maxMemory` | `int` | Maximum memory (MB) |
-| `maxPlayers` | `int` | Player limit |
-| `playerCount` | `int` | Current online players |
-| `properties` | `Map<String, String>` | Custom metadata |
-| `createdAt` | `Instant` | Creation timestamp |
+<ResponseField name="serverId" type="String">
+  Unique identifier for this server instance.
+</ResponseField>
+
+<ResponseField name="numericalId" type="int">
+  Sequential number within the group (e.g., 1 for Lobby-1).
+</ResponseField>
+
+<ResponseField name="serverGroupId" type="String?">
+  ID of the parent group. Null if this server was spawned from a persistent server.
+</ResponseField>
+
+<ResponseField name="persistentServerId" type="String?">
+  ID of the parent persistent server. Null if this server was spawned from a group.
+</ResponseField>
+
+<ResponseField name="serverhostId" type="String">
+  ID of the host machine running this server.
+</ResponseField>
+
+<ResponseField name="networkId" type="String">
+  Network this server belongs to.
+</ResponseField>
+
+<ResponseField name="ip" type="String?">
+  IP address where this server is accessible. Null until assigned.
+</ResponseField>
+
+<ResponseField name="port" type="Integer?">
+  Port this server listens on. Null until assigned.
+</ResponseField>
+
+<ResponseField name="minMemory" type="Integer">
+  Minimum memory allocation in MB.
+</ResponseField>
+
+<ResponseField name="maxMemory" type="Integer">
+  Maximum memory allocation in MB.
+</ResponseField>
+
+<ResponseField name="maxPlayers" type="Integer">
+  Maximum player limit.
+</ResponseField>
+
+<ResponseField name="playerCount" type="Integer?">
+  Current number of connected players.
+</ResponseField>
+
+<ResponseField name="cpuUsage" type="Double?">
+  Current CPU usage as a percentage (0.0–100.0).
+</ResponseField>
+
+<ResponseField name="memoryUsage" type="Double?">
+  Current memory usage in MB.
+</ResponseField>
+
+<ResponseField name="state" type="ServerState">
+  Current lifecycle state.
+</ResponseField>
+
+<ResponseField name="properties" type="Map<String, Object>?">
+  Custom metadata key-value pairs.
+</ResponseField>
+
+<ResponseField name="blueprint" type="Blueprint?">
+  Blueprint this server was created from, if any.
+</ResponseField>
+
+<ResponseField name="createdAt" type="String">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="String">
+  ISO 8601 last-updated timestamp.
+</ResponseField>
+
+<ResponseField name="lastActivity" type="String?">
+  ISO 8601 timestamp of the last activity on this server.
+</ResponseField>
+
+### Accessing the Parent Configuration
+
+A server can be spawned from either a group or a persistent server. Use the following methods to access the parent:
+
+```java
+// Access parent regardless of type (ServerBase covers both Group and PersistentServer)
+ServerBase base = server.getServerBase();
+System.out.println(base.getName());
+
+// Check the type
+if (server.isFromGroup()) {
+    Group group = server.getGroup();
+    System.out.println("Group: " + group.getServerGroupId());
+} else if (server.isFromPersistentServer()) {
+    PersistentServer ps = server.getPersistentServer();
+    System.out.println("Persistent server: " + ps.getPersistentServerId());
+}
+```
 
 ## ServerState
 
 | State | Description |
 |-------|-------------|
-| `PREPARING` | Copying template files |
-| `STARTING` | JVM process launching |
-| `AVAILABLE` | Ready for players |
-| `INGAME` | Has active players |
+| `UNKNOWN_STATE` | Unknown or unspecified state |
+| `PREPARING` | Downloading files, setting up server environment |
+| `STARTING` | JVM or process launching |
+| `AVAILABLE` | Ready and accepting connections |
+| `INGAME` | Active with players in a game |
 | `STOPPING` | Shutdown in progress |
+| `CLEANUP` | Process ended, cleaning up resources |
 
-## Environment Variables
+## Runtime Environment Variables
 
-Inside a running server, access server info without the API:
+Inside a running server, access server info without the API via `SimpleCloudRuntime`:
 
 ```java
-String group = System.getenv("SIMPLECLOUD_GROUP");
-String uniqueId = System.getenv("SIMPLECLOUD_UNIQUE_ID");
-String numericalId = System.getenv("SIMPLECLOUD_NUMERICAL_ID");
-String host = System.getenv("SIMPLECLOUD_HOST");
-String ip = System.getenv("SIMPLECLOUD_IP");
-String port = System.getenv("SIMPLECLOUD_PORT");
-String maxPlayers = System.getenv("SIMPLECLOUD_MAX_PLAYERS");
-String maxMemory = System.getenv("SIMPLECLOUD_MAX_MEMORY");
+import app.simplecloud.api.runtime.SimpleCloudRuntime;
+
+String serverId    = SimpleCloudRuntime.serverId();       // SIMPLECLOUD_UNIQUE_ID
+String groupName   = SimpleCloudRuntime.groupName();      // SIMPLECLOUD_GROUP
+String numericalId = SimpleCloudRuntime.numericalId();    // SIMPLECLOUD_NUMERICAL_ID
+String serverName  = SimpleCloudRuntime.serverName();     // "Lobby-1" or serverId fallback
 ```
 
-Custom group properties are also available with `SIMPLECLOUD_` prefix (uppercase, dashes become underscores).
+You can also read the raw environment variables directly:
+
+```java
+String group      = System.getenv("SIMPLECLOUD_GROUP");
+String uniqueId   = System.getenv("SIMPLECLOUD_UNIQUE_ID");
+String numId      = System.getenv("SIMPLECLOUD_NUMERICAL_ID");
+```

@@ -95,7 +95,8 @@
                   "en/developer/api/servers",
                   "en/developer/api/persistent-servers",
                   "en/developer/api/players",
-                  "en/developer/api/events"
+                  "en/developer/api/events",
+                  "en/developer/api/cache"
                 ]
               },
               {

@@ -1,0 +1,222 @@
+---
+title: 'Persistent Servers API'
+description: 'Manage long-lived server instances that maintain state across restarts'
+---
+
+The Persistent Servers API lets you create, query, update, and delete persistent servers. Access it via `api.persistentServer()`.
+
+## Get Persistent Servers
+
+```java
+// Get all persistent servers
+api.persistentServer().getAllPersistentServers()
+    .thenAccept(servers -> servers.forEach(s ->
+        System.out.println(s.getName() + ": " + s.getPersistentServerId())));
+
+// Get persistent servers with query filters
+PersistentServerQuery query = PersistentServerQuery.create()
+    .filterByActive(true)
+    .filterByTags("lobby", "hub")
+    .filterByServerhostId("host-uuid")
+    .limit(20);
+api.persistentServer().getAllPersistentServers(query)
+    .thenAccept(servers -> { ... });
+
+// Get by unique ID
+api.persistentServer().getPersistentServerById("persistent-server-uuid")
+    .thenAccept(server -> System.out.println(server.getName()));
+
+// Get by name
+api.persistentServer().getPersistentServerByName("main-lobby")
+    .thenAccept(server -> System.out.println(server.getPersistentServerId()));
+```
+
+## Create Persistent Server
+
+`CreatePersistentServerRequest` uses a builder pattern:
+
+```java
+SourceConfig source = new SourceConfig();
+source.setType(SourceType.BLUEPRINT);
+source.setBlueprint("paper-1.21");
+
+CreatePersistentServerRequest request = CreatePersistentServerRequest.builder()
+    .name("main-lobby")
+    .type(GroupServerType.SERVER)
+    .minMemory(512)
+    .maxMemory(2048)
+    .maxPlayers(100)
+    .active(true)
+    .priority(1)
+    .serverhostId("host-uuid")
+    .source(source)
+    .tags(List.of("lobby", "hub"))
+    .properties(Map.of("featured", true))
+    .build();
+
+api.persistentServer().createPersistentServer(request)
+    .thenAccept(server ->
+        System.out.println("Created: " + server.getPersistentServerId()));
+```
+
+## Update Persistent Server
+
+`UpdatePersistentServerRequest` also uses a builder pattern. Only the fields you set are changed:
+
+```java
+UpdatePersistentServerRequest update = UpdatePersistentServerRequest.builder()
+    .maxPlayers(150)
+    .active(true)
+    .build();
+
+api.persistentServer().updatePersistentServer("persistent-server-uuid", update)
+    .thenAccept(server -> System.out.println("Updated: " + server.getName()));
+```
+
+## Delete Persistent Server
+
+```java
+api.persistentServer().deletePersistentServer("persistent-server-uuid")
+    .thenRun(() -> System.out.println("Deleted"));
+```
+
+## Persistent Server Properties
+
+```java
+// Add or update properties (deep merge)
+api.persistentServer().updatePersistentServerProperties("persistent-server-uuid", Map.of(
+    "featured", true,
+    "region", "eu-west"
+)).thenAccept(props -> System.out.println("Updated: " + props));
+
+// Update a single property
+api.persistentServer().updatePersistentServerProperty(
+    "persistent-server-uuid", "region", "us-east"
+).thenAccept(props -> System.out.println("Updated: " + props));
+
+// Remove specific properties
+api.persistentServer().deletePersistentServerProperties(
+    "persistent-server-uuid", List.of("region")
+).thenAccept(remaining -> System.out.println("Remaining: " + remaining));
+
+// Remove a single property
+api.persistentServer().deletePersistentServerProperty(
+    "persistent-server-uuid", "region"
+).thenAccept(remaining -> System.out.println("Remaining: " + remaining));
+```
+
+## PersistentServerQuery
+
+Use `PersistentServerQuery.create()` to build filtered queries:
+
+| Method | Description |
+|--------|-------------|
+| `filterByTags(String...)` | Filter by one or more tags (matches if any tag matches) |
+| `filterByActive(boolean)` | Filter by active status |
+| `filterByServerhostId(String)` | Filter by assigned host machine ID |
+| `limit(int)` | Maximum number of results to return |
+
+## Persistent Server Model
+
+<ResponseField name="persistentServerId" type="String">
+  Unique identifier for this persistent server.
+</ResponseField>
+
+<ResponseField name="name" type="String">
+  Human-readable name.
+</ResponseField>
+
+<ResponseField name="type" type="GroupServerType">
+  Server type: `SERVER`, `PROXY`, or `UNKNOWN_SERVER`.
+</ResponseField>
+
+<ResponseField name="minMemory" type="Integer?">
+  Minimum memory allocation in MB.
+</ResponseField>
+
+<ResponseField name="maxMemory" type="Integer?">
+  Maximum memory allocation in MB.
+</ResponseField>
+
+<ResponseField name="maxPlayers" type="Integer?">
+  Maximum player limit.
+</ResponseField>
+
+<ResponseField name="active" type="Boolean?">
+  When true, the controller automatically starts this server if no running instance exists.
+</ResponseField>
+
+<ResponseField name="priority" type="Integer?">
+  Priority relative to other persistent servers.
+</ResponseField>
+
+<ResponseField name="serverhostId" type="String?">
+  ID of the host machine this persistent server is assigned to.
+</ResponseField>
+
+<ResponseField name="playerCount" type="int">
+  Current player count of the running instance. Returns `0` when no instance is running.
+</ResponseField>
+
+<ResponseField name="source" type="SourceConfig?">
+  Source configuration (blueprint or container image).
+</ResponseField>
+
+<ResponseField name="workflows" type="WorkflowsConfig?">
+  Workflow triggers for server lifecycle events.
+</ResponseField>
+
+<ResponseField name="properties" type="Map<String, Object>?">
+  Custom metadata key-value pairs.
+</ResponseField>
+
+<ResponseField name="tags" type="List<String>?">
+  Tags for organization and filtering.
+</ResponseField>
+
+<ResponseField name="createdAt" type="String">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="String">
+  ISO 8601 last-updated timestamp.
+</ResponseField>
+
+## Listen for Persistent Server Events
+
+Use the Events API to react to persistent server lifecycle changes:
+
+```java
+// React when a persistent server's instance starts
+api.event().persistentServer().onStarted(event -> {
+    System.out.println("Started: " + event.getPersistentServerId());
+    System.out.println("Server instance ID: " + event.getServerId());
+});
+
+// React when a persistent server's instance stops
+api.event().persistentServer().onStopped(event -> {
+    System.out.println("Stopped: " + event.getPersistentServerId());
+});
+```
+
+For the full event reference, see the [Events API](/en/developer/api/events).
+
+## Find the Running Instance
+
+A persistent server configuration is separate from its running instance. To find the server instance currently running for a persistent server, query the Servers API:
+
+```java
+api.persistentServer().getPersistentServerByName("main-lobby")
+    .thenCompose(ps -> api.server().getAllServers(
+        ServerQuery.create().filterByPersistentServerId(ps.getPersistentServerId())
+    ))
+    .thenAccept(instances -> {
+        if (instances.isEmpty()) {
+            System.out.println("No running instance");
+        } else {
+            Server instance = instances.get(0);
+            System.out.println("Running on port: " + instance.getPort());
+            System.out.println("State: " + instance.getState());
+        }
+    });
+```

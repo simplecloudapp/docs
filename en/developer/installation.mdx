@@ -117,8 +117,8 @@ For standalone applications or custom setups, provide configuration options:
 CloudApi api = CloudApi.create(CloudApiOptions.builder()
     .networkId("your-network-id")
     .networkSecret("your-secret")
-    .controllerUrl("https://controller.platform.simplecloud.app")
-    .natsUrl("nats://platform.simplecloud.app:4222")
+    .controllerUrl("https://controller.simplecloud.app")
+    .natsUrl("wss://nats.simplecloud.app:443")
     .build());
 ```
 
@@ -129,13 +129,45 @@ CloudApi api = CloudApi.create(CloudApiOptions.builder()
 val api = CloudApi.create(CloudApiOptions.builder()
     .networkId("your-network-id")
     .networkSecret("your-secret")
-    .controllerUrl("https://controller.platform.simplecloud.app")
-    .natsUrl("nats://platform.simplecloud.app:4222")
+    .controllerUrl("https://controller.simplecloud.app")
+    .natsUrl("wss://nats.simplecloud.app:443")
     .build())
 ```
 
 </Tab>
 </Tabs>
+
+### Cache Configuration
+
+The API includes a built-in query cache with sensible defaults. You can customize it or disable it entirely:
+
+```java
+// Disable caching
+CloudApi api = CloudApi.create(CloudApiOptions.builder()
+    .networkId("your-network-id")
+    .networkSecret("your-secret")
+    .disableCache()
+    .build());
+
+// Custom cache settings
+CacheConfig cache = CacheConfig.builder()
+    .defaultStaleTime(Duration.ofSeconds(10))
+    .defaultCacheTime(Duration.ofMinutes(5))
+    .entityConfig(EntityType.SERVER, EntityCacheConfig.builder()
+        .staleTime(Duration.ofSeconds(1))
+        .build())
+    .build();
+
+CloudApi api = CloudApi.create(CloudApiOptions.builder()
+    .networkId("your-network-id")
+    .networkSecret("your-secret")
+    .cache(cache)
+    .build());
+```
+
+<Note>
+  Caching is enabled by default. The cache automatically invalidates entries when NATS events arrive (e.g., a `ServerUpdatedEvent` invalidates that server's cached data).
+</Note>
 
 ## Environment Variables
 
@@ -145,8 +177,9 @@ The API reads these environment variables by default:
 |----------|---------|-------------|
 | `SIMPLECLOUD_NETWORK_ID` | `"default"` | Your network identifier |
 | `SIMPLECLOUD_NETWORK_SECRET` | `""` | Authentication secret |
-| `SIMPLECLOUD_CONTROLLER_URL` | `"https://controller.platform.simplecloud.app"` | Controller API endpoint |
-| `SIMPLECLOUD_NATS_URL` | `"nats://platform.simplecloud.app:4222"` | NATS server for events |
+| `SIMPLECLOUD_CONTROLLER_URL` | `"https://controller.simplecloud.app"` | Controller API endpoint |
+| `SIMPLECLOUD_NATS_URL` | `"wss://nats.simplecloud.app:443"` | NATS server for events |
+| `SIMPLECLOUD_NATS_FAILOVER_RECONNECT_AFTER` | `"30s"` | Reconnect delay (e.g. `30s`, `2m`, `1h`) |
 
 <Note>
   Inside SimpleCloud servers, these variables are set automatically. You only need to configure them for standalone applications or external services.
@@ -215,7 +248,7 @@ The API reads these environment variables by default:
     **Cause:** API shaded into JAR or plugin load order wrong.
 
     **Solution:**
-    1. Don't shade the API - use `compileOnly` scope
+    1. Don't shade the API — use `compileOnly` scope
     2. Add `simplecloud-api` to plugin descriptor dependencies
     3. Verify SimpleCloud API plugin loads before yours
   </Accordion>

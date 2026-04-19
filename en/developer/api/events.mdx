@@ -10,55 +10,75 @@ The Events API lets you react to changes in your network in real-time. Access it
 | Method | Events |
 |--------|--------|
 | `api.event().group()` | Group created, updated, deleted |
-| `api.event().server()` | Server started, stopped, state changed |
-| `api.event().persistentServer()` | Persistent server events |
+| `api.event().server()` | Server started, stopped, state changed, updated, deleted |
+| `api.event().persistentServer()` | Persistent server created, started, stopped, updated, deleted |
 | `api.event().blueprint()` | Blueprint created, updated, deleted |
 
 ## Server Events
 
-Server events fire for both group-based servers and persistent servers. When a persistent server triggers the event, `persistentServerId` is populated and `groupName` is empty. When a group server triggers the event, `groupName` is populated and `persistentServerId` is empty.
-
 ### Server Started
+
+Fires when a server instance becomes active. The event includes the full `Server` object with all runtime information.
 
 ```java
 Subscription sub = api.event().server().onStarted(event -> {
     System.out.println("Server started: " + event.getServerId());
+    System.out.println("Network: " + event.getNetworkId());
 
-    // Check whether this is a group or persistent server
-    if (event.getPersistentServerId() != null && !event.getPersistentServerId().isEmpty()) {
-        System.out.println("Persistent server: " + event.getPersistentServerId());
-    } else {
-        System.out.println("Group: " + event.getGroupName());
+    Server server = event.getServer();
+    if (server.isFromGroup()) {
+        System.out.println("Group: " + server.getServerGroupId());
+    } else if (server.isFromPersistentServer()) {
+        System.out.println("Persistent server: " + server.getPersistentServerId());
     }
 });
 ```
 
 ### Server Stopped
 
+Fires when a server instance stops. Use `getCrashed()` to detect unexpected shutdowns.
+
 ```java
 api.event().server().onStopped(event -> {
     System.out.println("Server stopped: " + event.getServerId());
+
+    if (event.getCrashed()) {
+        System.out.println("Server crashed! Exit code: " + event.getExitCode());
+        System.out.println("Reason: " + event.getReason());
+    }
 });
 ```
 
 ### Server State Changed
 
+Fires whenever a server transitions between lifecycle states.
+
 ```java
 api.event().server().onStateChanged(event -> {
     System.out.println(event.getServerId() + ": " +
         event.getOldState() + " → " + event.getNewState());
+
+    if (event.getNewState() == ServerState.AVAILABLE) {
+        System.out.println("Server ready: " + event.getServerId());
+    }
 });
 ```
 
 ### Server Updated
 
+Fires when a server's configuration or properties are updated.
+
 ```java
 api.event().server().onUpdated(event -> {
     System.out.println("Server updated: " + event.getServerId());
+    Server server = event.getServer();
+    System.out.println("Player count: " + server.getPlayerCount());
 });
 ```
 
 ### Server Deleted
+
+Fires when a server record is removed.
 
 ```java
 api.event().server().onDeleted(event -> {
@@ -73,6 +93,9 @@ api.event().server().onDeleted(event -> {
 ```java
 api.event().group().onCreated(event -> {
     System.out.println("Group created: " + event.getServerGroupId());
+    Group group = event.getGroup();
+    System.out.println("Name: " + group.getName());
+    System.out.println("Type: " + group.getType());
 });
 ```
 
@@ -81,6 +104,7 @@ api.event().group().onCreated(event -> {
 ```java
 api.event().group().onUpdated(event -> {
     System.out.println("Group updated: " + event.getServerGroupId());
+    Group group = event.getGroup();
 });
 ```
 
@@ -89,51 +113,75 @@ api.event().group().onUpdated(event -> {
 ```java
 api.event().group().onDeleted(event -> {
     System.out.println("Group deleted: " + event.getServerGroupId());
+    System.out.println("Name: " + event.getName());
 });
 ```
 
 ## Persistent Server Events
 
 ```java
-// Created
-api.event().persistentServer().onCreated(event -> { ... });
+// Created - fires when a persistent server configuration is created
+api.event().persistentServer().onCreated(event -> {
+    System.out.println("Persistent server created: " + event.getPersistentServerId());
+    System.out.println("Name: " + event.getName());
+});
 
-// Started
-api.event().persistentServer().onStarted(event -> { ... });
+// Started - fires when a persistent server's running instance starts
+api.event().persistentServer().onStarted(event -> {
+    System.out.println("Persistent server started: " + event.getPersistentServerId());
+    System.out.println("Server instance: " + event.getServerId());
+});
 
-// Stopped
-api.event().persistentServer().onStopped(event -> { ... });
+// Stopped - fires when a persistent server's running instance stops
+api.event().persistentServer().onStopped(event -> {
+    System.out.println("Persistent server stopped: " + event.getPersistentServerId());
+    System.out.println("Server instance: " + event.getServerId());
+});
 
 // Updated
-api.event().persistentServer().onUpdated(event -> { ... });
+api.event().persistentServer().onUpdated(event -> {
+    System.out.println("Persistent server updated: " + event.getPersistentServerId());
+});
 
 // Deleted
-api.event().persistentServer().onDeleted(event -> { ... });
+api.event().persistentServer().onDeleted(event -> {
+    System.out.println("Persistent server deleted: " + event.getPersistentServerId());
+    System.out.println("Name: " + event.getName());
+});
 ```
 
 ## Blueprint Events
 
 ```java
 // Created
-api.event().blueprint().onCreated(event -> { ... });
+api.event().blueprint().onCreated(event -> {
+    System.out.println("Blueprint created: " + event.getBlueprintId());
+    Blueprint blueprint = event.getBlueprint();
+    System.out.println("Name: " + blueprint.getName());
+});
 
 // Updated
-api.event().blueprint().onUpdated(event -> { ... });
+api.event().blueprint().onUpdated(event -> {
+    System.out.println("Blueprint updated: " + event.getBlueprintId());
+});
 
 // Deleted
-api.event().blueprint().onDeleted(event -> { ... });
+api.event().blueprint().onDeleted(event -> {
+    System.out.println("Blueprint deleted: " + event.getBlueprintId());
+    System.out.println("Name: " + event.getName());
+});
 ```
 
 ## Managing Subscriptions
 
-Subscriptions implement `AutoCloseable`. Always clean them up when done:
+Subscriptions implement `AutoCloseable`. Always clean them up when done.
 
 ### Manual Cleanup
 
 ```java
 Subscription sub = api.event().server().onStarted(event -> { ... });
 
-// Later, when shutting down
+// When shutting down
 sub.close();
 ```
 
@@ -159,11 +207,13 @@ public class MyPlugin extends JavaPlugin {
 
         subscriptions.add(api.event().server().onStarted(this::handleServerStart));
         subscriptions.add(api.event().server().onStopped(this::handleServerStop));
+        subscriptions.add(api.event().group().onUpdated(this::handleGroupUpdate));
     }
 
     @Override
     public void onDisable() {
         subscriptions.forEach(Subscription::close);
+        subscriptions.clear();
     }
 
     private void handleServerStart(ServerStartedEvent event) {
@@ -173,6 +223,10 @@ public class MyPlugin extends JavaPlugin {
     private void handleServerStop(ServerStoppedEvent event) {
         getLogger().info("Server stopped: " + event.getServerId());
     }
+
+    private void handleGroupUpdate(GroupUpdatedEvent event) {
+        getLogger().info("Group updated: " + event.getServerGroupId());
+    }
 }
 ```
 
@@ -180,40 +234,40 @@ public class MyPlugin extends JavaPlugin {
 
 ### Server Events
 
-| Event | Properties |
-|-------|------------|
-| `ServerStartedEvent` | `serverId`, `groupName`, `persistentServerId` |
-| `ServerStoppedEvent` | `serverId`, `groupName`, `persistentServerId` |
-| `ServerStateChangedEvent` | `serverId`, `oldState`, `newState` |
-| `ServerUpdatedEvent` | `serverId` |
-| `ServerDeletedEvent` | `serverId` |
+| Event | Key Properties |
+|-------|----------------|
+| `ServerStartedEvent` | `serverId`, `serverGroupId`, `server`, `networkId`, `timestamp` |
+| `ServerStoppedEvent` | `serverId`, `serverGroupId`, `server`, `crashed`, `exitCode`, `reason`, `networkId`, `timestamp` |
+| `ServerStateChangedEvent` | `serverId`, `oldState`, `newState`, `server`, `networkId`, `timestamp` |
+| `ServerUpdatedEvent` | `serverId`, `serverGroupId`, `server`, `networkId`, `timestamp` |
+| `ServerDeletedEvent` | `serverId`, `serverGroupId`, `server`, `networkId`, `timestamp` |
 
 <Note>
-`ServerStartedEvent` and `ServerStoppedEvent` fire for both group servers and persistent servers. For persistent servers, `persistentServerId` is set and `groupName` is empty. For group servers, `groupName` is set and `persistentServerId` is empty.
+  `ServerStartedEvent` and `ServerStoppedEvent` fire for both group servers and persistent servers. Use `server.isFromGroup()` or `server.isFromPersistentServer()` to distinguish them.
 </Note>
 
 ### Group Events
 
-| Event | Properties |
-|-------|------------|
-| `GroupCreatedEvent` | `serverGroupId` |
-| `GroupUpdatedEvent` | `serverGroupId` |
-| `GroupDeletedEvent` | `serverGroupId` |
+| Event | Key Properties |
+|-------|----------------|
+| `GroupCreatedEvent` | `serverGroupId`, `group`, `networkId`, `timestamp` |
+| `GroupUpdatedEvent` | `serverGroupId`, `group`, `networkId`, `timestamp` |
+| `GroupDeletedEvent` | `serverGroupId`, `name`, `networkId`, `timestamp` |
 
 ### Persistent Server Events
 
-| Event | Properties |
-|-------|------------|
-| `PersistentServerCreatedEvent` | `serverId` |
-| `PersistentServerStartedEvent` | `serverId` |
-| `PersistentServerStoppedEvent` | `serverId` |
-| `PersistentServerUpdatedEvent` | `serverId` |
-| `PersistentServerDeletedEvent` | `serverId` |
+| Event | Key Properties |
+|-------|----------------|
+| `PersistentServerCreatedEvent` | `persistentServerId`, `name`, `networkId`, `timestamp` |
+| `PersistentServerStartedEvent` | `persistentServerId`, `serverId`, `networkId`, `timestamp` |
+| `PersistentServerStoppedEvent` | `persistentServerId`, `serverId`, `networkId`, `timestamp` |
+| `PersistentServerUpdatedEvent` | `persistentServerId`, `name`, `networkId`, `timestamp` |
+| `PersistentServerDeletedEvent` | `persistentServerId`, `name`, `networkId`, `timestamp` |
 
 ### Blueprint Events
 
-| Event | Properties |
-|-------|------------|
-| `BlueprintCreatedEvent` | `blueprintId` |
-| `BlueprintUpdatedEvent` | `blueprintId` |
-| `BlueprintDeletedEvent` | `blueprintId` |
+| Event | Key Properties |
+|-------|----------------|
+| `BlueprintCreatedEvent` | `blueprintId`, `blueprint`, `networkId`, `timestamp` |
+| `BlueprintUpdatedEvent` | `blueprintId`, `blueprint`, `networkId`, `timestamp` |
+| `BlueprintDeletedEvent` | `blueprintId`, `name`, `networkId`, `timestamp` |

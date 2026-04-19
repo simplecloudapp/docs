@@ -34,7 +34,6 @@ public class MyPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // Clean up all subscriptions
         subscriptions.forEach(Subscription::close);
         subscriptions.clear();
     }
@@ -61,22 +60,25 @@ public class MyPlugin extends JavaPlugin {
 
 ## Common Event Patterns
 
-### Auto-Start Servers When Group Empty
+### React When a Group Has No Running Servers
 
 ```java
 public void setupAutoStart(String groupName, int minimum) {
     api.event().server().onStopped(event -> {
-        if (!event.getGroupName().equals(groupName)) return;
+        Server server = event.getServer();
+        if (!server.isFromGroup()) return;
+        if (!groupName.equals(server.getServerBase().getName())) return;
 
         api.server().getServersByGroup(groupName).thenAccept(servers -> {
             long running = servers.stream()
-                .filter(s -> s.getState() != ServerState.STOPPING)
+                .filter(s -> s.getState() != ServerState.STOPPING
+                          && s.getState() != ServerState.CLEANUP)
                 .count();
 
             if (running < minimum) {
                 api.group().getGroupByName(groupName).thenAccept(group -> {
                     if (group != null) {
-                        api.server().startServer(new StartServerRequest(group.getId(), groupName));
+                        api.group().requestServerStart(group);
                     }
                 });
             }
@@ -95,7 +97,6 @@ public void setupStateLogging() {
             event.getOldState(),
             event.getNewState());
 
-        // Log to file, database, or external service
         logger.info(message);
     });
 }
@@ -106,53 +107,49 @@ public void setupStateLogging() {
 ```java
 public void setupCrashNotifications() {
     api.event().server().onStopped(event -> {
-        api.server().getServerById(event.getServerId()).thenAccept(server -> {
-            // If server stopped unexpectedly (not graceful shutdown)
-            // This is a simplified check - adjust based on your needs
+        if (!event.getCrashed()) return;
 
-            notifyStaff(Component.text("[Alert] Server stopped: " + event.getServerId())
-                .color(NamedTextColor.RED));
-        });
+        String msg = "[Alert] Server crashed: " + event.getServerId();
+        if (event.getReason() != null) {
+            msg += " — " + event.getReason();
+        }
+        notifyStaff(Component.text(msg).color(NamedTextColor.RED));
     });
 }
 
 private void notifyStaff(Component message) {
-    api.player().getOnlinePlayers().thenAccept(players -> {
+    api.player().getOnlinePlayers().thenAccept(players ->
         players.stream()
             .filter(p -> hasStaffPermission(p))
-            .forEach(p -> p.sendMessage(message));
-    });
+            .forEach(p -> p.sendMessage(message)));
 }
 ```
 
-### Sync Data When Server Starts
+### Sync Data When Server Becomes Available
 
 ```java
 public void setupDataSync() {
     api.event().server().onStateChanged(event -> {
         if (event.getNewState() == ServerState.AVAILABLE) {
-            // Server is ready, sync data
             syncDataToServer(event.getServerId());
         }
     });
 }
 
 private void syncDataToServer(String serverId) {
-    // Your data synchronization logic
     System.out.println("Syncing data to: " + serverId);
 }
 ```
 
 ## Filtering Events
 
-### Filter by Group
-
-Server events fire for both group servers and persistent servers. When filtering by group name, persistent server events have an empty `groupName` and are skipped automatically.
+### Filter by Group Name
 
 ```java
 public void watchGroup(String groupName) {
     api.event().server().onStarted(event -> {
-        if (event.getGroupName().equals(groupName)) {
+        Server server = event.getServer();
+        if (server.isFromGroup() && groupName.equals(server.getServerBase().getName())) {
             handleGroupServerStart(event);
         }
     });
@@ -164,18 +161,33 @@ public void watchGroup(String groupName) {
 ```java
 public void watchProxies() {
     api.event().server().onStarted(event -> {
-        api.group().getGroupByName(event.getGroupName()).thenAccept(group -> {
-            if (group != null && group.getType() == GroupServerType.PROXY) {
-                handleProxyStart(event);
-            }
-        });
+        Server server = event.getServer();
+        if (server.getServerBase().getType() == GroupServerType.PROXY) {
+            handleProxyStart(event);
+        }
+    });
+}
+```
+
+### Filter Persistent Server Events
+
+```java
+public void watchPersistentServer(String persistentServerName) {
+    api.event().persistentServer().onStarted(event -> {
+        api.persistentServer()
+            .getPersistentServerById(event.getPersistentServerId())
+            .thenAccept(ps -> {
+                if (persistentServerName.equals(ps.getName())) {
+                    System.out.println("Lobby started, instance: " + event.getServerId());
+                }
+            });
     });
 }
 ```
 
 ## One-Time Events
 
-### Wait for Specific Server
+### Wait for a Specific Server to Become Available
 
 ```java
 public CompletableFuture<Void> waitForServer(String serverId) {
@@ -188,22 +200,21 @@ public CompletableFuture<Void> waitForServer(String serverId) {
         }
     });
 
-    // Clean up subscription when future completes
     future.whenComplete((result, error) -> sub.close());
 
     return future;
 }
 
 // Usage
-waitForServer("lobby-1").thenRun(() -> {
-    System.out.println("Server is ready!");
-});
+waitForServer("lobby-uuid").thenRun(() ->
+    System.out.println("Server is ready!"));
 ```
 
-### Timeout Handling
+### With Timeout
 
 ```java
-public CompletableFuture<Void> waitForServerWithTimeout(String serverId, Duration timeout) {
+public CompletableFuture<Void> waitForServerWithTimeout(
+        String serverId, Duration timeout) {
     CompletableFuture<Void> future = new CompletableFuture<>();
 
     Subscription sub = api.event().server().onStateChanged(event -> {
@@ -213,10 +224,9 @@ public CompletableFuture<Void> waitForServerWithTimeout(String serverId, Duratio
         }
     });
 
-    // Timeout after duration
     CompletableFuture.delayedExecutor(timeout.toMillis(), TimeUnit.MILLISECONDS)
         .execute(() -> future.completeExceptionally(
-            new TimeoutException("Server did not start in time")));
+            new TimeoutException("Server did not become available in time")));
 
     future.whenComplete((result, error) -> sub.close());
 

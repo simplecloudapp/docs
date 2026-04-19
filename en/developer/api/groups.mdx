@@ -13,42 +13,72 @@ api.group().getAllGroups()
     .thenAccept(groups -> groups.forEach(g -> System.out.println(g.getName())));
 
 // Get all groups with query filters
-api.group().getAllGroups(new GroupQuery())
-    .thenAccept(groups -> { ... });
+GroupQuery query = GroupQuery.create()
+    .filterByType(GroupServerType.SERVER)
+    .filterByTag("minigame")
+    .sortBy("name")
+    .sortOrder("asc")
+    .limit(10);
+api.group().getAllGroups(query)
+    .thenAccept(groups -> groups.forEach(g -> System.out.println(g.getName())));
 
 // Get group by name
 api.group().getGroupByName("lobby")
-    .thenAccept(group -> System.out.println(group.getId()));
+    .thenAccept(group -> System.out.println(group.getServerGroupId()));
 
 // Get group by ID
 api.group().getGroupById("group-uuid")
     .thenAccept(group -> System.out.println(group.getName()));
 ```
 
+## GroupQuery
+
+Use `GroupQuery.create()` to build filtered queries:
+
+| Method | Description |
+|--------|-------------|
+| `filterByType(GroupServerType)` | Filter by server type (`SERVER`, `PROXY`, `UNKNOWN_SERVER`) |
+| `filterByTag(String)` | Filter by a single tag |
+| `sortBy(String)` | Sort field: `"name"` or other group fields |
+| `sortOrder(String)` | `"asc"` or `"desc"` |
+| `limit(Integer)` | Maximum number of results to return |
+
 ## Create Group
 
+`CreateGroupRequest` uses a constructor + setter chaining pattern:
+
 ```java
-CreateGroupRequest request = CreateGroupRequest.builder()
-    .name("bedwars")
-    .type(GroupServerType.SERVER)
-    .minMemory(512)
-    .maxMemory(1024)
-    .maxPlayers(16)
-    .minOnlineCount(1)
-    .maxOnlineCount(10)
-    .build();
+ScalingConfig scaling = new ScalingConfig();
+scaling.setMinServers(1);
+scaling.setMaxServers(10);
+scaling.setScalingMode(ScalingMode.SLOTS);
+scaling.setAvailableSlots(4);
+
+SourceConfig source = new SourceConfig();
+source.setType(SourceType.BLUEPRINT);
+source.setBlueprint("paper-1.21");
+
+CreateGroupRequest request = new CreateGroupRequest("bedwars")
+    .setType(GroupServerType.SERVER)
+    .setMinMemory(512)
+    .setMaxMemory(1024)
+    .setMaxPlayers(16)
+    .setActive(true)
+    .setScaling(scaling)
+    .setSource(source);
 
 api.group().createGroup(request)
-    .thenAccept(group -> System.out.println("Created: " + group.getId()));
+    .thenAccept(group -> System.out.println("Created: " + group.getServerGroupId()));
 ```
 
 ## Update Group
 
+`UpdateGroupRequest` follows the same constructor + setter pattern. Only fields you set are changed:
+
 ```java
-UpdateGroupRequest update = UpdateGroupRequest.builder()
-    .maxPlayers(32)
-    .maxOnlineCount(20)
-    .build();
+UpdateGroupRequest update = new UpdateGroupRequest()
+    .setMaxPlayers(32)
+    .setActive(true);
 
 api.group().updateGroup("group-uuid", update)
     .thenAccept(group -> System.out.println("Updated: " + group.getName()));
@@ -58,154 +88,102 @@ api.group().updateGroup("group-uuid", update)
 
 ```java
 api.group().deleteGroup("group-uuid")
-    .thenAccept(success -> System.out.println("Deleted: " + success));
+    .thenRun(() -> System.out.println("Deleted"));
 ```
 
 <Warning>
-  Deleting a group doesn't stop running servers. Stop servers first if needed.
+  Deleting a group does not stop running servers. It prevents new servers from being created for that group.
 </Warning>
 
 ## Group Properties
 
-Groups support custom key-value properties for metadata:
+Groups support custom properties for metadata. Values can be any JSON-compatible type:
 
 ```java
-// Add or update properties (merges with existing)
-Map<String, String> props = Map.of(
+// Add or update properties (deep merge with existing)
+api.group().updateGroupProperties("group-uuid", Map.of(
     "gameMode", "ADVENTURE",
     "region", "eu-west"
-);
-api.group().updateGroupProperties("group-uuid", props);
+)).thenAccept(props -> System.out.println("Updated properties: " + props));
+
+// Update a single property
+api.group().updateGroupProperty("group-uuid", "region", "us-east")
+    .thenAccept(props -> System.out.println("Updated: " + props));
 
 // Remove specific properties
-api.group().deleteGroupProperties("group-uuid", List.of("region"));
-```
+api.group().deleteGroupProperties("group-uuid", List.of("region"))
+    .thenAccept(remaining -> System.out.println("Remaining: " + remaining));
 
-Properties are available in servers as environment variables prefixed with `SIMPLECLOUD_`.
+// Remove a single property
+api.group().deleteGroupProperty("group-uuid", "region")
+    .thenAccept(remaining -> System.out.println("Remaining: " + remaining));
+```
 
 ## Group Model
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `id` | `String` | Unique identifier |
-| `name` | `String` | Group name |
-| `type` | `GroupServerType` | `SERVER` or `PROXY` |
-| `minMemory` | `int` | Minimum memory (MB) |
-| `maxMemory` | `int` | Maximum memory (MB) |
-| `maxPlayers` | `int` | Player limit per server |
-| `minOnlineCount` | `int` | Minimum servers running |
-| `maxOnlineCount` | `int` | Maximum servers allowed |
-| `properties` | `Map<String, String>` | Custom metadata |
-| `scalingConfig` | `ScalingConfig` | Auto-scaling settings |
-| `deploymentConfig` | `DeploymentConfig` | Host deployment settings |
-| `sourceConfig` | `SourceConfig` | Blueprint or image source |
+<ResponseField name="serverGroupId" type="String">
+  Unique identifier for the group.
+</ResponseField>
 
-## ScalingConfig
+<ResponseField name="name" type="String">
+  Human-readable group name.
+</ResponseField>
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `min_servers` | `int` | Minimum servers to keep running |
-| `max_servers` | `int` | Maximum servers allowed |
-| `scaling_mode` | `ScalingMode` | `SLOTS` or `SERVERS` |
-| `available_slots` | `int` | Open slots to maintain (Slots mode) |
-| `player_threshold` | `float` | Scale-up threshold between 0 and 1 |
-| `scale_down` | `ScaleDownConfig` | Scale-down behavior settings |
+<ResponseField name="type" type="GroupServerType">
+  Server type: `SERVER`, `PROXY`, or `UNKNOWN_SERVER`.
+</ResponseField>
 
-## Server start queue
+<ResponseField name="minMemory" type="Integer">
+  Minimum memory allocation in MB.
+</ResponseField>
 
-Groups using the `SERVERS` scaling mode support a manual start queue. Instead of starting a server immediately, you can request a queued start that the reconciler processes on its next tick. This is useful when you want to control exactly when new servers are created while still respecting the group's `max_servers` limit.
+<ResponseField name="maxMemory" type="Integer">
+  Maximum memory allocation in MB.
+</ResponseField>
 
-<Info>
-  The start queue is only available for groups using the `SERVERS` scaling mode. Groups using `SLOTS` mode do not support queued starts.
-</Info>
+<ResponseField name="maxPlayers" type="Integer">
+  Maximum players per server instance.
+</ResponseField>
 
-### Queue a server start
+<ResponseField name="active" type="Boolean">
+  Whether the group is active. Inactive groups do not spawn new servers.
+</ResponseField>
 
-You can request a start by passing the server group ID directly or by resolving a `Group` first:
+<ResponseField name="priority" type="Integer">
+  Group priority (lower number = higher priority).
+</ResponseField>
 
-```java
-// Request a start by server group ID
-api.group().requestServerStart("group-uuid")
-    .thenRun(() -> System.out.println("Start request accepted"));
+<ResponseField name="scaling" type="ScalingConfig">
+  Auto-scaling configuration.
+</ResponseField>
 
-// Request a start using the Group overload
-api.group().getGroupByName("lobby")
-    .thenCompose(group -> {
-        if (group == null) {
-            return CompletableFuture.failedFuture(
-                new IllegalArgumentException("Group not found: lobby"));
-        }
-        return api.group().requestServerStart(group);
-    })
-    .thenRun(() -> System.out.println("Start request accepted for lobby"));
-```
+<ResponseField name="deployment" type="DeploymentConfig">
+  Deployment host and strategy configuration.
+</ResponseField>
 
-The reconciler picks up queued starts on the next reconciliation tick and attempts to allocate a server. If the group is at its `max_servers` limit, the queued start is marked as `FAILED` with a reason.
+<ResponseField name="source" type="SourceConfig">
+  Source configuration (blueprint or container image).
+</ResponseField>
 
-### List queued starts
+<ResponseField name="workflows" type="WorkflowsConfig">
+  Workflow triggers for server lifecycle events.
+</ResponseField>
 
-```java
-api.group().getServerStartQueue()
-    .thenAccept(queue -> {
-        System.out.println("Groups with queue data: " + queue.getCount());
-        System.out.println("Queued starts: " + queue.getQueuedStarts());
-        System.out.println("Failed starts: " + queue.getFailedStarts());
+<ResponseField name="properties" type="Map<String, Object>">
+  Custom metadata as a key-value map.
+</ResponseField>
 
-        GroupStartQueueEntry lobby = queue.findByServerGroupName("lobby");
-        if (lobby != null) {
-            System.out.println("Lobby starts: " + lobby.getTotalStarts());
-        }
-    });
-```
+<ResponseField name="tags" type="List<String>">
+  Tags for organization and filtering.
+</ResponseField>
 
-### Clear queued starts
+<ResponseField name="createdAt" type="String">
+  ISO 8601 creation timestamp.
+</ResponseField>
 
-Remove all pending and failed starts for a specific group:
-
-```java
-api.group().clearServerStartQueue("group-uuid")
-    .thenRun(() -> System.out.println("Cleared queue for group-uuid"));
-```
-
-### Queue overview model
-
-`getServerStartQueue()` returns a `GroupStartQueue`.
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `count` | `int` | Number of groups with queue data |
-| `queuedStarts` | `int` | Number of queued starts across all groups |
-| `failedStarts` | `int` | Number of failed starts across all groups |
-| `totalStarts` | `int` | Total number of queue items across all groups |
-| `items` | `List<GroupStartQueueEntry>` | Queue data grouped by server group |
-
-### Queue entry model
-
-Each `GroupStartQueueEntry` describes the queue state for one server group.
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `serverGroupId` | `String?` | Server group ID |
-| `serverGroupName` | `String?` | Server group name |
-| `queuedStarts` | `int` | Number of pending starts for the group |
-| `failedStarts` | `int` | Number of failed starts for the group |
-| `totalStarts` | `int` | Total number of queue items for the group |
-| `starts` | `List<GroupStartQueueItem>` | Persisted queue items for the group |
-
-### Queue item model
-
-Each `GroupStartQueueItem` represents one persisted start request.
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `id` | `String` | Unique identifier for the queued start |
-| `createdAt` | `String?` | Timestamp when the start was queued (ISO 8601) |
-| `status` | `GroupStartQueueItemStatus` | `PENDING`, `FAILED`, or `UNKNOWN` |
-| `failureReason` | `String?` | Reason for failure, if applicable |
-
-<Warning>
-  Failed starts are automatically cleaned up after 1 hour. Use the list endpoint to check for failures and requeue if needed.
-</Warning>
+<ResponseField name="updatedAt" type="String">
+  ISO 8601 last-updated timestamp.
+</ResponseField>
 
 ## GroupServerType
 
@@ -213,3 +191,169 @@ Each `GroupStartQueueItem` represents one persisted start request.
 |-------|-------------|
 | `SERVER` | Game server (Paper, Spigot, etc.) |
 | `PROXY` | Proxy server (Velocity, BungeeCord) |
+| `UNKNOWN_SERVER` | Unknown or unspecified type |
+
+## ScalingConfig
+
+Controls how many servers run and when to scale:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `minServers` | `int` | Minimum servers to keep running |
+| `maxServers` | `int` | Maximum servers allowed |
+| `scalingMode` | `ScalingMode` | `SLOTS`, `PLAYERS`, or `MANUAL` |
+| `availableSlots` | `int` | Free slots to maintain across the group (SLOTS mode) |
+| `playerThreshold` | `double` | Scale-up threshold between 0.0 and 1.0 (PLAYERS mode) |
+| `scaleDown` | `ScaleDownConfig` | Scale-down behavior |
+
+### ScalingMode
+
+| Value | Description |
+|-------|-------------|
+| `SLOTS` | Scale based on available player slots across the group |
+| `PLAYERS` | Scale based on player count relative to `playerThreshold` |
+| `MANUAL` | No automatic scaling; only manual starts |
+
+### ScaleDownConfig
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `idleTime` | `String` | Duration a server must be idle before scale-down (e.g. `"5m"`) |
+| `ignorePlayers` | `boolean` | Scale down even if players are present |
+
+## DeploymentConfig
+
+Controls which hosts run servers and how they are distributed:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `hosts` | `DeploymentHost[]` | List of eligible hosts |
+| `strategy` | `DeploymentStrategy` | `RANDOM`, `PRIORITY`, or `ROUND_ROBIN` |
+
+### DeploymentHost
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `String` | Host name or identifier |
+| `priority` | `int` | Priority for `PRIORITY` strategy (lower = preferred) |
+
+### DeploymentStrategy
+
+| Value | Description |
+|-------|-------------|
+| `RANDOM` | Randomly select a host |
+| `PRIORITY` | Prefer hosts with lower priority numbers |
+| `ROUND_ROBIN` | Distribute servers evenly across hosts |
+
+## SourceConfig
+
+Defines where server software comes from:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type` | `SourceType` | `BLUEPRINT` or `IMAGE` |
+| `blueprint` | `String` | Blueprint name (when type is `BLUEPRINT`) |
+| `image` | `String` | Container image reference (when type is `IMAGE`) |
+
+## WorkflowsConfig
+
+Defines automated workflows triggered by server lifecycle events:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `manual` | `List<String>` | Workflow IDs available for manual execution |
+| `when` | `WorkflowWhen` | Automatic trigger configuration |
+
+### WorkflowWhen
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `start` | `List<String>` | Workflow IDs to run when a server starts |
+| `stop` | `List<String>` | Workflow IDs to run when a server stops |
+
+## Server Start Queue
+
+The start queue lets you request server starts that the reconciler processes on its next tick. This is useful when you want to control new server creation while still respecting the group's `maxServers` limit.
+
+### Queue a server start
+
+```java
+// Request a start by server group ID
+api.group().requestServerStart("group-uuid")
+    .thenRun(() -> System.out.println("Start request accepted"));
+
+// Request a start using a Group object
+api.group().getGroupByName("lobby")
+    .thenCompose(group -> api.group().requestServerStart(group))
+    .thenRun(() -> System.out.println("Start request accepted for lobby"));
+```
+
+### Inspect the queue
+
+```java
+api.group().getServerStartQueue()
+    .thenAccept(queue -> {
+        System.out.println("Groups with queue data: " + queue.getCount());
+        System.out.println("Total queued starts: " + queue.getQueuedStarts());
+        System.out.println("Total failed starts: " + queue.getFailedStarts());
+
+        // Look up a specific group
+        GroupStartQueueEntry lobby = queue.findByServerGroupName("lobby");
+        if (lobby != null) {
+            System.out.println("Lobby starts: " + lobby.getTotalStarts());
+            for (GroupStartQueueItem item : lobby.getStarts()) {
+                System.out.println("  " + item.getId() + ": " + item.getStatus());
+                if (item.getFailureReason() != null) {
+                    System.out.println("  Reason: " + item.getFailureReason());
+                }
+            }
+        }
+    });
+```
+
+### Clear the queue
+
+```java
+// Clear all queued starts for a group by ID
+api.group().clearServerStartQueue("group-uuid")
+    .thenRun(() -> System.out.println("Queue cleared"));
+
+// Clear using a Group object
+api.group().getGroupByName("lobby")
+    .thenCompose(group -> api.group().clearServerStartQueue(group))
+    .thenRun(() -> System.out.println("Queue cleared for lobby"));
+```
+
+### GroupStartQueue model
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `count` | `int` | Number of groups with queue data |
+| `queuedStarts` | `int` | Pending starts across all groups |
+| `failedStarts` | `int` | Failed starts across all groups |
+| `totalStarts` | `int` | Total queue items across all groups |
+| `items` | `List<GroupStartQueueEntry>` | Queue data per group |
+
+### GroupStartQueueEntry model
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `serverGroupId` | `String?` | Server group ID |
+| `serverGroupName` | `String?` | Server group name |
+| `queuedStarts` | `int` | Pending starts for this group |
+| `failedStarts` | `int` | Failed starts for this group |
+| `totalStarts` | `int` | Total queue items for this group |
+| `starts` | `List<GroupStartQueueItem>` | Individual queue items |
+
+### GroupStartQueueItem model
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `String?` | Unique identifier for this queue item |
+| `createdAt` | `String?` | ISO 8601 timestamp when the start was queued |
+| `status` | `GroupStartQueueItemStatus` | `PENDING`, `FAILED`, or `UNKNOWN` |
+| `failureReason` | `String?` | Reason for failure, if applicable |
+
+<Warning>
+  If the group is at its `maxServers` limit, the queued start is marked `FAILED`. Failed starts are automatically cleaned up after one hour.
+</Warning>

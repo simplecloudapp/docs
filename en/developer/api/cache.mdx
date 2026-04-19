@@ -1,0 +1,142 @@
+---
+title: 'Cache API'
+description: 'Inspect and control the built-in query cache'
+---
+
+The Cloud API includes a built-in query cache with stale-while-revalidate semantics, inspired by TanStack Query. Access it via `api.cache()`.
+
+<Note>
+  Caching is enabled by default. You rarely need to interact with the cache directly it works automatically and invalidates itself when NATS events arrive.
+</Note>
+
+## How It Works
+
+The cache uses a **stale-while-revalidate** strategy:
+
+1. If a cached value is still **fresh** (within its stale time), it is returned immediately with no network call.
+2. If a cached value is **stale** (past its stale time), the cached value is returned immediately *and* a background refresh is triggered.
+3. If there is **no cached value**, data is fetched from the network and cached.
+
+Identical simultaneous requests share a single network call (query deduplication).
+
+## Default Stale Times
+
+Each entity type has a default stale time tuned for its typical update frequency:
+
+| Entity | Default stale time | Reason |
+|--------|--------------------|--------|
+| `SERVER` | 3 seconds | Metrics (CPU, memory, player count) may change without events |
+| `GROUP` | 10 seconds | Configuration rarely changes; events handle updates |
+| `PERSISTENT_SERVER` | 10 seconds | Similar to groups |
+| `PLAYER` | 5 seconds | Balance between freshness and load |
+
+The cache is automatically invalidated when a relevant NATS event arrives. For example, a `ServerUpdatedEvent` immediately invalidates the cached data for that server.
+
+## Manual Cache Operations
+
+Access the cache via `api.cache()`:
+
+```java
+QueryCache cache = api.cache();
+
+// Invalidate a specific entry
+cache.invalidate(QueryKey.of("server", serverId));
+
+// Invalidate all entries matching a key prefix
+cache.invalidateAll(QueryKey.of("servers"));
+
+// Invalidate all entries for a specific entity type
+cache.invalidateByType(EntityType.SERVER);
+
+// Clear everything
+cache.clear();
+
+// Read a cached entry without triggering a fetch
+CacheEntry<Server> entry = cache.get(QueryKey.of("server", serverId));
+if (entry != null) {
+    System.out.println("Cached at: " + entry.getFetchedAt());
+}
+
+// Get statistics
+System.out.println(cache.getStats());
+
+// List all cached keys (for debugging)
+cache.getKeys().forEach(System.out::println);
+```
+
+### When to manually invalidate
+
+In most cases you don't need to. Use manual invalidation when:
+- You performed an operation outside the API (e.g., a direct database change) and need fresh data immediately.
+- You want to force a refresh before the stale time expires.
+
+## Configuration
+
+Customize the cache when creating the API:
+
+```java
+CacheConfig cacheConfig = CacheConfig.builder()
+    .defaultStaleTime(Duration.ofSeconds(10))     // default: 5s
+    .defaultCacheTime(Duration.ofMinutes(5))       // default: 2m
+    .maxEntries(1000)                              // default: 500
+    .autoInvalidateOnEvents(true)                  // default: true
+    .eventDebounceTime(Duration.ofMillis(100))     // default: 50ms
+    .entityConfig(EntityType.SERVER, EntityCacheConfig.builder()
+        .staleTime(Duration.ofSeconds(1))
+        .build())
+    .build();
+
+CloudApi api = CloudApi.create(CloudApiOptions.builder()
+    .cache(cacheConfig)
+    .build());
+```
+
+### Disable caching entirely
+
+```java
+CloudApi api = CloudApi.create(CloudApiOptions.builder()
+    .disableCache()
+    .build());
+```
+
+### Per-entity configuration
+
+Override stale/cache time for specific entity types:
+
+```java
+EntityCacheConfig serverConfig = EntityCacheConfig.builder()
+    .staleTime(Duration.ofSeconds(1))    // Need very fresh server data
+    .cacheTime(Duration.ofMinutes(3))
+    .build();
+```
+
+## CacheConfig Reference
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `defaultStaleTime` | `Duration` | `5s` | How long data is considered fresh |
+| `defaultCacheTime` | `Duration` | `2m` | How long unused entries stay in memory |
+| `maxEntries` | `int` | `500` | Maximum number of cached entries (LRU eviction) |
+| `autoInvalidateOnEvents` | `boolean` | `true` | Invalidate entries automatically when NATS events arrive |
+| `eventDebounceTime` | `Duration` | `50ms` | Coalesce multiple events within this window into a single invalidation |
+| `entityConfig(EntityType, EntityCacheConfig)` | — | — | Per-entity overrides |
+
+## EntityType
+
+| Value | Description |
+|-------|-------------|
+| `SERVER` | Running server instances |
+| `GROUP` | Server groups |
+| `PERSISTENT_SERVER` | Persistent server configurations |
+| `PLAYER` | Online players |
+
+## CacheStats
+
+`cache.getStats()` returns statistics useful for debugging and monitoring:
+
+```java
+CacheStats stats = api.cache().getStats();
+System.out.println(stats);
+```
+
+Use this to monitor cache hit rates and detect unexpected cache misses in production.
