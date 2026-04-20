@@ -3,123 +3,347 @@ title: 'Servers API'
 description: 'Laufende Server-Instanzen abfragen und verwalten'
 ---
 
-Die Servers API ermöglicht das Abfragen, Starten, Stoppen und Aktualisieren von laufenden Servern. Zugriff über `api.server()`.
+Die Servers API ermöglicht das Abfragen, Stoppen und Aktualisieren laufender Server-Instanzen. Zugriff über `api.server()`.
 
 ## Server abrufen
 
-```java
-// Alle Server
+<CodeGroup>
+```java Java
+// Alle Server abrufen
 api.server().getAllServers()
-    .thenAccept(servers -> System.out.println("Total: " + servers.size()));
+    .thenAccept(servers -> System.out.println("Gesamt: " + servers.size()));
 
-// Server nach ID
+// Server mit Query-Filtern abrufen
+ServerQuery query = ServerQuery.create()
+    .filterByServerGroupName("lobby")
+    .filterByState(ServerState.AVAILABLE, ServerState.INGAME)
+    .sortBy("numerical_id")
+    .sortOrder("asc");
+api.server().getAllServers(query)
+    .thenAccept(servers -> servers.forEach(s ->
+        System.out.println(s.getServerId() + ": " + s.getState())));
+
+// Server nach eindeutiger ID abrufen
 api.server().getServerById("server-uuid")
     .thenAccept(server -> System.out.println(server.getState()));
 
-// Server in einer Gruppe
+// Alle Server einer Group abrufen
 api.server().getServersByGroup("lobby")
     .thenAccept(servers -> servers.forEach(s ->
         System.out.println(s.getServerId() + ": " + s.getState())));
 
-// Server nach Gruppe und numerischer ID (z.B. Lobby-1)
+// Server nach Group-Name und numerischer ID abrufen (z. B. Lobby-1)
 api.server().getServerByNumericalId("lobby", 1)
     .thenAccept(server -> System.out.println(server.getServerId()));
 
-// Aktuellen Server (aus laufendem Server)
+// Aktuellen Server abrufen (aus einem laufenden Server heraus)
 api.server().getCurrentServer()
     .thenAccept(server -> System.out.println("Läuft auf: " + server.getServerId()));
 ```
 
-## Server starten
+```kotlin Kotlin
+// in einem Coroutine-Scope (z. B. Plugin-Lifecycle oder launch { })
 
-```java
-StartServerRequest request = new StartServerRequest("group-uuid", "lobby");
+// Alle Server abrufen
+val servers = api.server().getAllServers().await()
+println("Gesamt: ${servers.size}")
 
-api.server().startServer(request)
-    .thenAccept(server -> System.out.println("Gestartet: " + server.getServerId()));
+// Server mit Query-Filtern abrufen
+val query = ServerQuery.create()
+    .filterByServerGroupName("lobby")
+    .filterByState(ServerState.AVAILABLE, ServerState.INGAME)
+    .sortBy("numerical_id")
+    .sortOrder("asc")
+val filteredServers = api.server().getAllServers(query).await()
+filteredServers.forEach { s -> println("${s.serverId}: ${s.state}") }
+
+// Server nach eindeutiger ID abrufen
+val server = api.server().getServerById("server-uuid").await()
+println(server.state)
+
+// Alle Server einer Group abrufen
+val groupServers = api.server().getServersByGroup("lobby").await()
+groupServers.forEach { s -> println("${s.serverId}: ${s.state}") }
+
+// Server nach Group-Name und numerischer ID abrufen (z. B. Lobby-1)
+val lobbyOne = api.server().getServerByNumericalId("lobby", 1).await()
+println(lobbyOne.serverId)
+
+// Aktuellen Server abrufen (aus einem laufenden Server heraus)
+val currentServer = api.server().getCurrentServer().await()
+println("Läuft auf: ${currentServer.serverId}")
 ```
+</CodeGroup>
 
 ## Server stoppen
 
-```java
+<CodeGroup>
+```java Java
 api.server().stopServer("server-uuid")
-    .thenAccept(success -> System.out.println("Gestoppt: " + success));
+    .thenRun(() -> System.out.println("Stopp eingeleitet"));
 ```
+
+```kotlin Kotlin
+api.server().stopServer("server-uuid").await()
+println("Stopp eingeleitet")
+```
+</CodeGroup>
 
 ## Server aktualisieren
 
-```java
-UpdateServerRequest update = UpdateServerRequest.builder()
-    .maxPlayers(64)
-    .build();
+`UpdateServerRequest` verwendet Setter-Methoden. Nur die gesetzten Felder werden geändert:
+
+<CodeGroup>
+```java Java
+UpdateServerRequest update = new UpdateServerRequest();
+update.setMaxPlayers(64);
+update.setState(ServerState.AVAILABLE);
 
 api.server().updateServer("server-uuid", update)
     .thenAccept(server -> System.out.println("Aktualisiert: " + server.getMaxPlayers()));
 ```
 
-## Server-Datensatz löschen
+```kotlin Kotlin
+val update = UpdateServerRequest().apply {
+    maxPlayers = 64
+    state = ServerState.AVAILABLE
+}
 
-Um einen Server-Datensatz direkt aus der Datenbank zu entfernen, ohne den Prozess zu stoppen oder Lifecycle-Events auszulösen, verwende den REST-API-Endpunkt `DELETE /v0/servers/database`. Dies ist nützlich, um veraltete oder verwaiste Datensätze zu bereinigen, wenn der Serverprozess bereits beendet wurde.
+val updatedServer = api.server().updateServer("server-uuid", update).await()
+println("Aktualisiert: ${updatedServer.maxPlayers}")
+```
+</CodeGroup>
 
-<Warning>
-Diese Operation entfernt nur den Datenbankeintrag. Sie stoppt nicht den Serverprozess, löst keine Cleanup-Workflows aus und sendet keine Events. Verwende `stopServer` für normales Herunterfahren.
-</Warning>
+## Server-Eigenschaften
 
-```bash
-curl -X DELETE "https://your-controller/v0/servers/database?server_id=SERVER_UUID" \
-  -H "X-Network-ID: your-network-id" \
-  -H "X-Network-Secret: your-network-secret"
+Server unterstützen benutzerdefinierte Eigenschaften für Laufzeit-Metadaten:
+
+<CodeGroup>
+```java Java
+// Eigenschaften hinzufügen oder aktualisieren (Deep-Merge mit bestehenden)
+api.server().updateServerProperties("server-uuid", Map.of(
+    "map", "castle",
+    "mode", "competitive"
+)).thenAccept(props -> System.out.println("Aktualisiert: " + props));
+
+// Einzelne Eigenschaft aktualisieren
+api.server().updateServerProperty("server-uuid", "map", "desert")
+    .thenAccept(props -> System.out.println("Aktualisiert: " + props));
+
+// Bestimmte Eigenschaften entfernen
+api.server().deleteServerProperties("server-uuid", List.of("mode"))
+    .thenAccept(remaining -> System.out.println("Verbleibend: " + remaining));
+
+// Einzelne Eigenschaft entfernen
+api.server().deleteServerProperty("server-uuid", "mode")
+    .thenAccept(remaining -> System.out.println("Verbleibend: " + remaining));
 ```
 
-**Antwort:**
+```kotlin Kotlin
+// Eigenschaften hinzufügen oder aktualisieren (Deep-Merge mit bestehenden)
+val props = api.server().updateServerProperties("server-uuid", mapOf(
+    "map" to "castle",
+    "mode" to "competitive"
+)).await()
+println("Aktualisiert: $props")
 
-```json
-{
-  "server_id": "123e4567-e89b-12d3-a456-426614174000",
-  "message": "Server row deleted successfully"
+// Einzelne Eigenschaft aktualisieren
+val updatedProps = api.server().updateServerProperty("server-uuid", "map", "desert").await()
+println("Aktualisiert: $updatedProps")
+
+// Bestimmte Eigenschaften entfernen
+val remaining = api.server().deleteServerProperties("server-uuid", listOf("mode")).await()
+println("Verbleibend: $remaining")
+
+// Einzelne Eigenschaft entfernen
+val remainingAfter = api.server().deleteServerProperty("server-uuid", "mode").await()
+println("Verbleibend: $remainingAfter")
+```
+</CodeGroup>
+
+## ServerQuery
+
+Nutze `ServerQuery.create()`, um gefilterte Abfragen zu erstellen:
+
+| Methode | Beschreibung |
+|---------|--------------|
+| `filterByServerGroupId(String...)` | Nach einer oder mehreren Group-IDs filtern |
+| `filterByServerGroupName(String...)` | Nach einem oder mehreren Group-Namen filtern |
+| `filterByServerGroupTags(String...)` | Nach Group-Tags filtern (trifft zu, wenn mindestens ein Tag übereinstimmt) |
+| `filterByServerGroupType(GroupServerType...)` | Nach Group-Typ filtern (`SERVER`, `PROXY`) |
+| `filterByState(ServerState...)` | Nach einem oder mehreren Server-States filtern |
+| `filterByServerhostId(String)` | Nach der Host-Maschinen-ID filtern |
+| `filterByPersistentServerId(String)` | Server filtern, die von einem bestimmten Persistent Server gestartet wurden |
+| `filterByNumericalId(Integer...)` | Nach numerischen IDs filtern (z. B. 1, 5, 10) |
+| `sortBy(String)` | Sortierfeld: `created_at`, `updated_at`, `numerical_id`, `state` |
+| `sortOrder(String)` | `"asc"` oder `"desc"` |
+
+## Server-Modell
+
+<ResponseField name="serverId" type="String">
+  Eindeutiger Bezeichner dieser Server-Instanz.
+</ResponseField>
+
+<ResponseField name="numericalId" type="int">
+  Laufende Nummer innerhalb der Group (z. B. 1 für Lobby-1).
+</ResponseField>
+
+<ResponseField name="serverGroupId" type="String?">
+  ID der übergeordneten Group. Null, wenn der Server von einem Persistent Server gestartet wurde.
+</ResponseField>
+
+<ResponseField name="persistentServerId" type="String?">
+  ID des übergeordneten Persistent Servers. Null, wenn der Server von einer Group gestartet wurde.
+</ResponseField>
+
+<ResponseField name="serverhostId" type="String">
+  ID der Host-Maschine, auf der dieser Server läuft.
+</ResponseField>
+
+<ResponseField name="networkId" type="String">
+  Network, zu dem dieser Server gehört.
+</ResponseField>
+
+<ResponseField name="ip" type="String?">
+  IP-Adresse des Servers. Null, bis eine zugewiesen wurde.
+</ResponseField>
+
+<ResponseField name="port" type="Integer?">
+  Port, auf dem der Server lauscht. Null, bis er zugewiesen wurde.
+</ResponseField>
+
+<ResponseField name="minMemory" type="Integer">
+  Minimale Speicherzuweisung in MB.
+</ResponseField>
+
+<ResponseField name="maxMemory" type="Integer">
+  Maximale Speicherzuweisung in MB.
+</ResponseField>
+
+<ResponseField name="maxPlayers" type="Integer">
+  Maximale Spieleranzahl.
+</ResponseField>
+
+<ResponseField name="playerCount" type="Integer?">
+  Aktuelle Anzahl verbundener Spieler.
+</ResponseField>
+
+<ResponseField name="cpuUsage" type="Double?">
+  Aktuelle CPU-Auslastung in Prozent (0.0–100.0).
+</ResponseField>
+
+<ResponseField name="memoryUsage" type="Double?">
+  Aktueller Speicherverbrauch in MB.
+</ResponseField>
+
+<ResponseField name="state" type="ServerState">
+  Aktueller Lifecycle-State.
+</ResponseField>
+
+<ResponseField name="properties" type="Map<String, Object>?">
+  Benutzerdefinierte Metadaten als Key-Value-Paare.
+</ResponseField>
+
+<ResponseField name="blueprint" type="Blueprint?">
+  Blueprint, aus dem dieser Server erstellt wurde, falls vorhanden.
+</ResponseField>
+
+<ResponseField name="createdAt" type="String">
+  Erstellungszeitstempel im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="String">
+  Zeitstempel der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="lastActivity" type="String?">
+  Zeitstempel der letzten Aktivität auf diesem Server im ISO-8601-Format.
+</ResponseField>
+
+### Auf die übergeordnete Konfiguration zugreifen
+
+Ein Server kann entweder von einer Group oder einem Persistent Server gestartet worden sein. Mit den folgenden Methoden kannst du auf die übergeordnete Instanz zugreifen:
+
+<CodeGroup>
+```java Java
+// Auf den übergeordneten Typ zugreifen (ServerBase deckt Group und PersistentServer ab)
+ServerBase base = server.getServerBase();
+System.out.println(base.getName());
+
+// Typ prüfen
+if (server.isFromGroup()) {
+    Group group = server.getGroup();
+    System.out.println("Group: " + group.getServerGroupId());
+} else if (server.isFromPersistentServer()) {
+    PersistentServer ps = server.getPersistentServer();
+    System.out.println("Persistent Server: " + ps.getPersistentServerId());
 }
 ```
 
-| Parameter | Ort | Erforderlich | Beschreibung |
-|-----------|-----|--------------|--------------|
-| `server_id` | Query | Ja | UUID des zu löschenden Server-Datensatzes |
-| `X-Network-ID` | Header | Ja | Deine Netzwerk-ID |
-| `X-Network-Secret` | Header | Ja | Dein Netzwerk-Secret |
+```kotlin Kotlin
+// Auf den übergeordneten Typ zugreifen (ServerBase deckt Group und PersistentServer ab)
+val base = server.serverBase
+println(base.name)
 
-## Server Model
-
-| Property | Typ | Beschreibung |
-|----------|-----|--------------|
-| `serverId` | `String` | Eindeutige Kennung |
-| `groupName` | `String` | Eltern-Gruppenname |
-| `numericalId` | `long` | Numerische ID in Gruppe (1, 2, 3...) |
-| `state` | `ServerState` | Aktueller Lifecycle-Status |
-| `host` | `String` | Server-Host-Maschine |
-| `ip` | `String` | IP-Adresse |
-| `port` | `int` | Server-Port |
-| `maxPlayers` | `int` | Spielerlimit |
-| `playerCount` | `int` | Aktuelle Online-Spieler |
-| `properties` | `Map<String, String>` | Eigene Metadaten |
+// Typ prüfen
+if (server.isFromGroup()) {
+    val group = server.group
+    println("Group: ${group.serverGroupId}")
+} else if (server.isFromPersistentServer()) {
+    val ps = server.persistentServer
+    println("Persistent Server: ${ps.persistentServerId}")
+}
+```
+</CodeGroup>
 
 ## ServerState
 
-| Status | Beschreibung |
-|--------|--------------|
-| `PREPARING` | Template-Dateien werden kopiert |
-| `STARTING` | JVM-Prozess startet |
-| `AVAILABLE` | Bereit für Spieler |
-| `INGAME` | Hat aktive Spieler |
-| `STOPPING` | Shutdown läuft |
+| State | Beschreibung |
+|-------|--------------|
+| `UNKNOWN_STATE` | Unbekannter oder nicht spezifizierter State |
+| `PREPARING` | Dateien werden heruntergeladen, Server-Umgebung wird vorbereitet |
+| `STARTING` | JVM oder Prozess wird gestartet |
+| `AVAILABLE` | Bereit und nimmt Verbindungen an |
+| `INGAME` | Aktiv mit Spielern in einem Spiel |
+| `STOPPING` | Herunterfahren läuft |
+| `CLEANUP` | Prozess beendet, Ressourcen werden bereinigt |
 
-## Umgebungsvariablen
+## Laufzeit-Umgebungsvariablen
 
-Innerhalb eines laufenden Servers kannst du Server-Info ohne API abrufen:
+Innerhalb eines laufenden Servers kannst du Server-Informationen ohne die API über `SimpleCloudRuntime` abrufen:
 
-```java
-String group = System.getenv("SIMPLECLOUD_GROUP");
-String uniqueId = System.getenv("SIMPLECLOUD_UNIQUE_ID");
-String numericalId = System.getenv("SIMPLECLOUD_NUMERICAL_ID");
-String host = System.getenv("SIMPLECLOUD_HOST");
-String port = System.getenv("SIMPLECLOUD_PORT");
-String maxPlayers = System.getenv("SIMPLECLOUD_MAX_PLAYERS");
+<CodeGroup>
+```java Java
+import app.simplecloud.api.runtime.SimpleCloudRuntime;
+
+String serverId    = SimpleCloudRuntime.serverId();       // SIMPLECLOUD_UNIQUE_ID
+String groupName   = SimpleCloudRuntime.groupName();      // SIMPLECLOUD_GROUP
+String numericalId = SimpleCloudRuntime.numericalId();    // SIMPLECLOUD_NUMERICAL_ID
+String serverName  = SimpleCloudRuntime.serverName();     // "Lobby-1" oder serverId als Fallback
 ```
+
+```kotlin Kotlin
+import app.simplecloud.api.runtime.SimpleCloudRuntime
+
+val serverId    = SimpleCloudRuntime.serverId()       // SIMPLECLOUD_UNIQUE_ID
+val groupName   = SimpleCloudRuntime.groupName()      // SIMPLECLOUD_GROUP
+val numericalId = SimpleCloudRuntime.numericalId()    // SIMPLECLOUD_NUMERICAL_ID
+val serverName  = SimpleCloudRuntime.serverName()     // "Lobby-1" oder serverId als Fallback
+```
+</CodeGroup>
+
+Du kannst die Umgebungsvariablen auch direkt auslesen:
+
+<CodeGroup>
+```java Java
+String group      = System.getenv("SIMPLECLOUD_GROUP");
+String uniqueId   = System.getenv("SIMPLECLOUD_UNIQUE_ID");
+String numId      = System.getenv("SIMPLECLOUD_NUMERICAL_ID");
+```
+
+```kotlin Kotlin
+val group      = System.getenv("SIMPLECLOUD_GROUP")
+val uniqueId   = System.getenv("SIMPLECLOUD_UNIQUE_ID")
+val numId      = System.getenv("SIMPLECLOUD_NUMERICAL_ID")
+```
+</CodeGroup>

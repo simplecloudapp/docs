@@ -3,11 +3,12 @@ title: 'Spieler zwischen Servern transferieren'
 description: 'Spieler programmatisch über dein Netzwerk bewegen'
 ---
 
-Diese Anleitung zeigt, wie du Spieler zwischen Servern transferierst, mit korrekter Fehlerbehandlung und Benutzer-Feedback.
+Diese Anleitung zeigt, wie du Spieler zwischen Servern transferierst – mit korrekter Fehlerbehandlung und Feedback für den Spieler.
 
 ## Einfacher Transfer
 
-```java
+<CodeGroup>
+```java Java
 public void transferPlayer(UUID playerUuid, String targetServer) {
     api.player().get(playerUuid).thenAccept(player -> {
         if (player == null) {
@@ -20,6 +21,7 @@ public void transferPlayer(UUID playerUuid, String targetServer) {
                 case SUCCESS -> System.out.println("Transfer erfolgreich");
                 case SERVER_NOT_FOUND -> System.out.println("Server existiert nicht");
                 case ALREADY_CONNECTED -> System.out.println("Bereits auf diesem Server");
+                case PLAYER_NOT_FOUND -> System.out.println("Spieler ist offline gegangen");
                 case CONNECTION_FAILED -> System.out.println("Transfer fehlgeschlagen");
             }
         });
@@ -27,21 +29,44 @@ public void transferPlayer(UUID playerUuid, String targetServer) {
 }
 ```
 
-## Transfer zum besten Server in Gruppe
+```kotlin Kotlin
+suspend fun transferPlayer(playerUuid: UUID, targetServer: String) {
+    val player = api.player().get(playerUuid).await()
+    if (player == null) {
+        println("Spieler nicht gefunden oder offline")
+        return
+    }
 
-Finde den Server mit den meisten freien Slots:
+    val result = player.connect(targetServer).await()
+    when (result) {
+        CloudPlayer.ConnectResult.SUCCESS -> println("Transfer erfolgreich")
+        CloudPlayer.ConnectResult.SERVER_NOT_FOUND -> println("Server existiert nicht")
+        CloudPlayer.ConnectResult.ALREADY_CONNECTED -> println("Bereits auf diesem Server")
+        CloudPlayer.ConnectResult.PLAYER_NOT_FOUND -> println("Spieler ist offline gegangen")
+        CloudPlayer.ConnectResult.CONNECTION_FAILED -> println("Transfer fehlgeschlagen")
+    }
+}
+```
+</CodeGroup>
 
-```java
+## Transfer zum besten Server in einer Group
+
+Den Server mit den meisten freien Slots finden:
+
+<CodeGroup>
+```java Java
 public void transferToGroup(UUID playerUuid, String groupName) {
     api.server().getServersByGroup(groupName).thenAccept(servers -> {
         Server bestServer = servers.stream()
-            .filter(s -> s.getState() == ServerState.AVAILABLE || s.getState() == ServerState.INGAME)
-            .filter(s -> s.getPlayerCount() < s.getMaxPlayers())
+            .filter(s -> s.getState() == ServerState.AVAILABLE
+                      || s.getState() == ServerState.INGAME)
+            .filter(s -> s.getPlayerCount() != null
+                      && s.getPlayerCount() < s.getMaxPlayers())
             .max(Comparator.comparingInt(s -> s.getMaxPlayers() - s.getPlayerCount()))
             .orElse(null);
 
         if (bestServer == null) {
-            System.out.println("Keine verfügbaren Server in Gruppe");
+            System.out.println("Keine verfügbaren Server in Group: " + groupName);
             return;
         }
 
@@ -54,11 +79,31 @@ public void transferToGroup(UUID playerUuid, String groupName) {
 }
 ```
 
-## Transfer mit Benutzer-Feedback
+```kotlin Kotlin
+suspend fun transferToGroup(playerUuid: UUID, groupName: String) {
+    val servers = api.server().getServersByGroup(groupName).await()
+    val bestServer = servers
+        .filter { s -> s.state == ServerState.AVAILABLE || s.state == ServerState.INGAME }
+        .filter { s -> s.playerCount != null && s.playerCount!! < s.maxPlayers }
+        .maxByOrNull { s -> s.maxPlayers - (s.playerCount ?: 0) }
 
-Sende Nachrichten während des Transfers:
+    if (bestServer == null) {
+        println("Keine verfügbaren Server in Group: $groupName")
+        return
+    }
 
-```java
+    val player = api.player().get(playerUuid).await() ?: return
+    player.connect(bestServer.serverId).await()
+}
+```
+</CodeGroup>
+
+## Transfer mit Spieler-Feedback
+
+Dem Spieler während des Transfers Nachrichten senden:
+
+<CodeGroup>
+```java Java
 public void transferWithFeedback(UUID playerUuid, String targetServer) {
     api.player().get(playerUuid).thenCompose(player -> {
         if (player == null) {
@@ -79,22 +124,132 @@ public void transferWithFeedback(UUID playerUuid, String targetServer) {
 }
 ```
 
-## Alle Spieler von Server evakuieren
+```kotlin Kotlin
+suspend fun transferWithFeedback(playerUuid: UUID, targetServer: String) {
+    val player = api.player().get(playerUuid).await() ?: return
 
-```java
+    player.sendMessage(Component.text("Verbinde zu $targetServer...")
+        .color(NamedTextColor.YELLOW))
+
+    val result = player.connect(targetServer).await()
+    if (result != CloudPlayer.ConnectResult.SUCCESS) {
+        player.sendMessage(Component.text("Verbindung fehlgeschlagen: $result")
+            .color(NamedTextColor.RED))
+    }
+}
+```
+</CodeGroup>
+
+## Alle Spieler von einem Server evakuieren
+
+Alle Spieler vor dem Herunterfahren eines Servers transferieren:
+
+<CodeGroup>
+```java Java
 public void evacuateServer(String serverId, String targetServer) {
-    api.server().getServerById(serverId).thenAccept(server -> {
-        if (server == null) return;
-
-        api.player().getOnlinePlayers().thenAccept(players -> {
-            players.stream()
-                .filter(p -> p.getConnectedServerName().equals(server.getServerId()))
-                .forEach(player -> {
-                    player.sendMessage(Component.text("Server fährt herunter, transferiere...")
-                        .color(NamedTextColor.GOLD));
-                    player.connect(targetServer);
-                });
-        });
+    api.player().getOnlinePlayers().thenAccept(players -> {
+        players.stream()
+            .filter(p -> serverId.equals(p.getConnectedServerName()))
+            .forEach(player -> {
+                player.sendMessage(Component.text("Server fährt herunter, transferiere...")
+                    .color(NamedTextColor.GOLD));
+                player.connect(targetServer);
+            });
     });
 }
 ```
+
+```kotlin Kotlin
+suspend fun evacuateServer(serverId: String, targetServer: String) {
+    val players = api.player().getOnlinePlayers().await()
+    players
+        .filter { p -> serverId == p.connectedServerName }
+        .forEach { player ->
+            player.sendMessage(Component.text("Server fährt herunter, transferiere...")
+                .color(NamedTextColor.GOLD))
+            player.connect(targetServer).await()
+        }
+}
+```
+</CodeGroup>
+
+## Server starten und Spieler transferieren
+
+Einen neuen Server starten und den Spieler transferieren, sobald er bereit ist:
+
+<CodeGroup>
+```java Java
+public void requestServerAndTransfer(UUID playerUuid, String groupName) {
+    api.server().getServersByGroup(groupName).thenAccept(servers -> {
+        Server available = servers.stream()
+            .filter(s -> s.getState() == ServerState.AVAILABLE)
+            .filter(s -> s.getPlayerCount() != null
+                      && s.getPlayerCount() < s.getMaxPlayers())
+            .findFirst()
+            .orElse(null);
+
+        if (available != null) {
+            api.player().get(playerUuid).thenAccept(player -> {
+                if (player != null) player.connect(available.getServerId());
+            });
+        } else {
+            // Kein verfügbarer Server – Start einreihen und auf Bereitschaft warten
+            api.group().getGroupByName(groupName).thenAccept(group -> {
+                if (group == null) return;
+
+                api.group().requestServerStart(group).thenRun(() -> {
+                    // Auf den neuen Server warten, bis er verfügbar ist
+                    Subscription[] subHolder = new Subscription[1];
+                    subHolder[0] = api.event().server().onStateChanged(event -> {
+                        Server s = event.getServer();
+                        if (s.isFromGroup()
+                                && groupName.equals(s.getServerBase().getName())
+                                && event.getNewState() == ServerState.AVAILABLE) {
+                            subHolder[0].close();
+                            api.player().get(playerUuid).thenAccept(player -> {
+                                if (player != null) player.connect(event.getServerId());
+                            });
+                        }
+                    });
+                });
+            });
+        }
+    });
+}
+```
+
+```kotlin Kotlin
+suspend fun requestServerAndTransfer(playerUuid: UUID, groupName: String) {
+    val servers = api.server().getServersByGroup(groupName).await()
+    val available = servers
+        .filter { s -> s.state == ServerState.AVAILABLE }
+        .filter { s -> s.playerCount != null && s.playerCount!! < s.maxPlayers }
+        .firstOrNull()
+
+    if (available != null) {
+        val player = api.player().get(playerUuid).await() ?: return
+        player.connect(available.serverId).await()
+    } else {
+        // Kein verfügbarer Server – Start einreihen und auf Bereitschaft warten
+        val group = api.group().getGroupByName(groupName).await() ?: return
+        api.group().requestServerStart(group).await()
+
+        // Auf den neuen Server warten, bis er verfügbar ist
+        val future = CompletableFuture<String>()
+        val sub = api.event().server().onStateChanged { event ->
+            val s = event.server
+            if (s.isFromGroup()
+                    && groupName == s.serverBase.name
+                    && event.newState == ServerState.AVAILABLE) {
+                future.complete(event.serverId)
+            }
+        }
+        val newServerId = future.await()
+        sub.close()
+
+        val player = api.player().get(playerUuid).await() ?: return
+        player.connect(newServerId).await()
+    }
+}
+```
+</CodeGroup>

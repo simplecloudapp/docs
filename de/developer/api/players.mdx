@@ -1,14 +1,15 @@
 ---
 title: 'Players API'
-description: 'Spieler verwalten und Cross-Server-Nachrichten senden'
+description: 'Spieler verwalten und serverübergreifende Nachrichten senden'
 ---
 
-Die Players API ermöglicht das Abfragen von Spielern, Transferieren zwischen Servern und Senden von Rich-Text-Nachrichten mit Adventure. Zugriff über `api.player()`.
+Die Players API ermöglicht das Abfragen von Spielern, das Transferieren zwischen Servern und das Senden von Rich-Text-Nachrichten mit Adventure. Zugriff über `api.player()`.
 
 ## Spieler abrufen
 
-```java
-// Spieler nach UUID
+<CodeGroup>
+```java Java
+// Spieler nach UUID abrufen
 api.player().get(uuid)
     .thenAccept(player -> {
         if (player != null) {
@@ -16,56 +17,160 @@ api.player().get(uuid)
         }
     });
 
-// Spieler nach Username
+// Spieler nach Benutzernamen abrufen (Groß-/Kleinschreibung egal)
 api.player().get("Steve")
     .thenAccept(player -> { ... });
 
-// Alle Online-Spieler
+// Alle Online-Spieler abrufen
 api.player().getOnlinePlayers()
     .thenAccept(players -> players.forEach(p ->
         System.out.println(p.getName())));
 
-// Online-Spielerzahl
+// Anzahl Online-Spieler abrufen
 api.player().getOnlinePlayerCount()
     .thenAccept(count -> System.out.println("Online: " + count));
 ```
+
+```kotlin Kotlin
+// in einem Coroutine-Scope (z. B. Plugin-Lifecycle oder launch { })
+
+// Spieler nach UUID abrufen
+val player = api.player().get(uuid).await()
+if (player != null) {
+    println("${player.name} auf ${player.connectedServerName}")
+}
+
+// Spieler nach Benutzernamen abrufen (Groß-/Kleinschreibung egal)
+val steve = api.player().get("Steve").await()
+
+// Alle Online-Spieler abrufen
+val players = api.player().getOnlinePlayers().await()
+players.forEach { p -> println(p.name) }
+
+// Anzahl Online-Spieler abrufen
+val count = api.player().getOnlinePlayerCount().await()
+println("Online: $count")
+```
+</CodeGroup>
 
 ## Spieler-Aktionen
 
 ### Spieler transferieren
 
-```java
+<CodeGroup>
+```java Java
 api.player().get(uuid).thenAccept(player -> {
     if (player != null) {
         player.connect("lobby-1").thenAccept(result -> {
             switch (result) {
-                case SUCCESS -> System.out.println("Transfer erfolgreich");
+                case SUCCESS -> System.out.println("Transfer erfolgreich!");
                 case SERVER_NOT_FOUND -> System.out.println("Server existiert nicht");
                 case ALREADY_CONNECTED -> System.out.println("Bereits auf diesem Server");
-                case CONNECTION_FAILED -> System.out.println("Transfer fehlgeschlagen");
+                case PLAYER_NOT_FOUND -> System.out.println("Spieler ist offline gegangen");
+                case CONNECTION_FAILED -> System.out.println("Verbindung fehlgeschlagen");
             }
         });
     }
 });
 ```
 
+```kotlin Kotlin
+val player = api.player().get(uuid).await() ?: return
+val result = player.connect("lobby-1").await()
+when (result) {
+    CloudPlayer.ConnectResult.SUCCESS -> println("Transfer erfolgreich!")
+    CloudPlayer.ConnectResult.SERVER_NOT_FOUND -> println("Server existiert nicht")
+    CloudPlayer.ConnectResult.ALREADY_CONNECTED -> println("Bereits auf diesem Server")
+    CloudPlayer.ConnectResult.PLAYER_NOT_FOUND -> println("Spieler ist offline gegangen")
+    CloudPlayer.ConnectResult.CONNECTION_FAILED -> println("Verbindung fehlgeschlagen")
+}
+```
+</CodeGroup>
+
 ### Spieler kicken
 
-```java
+<CodeGroup>
+```java Java
 player.kick(Component.text("Server wird neugestartet")
     .color(NamedTextColor.RED));
 ```
 
+```kotlin Kotlin
+player.kick(Component.text("Server wird neugestartet")
+    .color(NamedTextColor.RED))
+```
+</CodeGroup>
+
+## Spieler-Eigenschaften
+
+Spieler unterstützen benutzerdefinierte Eigenschaften, die auf dem Controller gespeichert werden:
+
+<CodeGroup>
+```java Java
+// Eigenschaften aktualisieren (Merge mit bestehenden)
+api.player().updatePlayerProperties(uuid, Map.of(
+    "rank", "VIP",
+    "coins", "1500"
+)).thenAccept(props -> System.out.println("Aktualisiert: " + props));
+
+// Einzelne Eigenschaft aktualisieren
+api.player().updatePlayerProperty(uuid, "rank", "MVP")
+    .thenAccept(props -> System.out.println("Aktualisiert: " + props));
+
+// Bestimmte Eigenschaften entfernen
+api.player().deletePlayerProperties(uuid, List.of("coins"))
+    .thenAccept(remaining -> System.out.println("Verbleibend: " + remaining));
+
+// Einzelne Eigenschaft entfernen
+api.player().deletePlayerProperty(uuid, "rank")
+    .thenAccept(remaining -> System.out.println("Verbleibend: " + remaining));
+```
+
+```kotlin Kotlin
+// Eigenschaften aktualisieren (Merge mit bestehenden)
+val props = api.player().updatePlayerProperties(uuid, mapOf(
+    "rank" to "VIP",
+    "coins" to "1500"
+)).await()
+println("Aktualisiert: $props")
+
+// Einzelne Eigenschaft aktualisieren
+val updatedProps = api.player().updatePlayerProperty(uuid, "rank", "MVP").await()
+println("Aktualisiert: $updatedProps")
+
+// Bestimmte Eigenschaften entfernen
+val remaining = api.player().deletePlayerProperties(uuid, listOf("coins")).await()
+println("Verbleibend: $remaining")
+
+// Einzelne Eigenschaft entfernen
+val remainingAfter = api.player().deletePlayerProperty(uuid, "rank").await()
+println("Verbleibend: $remainingAfter")
+```
+</CodeGroup>
+
+<Note>
+  Spieler-Eigenschaften verwenden `Map<String, String>` (nur String-Werte), anders als Group- und Server-Eigenschaften, die `Map<String, Object>` verwenden.
+</Note>
+
 ## Adventure-Integration
 
-`CloudPlayer` implementiert Adventure's `Audience` Interface:
+`CloudPlayer` implementiert Adventures `Audience`-Interface und gibt dir Zugriff auf alle Adventure-Messaging-Features:
 
 ### Nachrichten senden
 
-```java
+<CodeGroup>
+```java Java
+// Einfacher Text
+player.sendMessage(Component.text("Hallo!"));
+
 // Farbiger Text
 player.sendMessage(Component.text("Erfolg!")
     .color(NamedTextColor.GREEN));
+
+// Formatierter Text
+player.sendMessage(Component.text("Wichtig")
+    .color(NamedTextColor.GOLD)
+    .decorate(TextDecoration.BOLD));
 
 // Klickbarer Text
 player.sendMessage(Component.text("Hier klicken")
@@ -73,35 +178,216 @@ player.sendMessage(Component.text("Hier klicken")
     .hoverEvent(HoverEvent.showText(Component.text("/help ausführen"))));
 ```
 
+```kotlin Kotlin
+// Einfacher Text
+player.sendMessage(Component.text("Hallo!"))
+
+// Farbiger Text
+player.sendMessage(Component.text("Erfolg!")
+    .color(NamedTextColor.GREEN))
+
+// Formatierter Text
+player.sendMessage(Component.text("Wichtig")
+    .color(NamedTextColor.GOLD)
+    .decorate(TextDecoration.BOLD))
+
+// Klickbarer Text
+player.sendMessage(Component.text("Hier klicken")
+    .clickEvent(ClickEvent.runCommand("/help"))
+    .hoverEvent(HoverEvent.showText(Component.text("/help ausführen"))))
+```
+</CodeGroup>
+
 ### Titles senden
 
-```java
+<CodeGroup>
+```java Java
 player.showTitle(Title.title(
     Component.text("Willkommen!").color(NamedTextColor.GOLD),
     Component.text("auf dem Server").color(NamedTextColor.GRAY),
     Title.Times.times(
-        Duration.ofMillis(500),
-        Duration.ofSeconds(3),
-        Duration.ofMillis(500)
+        Duration.ofMillis(500),   // einblenden
+        Duration.ofSeconds(3),    // anzeigen
+        Duration.ofMillis(500)    // ausblenden
     )
 ));
 ```
 
+```kotlin Kotlin
+player.showTitle(Title.title(
+    Component.text("Willkommen!").color(NamedTextColor.GOLD),
+    Component.text("auf dem Server").color(NamedTextColor.GRAY),
+    Title.Times.times(
+        Duration.ofMillis(500),   // einblenden
+        Duration.ofSeconds(3),    // anzeigen
+        Duration.ofMillis(500)    // ausblenden
+    )
+))
+```
+</CodeGroup>
+
 ### Action Bar senden
 
-```java
+<CodeGroup>
+```java Java
 player.sendActionBar(Component.text("⚔ Kampfmodus aktiviert")
     .color(NamedTextColor.RED));
 ```
 
-## CloudPlayer Model
+```kotlin Kotlin
+player.sendActionBar(Component.text("⚔ Kampfmodus aktiviert")
+    .color(NamedTextColor.RED))
+```
+</CodeGroup>
 
-| Property | Typ | Beschreibung |
-|----------|-----|--------------|
-| `uniqueId` | `UUID` | Spieler-UUID |
-| `name` | `String` | Spieler-Username |
-| `connectedServerName` | `String` | Aktueller Server-Name |
-| `connectedProxyName` | `String` | Verbundener Proxy-Name |
+### Sounds abspielen
+
+<CodeGroup>
+```java Java
+player.playSound(Sound.sound(
+    Key.key("entity.experience_orb.pickup"),
+    Sound.Source.PLAYER,
+    1.0f,  // Lautstärke
+    1.0f   // Tonhöhe
+));
+```
+
+```kotlin Kotlin
+player.playSound(Sound.sound(
+    Key.key("entity.experience_orb.pickup"),
+    Sound.Source.PLAYER,
+    1.0f,  // Lautstärke
+    1.0f   // Tonhöhe
+))
+```
+</CodeGroup>
+
+### Boss Bars
+
+<CodeGroup>
+```java Java
+BossBar bar = BossBar.bossBar(
+    Component.text("Event-Fortschritt"),
+    0.5f,
+    BossBar.Color.PURPLE,
+    BossBar.Overlay.PROGRESS
+);
+
+player.showBossBar(bar);
+
+// Fortschritt aktualisieren
+bar.progress(0.75f);
+
+// Entfernen wenn fertig
+player.hideBossBar(bar);
+```
+
+```kotlin Kotlin
+val bar = BossBar.bossBar(
+    Component.text("Event-Fortschritt"),
+    0.5f,
+    BossBar.Color.PURPLE,
+    BossBar.Overlay.PROGRESS
+)
+
+player.showBossBar(bar)
+
+// Fortschritt aktualisieren
+bar.progress(0.75f)
+
+// Entfernen wenn fertig
+player.hideBossBar(bar)
+```
+</CodeGroup>
+
+### Spielerliste – Kopf- und Fußzeile
+
+<CodeGroup>
+```java Java
+player.sendPlayerListHeaderAndFooter(
+    Component.text("Mein Server").color(NamedTextColor.GOLD),
+    Component.text("play.example.com").color(NamedTextColor.GRAY)
+);
+```
+
+```kotlin Kotlin
+player.sendPlayerListHeaderAndFooter(
+    Component.text("Mein Server").color(NamedTextColor.GOLD),
+    Component.text("play.example.com").color(NamedTextColor.GRAY)
+)
+```
+</CodeGroup>
+
+## Broadcast an alle Spieler
+
+<CodeGroup>
+```java Java
+api.player().getOnlinePlayers().thenAccept(players -> {
+    Component message = Component.text("[Ankündigung] ")
+        .color(NamedTextColor.GOLD)
+        .append(Component.text("Server startet in 5 Minuten neu")
+            .color(NamedTextColor.WHITE));
+
+    players.forEach(player -> player.sendMessage(message));
+});
+```
+
+```kotlin Kotlin
+val players = api.player().getOnlinePlayers().await()
+val message = Component.text("[Ankündigung] ")
+    .color(NamedTextColor.GOLD)
+    .append(Component.text("Server startet in 5 Minuten neu")
+        .color(NamedTextColor.WHITE))
+
+players.forEach { player -> player.sendMessage(message) }
+```
+</CodeGroup>
+
+## CloudPlayer-Modell
+
+<ResponseField name="uniqueId" type="UUID">
+  Eindeutiger Bezeichner des Spielers.
+</ResponseField>
+
+<ResponseField name="name" type="String">
+  Benutzername des Spielers.
+</ResponseField>
+
+<ResponseField name="displayName" type="String">
+  Anzeigename des Spielers.
+</ResponseField>
+
+<ResponseField name="connectedServerName" type="String">
+  Name des Servers, auf dem der Spieler aktuell ist.
+</ResponseField>
+
+<ResponseField name="connectedProxyName" type="String">
+  Name des Proxys, über den der Spieler verbunden ist.
+</ResponseField>
+
+<ResponseField name="online" type="boolean">
+  Ob der Spieler aktuell online ist.
+</ResponseField>
+
+<ResponseField name="onlineTimeSeconds" type="long">
+  Gesammelte Online-Zeit in Sekunden.
+</ResponseField>
+
+<ResponseField name="sessionId" type="String">
+  Bezeichner der aktuellen Sitzung.
+</ResponseField>
+
+<ResponseField name="firstSeen" type="String">
+  ISO-8601-Zeitstempel des ersten Logins.
+</ResponseField>
+
+<ResponseField name="lastSeen" type="String">
+  ISO-8601-Zeitstempel des letzten Logins.
+</ResponseField>
+
+<ResponseField name="properties" type="Map<String, String>">
+  Benutzerdefinierte Spieler-Eigenschaften (unveränderliche Map; leer, wenn keine vorhanden).
+</ResponseField>
 
 ## ConnectResult
 
@@ -109,6 +395,6 @@ player.sendActionBar(Component.text("⚔ Kampfmodus aktiviert")
 |------|--------------|
 | `SUCCESS` | Transfer erfolgreich |
 | `SERVER_NOT_FOUND` | Zielserver existiert nicht |
-| `ALREADY_CONNECTED` | Spieler bereits auf diesem Server |
-| `PLAYER_NOT_FOUND` | Spieler ging offline |
-| `CONNECTION_FAILED` | Transfer fehlgeschlagen |
+| `ALREADY_CONNECTED` | Spieler ist bereits auf diesem Server |
+| `PLAYER_NOT_FOUND` | Spieler ist offline gegangen, bevor der Transfer abgeschlossen wurde |
+| `CONNECTION_FAILED` | Transfer aus unbekanntem Grund fehlgeschlagen |

@@ -1,13 +1,13 @@
 ---
 title: 'Installation'
-description: 'Cloud API zu deinem Minecraft-Plugin oder Standalone-Anwendung hinzufügen'
+description: 'Cloud API zu deinem Minecraft-Plugin oder einer Standalone-Anwendung hinzufügen'
 ---
 
 import { DependencySnippet } from '/snippets/DependencySnippet.jsx'
 
-## Dependencies hinzufügen
+## Abhängigkeiten hinzufügen
 
-Füge die Cloud API zu deiner Build-Konfiguration hinzu. Die Version wird automatisch aus unserem Maven-Repository abgerufen.
+Füge die Cloud API zu deiner Build-Konfiguration hinzu. Die Version wird automatisch aus unserem Maven-Repository bezogen.
 
 <DependencySnippet
   dependencies={[
@@ -22,15 +22,15 @@ Füge die Cloud API zu deiner Build-Konfiguration hinzu. Die Version wird automa
 
 ## Plugin-Setup
 
-Füge das SimpleCloud API Plugin als Dependency in deinem Plugin-Deskriptor hinzu:
+Trage das SimpleCloud API Plugin als Abhängigkeit in deinem Plugin-Deskriptor ein:
 
 <Tabs>
 <Tab title="Paper/Spigot (plugin.yml)">
 
 ```yaml
-name: mein-plugin
+name: my-plugin
 version: 1.0.0
-main: com.example.MeinPlugin
+main: com.example.MyPlugin
 depend: [simplecloud-api]
 ```
 
@@ -39,10 +39,10 @@ depend: [simplecloud-api]
 
 ```json
 {
-  "id": "mein-plugin",
-  "name": "Mein Plugin",
+  "id": "my-plugin",
+  "name": "My Plugin",
   "version": "1.0.0",
-  "main": "com.example.MeinPlugin",
+  "main": "com.example.MyPlugin",
   "dependencies": [
     { "id": "simplecloud-api", "optional": false }
   ]
@@ -53,9 +53,9 @@ depend: [simplecloud-api]
 <Tab title="BungeeCord (bungee.yml)">
 
 ```yaml
-name: mein-plugin
+name: my-plugin
 version: 1.0.0
-main: com.example.MeinPlugin
+main: com.example.MyPlugin
 depends: [simplecloud-api]
 ```
 
@@ -63,14 +63,18 @@ depends: [simplecloud-api]
 </Tabs>
 
 <Warning>
-  Shade die Cloud API nicht in dein Plugin. Hänge stattdessen vom `simplecloud-api` Plugin ab.
+  Shade die Cloud API nicht in dein Plugin. Nutze stattdessen das `simplecloud-api`-Plugin als Abhängigkeit.
 </Warning>
 
 ## API initialisieren
 
-### Standard-Konfiguration
+### Standardkonfiguration
 
-Wenn du innerhalb eines SimpleCloud-Servers läufst, konfiguriert sich die API automatisch aus Umgebungsvariablen:
+Innerhalb eines SimpleCloud-Servers konfiguriert sich die API automatisch aus Umgebungsvariablen:
+
+<Note>
+  Kotlin-Beispiele verwenden `.await()` aus `kotlinx-coroutines-jdk8`. Füge `org.jetbrains.kotlinx:kotlinx-coroutines-jdk8` zu deinen Abhängigkeiten hinzu und rufe API-Methoden aus einem Coroutine-Scope oder einer `suspend`-Funktion auf.
+</Note>
 
 <Tabs>
 <Tab title="Java">
@@ -78,7 +82,7 @@ Wenn du innerhalb eines SimpleCloud-Servers läufst, konfiguriert sich die API a
 ```java
 import app.simplecloud.api.CloudApi;
 
-public class MeinPlugin extends JavaPlugin {
+public class MyPlugin extends JavaPlugin {
     private CloudApi api;
 
     @Override
@@ -94,7 +98,7 @@ public class MeinPlugin extends JavaPlugin {
 ```kotlin
 import app.simplecloud.api.CloudApi
 
-class MeinPlugin : JavaPlugin() {
+class MyPlugin : JavaPlugin() {
     private lateinit var api: CloudApi
 
     override fun onEnable() {
@@ -106,19 +110,19 @@ class MeinPlugin : JavaPlugin() {
 </Tab>
 </Tabs>
 
-### Eigene Konfiguration
+### Benutzerdefinierte Konfiguration
 
-Für Standalone-Anwendungen oder eigene Setups, gib Konfigurationsoptionen an:
+Für Standalone-Anwendungen oder eigene Setups kannst du Konfigurationsoptionen übergeben:
 
 <Tabs>
 <Tab title="Java">
 
 ```java
 CloudApi api = CloudApi.create(CloudApiOptions.builder()
-    .networkId("deine-netzwerk-id")
-    .networkSecret("dein-secret")
-    .controllerUrl("https://controller.platform.simplecloud.app")
-    .natsUrl("nats://platform.simplecloud.app:4222")
+    .networkId("your-network-id")
+    .networkSecret("your-secret")
+    .controllerUrl("https://controller.simplecloud.app")
+    .natsUrl("wss://nats.simplecloud.app:443")
     .build());
 ```
 
@@ -127,70 +131,210 @@ CloudApi api = CloudApi.create(CloudApiOptions.builder()
 
 ```kotlin
 val api = CloudApi.create(CloudApiOptions.builder()
-    .networkId("deine-netzwerk-id")
-    .networkSecret("dein-secret")
-    .controllerUrl("https://controller.platform.simplecloud.app")
-    .natsUrl("nats://platform.simplecloud.app:4222")
+    .networkId("your-network-id")
+    .networkSecret("your-secret")
+    .controllerUrl("https://controller.simplecloud.app")
+    .natsUrl("wss://nats.simplecloud.app:443")
     .build())
 ```
 
 </Tab>
 </Tabs>
 
+### Cache-Konfiguration
+
+Die API enthält einen eingebauten Query-Cache mit sinnvollen Standardwerten. Du kannst ihn anpassen oder vollständig deaktivieren:
+
+<CodeGroup>
+```java Java
+// Caching deaktivieren
+CloudApi api = CloudApi.create(CloudApiOptions.builder()
+    .networkId("your-network-id")
+    .networkSecret("your-secret")
+    .disableCache()
+    .build());
+
+// Eigene Cache-Einstellungen
+CacheConfig cache = CacheConfig.builder()
+    .defaultStaleTime(Duration.ofSeconds(10))
+    .defaultCacheTime(Duration.ofMinutes(5))
+    .entityConfig(EntityType.SERVER, EntityCacheConfig.builder()
+        .staleTime(Duration.ofSeconds(1))
+        .build())
+    .build();
+
+CloudApi api = CloudApi.create(CloudApiOptions.builder()
+    .networkId("your-network-id")
+    .networkSecret("your-secret")
+    .cache(cache)
+    .build());
+```
+
+```kotlin Kotlin
+// Caching deaktivieren
+val api = CloudApi.create(CloudApiOptions.builder()
+    .networkId("your-network-id")
+    .networkSecret("your-secret")
+    .disableCache()
+    .build())
+
+// Eigene Cache-Einstellungen
+val cache = CacheConfig.builder()
+    .defaultStaleTime(Duration.ofSeconds(10))
+    .defaultCacheTime(Duration.ofMinutes(5))
+    .entityConfig(EntityType.SERVER, EntityCacheConfig.builder()
+        .staleTime(Duration.ofSeconds(1))
+        .build())
+    .build()
+
+val api = CloudApi.create(CloudApiOptions.builder()
+    .networkId("your-network-id")
+    .networkSecret("your-secret")
+    .cache(cache)
+    .build())
+```
+</CodeGroup>
+
+<Note>
+  Caching ist standardmäßig aktiviert. Der Cache invalidiert Einträge automatisch, wenn NATS-Events eintreffen (z. B. invalidiert ein `ServerUpdatedEvent` die gecachten Daten des betroffenen Servers).
+</Note>
+
 ## Umgebungsvariablen
 
-Die API liest standardmäßig diese Umgebungsvariablen:
+Die API liest standardmäßig folgende Umgebungsvariablen:
 
 | Variable | Standard | Beschreibung |
 |----------|----------|--------------|
-| `SIMPLECLOUD_NETWORK_ID` | `"default"` | Deine Netzwerk-Kennung |
-| `SIMPLECLOUD_NETWORK_SECRET` | `""` | Authentifizierungs-Secret |
-| `SIMPLECLOUD_CONTROLLER_URL` | `"https://controller.platform.simplecloud.app"` | Controller API-Endpunkt |
-| `SIMPLECLOUD_NATS_URL` | `"nats://platform.simplecloud.app:4222"` | NATS-Server für Events |
+| `SIMPLECLOUD_NETWORK_ID` | `"default"` | Deine Network-ID |
+| `SIMPLECLOUD_NETWORK_SECRET` | `""` | Authentifizierungsschlüssel |
+| `SIMPLECLOUD_CONTROLLER_URL` | `"https://controller.simplecloud.app"` | Controller-API-Endpunkt |
+| `SIMPLECLOUD_NATS_URL` | `"wss://nats.simplecloud.app:443"` | NATS-Server für Events |
+| `SIMPLECLOUD_NATS_FAILOVER_RECONNECT_AFTER` | `"30s"` | Wartezeit vor Reconnect (z. B. `30s`, `2m`, `1h`) |
 
 <Note>
-  Innerhalb von SimpleCloud-Servern werden diese Variablen automatisch gesetzt. Du musst sie nur für Standalone-Anwendungen oder externe Services konfigurieren.
+  Innerhalb von SimpleCloud-Servern werden diese Variablen automatisch gesetzt. Du musst sie nur für Standalone-Anwendungen oder externe Dienste konfigurieren.
 </Note>
 
 ## Best Practices
 
 <AccordionGroup>
-  <Accordion title="Eine einzelne API-Instanz verwenden">
-    Erstelle eine `CloudApi`-Instanz und verwende sie wieder. Nutze Dependency Injection wenn dein Framework es unterstützt.
+  <Accordion title="Eine einzige API-Instanz verwenden">
+    Erstelle eine `CloudApi`-Instanz und verwende sie überall. Nutze Dependency Injection, wenn dein Framework das unterstützt.
 
-    ```java
-    // Gut - einzelne Instanz
+    <CodeGroup>
+    ```java Java
+    // Richtig – eine Instanz
     private final CloudApi api = CloudApi.create();
 
-    // Vermeiden - mehrere Instanzen
+    // Vermeiden – mehrere Instanzen
     public void doSomething() {
-        CloudApi api = CloudApi.create(); // Das nicht tun
+        CloudApi api = CloudApi.create(); // Nicht so!
     }
     ```
+
+    ```kotlin Kotlin
+    // Richtig – eine Instanz
+    private val api = CloudApi.create()
+
+    // Vermeiden – mehrere Instanzen
+    fun doSomething() {
+        val api = CloudApi.create() // Nicht so!
+    }
+    ```
+    </CodeGroup>
   </Accordion>
 
-  <Accordion title="Async-Operationen richtig behandeln">
-    Alle API-Methoden geben `CompletableFuture` zurück. Blockiere nicht auf dem Haupt-Thread.
+  <Accordion title="Async-Operationen korrekt behandeln">
+    Alle API-Methoden geben `CompletableFuture` zurück. Blockiere niemals den Haupt-Thread.
 
-    ```java
-    // Gut - async Behandlung
+    <CodeGroup>
+    ```java Java
+    // Richtig – asynchron verarbeiten
     api.server().getAllServers().thenAccept(servers -> {
         // Server verarbeiten
     });
 
-    // Vermeiden - blockieren
+    // Vermeiden – blockierend
     List<Server> servers = api.server().getAllServers().join(); // Nicht blockieren!
     ```
+
+    ```kotlin Kotlin
+    // Richtig – Coroutine-Stil
+    // in einem Coroutine-Scope (z. B. Plugin-Lifecycle oder launch { })
+    val servers = api.server().getAllServers().await()
+    // Server verarbeiten
+
+    // Vermeiden – blockierend
+    val servers = api.server().getAllServers().join() // Nicht blockieren!
+    ```
+    </CodeGroup>
   </Accordion>
 
   <Accordion title="Event-Subscriptions aufräumen">
-    Subscriptions implementieren `AutoCloseable`. Schließe sie wenn du fertig bist.
+    Subscriptions implementieren `AutoCloseable`. Schließe sie, wenn du sie nicht mehr brauchst.
 
-    ```java
+    <CodeGroup>
+    ```java Java
     Subscription sub = api.event().server().onStarted(event -> { ... });
 
     // Beim Herunterfahren
     sub.close();
     ```
+
+    ```kotlin Kotlin
+    val sub = api.event().server().onStarted { event -> /* ... */ }
+
+    // Beim Herunterfahren
+    sub.close()
+    ```
+    </CodeGroup>
+  </Accordion>
+</AccordionGroup>
+
+## Fehlerbehebung
+
+<AccordionGroup>
+  <Accordion title="Abhängigkeit nicht gefunden">
+    **Symptom:** Gradle/Maven kann `app.simplecloud.api:api` nicht auflösen.
+
+    **Lösung:**
+    1. Beide Repositories hinzufügen:
+       - `https://repo.simplecloud.app/snapshots`
+       - `https://buf.build/gen/maven`
+    2. Abhängigkeiten neu laden: `gradle --refresh-dependencies` oder `mvn -U clean install`
+    3. Netzwerkzugriff auf die Repository-URLs prüfen
+  </Accordion>
+
+  <Accordion title="NoClassDefFoundError zur Laufzeit">
+    **Symptom:** Plugin schlägt mit `ClassNotFoundException` für SimpleCloud-Klassen fehl.
+
+    **Ursache:** API wurde in die JAR gepackt (Shading) oder die Ladereihenfolge der Plugins ist falsch.
+
+    **Lösung:**
+    1. API nicht shaden – `compileOnly`-Scope verwenden
+    2. `simplecloud-api` als Abhängigkeit im Plugin-Deskriptor eintragen
+    3. Sicherstellen, dass das SimpleCloud API Plugin vor deinem Plugin geladen wird
+  </Accordion>
+
+  <Accordion title="API-Initialisierung schlägt fehl">
+    **Symptom:** `CloudApi.create()` wirft eine Exception.
+
+    **Bei „Connection refused":**
+    - Sicherstellen, dass der Server innerhalb von SimpleCloud läuft
+    - Umgebungsvariablen prüfen
+    - Für Standalone-Apps: Controller- und NATS-URLs verifizieren
+
+    **Bei Authentifizierungsfehler:**
+    - `SIMPLECLOUD_NETWORK_ID` auf Korrektheit prüfen
+    - `SIMPLECLOUD_NETWORK_SECRET` muss übereinstimmen
+  </Accordion>
+
+  <Accordion title="Versionskonflikte">
+    **Symptom:** Fehler wegen inkompatibler API-Versionen.
+
+    **Lösung:**
+    1. `compileOnly`-Scope verwenden (nicht `implementation`)
+    2. Andere Plugins auf mitgelieferte API-Versionen prüfen
+    3. API-Version mit der SimpleCloud-Installation abgleichen
   </Accordion>
 </AccordionGroup>

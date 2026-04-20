@@ -1,163 +1,503 @@
 ---
 title: 'Groups API'
-description: 'Server-Gruppen programmatisch verwalten'
+description: 'Server-Groups programmatisch verwalten'
 ---
 
-Die Groups API ermöglicht das Erstellen, Abfragen, Aktualisieren und Löschen von Server-Gruppen. Zugriff über `api.group()`.
+Die Groups API ermöglicht das Erstellen, Abfragen, Aktualisieren und Löschen von Server-Groups. Zugriff über `api.group()`.
 
-## Gruppen abrufen
+## Groups abrufen
 
-```java
-// Alle Gruppen abrufen
+<CodeGroup>
+```java Java
+// Alle Groups abrufen
 api.group().getAllGroups()
     .thenAccept(groups -> groups.forEach(g -> System.out.println(g.getName())));
 
-// Gruppe nach Namen
-api.group().getGroupByName("lobby")
-    .thenAccept(group -> System.out.println(group.getId()));
+// Alle Groups mit Query-Filtern abrufen
+GroupQuery query = GroupQuery.create()
+    .filterByType(GroupServerType.SERVER)
+    .filterByTag("minigame")
+    .sortBy("name")
+    .sortOrder("asc")
+    .limit(10);
+api.group().getAllGroups(query)
+    .thenAccept(groups -> groups.forEach(g -> System.out.println(g.getName())));
 
-// Gruppe nach ID
+// Group nach Namen abrufen
+api.group().getGroupByName("lobby")
+    .thenAccept(group -> System.out.println(group.getServerGroupId()));
+
+// Group nach ID abrufen
 api.group().getGroupById("group-uuid")
     .thenAccept(group -> System.out.println(group.getName()));
 ```
 
-## Gruppe erstellen
+```kotlin Kotlin
+// in einem Coroutine-Scope (z. B. Plugin-Lifecycle oder launch { })
 
-```java
-CreateGroupRequest request = CreateGroupRequest.builder()
-    .name("bedwars")
-    .type(GroupServerType.SERVER)
-    .minMemory(512)
-    .maxMemory(1024)
-    .maxPlayers(16)
-    .minOnlineCount(1)
-    .maxOnlineCount(10)
-    .build();
+// Alle Groups abrufen
+val groups = api.group().getAllGroups().await()
+groups.forEach { g -> println(g.name) }
+
+// Alle Groups mit Query-Filtern abrufen
+val query = GroupQuery.create()
+    .filterByType(GroupServerType.SERVER)
+    .filterByTag("minigame")
+    .sortBy("name")
+    .sortOrder("asc")
+    .limit(10)
+val filteredGroups = api.group().getAllGroups(query).await()
+filteredGroups.forEach { g -> println(g.name) }
+
+// Group nach Namen abrufen
+val group = api.group().getGroupByName("lobby").await()
+println(group.serverGroupId)
+
+// Group nach ID abrufen
+val groupById = api.group().getGroupById("group-uuid").await()
+println(groupById.name)
+```
+</CodeGroup>
+
+## GroupQuery
+
+Nutze `GroupQuery.create()`, um gefilterte Abfragen zu erstellen:
+
+| Methode | Beschreibung |
+|---------|--------------|
+| `filterByType(GroupServerType)` | Nach Server-Typ filtern (`SERVER`, `PROXY`, `UNKNOWN_SERVER`) |
+| `filterByTag(String)` | Nach einem einzelnen Tag filtern |
+| `sortBy(String)` | Sortierfeld: `"name"` oder andere Group-Felder |
+| `sortOrder(String)` | `"asc"` oder `"desc"` |
+| `limit(Integer)` | Maximale Anzahl zurückgegebener Ergebnisse |
+
+## Group erstellen
+
+`CreateGroupRequest` verwendet ein Konstruktor- und Setter-Chaining-Muster:
+
+<CodeGroup>
+```java Java
+ScalingConfig scaling = new ScalingConfig();
+scaling.setMinServers(1);
+scaling.setMaxServers(10);
+scaling.setScalingMode(ScalingMode.SLOTS);
+scaling.setAvailableSlots(4);
+
+SourceConfig source = new SourceConfig();
+source.setType(SourceType.BLUEPRINT);
+source.setBlueprint("paper-1.21");
+
+CreateGroupRequest request = new CreateGroupRequest("bedwars")
+    .setType(GroupServerType.SERVER)
+    .setMinMemory(512)
+    .setMaxMemory(1024)
+    .setMaxPlayers(16)
+    .setActive(true)
+    .setScaling(scaling)
+    .setSource(source);
 
 api.group().createGroup(request)
-    .thenAccept(group -> System.out.println("Erstellt: " + group.getId()));
+    .thenAccept(group -> System.out.println("Erstellt: " + group.getServerGroupId()));
 ```
 
-## Gruppe aktualisieren
+```kotlin Kotlin
+val scaling = ScalingConfig().apply {
+    minServers = 1
+    maxServers = 10
+    scalingMode = ScalingMode.SLOTS
+    availableSlots = 4
+}
 
-```java
-UpdateGroupRequest update = UpdateGroupRequest.builder()
-    .maxPlayers(32)
-    .maxOnlineCount(20)
-    .build();
+val source = SourceConfig().apply {
+    type = SourceType.BLUEPRINT
+    blueprint = "paper-1.21"
+}
+
+val request = CreateGroupRequest("bedwars")
+    .setType(GroupServerType.SERVER)
+    .setMinMemory(512)
+    .setMaxMemory(1024)
+    .setMaxPlayers(16)
+    .setActive(true)
+    .setScaling(scaling)
+    .setSource(source)
+
+val createdGroup = api.group().createGroup(request).await()
+println("Erstellt: ${createdGroup.serverGroupId}")
+```
+</CodeGroup>
+
+## Group aktualisieren
+
+`UpdateGroupRequest` folgt demselben Konstruktor- und Setter-Muster. Nur die gesetzten Felder werden geändert:
+
+<CodeGroup>
+```java Java
+UpdateGroupRequest update = new UpdateGroupRequest()
+    .setMaxPlayers(32)
+    .setActive(true);
 
 api.group().updateGroup("group-uuid", update)
     .thenAccept(group -> System.out.println("Aktualisiert: " + group.getName()));
 ```
 
-## Gruppe löschen
+```kotlin Kotlin
+val update = UpdateGroupRequest()
+    .setMaxPlayers(32)
+    .setActive(true)
 
-```java
+val updatedGroup = api.group().updateGroup("group-uuid", update).await()
+println("Aktualisiert: ${updatedGroup.name}")
+```
+</CodeGroup>
+
+## Group löschen
+
+<CodeGroup>
+```java Java
 api.group().deleteGroup("group-uuid")
-    .thenAccept(success -> System.out.println("Gelöscht: " + success));
+    .thenRun(() -> System.out.println("Gelöscht"));
 ```
 
+```kotlin Kotlin
+api.group().deleteGroup("group-uuid").await()
+println("Gelöscht")
+```
+</CodeGroup>
+
 <Warning>
-  Das Löschen einer Gruppe stoppt laufende Server nicht. Stoppe Server zuerst wenn nötig.
+  Das Löschen einer Group stoppt laufende Server nicht. Es verhindert lediglich, dass neue Server für diese Group erstellt werden.
 </Warning>
 
-## Gruppen-Properties
+## Group-Eigenschaften
 
-Gruppen unterstützen eigene Key-Value-Properties für Metadaten:
+Groups unterstützen benutzerdefinierte Eigenschaften als Metadaten. Die Werte können beliebige JSON-kompatible Typen sein:
 
-```java
-// Properties hinzufügen oder aktualisieren (merged mit bestehenden)
-Map<String, String> props = Map.of(
+<CodeGroup>
+```java Java
+// Eigenschaften hinzufügen oder aktualisieren (Deep-Merge mit bestehenden)
+api.group().updateGroupProperties("group-uuid", Map.of(
     "gameMode", "ADVENTURE",
     "region", "eu-west"
-);
-api.group().updateGroupProperties("group-uuid", props);
+)).thenAccept(props -> System.out.println("Eigenschaften aktualisiert: " + props));
 
-// Bestimmte Properties entfernen
-api.group().deleteGroupProperties("group-uuid", List.of("region"));
+// Einzelne Eigenschaft aktualisieren
+api.group().updateGroupProperty("group-uuid", "region", "us-east")
+    .thenAccept(props -> System.out.println("Aktualisiert: " + props));
+
+// Bestimmte Eigenschaften entfernen
+api.group().deleteGroupProperties("group-uuid", List.of("region"))
+    .thenAccept(remaining -> System.out.println("Verbleibend: " + remaining));
+
+// Einzelne Eigenschaft entfernen
+api.group().deleteGroupProperty("group-uuid", "region")
+    .thenAccept(remaining -> System.out.println("Verbleibend: " + remaining));
 ```
 
-Properties sind in Servern als Umgebungsvariablen mit `SIMPLECLOUD_` Präfix verfügbar.
+```kotlin Kotlin
+// Eigenschaften hinzufügen oder aktualisieren (Deep-Merge mit bestehenden)
+val props = api.group().updateGroupProperties("group-uuid", mapOf(
+    "gameMode" to "ADVENTURE",
+    "region" to "eu-west"
+)).await()
+println("Eigenschaften aktualisiert: $props")
 
-## Group Model
+// Einzelne Eigenschaft aktualisieren
+val updatedProps = api.group().updateGroupProperty("group-uuid", "region", "us-east").await()
+println("Aktualisiert: $updatedProps")
 
-| Property | Typ | Beschreibung |
-|----------|-----|--------------|
-| `id` | `String` | Eindeutige Kennung |
-| `name` | `String` | Gruppenname |
-| `type` | `GroupServerType` | `SERVER` oder `PROXY` |
-| `minMemory` | `int` | Minimaler Speicher (MB) |
-| `maxMemory` | `int` | Maximaler Speicher (MB) |
-| `maxPlayers` | `int` | Spielerlimit pro Server |
-| `minOnlineCount` | `int` | Minimale laufende Server |
-| `maxOnlineCount` | `int` | Maximale erlaubte Server |
-| `properties` | `Map<String, String>` | Eigene Metadaten |
+// Bestimmte Eigenschaften entfernen
+val remaining = api.group().deleteGroupProperties("group-uuid", listOf("region")).await()
+println("Verbleibend: $remaining")
 
-## Server-Start-Warteschlange
-
-Gruppen mit dem Skalierungsmodus `SERVERS` unterstützen eine manuelle Start-Warteschlange. Anstatt einen Server sofort zu starten, kannst du eine Start-Anfrage in die Warteschlange einreihen, die der Reconciler beim nächsten Tick verarbeitet. Dies ist nützlich, wenn du genau kontrollieren möchtest, wann neue Server erstellt werden, während das `max_servers`-Limit der Gruppe eingehalten wird.
-
-<Info>
-  Die Start-Warteschlange ist nur für Gruppen mit dem Skalierungsmodus `SERVERS` verfügbar. Gruppen mit dem Modus `SLOTS` unterstützen keine Warteschlangen-Starts.
-</Info>
-
-### Server-Start einreihen
-
-Du kannst einen Start über die Gruppen-ID oder den Gruppennamen (oder beides) einreihen:
-
-```java
-// Start nach Gruppenname einreihen
-api.group().queueServerStart("lobby")
-    .thenAccept(response -> System.out.println(
-        "Eingereiht: " + response.getQueuedStarts()));
-
-// Start nach Gruppen-ID einreihen
-api.group().queueServerStart("group-uuid")
-    .thenAccept(response -> System.out.println(
-        "Eingereiht: " + response.getQueuedStarts()));
+// Einzelne Eigenschaft entfernen
+val remainingAfter = api.group().deleteGroupProperty("group-uuid", "region").await()
+println("Verbleibend: $remainingAfter")
 ```
+</CodeGroup>
 
-Der Reconciler verarbeitet eingereihte Starts beim nächsten Reconciliation-Tick und versucht, einen Server zuzuweisen. Wenn die Gruppe ihr `max_servers`-Limit erreicht hat, wird der eingereihte Start als `failed` mit einem Grund markiert.
+## Group-Modell
 
-### Eingereihte Starts auflisten
+<ResponseField name="serverGroupId" type="String">
+  Eindeutiger Bezeichner der Group.
+</ResponseField>
 
-```java
-api.group().listQueuedStarts()
-    .thenAccept(response -> {
-        System.out.println("Wartend: " + response.getQueuedStarts());
-        System.out.println("Fehlgeschlagen: " + response.getFailedStarts());
-        response.getItems().forEach(entry ->
-            System.out.println(entry.getServerGroupName() + ": " +
-                entry.getQueuedStarts() + " wartend"));
-    });
-```
+<ResponseField name="name" type="String">
+  Lesbarer Name der Group.
+</ResponseField>
 
-### Eingereihte Starts löschen
+<ResponseField name="type" type="GroupServerType">
+  Server-Typ: `SERVER`, `PROXY` oder `UNKNOWN_SERVER`.
+</ResponseField>
 
-Alle ausstehenden und fehlgeschlagenen Starts einer bestimmten Gruppe entfernen:
+<ResponseField name="minMemory" type="Integer">
+  Minimale Speicherzuweisung in MB.
+</ResponseField>
 
-```java
-api.group().clearQueuedStarts("group-uuid")
-    .thenAccept(response -> System.out.println(
-        "Warteschlange geleert für: " + response.getServerGroupName()));
-```
+<ResponseField name="maxMemory" type="Integer">
+  Maximale Speicherzuweisung in MB.
+</ResponseField>
 
-### Start-Warteschlangen-Eintrag
+<ResponseField name="maxPlayers" type="Integer">
+  Maximale Spieleranzahl pro Server-Instanz.
+</ResponseField>
 
-| Property | Typ | Beschreibung |
-|----------|-----|--------------|
-| `id` | `String` | Eindeutige Kennung des eingereihten Starts |
-| `created_at` | `String` | Zeitstempel der Einreihung (ISO 8601) |
-| `status` | `String` | `pending` oder `failed` |
-| `failure_reason` | `String?` | Grund des Fehlschlags, falls zutreffend |
+<ResponseField name="active" type="Boolean">
+  Ob die Group aktiv ist. Inaktive Groups starten keine neuen Server.
+</ResponseField>
 
-<Warning>
-  Fehlgeschlagene Starts werden nach 1 Stunde automatisch bereinigt. Verwende den List-Endpunkt, um auf Fehler zu prüfen und bei Bedarf neu einzureihen.
-</Warning>
+<ResponseField name="priority" type="Integer">
+  Priorität der Group (niedrigere Zahl = höhere Priorität).
+</ResponseField>
+
+<ResponseField name="scaling" type="ScalingConfig">
+  Konfiguration der automatischen Skalierung.
+</ResponseField>
+
+<ResponseField name="deployment" type="DeploymentConfig">
+  Konfiguration von Deployment-Host und -Strategie.
+</ResponseField>
+
+<ResponseField name="source" type="SourceConfig">
+  Quellkonfiguration (Blueprint oder Container-Image).
+</ResponseField>
+
+<ResponseField name="workflows" type="WorkflowsConfig">
+  Workflow-Trigger für Server-Lifecycle-Events.
+</ResponseField>
+
+<ResponseField name="properties" type="Map<String, Object>">
+  Benutzerdefinierte Metadaten als Key-Value-Map.
+</ResponseField>
+
+<ResponseField name="tags" type="List<String>">
+  Tags zur Organisation und Filterung.
+</ResponseField>
+
+<ResponseField name="createdAt" type="String">
+  Erstellungszeitstempel im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="String">
+  Zeitstempel der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
 
 ## GroupServerType
 
 | Wert | Beschreibung |
 |------|--------------|
-| `SERVER` | Game-Server (Paper, Spigot, etc.) |
+| `SERVER` | Game-Server (Paper, Spigot usw.) |
 | `PROXY` | Proxy-Server (Velocity, BungeeCord) |
+| `UNKNOWN_SERVER` | Unbekannter oder nicht spezifizierter Typ |
+
+## ScalingConfig
+
+Steuert, wie viele Server laufen und wann skaliert wird:
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `minServers` | `int` | Minimale Anzahl laufender Server |
+| `maxServers` | `int` | Maximale erlaubte Server-Anzahl |
+| `scalingMode` | `ScalingMode` | `SLOTS`, `PLAYERS` oder `MANUAL` |
+| `availableSlots` | `int` | Freie Slots, die gruppenübergreifend gehalten werden sollen (SLOTS-Modus) |
+| `playerThreshold` | `double` | Skalierungs-Schwellenwert zwischen 0.0 und 1.0 (PLAYERS-Modus) |
+| `scaleDown` | `ScaleDownConfig` | Verhalten beim Herunterskalieren |
+
+### ScalingMode
+
+| Wert | Beschreibung |
+|------|--------------|
+| `SLOTS` | Skalierung anhand freier Spieler-Slots in der gesamten Group |
+| `PLAYERS` | Skalierung anhand der Spieleranzahl relativ zu `playerThreshold` |
+| `MANUAL` | Keine automatische Skalierung; nur manuelle Starts |
+
+### ScaleDownConfig
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `idleTime` | `String` | Wie lange ein Server inaktiv sein muss, bevor er herunterskaliert wird (z. B. `"5m"`) |
+| `ignorePlayers` | `boolean` | Herunterskalieren auch bei anwesenden Spielern |
+
+## DeploymentConfig
+
+Steuert, auf welchen Hosts Server laufen und wie sie verteilt werden:
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `hosts` | `DeploymentHost[]` | Liste möglicher Hosts |
+| `strategy` | `DeploymentStrategy` | `RANDOM`, `PRIORITY` oder `ROUND_ROBIN` |
+
+### DeploymentHost
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `name` | `String` | Host-Name oder -Bezeichner |
+| `priority` | `int` | Priorität für die `PRIORITY`-Strategie (niedriger = bevorzugt) |
+
+### DeploymentStrategy
+
+| Wert | Beschreibung |
+|------|--------------|
+| `RANDOM` | Host zufällig auswählen |
+| `PRIORITY` | Hosts mit niedrigerer Prioritätszahl bevorzugen |
+| `ROUND_ROBIN` | Server gleichmäßig über alle Hosts verteilen |
+
+## SourceConfig
+
+Legt fest, woher die Server-Software stammt:
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `type` | `SourceType` | `BLUEPRINT` oder `IMAGE` |
+| `blueprint` | `String` | Blueprint-Name (wenn Typ `BLUEPRINT` ist) |
+| `image` | `String` | Container-Image-Referenz (wenn Typ `IMAGE` ist) |
+
+## WorkflowsConfig
+
+Definiert automatisierte Workflows, die durch Server-Lifecycle-Events ausgelöst werden:
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `manual` | `List<String>` | Workflow-IDs für manuelle Ausführung |
+| `when` | `WorkflowWhen` | Konfiguration automatischer Trigger |
+
+### WorkflowWhen
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `start` | `List<String>` | Workflow-IDs, die beim Serverstart ausgeführt werden |
+| `stop` | `List<String>` | Workflow-IDs, die beim Serverstopp ausgeführt werden |
+
+## Start Queue
+
+Die Start Queue ermöglicht es, Server-Starts anzufordern, die der Reconciler beim nächsten Tick verarbeitet. Das ist nützlich, wenn du neue Server gezielt steuern und dabei das `maxServers`-Limit der Group einhalten möchtest.
+
+### Server-Start einreihen
+
+<CodeGroup>
+```java Java
+// Start über Server-Group-ID anfordern
+api.group().requestServerStart("group-uuid")
+    .thenRun(() -> System.out.println("Start-Anfrage akzeptiert"));
+
+// Start über ein Group-Objekt anfordern
+api.group().getGroupByName("lobby")
+    .thenCompose(group -> api.group().requestServerStart(group))
+    .thenRun(() -> System.out.println("Start-Anfrage für lobby akzeptiert"));
+```
+
+```kotlin Kotlin
+// Start über Server-Group-ID anfordern
+api.group().requestServerStart("group-uuid").await()
+println("Start-Anfrage akzeptiert")
+
+// Start über ein Group-Objekt anfordern
+val lobbyGroup = api.group().getGroupByName("lobby").await()
+api.group().requestServerStart(lobbyGroup).await()
+println("Start-Anfrage für lobby akzeptiert")
+```
+</CodeGroup>
+
+### Queue abfragen
+
+<CodeGroup>
+```java Java
+api.group().getServerStartQueue()
+    .thenAccept(queue -> {
+        System.out.println("Groups mit Queue-Daten: " + queue.getCount());
+        System.out.println("Ausstehende Starts gesamt: " + queue.getQueuedStarts());
+        System.out.println("Fehlgeschlagene Starts gesamt: " + queue.getFailedStarts());
+
+        // Bestimmte Group nachschlagen
+        GroupStartQueueEntry lobby = queue.findByServerGroupName("lobby");
+        if (lobby != null) {
+            System.out.println("Lobby-Starts: " + lobby.getTotalStarts());
+            for (GroupStartQueueItem item : lobby.getStarts()) {
+                System.out.println("  " + item.getId() + ": " + item.getStatus());
+                if (item.getFailureReason() != null) {
+                    System.out.println("  Grund: " + item.getFailureReason());
+                }
+            }
+        }
+    });
+```
+
+```kotlin Kotlin
+val queue = api.group().getServerStartQueue().await()
+println("Groups mit Queue-Daten: ${queue.count}")
+println("Ausstehende Starts gesamt: ${queue.queuedStarts}")
+println("Fehlgeschlagene Starts gesamt: ${queue.failedStarts}")
+
+// Bestimmte Group nachschlagen
+val lobby = queue.findByServerGroupName("lobby")
+if (lobby != null) {
+    println("Lobby-Starts: ${lobby.totalStarts}")
+    for (item in lobby.starts) {
+        println("  ${item.id}: ${item.status}")
+        if (item.failureReason != null) {
+            println("  Grund: ${item.failureReason}")
+        }
+    }
+}
+```
+</CodeGroup>
+
+### Queue leeren
+
+<CodeGroup>
+```java Java
+// Alle ausstehenden Starts einer Group nach ID löschen
+api.group().clearServerStartQueue("group-uuid")
+    .thenRun(() -> System.out.println("Queue geleert"));
+
+// Über ein Group-Objekt leeren
+api.group().getGroupByName("lobby")
+    .thenCompose(group -> api.group().clearServerStartQueue(group))
+    .thenRun(() -> System.out.println("Queue für lobby geleert"));
+```
+
+```kotlin Kotlin
+// Alle ausstehenden Starts einer Group nach ID löschen
+api.group().clearServerStartQueue("group-uuid").await()
+println("Queue geleert")
+
+// Über ein Group-Objekt leeren
+val lobbyGroup = api.group().getGroupByName("lobby").await()
+api.group().clearServerStartQueue(lobbyGroup).await()
+println("Queue für lobby geleert")
+```
+</CodeGroup>
+
+### GroupStartQueue-Modell
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `count` | `int` | Anzahl der Groups mit Queue-Daten |
+| `queuedStarts` | `int` | Ausstehende Starts über alle Groups |
+| `failedStarts` | `int` | Fehlgeschlagene Starts über alle Groups |
+| `totalStarts` | `int` | Gesamte Queue-Einträge über alle Groups |
+| `items` | `List<GroupStartQueueEntry>` | Queue-Daten pro Group |
+
+### GroupStartQueueEntry-Modell
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `serverGroupId` | `String?` | Server-Group-ID |
+| `serverGroupName` | `String?` | Server-Group-Name |
+| `queuedStarts` | `int` | Ausstehende Starts dieser Group |
+| `failedStarts` | `int` | Fehlgeschlagene Starts dieser Group |
+| `totalStarts` | `int` | Gesamte Queue-Einträge dieser Group |
+| `starts` | `List<GroupStartQueueItem>` | Einzelne Queue-Einträge |
+
+### GroupStartQueueItem-Modell
+
+| Eigenschaft | Typ | Beschreibung |
+|-------------|-----|--------------|
+| `id` | `String?` | Eindeutiger Bezeichner des Queue-Eintrags |
+| `createdAt` | `String?` | ISO-8601-Zeitstempel der Einreihung |
+| `status` | `GroupStartQueueItemStatus` | `PENDING`, `FAILED` oder `UNKNOWN` |
+| `failureReason` | `String?` | Fehlergrund, falls zutreffend |
+
+<Warning>
+  Wenn die Group ihr `maxServers`-Limit erreicht hat, wird der ausstehende Start als `FAILED` markiert. Fehlgeschlagene Starts werden automatisch nach einer Stunde bereinigt.
+</Warning>

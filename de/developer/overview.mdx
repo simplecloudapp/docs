@@ -3,33 +3,36 @@ title: 'Cloud API'
 description: 'Baue Integrationen mit SimpleCloud über unsere Java/Kotlin API'
 ---
 
-Die Cloud API ist eine Java-Bibliothek zur programmatischen Interaktion mit deinem SimpleCloud-Netzwerk. Verwende sie zum Verwalten von Gruppen, Servern, Spielern und zur Reaktion auf Events in Echtzeit.
+Die Cloud API ist eine Java-Bibliothek zur programmatischen Interaktion mit deinem SimpleCloud-Netzwerk. Nutze sie, um Groups, Server, Persistent Server und Spieler zu verwalten und in Echtzeit auf Events zu reagieren.
 
 ## API-Architektur
 
 | Methode | Gibt zurück | Beschreibung |
 |---------|-------------|--------------|
-| `api.group()` | `GroupApi` | Gruppen erstellen, lesen, aktualisieren, löschen |
-| `api.server()` | `ServerApi` | Server starten, stoppen, abfragen |
+| `api.group()` | `GroupApi` | Groups erstellen, lesen, aktualisieren, löschen |
+| `api.server()` | `ServerApi` | Server-Instanzen abfragen, stoppen, aktualisieren |
+| `api.persistentServer()` | `PersistentServerApi` | Persistent Server erstellen, lesen, aktualisieren, löschen |
 | `api.player()` | `PlayerApi` | Spielerdaten, Verbindungen, Messaging |
 | `api.event()` | `EventApi` | Echtzeit-Events abonnieren |
+| `api.cache()` | `QueryCache` | Cache manuell inspizieren und invalidieren |
 
 ### Event API Unterkategorien
 
 | Methode | Beschreibung |
 |---------|--------------|
-| `api.event().group()` | Gruppen-Lifecycle-Events |
+| `api.event().group()` | Group-Lifecycle-Events |
 | `api.event().server()` | Server-Lifecycle-Events |
-| `api.event().persistentServer()` | Persistente Server-Events |
+| `api.event().persistentServer()` | Persistent-Server-Events |
 | `api.event().blueprint()` | Blueprint-Lifecycle-Events |
 
 ## Wichtige Features
 
-- **Async-first Design** - Alle Operationen geben `CompletableFuture` (Java) oder Suspend-Funktionen (Kotlin) zurück
-- **Typsichere Modelle** - Stark typisierte Domain-Objekte für Gruppen, Server, Spieler
-- **Echtzeit-Events** - Änderungen über NATS-Messaging abonnieren
-- **Adventure-Integration** - Spieler implementieren Adventure's `Audience` für Rich-Text-Messaging
-- **Umgebungs-bewusst** - Auto-Konfiguration aus `SIMPLECLOUD_*` Umgebungsvariablen
+- **Async-first-Design** Alle Operationen geben `CompletableFuture` zurück
+- **Typsichere Modelle** Stark typisierte Domain-Objekte für Groups, Server, Spieler, Persistent Server und Blueprints
+- **Echtzeit-Events** Änderungen über NATS-Messaging abonnieren
+- **Eingebauter Cache** TanStack-Query-ähnliches Stale-while-revalidate-Caching, automatisch invalidiert durch Events
+- **Adventure-Integration** Spieler implementieren Adventures `Audience`-Interface für Rich-Text-Messaging
+- **Umgebungs-bewusst** Automatische Konfiguration aus `SIMPLECLOUD_*`-Umgebungsvariablen
 
 ## Schnellbeispiel
 
@@ -40,14 +43,15 @@ Die Cloud API ist eine Java-Bibliothek zur programmatischen Interaktion mit dein
 // API initialisieren
 CloudApi api = CloudApi.create();
 
-// Alle Server in einer Gruppe abrufen
+// Alle Server einer Group abrufen
 api.server().getServersByGroup("lobby").thenAccept(servers -> {
     System.out.println("Lobby-Server: " + servers.size());
 });
 
-// Neuen Server starten
-api.server().startServer(new StartServerRequest("group-id", "lobby"))
-    .thenAccept(server -> System.out.println("Gestartet: " + server.getServerId()));
+// Neuen Server für eine Group starten
+api.group().getGroupByName("lobby")
+    .thenCompose(group -> api.group().requestServerStart(group))
+    .thenRun(() -> System.out.println("Start-Anfrage für lobby akzeptiert"));
 
 // Nachricht an Spieler senden (Adventure-Integration)
 api.player().get(playerUUID).thenAccept(player -> {
@@ -69,18 +73,20 @@ Subscription sub = api.event().server().onStarted(event -> {
 // API initialisieren
 val api = CloudApi.create()
 
-// Alle Server in einer Gruppe abrufen
+// in einem Coroutine-Scope (z. B. Plugin-Lifecycle oder launch { })
+
+// Alle Server einer Group abrufen
 val servers = api.server().getServersByGroup("lobby").await()
 println("Lobby-Server: ${servers.size}")
 
-// Neuen Server starten
-val server = api.server().startServer(StartServerRequest("group-id", "lobby")).await()
-println("Gestartet: ${server.serverId}")
+// Neuen Server für eine Group starten
+val group = api.group().getGroupByName("lobby").await()
+api.group().requestServerStart(group).await()
+println("Start-Anfrage für lobby akzeptiert")
 
 // Nachricht an Spieler senden (Adventure-Integration)
-api.player().get(playerUUID).await()?.let { player ->
-    player.sendMessage(Component.text("Willkommen!").color(NamedTextColor.GREEN))
-}
+val player = api.player().get(playerUUID).await()
+player?.sendMessage(Component.text("Willkommen!").color(NamedTextColor.GREEN))
 
 // Server-Events abonnieren
 val sub = api.event().server().onStarted { event ->
@@ -95,10 +101,16 @@ val sub = api.event().server().onStarted { event ->
 
 <CardGroup cols={2}>
   <Card title="Installation" icon="download" href="/de/developer/installation">
-    Cloud API zu deinem Projekt hinzufügen
+    Cloud API zum Projekt hinzufügen
+  </Card>
+  <Card title="Groups API" icon="layer-group" href="/de/developer/api/groups">
+    Server-Groups und Skalierung verwalten
   </Card>
   <Card title="Servers API" icon="server" href="/de/developer/api/servers">
-    Server-Instanzen verwalten
+    Server-Instanzen abfragen und verwalten
+  </Card>
+  <Card title="Persistent Servers API" icon="database" href="/de/developer/api/persistent-servers">
+    Langlebige Server-Instanzen
   </Card>
   <Card title="Players API" icon="users" href="/de/developer/api/players">
     Spielerdaten und Messaging

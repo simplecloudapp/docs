@@ -225,7 +225,9 @@
                   "de/developer/api/groups",
                   "de/developer/api/servers",
                   "de/developer/api/players",
-                  "de/developer/api/events"
+                  "de/developer/api/events",
+                  "de/developer/api/persistent-servers",
+                  "de/developer/api/cache"
                 ]
               },
               {

@@ -1,0 +1,353 @@
+---
+title: 'Persistent Servers API'
+description: 'Langlebige Server-Instanzen verwalten, die ihren State über Neustarts hinweg behalten'
+---
+
+Die Persistent Servers API ermöglicht das Erstellen, Abfragen, Aktualisieren und Löschen von Persistent Servern. Zugriff über `api.persistentServer()`.
+
+## Persistent Server abrufen
+
+<CodeGroup>
+```java Java
+// Alle Persistent Server abrufen
+api.persistentServer().getAllPersistentServers()
+    .thenAccept(servers -> servers.forEach(s ->
+        System.out.println(s.getName() + ": " + s.getPersistentServerId())));
+
+// Persistent Server mit Query-Filtern abrufen
+PersistentServerQuery query = PersistentServerQuery.create()
+    .filterByActive(true)
+    .filterByTags("lobby", "hub")
+    .filterByServerhostId("host-uuid")
+    .limit(20);
+api.persistentServer().getAllPersistentServers(query)
+    .thenAccept(servers -> { ... });
+
+// Nach eindeutiger ID abrufen
+api.persistentServer().getPersistentServerById("persistent-server-uuid")
+    .thenAccept(server -> System.out.println(server.getName()));
+
+// Nach Namen abrufen
+api.persistentServer().getPersistentServerByName("main-lobby")
+    .thenAccept(server -> System.out.println(server.getPersistentServerId()));
+```
+
+```kotlin Kotlin
+// in einem Coroutine-Scope (z. B. Plugin-Lifecycle oder launch { })
+
+// Alle Persistent Server abrufen
+val servers = api.persistentServer().getAllPersistentServers().await()
+servers.forEach { s -> println("${s.name}: ${s.persistentServerId}") }
+
+// Persistent Server mit Query-Filtern abrufen
+val query = PersistentServerQuery.create()
+    .filterByActive(true)
+    .filterByTags("lobby", "hub")
+    .filterByServerhostId("host-uuid")
+    .limit(20)
+val filteredServers = api.persistentServer().getAllPersistentServers(query).await()
+
+// Nach eindeutiger ID abrufen
+val serverById = api.persistentServer().getPersistentServerById("persistent-server-uuid").await()
+println(serverById.name)
+
+// Nach Namen abrufen
+val serverByName = api.persistentServer().getPersistentServerByName("main-lobby").await()
+println(serverByName.persistentServerId)
+```
+</CodeGroup>
+
+## Persistent Server erstellen
+
+`CreatePersistentServerRequest` verwendet ein Builder-Muster:
+
+<CodeGroup>
+```java Java
+SourceConfig source = new SourceConfig();
+source.setType(SourceType.BLUEPRINT);
+source.setBlueprint("paper-1.21");
+
+CreatePersistentServerRequest request = CreatePersistentServerRequest.builder()
+    .name("main-lobby")
+    .type(GroupServerType.SERVER)
+    .minMemory(512)
+    .maxMemory(2048)
+    .maxPlayers(100)
+    .active(true)
+    .priority(1)
+    .serverhostId("host-uuid")
+    .source(source)
+    .tags(List.of("lobby", "hub"))
+    .properties(Map.of("featured", true))
+    .build();
+
+api.persistentServer().createPersistentServer(request)
+    .thenAccept(server ->
+        System.out.println("Erstellt: " + server.getPersistentServerId()));
+```
+
+```kotlin Kotlin
+val source = SourceConfig().apply {
+    type = SourceType.BLUEPRINT
+    blueprint = "paper-1.21"
+}
+
+val request = CreatePersistentServerRequest.builder()
+    .name("main-lobby")
+    .type(GroupServerType.SERVER)
+    .minMemory(512)
+    .maxMemory(2048)
+    .maxPlayers(100)
+    .active(true)
+    .priority(1)
+    .serverhostId("host-uuid")
+    .source(source)
+    .tags(listOf("lobby", "hub"))
+    .properties(mapOf("featured" to true))
+    .build()
+
+val createdServer = api.persistentServer().createPersistentServer(request).await()
+println("Erstellt: ${createdServer.persistentServerId}")
+```
+</CodeGroup>
+
+## Persistent Server aktualisieren
+
+`UpdatePersistentServerRequest` verwendet ebenfalls ein Builder-Muster. Nur die gesetzten Felder werden geändert:
+
+<CodeGroup>
+```java Java
+UpdatePersistentServerRequest update = UpdatePersistentServerRequest.builder()
+    .maxPlayers(150)
+    .active(true)
+    .build();
+
+api.persistentServer().updatePersistentServer("persistent-server-uuid", update)
+    .thenAccept(server -> System.out.println("Aktualisiert: " + server.getName()));
+```
+
+```kotlin Kotlin
+val update = UpdatePersistentServerRequest.builder()
+    .maxPlayers(150)
+    .active(true)
+    .build()
+
+val updatedServer = api.persistentServer().updatePersistentServer("persistent-server-uuid", update).await()
+println("Aktualisiert: ${updatedServer.name}")
+```
+</CodeGroup>
+
+## Persistent Server löschen
+
+<CodeGroup>
+```java Java
+api.persistentServer().deletePersistentServer("persistent-server-uuid")
+    .thenRun(() -> System.out.println("Gelöscht"));
+```
+
+```kotlin Kotlin
+api.persistentServer().deletePersistentServer("persistent-server-uuid").await()
+println("Gelöscht")
+```
+</CodeGroup>
+
+## Persistent-Server-Eigenschaften
+
+<CodeGroup>
+```java Java
+// Eigenschaften hinzufügen oder aktualisieren (Deep-Merge)
+api.persistentServer().updatePersistentServerProperties("persistent-server-uuid", Map.of(
+    "featured", true,
+    "region", "eu-west"
+)).thenAccept(props -> System.out.println("Aktualisiert: " + props));
+
+// Einzelne Eigenschaft aktualisieren
+api.persistentServer().updatePersistentServerProperty(
+    "persistent-server-uuid", "region", "us-east"
+).thenAccept(props -> System.out.println("Aktualisiert: " + props));
+
+// Bestimmte Eigenschaften entfernen
+api.persistentServer().deletePersistentServerProperties(
+    "persistent-server-uuid", List.of("region")
+).thenAccept(remaining -> System.out.println("Verbleibend: " + remaining));
+
+// Einzelne Eigenschaft entfernen
+api.persistentServer().deletePersistentServerProperty(
+    "persistent-server-uuid", "region"
+).thenAccept(remaining -> System.out.println("Verbleibend: " + remaining));
+```
+
+```kotlin Kotlin
+// Eigenschaften hinzufügen oder aktualisieren (Deep-Merge)
+val props = api.persistentServer().updatePersistentServerProperties("persistent-server-uuid", mapOf(
+    "featured" to true,
+    "region" to "eu-west"
+)).await()
+println("Aktualisiert: $props")
+
+// Einzelne Eigenschaft aktualisieren
+val updatedProps = api.persistentServer().updatePersistentServerProperty(
+    "persistent-server-uuid", "region", "us-east"
+).await()
+println("Aktualisiert: $updatedProps")
+
+// Bestimmte Eigenschaften entfernen
+val remaining = api.persistentServer().deletePersistentServerProperties(
+    "persistent-server-uuid", listOf("region")
+).await()
+println("Verbleibend: $remaining")
+
+// Einzelne Eigenschaft entfernen
+val remainingAfter = api.persistentServer().deletePersistentServerProperty(
+    "persistent-server-uuid", "region"
+).await()
+println("Verbleibend: $remainingAfter")
+```
+</CodeGroup>
+
+## PersistentServerQuery
+
+Nutze `PersistentServerQuery.create()`, um gefilterte Abfragen zu erstellen:
+
+| Methode | Beschreibung |
+|---------|--------------|
+| `filterByTags(String...)` | Nach einem oder mehreren Tags filtern (trifft zu, wenn mindestens ein Tag übereinstimmt) |
+| `filterByActive(boolean)` | Nach Aktivstatus filtern |
+| `filterByServerhostId(String)` | Nach der ID der zugewiesenen Host-Maschine filtern |
+| `limit(int)` | Maximale Anzahl zurückgegebener Ergebnisse |
+
+## Persistent-Server-Modell
+
+<ResponseField name="persistentServerId" type="String">
+  Eindeutiger Bezeichner dieses Persistent Servers.
+</ResponseField>
+
+<ResponseField name="name" type="String">
+  Lesbarer Name.
+</ResponseField>
+
+<ResponseField name="type" type="GroupServerType">
+  Server-Typ: `SERVER`, `PROXY` oder `UNKNOWN_SERVER`.
+</ResponseField>
+
+<ResponseField name="minMemory" type="Integer?">
+  Minimale Speicherzuweisung in MB.
+</ResponseField>
+
+<ResponseField name="maxMemory" type="Integer?">
+  Maximale Speicherzuweisung in MB.
+</ResponseField>
+
+<ResponseField name="maxPlayers" type="Integer?">
+  Maximale Spieleranzahl.
+</ResponseField>
+
+<ResponseField name="active" type="Boolean?">
+  Wenn true, startet der Controller diesen Server automatisch, falls keine laufende Instanz existiert.
+</ResponseField>
+
+<ResponseField name="priority" type="Integer?">
+  Priorität relativ zu anderen Persistent Servern.
+</ResponseField>
+
+<ResponseField name="serverhostId" type="String?">
+  ID der Host-Maschine, der dieser Persistent Server zugewiesen ist.
+</ResponseField>
+
+<ResponseField name="playerCount" type="int">
+  Aktuelle Spieleranzahl der laufenden Instanz. Gibt `0` zurück, wenn keine Instanz läuft.
+</ResponseField>
+
+<ResponseField name="source" type="SourceConfig?">
+  Quellkonfiguration (Blueprint oder Container-Image).
+</ResponseField>
+
+<ResponseField name="workflows" type="WorkflowsConfig?">
+  Workflow-Trigger für Server-Lifecycle-Events.
+</ResponseField>
+
+<ResponseField name="properties" type="Map<String, Object>?">
+  Benutzerdefinierte Metadaten als Key-Value-Paare.
+</ResponseField>
+
+<ResponseField name="tags" type="List<String>?">
+  Tags zur Organisation und Filterung.
+</ResponseField>
+
+<ResponseField name="createdAt" type="String">
+  Erstellungszeitstempel im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="String">
+  Zeitstempel der letzten Aktualisierung im ISO-8601-Format.
+</ResponseField>
+
+## Auf Persistent-Server-Events reagieren
+
+Nutze die Events API, um auf Lifecycle-Änderungen von Persistent Servern zu reagieren:
+
+<CodeGroup>
+```java Java
+// Reagieren, wenn die Instanz eines Persistent Servers startet
+api.event().persistentServer().onStarted(event -> {
+    System.out.println("Gestartet: " + event.getPersistentServerId());
+    System.out.println("Server-Instanz-ID: " + event.getServerId());
+});
+
+// Reagieren, wenn die Instanz eines Persistent Servers stoppt
+api.event().persistentServer().onStopped(event -> {
+    System.out.println("Gestoppt: " + event.getPersistentServerId());
+});
+```
+
+```kotlin Kotlin
+// Reagieren, wenn die Instanz eines Persistent Servers startet
+api.event().persistentServer().onStarted { event ->
+    println("Gestartet: ${event.persistentServerId}")
+    println("Server-Instanz-ID: ${event.serverId}")
+}
+
+// Reagieren, wenn die Instanz eines Persistent Servers stoppt
+api.event().persistentServer().onStopped { event ->
+    println("Gestoppt: ${event.persistentServerId}")
+}
+```
+</CodeGroup>
+
+Die vollständige Event-Referenz findest du in der [Events API](/de/developer/api/events).
+
+## Laufende Instanz finden
+
+Eine Persistent-Server-Konfiguration ist von ihrer laufenden Instanz getrennt. Um die aktuell laufende Server-Instanz eines Persistent Servers zu finden, frage die Servers API ab:
+
+<CodeGroup>
+```java Java
+api.persistentServer().getPersistentServerByName("main-lobby")
+    .thenCompose(ps -> api.server().getAllServers(
+        ServerQuery.create().filterByPersistentServerId(ps.getPersistentServerId())
+    ))
+    .thenAccept(instances -> {
+        if (instances.isEmpty()) {
+            System.out.println("Keine laufende Instanz");
+        } else {
+            Server instance = instances.get(0);
+            System.out.println("Läuft auf Port: " + instance.getPort());
+            System.out.println("State: " + instance.getState());
+        }
+    });
+```
+
+```kotlin Kotlin
+val ps = api.persistentServer().getPersistentServerByName("main-lobby").await()
+val instances = api.server().getAllServers(
+    ServerQuery.create().filterByPersistentServerId(ps.persistentServerId)
+).await()
+if (instances.isEmpty()) {
+    println("Keine laufende Instanz")
+} else {
+    val instance = instances[0]
+    println("Läuft auf Port: ${instance.port}")
+    println("State: ${instance.state}")
+}
+```
+</CodeGroup>

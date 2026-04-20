@@ -5,30 +5,44 @@ description: 'Server mit der Cloud API starten, stoppen und überwachen'
 
 Diese Anleitung zeigt gängige Muster für die programmatische Server-Verwaltung.
 
-## Server bei Bedarf starten
+## Server-Starts anfordern
 
-### Einzelnen Server starten
+SimpleCloud bietet keine direkte „Server starten"-Methode auf der `ServerApi`. Stattdessen stellst du eine Anfrage über die Queue der Group – der Reconciler verarbeitet sie beim nächsten Tick.
 
-```java
-public CompletableFuture<Server> startServer(String groupName) {
+### Einzelnen Server-Start anfordern
+
+<CodeGroup>
+```java Java
+public CompletableFuture<Void> requestServerStart(String groupName) {
     return api.group().getGroupByName(groupName)
         .thenCompose(group -> {
             if (group == null) {
                 return CompletableFuture.failedFuture(
-                    new IllegalArgumentException("Gruppe nicht gefunden: " + groupName));
+                    new IllegalArgumentException("Group nicht gefunden: " + groupName));
             }
-            return api.server().startServer(new StartServerRequest(group.getId(), groupName));
+            return api.group().requestServerStart(group);
         });
 }
 ```
 
-### Mehrere Server starten
+```kotlin Kotlin
+suspend fun requestServerStart(groupName: String) {
+    val group = api.group().getGroupByName(groupName).await()
+        ?: throw IllegalArgumentException("Group nicht gefunden: $groupName")
+    api.group().requestServerStart(group).await()
+}
+```
+</CodeGroup>
 
-```java
+### Mindestanzahl an Servern sicherstellen
+
+<CodeGroup>
+```java Java
 public void ensureMinimumServers(String groupName, int minimum) {
     api.server().getServersByGroup(groupName).thenAccept(servers -> {
         long running = servers.stream()
-            .filter(s -> s.getState() != ServerState.STOPPING)
+            .filter(s -> s.getState() != ServerState.STOPPING
+                      && s.getState() != ServerState.CLEANUP)
             .count();
 
         if (running < minimum) {
@@ -37,8 +51,8 @@ public void ensureMinimumServers(String groupName, int minimum) {
                 if (group == null) return;
 
                 for (int i = 0; i < toStart; i++) {
-                    api.server().startServer(new StartServerRequest(group.getId(), groupName))
-                        .thenAccept(server -> System.out.println("Gestartet: " + server.getServerId()));
+                    api.group().requestServerStart(group)
+                        .thenRun(() -> System.out.println("Start-Anfrage eingereiht für: " + groupName));
                 }
             });
         }
@@ -46,17 +60,56 @@ public void ensureMinimumServers(String groupName, int minimum) {
 }
 ```
 
+```kotlin Kotlin
+suspend fun ensureMinimumServers(groupName: String, minimum: Int) {
+    val servers = api.server().getServersByGroup(groupName).await()
+    val running = servers.count { s ->
+        s.state != ServerState.STOPPING && s.state != ServerState.CLEANUP
+    }
+
+    if (running < minimum) {
+        val toStart = minimum - running
+        val group = api.group().getGroupByName(groupName).await() ?: return
+
+        repeat(toStart) {
+            api.group().requestServerStart(group).await()
+            println("Start-Anfrage eingereiht für: $groupName")
+        }
+    }
+}
+```
+</CodeGroup>
+
 ## Server stoppen
+
+### Einzelnen Server stoppen
+
+<CodeGroup>
+```java Java
+public void stopServer(String serverId) {
+    api.server().stopServer(serverId)
+        .thenRun(() -> System.out.println("Stopp eingeleitet: " + serverId));
+}
+```
+
+```kotlin Kotlin
+suspend fun stopServer(serverId: String) {
+    api.server().stopServer(serverId).await()
+    println("Stopp eingeleitet: $serverId")
+}
+```
+</CodeGroup>
 
 ### Leere Server stoppen
 
-```java
+<CodeGroup>
+```java Java
 public void stopEmptyServers(String groupName, int keepMinimum) {
     api.server().getServersByGroup(groupName).thenAccept(servers -> {
         List<Server> emptyServers = servers.stream()
             .filter(s -> s.getState() == ServerState.AVAILABLE)
-            .filter(s -> s.getPlayerCount() == 0)
-            .sorted(Comparator.comparingLong(Server::getNumericalId).reversed())
+            .filter(s -> s.getPlayerCount() == null || s.getPlayerCount() == 0)
+            .sorted(Comparator.comparingInt(Server::getNumericalId).reversed())
             .toList();
 
         int toStop = Math.max(0, emptyServers.size() - keepMinimum);
@@ -68,67 +121,248 @@ public void stopEmptyServers(String groupName, int keepMinimum) {
 }
 ```
 
+```kotlin Kotlin
+suspend fun stopEmptyServers(groupName: String, keepMinimum: Int) {
+    val servers = api.server().getServersByGroup(groupName).await()
+    val emptyServers = servers
+        .filter { s -> s.state == ServerState.AVAILABLE }
+        .filter { s -> s.playerCount == null || s.playerCount == 0 }
+        .sortedByDescending { it.numericalId }
+
+    val toStop = maxOf(0, emptyServers.size - keepMinimum)
+
+    emptyServers.take(toStop)
+        .forEach { server -> api.server().stopServer(server.serverId).await() }
+}
+```
+</CodeGroup>
+
 ### Graceful Shutdown mit Spieler-Evakuierung
 
-```java
+<CodeGroup>
+```java Java
 public void gracefulStop(String serverId, String fallbackServer) {
-    api.server().getServerById(serverId).thenAccept(server -> {
-        if (server == null) return;
+    api.player().getOnlinePlayers().thenAccept(players -> {
+        List<CompletableFuture<CloudPlayer.ConnectResult>> transfers = players.stream()
+            .filter(p -> serverId.equals(p.getConnectedServerName()))
+            .map(player -> {
+                player.sendMessage(Component.text("Server wird heruntergefahren...")
+                    .color(NamedTextColor.YELLOW));
+                return player.connect(fallbackServer);
+            })
+            .toList();
 
-        api.player().getOnlinePlayers().thenAccept(players -> {
-            List<CompletableFuture<CloudPlayer.ConnectResult>> transfers = players.stream()
-                .filter(p -> p.getConnectedServerName().equals(serverId))
-                .map(player -> {
-                    player.sendMessage(Component.text("Server fährt herunter...")
-                        .color(NamedTextColor.YELLOW));
-                    return player.connect(fallbackServer);
-                })
-                .toList();
-
-            CompletableFuture.allOf(transfers.toArray(new CompletableFuture[0]))
-                .thenRun(() -> api.server().stopServer(serverId));
-        });
+        CompletableFuture.allOf(transfers.toArray(new CompletableFuture[0]))
+            .thenRun(() -> api.server().stopServer(serverId));
     });
 }
 ```
+
+```kotlin Kotlin
+suspend fun gracefulStop(serverId: String, fallbackServer: String) {
+    val players = api.player().getOnlinePlayers().await()
+    val transfers = players
+        .filter { p -> serverId == p.connectedServerName }
+        .map { player ->
+            player.sendMessage(Component.text("Server wird heruntergefahren...")
+                .color(NamedTextColor.YELLOW))
+            player.connect(fallbackServer)
+        }
+
+    CompletableFuture.allOf(*transfers.toTypedArray()).await()
+    api.server().stopServer(serverId).await()
+}
+```
+</CodeGroup>
 
 ## Server überwachen
 
 ### Server-Anzahl beobachten
 
-```java
+<CodeGroup>
+```java Java
 public void monitorServerCount(String groupName) {
     api.event().server().onStarted(event -> {
-        if (event.getGroupName().equals(groupName)) {
+        Server server = event.getServer();
+        if (server.isFromGroup() && groupName.equals(server.getServerBase().getName())) {
             updateServerCount(groupName);
         }
     });
 
     api.event().server().onStopped(event -> {
-        if (event.getGroupName().equals(groupName)) {
+        Server server = event.getServer();
+        if (server.isFromGroup() && groupName.equals(server.getServerBase().getName())) {
             updateServerCount(groupName);
         }
     });
 }
 
 private void updateServerCount(String groupName) {
-    api.server().getServersByGroup(groupName).thenAccept(servers -> {
-        System.out.println(groupName + " Server: " + servers.size());
+    api.server().getServersByGroup(groupName).thenAccept(servers ->
+        System.out.println(groupName + " Server: " + servers.size()));
+}
+```
+
+```kotlin Kotlin
+fun monitorServerCount(groupName: String) {
+    api.event().server().onStarted { event ->
+        val server = event.server
+        if (server.isFromGroup() && groupName == server.serverBase.name) {
+            launch { updateServerCount(groupName) }
+        }
+    }
+
+    api.event().server().onStopped { event ->
+        val server = event.server
+        if (server.isFromGroup() && groupName == server.serverBase.name) {
+            launch { updateServerCount(groupName) }
+        }
+    }
+}
+
+private suspend fun updateServerCount(groupName: String) {
+    val servers = api.server().getServersByGroup(groupName).await()
+    println("$groupName Server: ${servers.size}")
+}
+```
+</CodeGroup>
+
+### Server-States verfolgen
+
+<CodeGroup>
+```java Java
+public void trackServerStates() {
+    api.event().server().onStateChanged(event -> {
+        System.out.println(event.getServerId() + ": " +
+            event.getOldState() + " → " + event.getNewState());
+
+        if (event.getNewState() == ServerState.AVAILABLE) {
+            System.out.println("Server bereit für Spieler: " + event.getServerId());
+        }
     });
 }
 ```
+
+```kotlin Kotlin
+fun trackServerStates() {
+    api.event().server().onStateChanged { event ->
+        println("${event.serverId}: ${event.oldState} → ${event.newState}")
+
+        if (event.newState == ServerState.AVAILABLE) {
+            println("Server bereit für Spieler: ${event.serverId}")
+        }
+    }
+}
+```
+</CodeGroup>
+
+## Server-Eigenschaften aktualisieren
+
+### Spielmodus-Eigenschaft setzen
+
+<CodeGroup>
+```java Java
+public void setServerGameMode(String serverId, String mode) {
+    api.server().updateServerProperty(serverId, "gameMode", mode)
+        .thenAccept(props -> System.out.println("Aktualisiert: " + props));
+}
+```
+
+```kotlin Kotlin
+suspend fun setServerGameMode(serverId: String, mode: String) {
+    val props = api.server().updateServerProperty(serverId, "gameMode", mode).await()
+    println("Aktualisiert: $props")
+}
+```
+</CodeGroup>
+
+### Server als beitrittbar markieren
+
+<CodeGroup>
+```java Java
+public void setJoinable(String serverId, boolean joinable) {
+    api.server().updateServerProperty(serverId, "joinable", joinable);
+}
+```
+
+```kotlin Kotlin
+suspend fun setJoinable(serverId: String, joinable: Boolean) {
+    api.server().updateServerProperty(serverId, "joinable", joinable).await()
+}
+```
+</CodeGroup>
 
 ## Server finden
 
 ### Server mit niedrigster Spielerzahl finden
 
-```java
+<CodeGroup>
+```java Java
 public CompletableFuture<Server> findBestServer(String groupName) {
     return api.server().getServersByGroup(groupName)
         .thenApply(servers -> servers.stream()
-            .filter(s -> s.getState() == ServerState.AVAILABLE || s.getState() == ServerState.INGAME)
-            .filter(s -> s.getPlayerCount() < s.getMaxPlayers())
+            .filter(s -> s.getState() == ServerState.AVAILABLE
+                      || s.getState() == ServerState.INGAME)
+            .filter(s -> s.getPlayerCount() != null
+                      && s.getPlayerCount() < s.getMaxPlayers())
             .min(Comparator.comparingInt(Server::getPlayerCount))
             .orElse(null));
 }
 ```
+
+```kotlin Kotlin
+suspend fun findBestServer(groupName: String): Server? {
+    val servers = api.server().getServersByGroup(groupName).await()
+    return servers
+        .filter { s -> s.state == ServerState.AVAILABLE || s.state == ServerState.INGAME }
+        .filter { s -> s.playerCount != null && s.playerCount!! < s.maxPlayers }
+        .minByOrNull { it.playerCount ?: 0 }
+}
+```
+</CodeGroup>
+
+### Server nach Eigenschaft suchen
+
+<CodeGroup>
+```java Java
+public CompletableFuture<List<Server>> findByProperty(
+        String groupName, String key, Object value) {
+    return api.server().getServersByGroup(groupName)
+        .thenApply(servers -> servers.stream()
+            .filter(s -> s.getProperties() != null
+                      && value.equals(s.getProperties().get(key)))
+            .toList());
+}
+```
+
+```kotlin Kotlin
+suspend fun findByProperty(groupName: String, key: String, value: Any): List<Server> {
+    val servers = api.server().getServersByGroup(groupName).await()
+    return servers.filter { s -> s.properties != null && value == s.properties!![key] }
+}
+```
+</CodeGroup>
+
+### Alle laufenden Proxy-Server abfragen
+
+<CodeGroup>
+```java Java
+public CompletableFuture<List<Server>> getRunningProxies() {
+    return api.server().getAllServers(
+        ServerQuery.create()
+            .filterByServerGroupType(GroupServerType.PROXY)
+            .filterByState(ServerState.AVAILABLE, ServerState.INGAME)
+    );
+}
+```
+
+```kotlin Kotlin
+suspend fun getRunningProxies(): List<Server> {
+    return api.server().getAllServers(
+        ServerQuery.create()
+            .filterByServerGroupType(GroupServerType.PROXY)
+            .filterByState(ServerState.AVAILABLE, ServerState.INGAME)
+    ).await()
+}
+```
+</CodeGroup>

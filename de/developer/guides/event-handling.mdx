@@ -1,6 +1,6 @@
 ---
 title: 'Events in Echtzeit behandeln'
-description: 'Auf Server-, Gruppen- und Spieler-Änderungen mit der Events API reagieren'
+description: 'Auf Server-, Group- und Spieler-Änderungen mit der Events API reagieren'
 ---
 
 Diese Anleitung zeigt Muster für die Echtzeit-Event-Behandlung in deinen Plugins.
@@ -9,20 +9,33 @@ Diese Anleitung zeigt Muster für die Echtzeit-Event-Behandlung in deinen Plugin
 
 ### Events abonnieren
 
-```java
+<CodeGroup>
+```java Java
 // Subscribe gibt ein Subscription-Objekt zurück
 Subscription sub = api.event().server().onStarted(event -> {
     System.out.println("Server gestartet: " + event.getServerId());
 });
 
-// Schließen wenn fertig
+// Schließen wenn nicht mehr benötigt
 sub.close();
 ```
 
-### Plugin-Lebenszyklus-Verwaltung
+```kotlin Kotlin
+// Subscribe gibt ein Subscription-Objekt zurück
+val sub = api.event().server().onStarted { event ->
+    println("Server gestartet: ${event.serverId}")
+}
 
-```java
-public class MeinPlugin extends JavaPlugin {
+// Schließen wenn nicht mehr benötigt
+sub.close()
+```
+</CodeGroup>
+
+### Plugin-Lifecycle-Verwaltung
+
+<CodeGroup>
+```java Java
+public class MyPlugin extends JavaPlugin {
     private CloudApi api;
     private final List<Subscription> subscriptions = new ArrayList<>();
 
@@ -53,29 +66,69 @@ public class MeinPlugin extends JavaPlugin {
     }
 
     private void onGroupUpdated(GroupUpdatedEvent event) {
-        getLogger().info("Gruppe aktualisiert: " + event.getServerGroupId());
+        getLogger().info("Group aktualisiert: " + event.getServerGroupId());
     }
 }
 ```
 
+```kotlin Kotlin
+class MyPlugin : JavaPlugin() {
+    private lateinit var api: CloudApi
+    private val subscriptions = mutableListOf<Subscription>()
+
+    override fun onEnable() {
+        api = CloudApi.create()
+        registerEvents()
+    }
+
+    override fun onDisable() {
+        subscriptions.forEach { it.close() }
+        subscriptions.clear()
+    }
+
+    private fun registerEvents() {
+        subscriptions.add(api.event().server().onStarted(::onServerStarted))
+        subscriptions.add(api.event().server().onStopped(::onServerStopped))
+        subscriptions.add(api.event().group().onUpdated(::onGroupUpdated))
+    }
+
+    private fun onServerStarted(event: ServerStartedEvent) {
+        logger.info("Server gestartet: ${event.serverId}")
+    }
+
+    private fun onServerStopped(event: ServerStoppedEvent) {
+        logger.info("Server gestoppt: ${event.serverId}")
+    }
+
+    private fun onGroupUpdated(event: GroupUpdatedEvent) {
+        logger.info("Group aktualisiert: ${event.serverGroupId}")
+    }
+}
+```
+</CodeGroup>
+
 ## Gängige Event-Muster
 
-### Auto-Start wenn Gruppe leer
+### Reagieren, wenn eine Group keine laufenden Server mehr hat
 
-```java
+<CodeGroup>
+```java Java
 public void setupAutoStart(String groupName, int minimum) {
     api.event().server().onStopped(event -> {
-        if (!event.getGroupName().equals(groupName)) return;
+        Server server = event.getServer();
+        if (!server.isFromGroup()) return;
+        if (!groupName.equals(server.getServerBase().getName())) return;
 
         api.server().getServersByGroup(groupName).thenAccept(servers -> {
             long running = servers.stream()
-                .filter(s -> s.getState() != ServerState.STOPPING)
+                .filter(s -> s.getState() != ServerState.STOPPING
+                          && s.getState() != ServerState.CLEANUP)
                 .count();
 
             if (running < minimum) {
                 api.group().getGroupByName(groupName).thenAccept(group -> {
                     if (group != null) {
-                        api.server().startServer(new StartServerRequest(group.getId(), groupName));
+                        api.group().requestServerStart(group);
                     }
                 });
             }
@@ -84,9 +137,33 @@ public void setupAutoStart(String groupName, int minimum) {
 }
 ```
 
-### Alle Status-Änderungen loggen
+```kotlin Kotlin
+fun setupAutoStart(groupName: String, minimum: Int) {
+    api.event().server().onStopped { event ->
+        val server = event.server
+        if (!server.isFromGroup()) return@onStopped
+        if (groupName != server.serverBase.name) return@onStopped
 
-```java
+        launch {
+            val servers = api.server().getServersByGroup(groupName).await()
+            val running = servers.count { s ->
+                s.state != ServerState.STOPPING && s.state != ServerState.CLEANUP
+            }
+
+            if (running < minimum) {
+                val group = api.group().getGroupByName(groupName).await() ?: return@launch
+                api.group().requestServerStart(group).await()
+            }
+        }
+    }
+}
+```
+</CodeGroup>
+
+### Alle State-Änderungen loggen
+
+<CodeGroup>
+```java Java
 public void setupStateLogging() {
     api.event().server().onStateChanged(event -> {
         String message = String.format("[%s] %s → %s",
@@ -99,46 +176,186 @@ public void setupStateLogging() {
 }
 ```
 
-### Staff bei Server-Crash benachrichtigen
+```kotlin Kotlin
+fun setupStateLogging() {
+    api.event().server().onStateChanged { event ->
+        val message = "[${event.serverId}] ${event.oldState} → ${event.newState}"
+        logger.info(message)
+    }
+}
+```
+</CodeGroup>
 
-```java
+### Staff bei Server-Absturz benachrichtigen
+
+<CodeGroup>
+```java Java
 public void setupCrashNotifications() {
     api.event().server().onStopped(event -> {
-        notifyStaff(Component.text("[Alert] Server gestoppt: " + event.getServerId())
-            .color(NamedTextColor.RED));
+        if (!event.getCrashed()) return;
+
+        String msg = "[Alert] Server abgestürzt: " + event.getServerId();
+        if (event.getReason() != null) {
+            msg += " — " + event.getReason();
+        }
+        notifyStaff(Component.text(msg).color(NamedTextColor.RED));
     });
 }
 
 private void notifyStaff(Component message) {
-    api.player().getOnlinePlayers().thenAccept(players -> {
+    api.player().getOnlinePlayers().thenAccept(players ->
         players.stream()
             .filter(p -> hasStaffPermission(p))
-            .forEach(p -> p.sendMessage(message));
-    });
+            .forEach(p -> p.sendMessage(message)));
 }
 ```
 
+```kotlin Kotlin
+fun setupCrashNotifications() {
+    api.event().server().onStopped { event ->
+        if (!event.crashed) return@onStopped
+
+        var msg = "[Alert] Server abgestürzt: ${event.serverId}"
+        if (event.reason != null) {
+            msg += " — ${event.reason}"
+        }
+        launch { notifyStaff(Component.text(msg).color(NamedTextColor.RED)) }
+    }
+}
+
+private suspend fun notifyStaff(message: Component) {
+    val players = api.player().getOnlinePlayers().await()
+    players
+        .filter { p -> hasStaffPermission(p) }
+        .forEach { p -> p.sendMessage(message) }
+}
+```
+</CodeGroup>
+
+### Daten synchronisieren, wenn Server verfügbar wird
+
+<CodeGroup>
+```java Java
+public void setupDataSync() {
+    api.event().server().onStateChanged(event -> {
+        if (event.getNewState() == ServerState.AVAILABLE) {
+            syncDataToServer(event.getServerId());
+        }
+    });
+}
+
+private void syncDataToServer(String serverId) {
+    System.out.println("Synchronisiere Daten zu: " + serverId);
+}
+```
+
+```kotlin Kotlin
+fun setupDataSync() {
+    api.event().server().onStateChanged { event ->
+        if (event.newState == ServerState.AVAILABLE) {
+            syncDataToServer(event.serverId)
+        }
+    }
+}
+
+private fun syncDataToServer(serverId: String) {
+    println("Synchronisiere Daten zu: $serverId")
+}
+```
+</CodeGroup>
+
 ## Events filtern
 
-### Nach Gruppe filtern
+### Nach Group-Namen filtern
 
-Server Events werden sowohl für Gruppen-Server als auch für persistente Server ausgelöst. Beim Filtern nach Gruppenname haben persistente Server Events einen leeren `groupName` und werden automatisch übersprungen.
-
-```java
+<CodeGroup>
+```java Java
 public void watchGroup(String groupName) {
     api.event().server().onStarted(event -> {
-        if (event.getGroupName().equals(groupName)) {
+        Server server = event.getServer();
+        if (server.isFromGroup() && groupName.equals(server.getServerBase().getName())) {
             handleGroupServerStart(event);
         }
     });
 }
 ```
 
+```kotlin Kotlin
+fun watchGroup(groupName: String) {
+    api.event().server().onStarted { event ->
+        val server = event.server
+        if (server.isFromGroup() && groupName == server.serverBase.name) {
+            handleGroupServerStart(event)
+        }
+    }
+}
+```
+</CodeGroup>
+
+### Nach Server-Typ filtern
+
+<CodeGroup>
+```java Java
+public void watchProxies() {
+    api.event().server().onStarted(event -> {
+        Server server = event.getServer();
+        if (server.getServerBase().getType() == GroupServerType.PROXY) {
+            handleProxyStart(event);
+        }
+    });
+}
+```
+
+```kotlin Kotlin
+fun watchProxies() {
+    api.event().server().onStarted { event ->
+        val server = event.server
+        if (server.serverBase.type == GroupServerType.PROXY) {
+            handleProxyStart(event)
+        }
+    }
+}
+```
+</CodeGroup>
+
+### Persistent-Server-Events filtern
+
+<CodeGroup>
+```java Java
+public void watchPersistentServer(String persistentServerName) {
+    api.event().persistentServer().onStarted(event -> {
+        api.persistentServer()
+            .getPersistentServerById(event.getPersistentServerId())
+            .thenAccept(ps -> {
+                if (persistentServerName.equals(ps.getName())) {
+                    System.out.println("Lobby gestartet, Instanz: " + event.getServerId());
+                }
+            });
+    });
+}
+```
+
+```kotlin Kotlin
+fun watchPersistentServer(persistentServerName: String) {
+    api.event().persistentServer().onStarted { event ->
+        launch {
+            val ps = api.persistentServer()
+                .getPersistentServerById(event.persistentServerId).await()
+            if (persistentServerName == ps.name) {
+                println("Lobby gestartet, Instanz: ${event.serverId}")
+            }
+        }
+    }
+}
+```
+</CodeGroup>
+
 ## Einmalige Events
 
-### Auf bestimmten Server warten
+### Auf einen bestimmten Server warten, bis er verfügbar ist
 
-```java
+<CodeGroup>
+```java Java
 public CompletableFuture<Void> waitForServer(String serverId) {
     CompletableFuture<Void> future = new CompletableFuture<>();
 
@@ -155,7 +372,76 @@ public CompletableFuture<Void> waitForServer(String serverId) {
 }
 
 // Verwendung
-waitForServer("lobby-1").thenRun(() -> {
-    System.out.println("Server ist bereit!");
-});
+waitForServer("lobby-uuid").thenRun(() ->
+    System.out.println("Server ist bereit!"));
 ```
+
+```kotlin Kotlin
+suspend fun waitForServer(serverId: String) {
+    val future = CompletableFuture<Unit>()
+
+    val sub = api.event().server().onStateChanged { event ->
+        if (event.serverId == serverId &&
+            event.newState == ServerState.AVAILABLE) {
+            future.complete(Unit)
+        }
+    }
+
+    future.await()
+    sub.close()
+}
+
+// Verwendung
+// in einem Coroutine-Scope (z. B. Plugin-Lifecycle oder launch { })
+waitForServer("lobby-uuid")
+println("Server ist bereit!")
+```
+</CodeGroup>
+
+### Mit Timeout
+
+<CodeGroup>
+```java Java
+public CompletableFuture<Void> waitForServerWithTimeout(
+        String serverId, Duration timeout) {
+    CompletableFuture<Void> future = new CompletableFuture<>();
+
+    Subscription sub = api.event().server().onStateChanged(event -> {
+        if (event.getServerId().equals(serverId) &&
+            event.getNewState() == ServerState.AVAILABLE) {
+            future.complete(null);
+        }
+    });
+
+    CompletableFuture.delayedExecutor(timeout.toMillis(), TimeUnit.MILLISECONDS)
+        .execute(() -> future.completeExceptionally(
+            new TimeoutException("Server wurde nicht rechtzeitig verfügbar")));
+
+    future.whenComplete((result, error) -> sub.close());
+
+    return future;
+}
+```
+
+```kotlin Kotlin
+suspend fun waitForServerWithTimeout(serverId: String, timeout: Duration) {
+    val future = CompletableFuture<Unit>()
+
+    val sub = api.event().server().onStateChanged { event ->
+        if (event.serverId == serverId &&
+            event.newState == ServerState.AVAILABLE) {
+            future.complete(Unit)
+        }
+    }
+
+    CompletableFuture.delayedExecutor(timeout.toMillis(), TimeUnit.MILLISECONDS)
+        .execute {
+            future.completeExceptionally(
+                TimeoutException("Server wurde nicht rechtzeitig verfügbar"))
+        }
+
+    future.await()
+    sub.close()
+}
+```
+</CodeGroup>

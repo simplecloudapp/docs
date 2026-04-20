@@ -1,0 +1,215 @@
+---
+title: 'Cache API'
+description: 'Den eingebauten Query-Cache inspizieren und steuern'
+---
+
+Die Cloud API enthält einen eingebauten Query-Cache mit Stale-while-revalidate-Semantik, angelehnt an TanStack Query. Zugriff über `api.cache()`.
+
+<Note>
+  Caching ist standardmäßig aktiviert. In der Regel musst du nicht direkt mit dem Cache interagieren – er funktioniert automatisch und invalidiert sich selbst, wenn NATS-Events eintreffen.
+</Note>
+
+## Funktionsweise
+
+Der Cache verwendet eine **Stale-while-revalidate**-Strategie:
+
+1. Ist ein gecachter Wert noch **frisch** (innerhalb der Stale-Zeit), wird er sofort ohne Netzwerkanfrage zurückgegeben.
+2. Ist ein gecachter Wert **stale** (Stale-Zeit abgelaufen), wird der gecachte Wert sofort zurückgegeben *und* im Hintergrund wird eine Aktualisierung angestoßen.
+3. Gibt es **keinen gecachten Wert**, werden die Daten aus dem Netzwerk geladen und gecacht.
+
+Identische gleichzeitige Anfragen teilen sich einen einzigen Netzwerkaufruf (Query-Deduplication).
+
+## Standard-Stale-Zeiten
+
+Jeder Entity-Typ hat eine auf seine typische Aktualisierungshäufigkeit abgestimmte Standard-Stale-Zeit:
+
+| Entity | Standard-Stale-Zeit | Begründung |
+|--------|---------------------|------------|
+| `SERVER` | 3 Sekunden | Metriken (CPU, Speicher, Spieleranzahl) können sich ohne Events ändern |
+| `GROUP` | 10 Sekunden | Konfiguration ändert sich selten; Events übernehmen die Aktualisierung |
+| `PERSISTENT_SERVER` | 10 Sekunden | Ähnlich wie Groups |
+| `PLAYER` | 5 Sekunden | Ausgewogenes Verhältnis zwischen Aktualität und Last |
+
+Der Cache wird automatisch invalidiert, wenn ein passendes NATS-Event eintrifft. Ein `ServerUpdatedEvent` invalidiert beispielsweise sofort die gecachten Daten des betroffenen Servers.
+
+## Manuelle Cache-Operationen
+
+Zugriff auf den Cache über `api.cache()`:
+
+<CodeGroup>
+```java Java
+QueryCache cache = api.cache();
+
+// Einzelnen Eintrag invalidieren
+cache.invalidate(QueryKey.of("server", serverId));
+
+// Alle Einträge mit einem Key-Präfix invalidieren
+cache.invalidateAll(QueryKey.of("servers"));
+
+// Alle Einträge eines bestimmten Entity-Typs invalidieren
+cache.invalidateByType(EntityType.SERVER);
+
+// Alles leeren
+cache.clear();
+
+// Gecachten Eintrag lesen, ohne einen Fetch auszulösen
+CacheEntry<Server> entry = cache.get(QueryKey.of("server", serverId));
+if (entry != null) {
+    System.out.println("Gecacht um: " + entry.getFetchedAt());
+}
+
+// Statistiken abrufen
+System.out.println(cache.getStats());
+
+// Alle gecachten Keys auflisten (zum Debuggen)
+cache.getKeys().forEach(System.out::println);
+```
+
+```kotlin Kotlin
+val cache = api.cache()
+
+// Einzelnen Eintrag invalidieren
+cache.invalidate(QueryKey.of("server", serverId))
+
+// Alle Einträge mit einem Key-Präfix invalidieren
+cache.invalidateAll(QueryKey.of("servers"))
+
+// Alle Einträge eines bestimmten Entity-Typs invalidieren
+cache.invalidateByType(EntityType.SERVER)
+
+// Alles leeren
+cache.clear()
+
+// Gecachten Eintrag lesen, ohne einen Fetch auszulösen
+val entry = cache.get<Server>(QueryKey.of("server", serverId))
+if (entry != null) {
+    println("Gecacht um: ${entry.fetchedAt}")
+}
+
+// Statistiken abrufen
+println(cache.stats)
+
+// Alle gecachten Keys auflisten (zum Debuggen)
+cache.keys.forEach { println(it) }
+```
+</CodeGroup>
+
+### Wann manuell invalidieren?
+
+In den meisten Fällen ist das nicht nötig. Manuelle Invalidierung macht Sinn, wenn:
+- du eine Operation außerhalb der API durchgeführt hast (z. B. eine direkte Datenbankänderung) und sofort frische Daten benötigst.
+- du eine Aktualisierung erzwingen möchtest, bevor die Stale-Zeit abläuft.
+
+## Konfiguration
+
+Den Cache beim Erstellen der API anpassen:
+
+<CodeGroup>
+```java Java
+CacheConfig cacheConfig = CacheConfig.builder()
+    .defaultStaleTime(Duration.ofSeconds(10))     // Standard: 5s
+    .defaultCacheTime(Duration.ofMinutes(5))       // Standard: 2m
+    .maxEntries(1000)                              // Standard: 500
+    .autoInvalidateOnEvents(true)                  // Standard: true
+    .eventDebounceTime(Duration.ofMillis(100))     // Standard: 50ms
+    .entityConfig(EntityType.SERVER, EntityCacheConfig.builder()
+        .staleTime(Duration.ofSeconds(1))
+        .build())
+    .build();
+
+CloudApi api = CloudApi.create(CloudApiOptions.builder()
+    .cache(cacheConfig)
+    .build());
+```
+
+```kotlin Kotlin
+val cacheConfig = CacheConfig.builder()
+    .defaultStaleTime(Duration.ofSeconds(10))     // Standard: 5s
+    .defaultCacheTime(Duration.ofMinutes(5))       // Standard: 2m
+    .maxEntries(1000)                              // Standard: 500
+    .autoInvalidateOnEvents(true)                  // Standard: true
+    .eventDebounceTime(Duration.ofMillis(100))     // Standard: 50ms
+    .entityConfig(EntityType.SERVER, EntityCacheConfig.builder()
+        .staleTime(Duration.ofSeconds(1))
+        .build())
+    .build()
+
+val api = CloudApi.create(CloudApiOptions.builder()
+    .cache(cacheConfig)
+    .build())
+```
+</CodeGroup>
+
+### Caching vollständig deaktivieren
+
+<CodeGroup>
+```java Java
+CloudApi api = CloudApi.create(CloudApiOptions.builder()
+    .disableCache()
+    .build());
+```
+
+```kotlin Kotlin
+val api = CloudApi.create(CloudApiOptions.builder()
+    .disableCache()
+    .build())
+```
+</CodeGroup>
+
+### Konfiguration pro Entity-Typ
+
+Stale-Zeit und Cache-Zeit für bestimmte Entity-Typen überschreiben:
+
+<CodeGroup>
+```java Java
+EntityCacheConfig serverConfig = EntityCacheConfig.builder()
+    .staleTime(Duration.ofSeconds(1))    // Sehr frische Server-Daten benötigt
+    .cacheTime(Duration.ofMinutes(3))
+    .build();
+```
+
+```kotlin Kotlin
+val serverConfig = EntityCacheConfig.builder()
+    .staleTime(Duration.ofSeconds(1))    // Sehr frische Server-Daten benötigt
+    .cacheTime(Duration.ofMinutes(3))
+    .build()
+```
+</CodeGroup>
+
+## CacheConfig-Referenz
+
+| Option | Typ | Standard | Beschreibung |
+|--------|-----|----------|--------------|
+| `defaultStaleTime` | `Duration` | `5s` | Wie lange Daten als frisch gelten |
+| `defaultCacheTime` | `Duration` | `2m` | Wie lange ungenutzte Einträge im Speicher bleiben |
+| `maxEntries` | `int` | `500` | Maximale Anzahl gecachter Einträge (LRU-Verdrängung) |
+| `autoInvalidateOnEvents` | `boolean` | `true` | Einträge automatisch invalidieren, wenn NATS-Events eintreffen |
+| `eventDebounceTime` | `Duration` | `50ms` | Mehrere Events innerhalb dieses Zeitfensters zu einer einzigen Invalidierung zusammenfassen |
+| `entityConfig(EntityType, EntityCacheConfig)` | — | — | Überschreibungen pro Entity-Typ |
+
+## EntityType
+
+| Wert | Beschreibung |
+|------|--------------|
+| `SERVER` | Laufende Server-Instanzen |
+| `GROUP` | Server-Groups |
+| `PERSISTENT_SERVER` | Persistent-Server-Konfigurationen |
+| `PLAYER` | Online-Spieler |
+
+## CacheStats
+
+`cache.getStats()` gibt Statistiken zurück, die beim Debuggen und Monitoring hilfreich sind:
+
+<CodeGroup>
+```java Java
+CacheStats stats = api.cache().getStats();
+System.out.println(stats);
+```
+
+```kotlin Kotlin
+val stats = api.cache().stats
+println(stats)
+```
+</CodeGroup>
+
+Damit lassen sich Cache-Hit-Raten überwachen und unerwartete Cache-Misses in der Produktion erkennen.
