@@ -3,7 +3,7 @@ title: 'Cloud API'
 description: 'Baue Integrationen mit SimpleCloud über unsere Java/Kotlin API'
 ---
 
-Die Cloud API ist eine Java-Bibliothek zur programmatischen Interaktion mit deinem SimpleCloud-Netzwerk. Nutze sie, um Groups, Server, Persistent Server und Spieler zu verwalten und in Echtzeit auf Events zu reagieren.
+Die Cloud API ist eine Java Bibliothek zur programmatischen Interaktion mit deinem SimpleCloud-Netzwerk. Nutze sie, um Groups, Server, Persistent Server und Spieler zu verwalten und in Echtzeit auf Events zu reagieren.
 
 ## API-Architektur
 
@@ -72,8 +72,6 @@ Subscription sub = api.event().server().onStarted(event -> {
 ```kotlin
 // API initialisieren
 val api = CloudApi.create()
-
-// in einem Coroutine-Scope (z. B. Plugin-Lifecycle oder launch { })
 
 // Alle Server einer Group abrufen
 val servers = api.server().getServersByGroup("lobby").await()

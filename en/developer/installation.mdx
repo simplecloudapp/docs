@@ -72,10 +72,6 @@ depends: [simplecloud-api]
 
 When running inside a SimpleCloud server, the API auto-configures from environment variables:
 
-<Note>
-  Kotlin examples use `.await()` from `kotlinx-coroutines-jdk8`. Add `org.jetbrains.kotlinx:kotlinx-coroutines-jdk8` to your dependencies and call API methods from a coroutine scope or `suspend` function.
-</Note>
-
 <Tabs>
 <Tab title="Java">
 
@@ -260,7 +256,6 @@ The API reads these environment variables by default:
 
     ```kotlin Kotlin
     // Good - coroutine-style handling
-    // in a coroutine scope (e.g. plugin lifecycle or launch { })
     val servers = api.server().getAllServers().await()
     // Process servers
 

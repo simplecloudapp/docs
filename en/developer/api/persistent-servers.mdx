@@ -33,7 +33,6 @@ api.persistentServer().getPersistentServerByName("main-lobby")
 ```
 
 ```kotlin Kotlin
-// in a coroutine scope (e.g. plugin lifecycle or launch { })
 
 // Get all persistent servers
 val servers = api.persistentServer().getAllPersistentServers().await()

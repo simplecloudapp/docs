@@ -73,8 +73,6 @@ Subscription sub = api.event().server().onStarted(event -> {
 // Initialize the API
 val api = CloudApi.create()
 
-// in a coroutine scope (e.g. plugin lifecycle or launch { })
-
 // Get all servers in a group
 val servers = api.server().getServersByGroup("lobby").await()
 println("Lobby servers: ${servers.size}")

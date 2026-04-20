@@ -392,7 +392,6 @@ suspend fun waitForServer(serverId: String) {
 }
 
 // Usage
-// in a coroutine scope (e.g. plugin lifecycle or launch { })
 waitForServer("lobby-uuid")
 println("Server is ready!")
 ```

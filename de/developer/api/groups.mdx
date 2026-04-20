@@ -33,7 +33,6 @@ api.group().getGroupById("group-uuid")
 ```
 
 ```kotlin Kotlin
-// in einem Coroutine-Scope (z. B. Plugin-Lifecycle oder launch { })
 
 // Alle Groups abrufen
 val groups = api.group().getAllGroups().await()
