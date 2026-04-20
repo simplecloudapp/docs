@@ -36,7 +36,8 @@ The cache is automatically invalidated when a relevant NATS event arrives. For e
 
 Access the cache via `api.cache()`:
 
-```java
+<CodeGroup>
+```java Java
 QueryCache cache = api.cache();
 
 // Invalidate a specific entry
@@ -64,6 +65,35 @@ System.out.println(cache.getStats());
 cache.getKeys().forEach(System.out::println);
 ```
 
+```kotlin Kotlin
+val cache = api.cache()
+
+// Invalidate a specific entry
+cache.invalidate(QueryKey.of("server", serverId))
+
+// Invalidate all entries matching a key prefix
+cache.invalidateAll(QueryKey.of("servers"))
+
+// Invalidate all entries for a specific entity type
+cache.invalidateByType(EntityType.SERVER)
+
+// Clear everything
+cache.clear()
+
+// Read a cached entry without triggering a fetch
+val entry = cache.get<Server>(QueryKey.of("server", serverId))
+if (entry != null) {
+    println("Cached at: ${entry.fetchedAt}")
+}
+
+// Get statistics
+println(cache.stats)
+
+// List all cached keys (for debugging)
+cache.keys.forEach { println(it) }
+```
+</CodeGroup>
+
 ### When to manually invalidate
 
 In most cases you don't need to. Use manual invalidation when:
@@ -74,7 +104,8 @@ In most cases you don't need to. Use manual invalidation when:
 
 Customize the cache when creating the API:
 
-```java
+<CodeGroup>
+```java Java
 CacheConfig cacheConfig = CacheConfig.builder()
     .defaultStaleTime(Duration.ofSeconds(10))     // default: 5s
     .defaultCacheTime(Duration.ofMinutes(5))       // default: 2m
@@ -91,24 +122,59 @@ CloudApi api = CloudApi.create(CloudApiOptions.builder()
     .build());
 ```
 
+```kotlin Kotlin
+val cacheConfig = CacheConfig.builder()
+    .defaultStaleTime(Duration.ofSeconds(10))     // default: 5s
+    .defaultCacheTime(Duration.ofMinutes(5))       // default: 2m
+    .maxEntries(1000)                              // default: 500
+    .autoInvalidateOnEvents(true)                  // default: true
+    .eventDebounceTime(Duration.ofMillis(100))     // default: 50ms
+    .entityConfig(EntityType.SERVER, EntityCacheConfig.builder()
+        .staleTime(Duration.ofSeconds(1))
+        .build())
+    .build()
+
+val api = CloudApi.create(CloudApiOptions.builder()
+    .cache(cacheConfig)
+    .build())
+```
+</CodeGroup>
+
 ### Disable caching entirely
 
-```java
+<CodeGroup>
+```java Java
 CloudApi api = CloudApi.create(CloudApiOptions.builder()
     .disableCache()
     .build());
 ```
 
+```kotlin Kotlin
+val api = CloudApi.create(CloudApiOptions.builder()
+    .disableCache()
+    .build())
+```
+</CodeGroup>
+
 ### Per-entity configuration
 
 Override stale/cache time for specific entity types:
 
-```java
+<CodeGroup>
+```java Java
 EntityCacheConfig serverConfig = EntityCacheConfig.builder()
     .staleTime(Duration.ofSeconds(1))    // Need very fresh server data
     .cacheTime(Duration.ofMinutes(3))
     .build();
 ```
+
+```kotlin Kotlin
+val serverConfig = EntityCacheConfig.builder()
+    .staleTime(Duration.ofSeconds(1))    // Need very fresh server data
+    .cacheTime(Duration.ofMinutes(3))
+    .build()
+```
+</CodeGroup>
 
 ## CacheConfig Reference
 
@@ -134,9 +200,16 @@ EntityCacheConfig serverConfig = EntityCacheConfig.builder()
 
 `cache.getStats()` returns statistics useful for debugging and monitoring:
 
-```java
+<CodeGroup>
+```java Java
 CacheStats stats = api.cache().getStats();
 System.out.println(stats);
 ```
+
+```kotlin Kotlin
+val stats = api.cache().stats
+println(stats)
+```
+</CodeGroup>
 
 Use this to monitor cache hit rates and detect unexpected cache misses in production.

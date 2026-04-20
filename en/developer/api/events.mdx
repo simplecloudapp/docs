@@ -20,7 +20,8 @@ The Events API lets you react to changes in your network in real-time. Access it
 
 Fires when a server instance becomes active. The event includes the full `Server` object with all runtime information.
 
-```java
+<CodeGroup>
+```java Java
 Subscription sub = api.event().server().onStarted(event -> {
     System.out.println("Server started: " + event.getServerId());
     System.out.println("Network: " + event.getNetworkId());
@@ -34,11 +35,27 @@ Subscription sub = api.event().server().onStarted(event -> {
 });
 ```
 
+```kotlin Kotlin
+val sub = api.event().server().onStarted { event ->
+    println("Server started: ${event.serverId}")
+    println("Network: ${event.networkId}")
+
+    val server = event.server
+    if (server.isFromGroup()) {
+        println("Group: ${server.serverGroupId}")
+    } else if (server.isFromPersistentServer()) {
+        println("Persistent server: ${server.persistentServerId}")
+    }
+}
+```
+</CodeGroup>
+
 ### Server Stopped
 
 Fires when a server instance stops. Use `getCrashed()` to detect unexpected shutdowns.
 
-```java
+<CodeGroup>
+```java Java
 api.event().server().onStopped(event -> {
     System.out.println("Server stopped: " + event.getServerId());
 
@@ -49,11 +66,24 @@ api.event().server().onStopped(event -> {
 });
 ```
 
+```kotlin Kotlin
+api.event().server().onStopped { event ->
+    println("Server stopped: ${event.serverId}")
+
+    if (event.crashed) {
+        println("Server crashed! Exit code: ${event.exitCode}")
+        println("Reason: ${event.reason}")
+    }
+}
+```
+</CodeGroup>
+
 ### Server State Changed
 
 Fires whenever a server transitions between lifecycle states.
 
-```java
+<CodeGroup>
+```java Java
 api.event().server().onStateChanged(event -> {
     System.out.println(event.getServerId() + ": " +
         event.getOldState() + " → " + event.getNewState());
@@ -64,11 +94,23 @@ api.event().server().onStateChanged(event -> {
 });
 ```
 
+```kotlin Kotlin
+api.event().server().onStateChanged { event ->
+    println("${event.serverId}: ${event.oldState} → ${event.newState}")
+
+    if (event.newState == ServerState.AVAILABLE) {
+        println("Server ready: ${event.serverId}")
+    }
+}
+```
+</CodeGroup>
+
 ### Server Updated
 
 Fires when a server's configuration or properties are updated.
 
-```java
+<CodeGroup>
+```java Java
 api.event().server().onUpdated(event -> {
     System.out.println("Server updated: " + event.getServerId());
     Server server = event.getServer();
@@ -76,21 +118,39 @@ api.event().server().onUpdated(event -> {
 });
 ```
 
+```kotlin Kotlin
+api.event().server().onUpdated { event ->
+    println("Server updated: ${event.serverId}")
+    val server = event.server
+    println("Player count: ${server.playerCount}")
+}
+```
+</CodeGroup>
+
 ### Server Deleted
 
 Fires when a server record is removed.
 
-```java
+<CodeGroup>
+```java Java
 api.event().server().onDeleted(event -> {
     System.out.println("Server deleted: " + event.getServerId());
 });
 ```
 
+```kotlin Kotlin
+api.event().server().onDeleted { event ->
+    println("Server deleted: ${event.serverId}")
+}
+```
+</CodeGroup>
+
 ## Group Events
 
 ### Group Created
 
-```java
+<CodeGroup>
+```java Java
 api.event().group().onCreated(event -> {
     System.out.println("Group created: " + event.getServerGroupId());
     Group group = event.getGroup();
@@ -99,27 +159,56 @@ api.event().group().onCreated(event -> {
 });
 ```
 
+```kotlin Kotlin
+api.event().group().onCreated { event ->
+    println("Group created: ${event.serverGroupId}")
+    val group = event.group
+    println("Name: ${group.name}")
+    println("Type: ${group.type}")
+}
+```
+</CodeGroup>
+
 ### Group Updated
 
-```java
+<CodeGroup>
+```java Java
 api.event().group().onUpdated(event -> {
     System.out.println("Group updated: " + event.getServerGroupId());
     Group group = event.getGroup();
 });
 ```
 
+```kotlin Kotlin
+api.event().group().onUpdated { event ->
+    println("Group updated: ${event.serverGroupId}")
+    val group = event.group
+}
+```
+</CodeGroup>
+
 ### Group Deleted
 
-```java
+<CodeGroup>
+```java Java
 api.event().group().onDeleted(event -> {
     System.out.println("Group deleted: " + event.getServerGroupId());
     System.out.println("Name: " + event.getName());
 });
 ```
 
+```kotlin Kotlin
+api.event().group().onDeleted { event ->
+    println("Group deleted: ${event.serverGroupId}")
+    println("Name: ${event.name}")
+}
+```
+</CodeGroup>
+
 ## Persistent Server Events
 
-```java
+<CodeGroup>
+```java Java
 // Created - fires when a persistent server configuration is created
 api.event().persistentServer().onCreated(event -> {
     System.out.println("Persistent server created: " + event.getPersistentServerId());
@@ -150,9 +239,42 @@ api.event().persistentServer().onDeleted(event -> {
 });
 ```
 
+```kotlin Kotlin
+// Created - fires when a persistent server configuration is created
+api.event().persistentServer().onCreated { event ->
+    println("Persistent server created: ${event.persistentServerId}")
+    println("Name: ${event.name}")
+}
+
+// Started - fires when a persistent server's running instance starts
+api.event().persistentServer().onStarted { event ->
+    println("Persistent server started: ${event.persistentServerId}")
+    println("Server instance: ${event.serverId}")
+}
+
+// Stopped - fires when a persistent server's running instance stops
+api.event().persistentServer().onStopped { event ->
+    println("Persistent server stopped: ${event.persistentServerId}")
+    println("Server instance: ${event.serverId}")
+}
+
+// Updated
+api.event().persistentServer().onUpdated { event ->
+    println("Persistent server updated: ${event.persistentServerId}")
+}
+
+// Deleted
+api.event().persistentServer().onDeleted { event ->
+    println("Persistent server deleted: ${event.persistentServerId}")
+    println("Name: ${event.name}")
+}
+```
+</CodeGroup>
+
 ## Blueprint Events
 
-```java
+<CodeGroup>
+```java Java
 // Created
 api.event().blueprint().onCreated(event -> {
     System.out.println("Blueprint created: " + event.getBlueprintId());
@@ -172,31 +294,71 @@ api.event().blueprint().onDeleted(event -> {
 });
 ```
 
+```kotlin Kotlin
+// Created
+api.event().blueprint().onCreated { event ->
+    println("Blueprint created: ${event.blueprintId}")
+    val blueprint = event.blueprint
+    println("Name: ${blueprint.name}")
+}
+
+// Updated
+api.event().blueprint().onUpdated { event ->
+    println("Blueprint updated: ${event.blueprintId}")
+}
+
+// Deleted
+api.event().blueprint().onDeleted { event ->
+    println("Blueprint deleted: ${event.blueprintId}")
+    println("Name: ${event.name}")
+}
+```
+</CodeGroup>
+
 ## Managing Subscriptions
 
 Subscriptions implement `AutoCloseable`. Always clean them up when done.
 
 ### Manual Cleanup
 
-```java
+<CodeGroup>
+```java Java
 Subscription sub = api.event().server().onStarted(event -> { ... });
 
 // When shutting down
 sub.close();
 ```
 
+```kotlin Kotlin
+val sub = api.event().server().onStarted { event -> /* ... */ }
+
+// When shutting down
+sub.close()
+```
+</CodeGroup>
+
 ### Try-with-Resources
 
-```java
+<CodeGroup>
+```java Java
 try (Subscription sub = api.event().server().onStarted(event -> { ... })) {
     // Subscription active within this block
     Thread.sleep(60000);
 } // Automatically closed
 ```
 
+```kotlin Kotlin
+api.event().server().onStarted { event -> /* ... */ }.use {
+    // Subscription active within this block
+    Thread.sleep(60000)
+} // Automatically closed
+```
+</CodeGroup>
+
 ### Plugin Lifecycle
 
-```java
+<CodeGroup>
+```java Java
 public class MyPlugin extends JavaPlugin {
     private final List<Subscription> subscriptions = new ArrayList<>();
     private CloudApi api;
@@ -229,6 +391,39 @@ public class MyPlugin extends JavaPlugin {
     }
 }
 ```
+
+```kotlin Kotlin
+class MyPlugin : JavaPlugin() {
+    private val subscriptions = mutableListOf<Subscription>()
+    private lateinit var api: CloudApi
+
+    override fun onEnable() {
+        api = CloudApi.create()
+
+        subscriptions.add(api.event().server().onStarted(::handleServerStart))
+        subscriptions.add(api.event().server().onStopped(::handleServerStop))
+        subscriptions.add(api.event().group().onUpdated(::handleGroupUpdate))
+    }
+
+    override fun onDisable() {
+        subscriptions.forEach { it.close() }
+        subscriptions.clear()
+    }
+
+    private fun handleServerStart(event: ServerStartedEvent) {
+        logger.info("Server started: ${event.serverId}")
+    }
+
+    private fun handleServerStop(event: ServerStoppedEvent) {
+        logger.info("Server stopped: ${event.serverId}")
+    }
+
+    private fun handleGroupUpdate(event: GroupUpdatedEvent) {
+        logger.info("Group updated: ${event.serverGroupId}")
+    }
+}
+```
+</CodeGroup>
 
 ## Event Reference
 

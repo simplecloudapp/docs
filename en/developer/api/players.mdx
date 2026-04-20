@@ -7,7 +7,8 @@ The Players API lets you query players, transfer them between servers, and send 
 
 ## Get Players
 
-```java
+<CodeGroup>
+```java Java
 // Get player by UUID
 api.player().get(uuid)
     .thenAccept(player -> {
@@ -30,11 +31,34 @@ api.player().getOnlinePlayerCount()
     .thenAccept(count -> System.out.println("Online: " + count));
 ```
 
+```kotlin Kotlin
+// in a coroutine scope (e.g. plugin lifecycle or launch { })
+
+// Get player by UUID
+val player = api.player().get(uuid).await()
+if (player != null) {
+    println("${player.name} on ${player.connectedServerName}")
+}
+
+// Get player by username (case-insensitive)
+val steve = api.player().get("Steve").await()
+
+// Get all online players
+val players = api.player().getOnlinePlayers().await()
+players.forEach { p -> println(p.name) }
+
+// Get online player count
+val count = api.player().getOnlinePlayerCount().await()
+println("Online: $count")
+```
+</CodeGroup>
+
 ## Player Actions
 
 ### Transfer Player
 
-```java
+<CodeGroup>
+```java Java
 api.player().get(uuid).thenAccept(player -> {
     if (player != null) {
         player.connect("lobby-1").thenAccept(result -> {
@@ -50,18 +74,39 @@ api.player().get(uuid).thenAccept(player -> {
 });
 ```
 
+```kotlin Kotlin
+val player = api.player().get(uuid).await() ?: return
+val result = player.connect("lobby-1").await()
+when (result) {
+    CloudPlayer.ConnectResult.SUCCESS -> println("Transferred!")
+    CloudPlayer.ConnectResult.SERVER_NOT_FOUND -> println("Server doesn't exist")
+    CloudPlayer.ConnectResult.ALREADY_CONNECTED -> println("Already on that server")
+    CloudPlayer.ConnectResult.PLAYER_NOT_FOUND -> println("Player went offline")
+    CloudPlayer.ConnectResult.CONNECTION_FAILED -> println("Connection failed")
+}
+```
+</CodeGroup>
+
 ### Kick Player
 
-```java
+<CodeGroup>
+```java Java
 player.kick(Component.text("Server restarting")
     .color(NamedTextColor.RED));
 ```
+
+```kotlin Kotlin
+player.kick(Component.text("Server restarting")
+    .color(NamedTextColor.RED))
+```
+</CodeGroup>
 
 ## Player Properties
 
 Players support custom properties stored on the controller:
 
-```java
+<CodeGroup>
+```java Java
 // Update properties (merge with existing)
 api.player().updatePlayerProperties(uuid, Map.of(
     "rank", "VIP",
@@ -81,6 +126,28 @@ api.player().deletePlayerProperty(uuid, "rank")
     .thenAccept(remaining -> System.out.println("Remaining: " + remaining));
 ```
 
+```kotlin Kotlin
+// Update properties (merge with existing)
+val props = api.player().updatePlayerProperties(uuid, mapOf(
+    "rank" to "VIP",
+    "coins" to "1500"
+)).await()
+println("Updated: $props")
+
+// Update a single property
+val updatedProps = api.player().updatePlayerProperty(uuid, "rank", "MVP").await()
+println("Updated: $updatedProps")
+
+// Remove specific properties
+val remaining = api.player().deletePlayerProperties(uuid, listOf("coins")).await()
+println("Remaining: $remaining")
+
+// Remove a single property
+val remainingAfter = api.player().deletePlayerProperty(uuid, "rank").await()
+println("Remaining: $remainingAfter")
+```
+</CodeGroup>
+
 <Note>
   Player properties use `Map<String, String>` (string values only), unlike group and server properties which use `Map<String, Object>`.
 </Note>
@@ -91,7 +158,8 @@ api.player().deletePlayerProperty(uuid, "rank")
 
 ### Send Messages
 
-```java
+<CodeGroup>
+```java Java
 // Plain text
 player.sendMessage(Component.text("Hello!"));
 
@@ -110,9 +178,30 @@ player.sendMessage(Component.text("Click here")
     .hoverEvent(HoverEvent.showText(Component.text("Run /help"))));
 ```
 
+```kotlin Kotlin
+// Plain text
+player.sendMessage(Component.text("Hello!"))
+
+// Colored text
+player.sendMessage(Component.text("Success!")
+    .color(NamedTextColor.GREEN))
+
+// Styled text
+player.sendMessage(Component.text("Important")
+    .color(NamedTextColor.GOLD)
+    .decorate(TextDecoration.BOLD))
+
+// Clickable text
+player.sendMessage(Component.text("Click here")
+    .clickEvent(ClickEvent.runCommand("/help"))
+    .hoverEvent(HoverEvent.showText(Component.text("Run /help"))))
+```
+</CodeGroup>
+
 ### Send Titles
 
-```java
+<CodeGroup>
+```java Java
 player.showTitle(Title.title(
     Component.text("Welcome!").color(NamedTextColor.GOLD),
     Component.text("to the server").color(NamedTextColor.GRAY),
@@ -124,16 +213,37 @@ player.showTitle(Title.title(
 ));
 ```
 
+```kotlin Kotlin
+player.showTitle(Title.title(
+    Component.text("Welcome!").color(NamedTextColor.GOLD),
+    Component.text("to the server").color(NamedTextColor.GRAY),
+    Title.Times.times(
+        Duration.ofMillis(500),   // fade in
+        Duration.ofSeconds(3),    // stay
+        Duration.ofMillis(500)    // fade out
+    )
+))
+```
+</CodeGroup>
+
 ### Send Action Bar
 
-```java
+<CodeGroup>
+```java Java
 player.sendActionBar(Component.text("⚔ Combat Mode Enabled")
     .color(NamedTextColor.RED));
 ```
 
+```kotlin Kotlin
+player.sendActionBar(Component.text("⚔ Combat Mode Enabled")
+    .color(NamedTextColor.RED))
+```
+</CodeGroup>
+
 ### Play Sounds
 
-```java
+<CodeGroup>
+```java Java
 player.playSound(Sound.sound(
     Key.key("entity.experience_orb.pickup"),
     Sound.Source.PLAYER,
@@ -142,9 +252,20 @@ player.playSound(Sound.sound(
 ));
 ```
 
+```kotlin Kotlin
+player.playSound(Sound.sound(
+    Key.key("entity.experience_orb.pickup"),
+    Sound.Source.PLAYER,
+    1.0f,  // volume
+    1.0f   // pitch
+))
+```
+</CodeGroup>
+
 ### Boss Bars
 
-```java
+<CodeGroup>
+```java Java
 BossBar bar = BossBar.bossBar(
     Component.text("Event Progress"),
     0.5f,
@@ -161,18 +282,46 @@ bar.progress(0.75f);
 player.hideBossBar(bar);
 ```
 
+```kotlin Kotlin
+val bar = BossBar.bossBar(
+    Component.text("Event Progress"),
+    0.5f,
+    BossBar.Color.PURPLE,
+    BossBar.Overlay.PROGRESS
+)
+
+player.showBossBar(bar)
+
+// Update progress
+bar.progress(0.75f)
+
+// Remove when done
+player.hideBossBar(bar)
+```
+</CodeGroup>
+
 ### Player List Header and Footer
 
-```java
+<CodeGroup>
+```java Java
 player.sendPlayerListHeaderAndFooter(
     Component.text("My Server").color(NamedTextColor.GOLD),
     Component.text("play.example.com").color(NamedTextColor.GRAY)
 );
 ```
 
+```kotlin Kotlin
+player.sendPlayerListHeaderAndFooter(
+    Component.text("My Server").color(NamedTextColor.GOLD),
+    Component.text("play.example.com").color(NamedTextColor.GRAY)
+)
+```
+</CodeGroup>
+
 ## Broadcast to All Players
 
-```java
+<CodeGroup>
+```java Java
 api.player().getOnlinePlayers().thenAccept(players -> {
     Component message = Component.text("[Announcement] ")
         .color(NamedTextColor.GOLD)
@@ -182,6 +331,17 @@ api.player().getOnlinePlayers().thenAccept(players -> {
     players.forEach(player -> player.sendMessage(message));
 });
 ```
+
+```kotlin Kotlin
+val players = api.player().getOnlinePlayers().await()
+val message = Component.text("[Announcement] ")
+    .color(NamedTextColor.GOLD)
+    .append(Component.text("Server restarting in 5 minutes")
+        .color(NamedTextColor.WHITE))
+
+players.forEach { player -> player.sendMessage(message) }
+```
+</CodeGroup>
 
 ## CloudPlayer Model
 

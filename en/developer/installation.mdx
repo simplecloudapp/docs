@@ -72,6 +72,10 @@ depends: [simplecloud-api]
 
 When running inside a SimpleCloud server, the API auto-configures from environment variables:
 
+<Note>
+  Kotlin examples use `.await()` from `kotlinx-coroutines-jdk8`. Add `org.jetbrains.kotlinx:kotlinx-coroutines-jdk8` to your dependencies and call API methods from a coroutine scope or `suspend` function.
+</Note>
+
 <Tabs>
 <Tab title="Java">
 
@@ -141,7 +145,8 @@ val api = CloudApi.create(CloudApiOptions.builder()
 
 The API includes a built-in query cache with sensible defaults. You can customize it or disable it entirely:
 
-```java
+<CodeGroup>
+```java Java
 // Disable caching
 CloudApi api = CloudApi.create(CloudApiOptions.builder()
     .networkId("your-network-id")
@@ -164,6 +169,31 @@ CloudApi api = CloudApi.create(CloudApiOptions.builder()
     .cache(cache)
     .build());
 ```
+
+```kotlin Kotlin
+// Disable caching
+val api = CloudApi.create(CloudApiOptions.builder()
+    .networkId("your-network-id")
+    .networkSecret("your-secret")
+    .disableCache()
+    .build())
+
+// Custom cache settings
+val cache = CacheConfig.builder()
+    .defaultStaleTime(Duration.ofSeconds(10))
+    .defaultCacheTime(Duration.ofMinutes(5))
+    .entityConfig(EntityType.SERVER, EntityCacheConfig.builder()
+        .staleTime(Duration.ofSeconds(1))
+        .build())
+    .build()
+
+val api = CloudApi.create(CloudApiOptions.builder()
+    .networkId("your-network-id")
+    .networkSecret("your-secret")
+    .cache(cache)
+    .build())
+```
+</CodeGroup>
 
 <Note>
   Caching is enabled by default. The cache automatically invalidates entries when NATS events arrive (e.g., a `ServerUpdatedEvent` invalidates that server's cached data).
@@ -191,7 +221,8 @@ The API reads these environment variables by default:
   <Accordion title="Use a single API instance">
     Create one `CloudApi` instance and reuse it. Use dependency injection if your framework supports it.
 
-    ```java
+    <CodeGroup>
+    ```java Java
     // Good - single instance
     private final CloudApi api = CloudApi.create();
 
@@ -200,12 +231,24 @@ The API reads these environment variables by default:
         CloudApi api = CloudApi.create(); // Don't do this
     }
     ```
+
+    ```kotlin Kotlin
+    // Good - single instance
+    private val api = CloudApi.create()
+
+    // Avoid - multiple instances
+    fun doSomething() {
+        val api = CloudApi.create() // Don't do this
+    }
+    ```
+    </CodeGroup>
   </Accordion>
 
   <Accordion title="Handle async operations properly">
     All API methods return `CompletableFuture`. Don't block on the main thread.
 
-    ```java
+    <CodeGroup>
+    ```java Java
     // Good - async handling
     api.server().getAllServers().thenAccept(servers -> {
         // Process servers
@@ -214,17 +257,37 @@ The API reads these environment variables by default:
     // Avoid - blocking
     List<Server> servers = api.server().getAllServers().join(); // Don't block!
     ```
+
+    ```kotlin Kotlin
+    // Good - coroutine-style handling
+    // in a coroutine scope (e.g. plugin lifecycle or launch { })
+    val servers = api.server().getAllServers().await()
+    // Process servers
+
+    // Avoid - blocking
+    val servers = api.server().getAllServers().join() // Don't block!
+    ```
+    </CodeGroup>
   </Accordion>
 
   <Accordion title="Clean up event subscriptions">
     Subscriptions implement `AutoCloseable`. Close them when done.
 
-    ```java
+    <CodeGroup>
+    ```java Java
     Subscription sub = api.event().server().onStarted(event -> { ... });
 
     // When shutting down
     sub.close();
     ```
+
+    ```kotlin Kotlin
+    val sub = api.event().server().onStarted { event -> /* ... */ }
+
+    // When shutting down
+    sub.close()
+    ```
+    </CodeGroup>
   </Accordion>
 </AccordionGroup>
 

@@ -73,6 +73,8 @@ Subscription sub = api.event().server().onStarted(event -> {
 // Initialize the API
 val api = CloudApi.create()
 
+// in a coroutine scope (e.g. plugin lifecycle or launch { })
+
 // Get all servers in a group
 val servers = api.server().getServersByGroup("lobby").await()
 println("Lobby servers: ${servers.size}")
@@ -83,9 +85,8 @@ api.group().requestServerStart(group).await()
 println("Start request accepted for lobby")
 
 // Send a message to a player (Adventure integration)
-api.player().get(playerUUID).await()?.let { player ->
-    player.sendMessage(Component.text("Welcome!").color(NamedTextColor.GREEN))
-}
+val player = api.player().get(playerUUID).await()
+player?.sendMessage(Component.text("Welcome!").color(NamedTextColor.GREEN))
 
 // Subscribe to server events
 val sub = api.event().server().onStarted { event ->

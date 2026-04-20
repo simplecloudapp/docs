@@ -7,7 +7,8 @@ The Servers API lets you query, stop, and update running server instances. Acces
 
 ## Get Servers
 
-```java
+<CodeGroup>
+```java Java
 // Get all servers
 api.server().getAllServers()
     .thenAccept(servers -> System.out.println("Total: " + servers.size()));
@@ -40,18 +41,60 @@ api.server().getCurrentServer()
     .thenAccept(server -> System.out.println("Running on: " + server.getServerId()));
 ```
 
+```kotlin Kotlin
+// in a coroutine scope (e.g. plugin lifecycle or launch { })
+
+// Get all servers
+val servers = api.server().getAllServers().await()
+println("Total: ${servers.size}")
+
+// Get servers with query filters
+val query = ServerQuery.create()
+    .filterByServerGroupName("lobby")
+    .filterByState(ServerState.AVAILABLE, ServerState.INGAME)
+    .sortBy("numerical_id")
+    .sortOrder("asc")
+val filteredServers = api.server().getAllServers(query).await()
+filteredServers.forEach { s -> println("${s.serverId}: ${s.state}") }
+
+// Get server by unique ID
+val server = api.server().getServerById("server-uuid").await()
+println(server.state)
+
+// Get all servers in a group
+val groupServers = api.server().getServersByGroup("lobby").await()
+groupServers.forEach { s -> println("${s.serverId}: ${s.state}") }
+
+// Get server by group name and numerical ID (e.g., Lobby-1)
+val lobbyOne = api.server().getServerByNumericalId("lobby", 1).await()
+println(lobbyOne.serverId)
+
+// Get the current server (from within a running server)
+val currentServer = api.server().getCurrentServer().await()
+println("Running on: ${currentServer.serverId}")
+```
+</CodeGroup>
+
 ## Stop Server
 
-```java
+<CodeGroup>
+```java Java
 api.server().stopServer("server-uuid")
     .thenRun(() -> System.out.println("Stop initiated"));
 ```
+
+```kotlin Kotlin
+api.server().stopServer("server-uuid").await()
+println("Stop initiated")
+```
+</CodeGroup>
 
 ## Update Server
 
 `UpdateServerRequest` uses setter methods. Only the fields you set are changed:
 
-```java
+<CodeGroup>
+```java Java
 UpdateServerRequest update = new UpdateServerRequest();
 update.setMaxPlayers(64);
 update.setState(ServerState.AVAILABLE);
@@ -60,11 +103,23 @@ api.server().updateServer("server-uuid", update)
     .thenAccept(server -> System.out.println("Updated: " + server.getMaxPlayers()));
 ```
 
+```kotlin Kotlin
+val update = UpdateServerRequest().apply {
+    maxPlayers = 64
+    state = ServerState.AVAILABLE
+}
+
+val updatedServer = api.server().updateServer("server-uuid", update).await()
+println("Updated: ${updatedServer.maxPlayers}")
+```
+</CodeGroup>
+
 ## Server Properties
 
 Servers support custom properties for runtime metadata:
 
-```java
+<CodeGroup>
+```java Java
 // Add or update properties (deep merge with existing)
 api.server().updateServerProperties("server-uuid", Map.of(
     "map", "castle",
@@ -83,6 +138,28 @@ api.server().deleteServerProperties("server-uuid", List.of("mode"))
 api.server().deleteServerProperty("server-uuid", "mode")
     .thenAccept(remaining -> System.out.println("Remaining: " + remaining));
 ```
+
+```kotlin Kotlin
+// Add or update properties (deep merge with existing)
+val props = api.server().updateServerProperties("server-uuid", mapOf(
+    "map" to "castle",
+    "mode" to "competitive"
+)).await()
+println("Updated: $props")
+
+// Update a single property
+val updatedProps = api.server().updateServerProperty("server-uuid", "map", "desert").await()
+println("Updated: $updatedProps")
+
+// Remove specific properties
+val remaining = api.server().deleteServerProperties("server-uuid", listOf("mode")).await()
+println("Remaining: $remaining")
+
+// Remove a single property
+val remainingAfter = api.server().deleteServerProperty("server-uuid", "mode").await()
+println("Remaining: $remainingAfter")
+```
+</CodeGroup>
 
 ## ServerQuery
 
@@ -187,7 +264,8 @@ Use `ServerQuery.create()` to build filtered queries:
 
 A server can be spawned from either a group or a persistent server. Use the following methods to access the parent:
 
-```java
+<CodeGroup>
+```java Java
 // Access parent regardless of type (ServerBase covers both Group and PersistentServer)
 ServerBase base = server.getServerBase();
 System.out.println(base.getName());
@@ -201,6 +279,22 @@ if (server.isFromGroup()) {
     System.out.println("Persistent server: " + ps.getPersistentServerId());
 }
 ```
+
+```kotlin Kotlin
+// Access parent regardless of type (ServerBase covers both Group and PersistentServer)
+val base = server.serverBase
+println(base.name)
+
+// Check the type
+if (server.isFromGroup()) {
+    val group = server.group
+    println("Group: ${group.serverGroupId}")
+} else if (server.isFromPersistentServer()) {
+    val ps = server.persistentServer
+    println("Persistent server: ${ps.persistentServerId}")
+}
+```
+</CodeGroup>
 
 ## ServerState
 
@@ -218,7 +312,8 @@ if (server.isFromGroup()) {
 
 Inside a running server, access server info without the API via `SimpleCloudRuntime`:
 
-```java
+<CodeGroup>
+```java Java
 import app.simplecloud.api.runtime.SimpleCloudRuntime;
 
 String serverId    = SimpleCloudRuntime.serverId();       // SIMPLECLOUD_UNIQUE_ID
@@ -227,10 +322,28 @@ String numericalId = SimpleCloudRuntime.numericalId();    // SIMPLECLOUD_NUMERIC
 String serverName  = SimpleCloudRuntime.serverName();     // "Lobby-1" or serverId fallback
 ```
 
+```kotlin Kotlin
+import app.simplecloud.api.runtime.SimpleCloudRuntime
+
+val serverId    = SimpleCloudRuntime.serverId()       // SIMPLECLOUD_UNIQUE_ID
+val groupName   = SimpleCloudRuntime.groupName()      // SIMPLECLOUD_GROUP
+val numericalId = SimpleCloudRuntime.numericalId()    // SIMPLECLOUD_NUMERICAL_ID
+val serverName  = SimpleCloudRuntime.serverName()     // "Lobby-1" or serverId fallback
+```
+</CodeGroup>
+
 You can also read the raw environment variables directly:
 
-```java
+<CodeGroup>
+```java Java
 String group      = System.getenv("SIMPLECLOUD_GROUP");
 String uniqueId   = System.getenv("SIMPLECLOUD_UNIQUE_ID");
 String numId      = System.getenv("SIMPLECLOUD_NUMERICAL_ID");
 ```
+
+```kotlin Kotlin
+val group      = System.getenv("SIMPLECLOUD_GROUP")
+val uniqueId   = System.getenv("SIMPLECLOUD_UNIQUE_ID")
+val numId      = System.getenv("SIMPLECLOUD_NUMERICAL_ID")
+```
+</CodeGroup>

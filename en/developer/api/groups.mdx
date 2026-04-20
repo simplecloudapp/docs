@@ -7,7 +7,8 @@ The Groups API lets you create, query, update, and delete server groups. Access 
 
 ## Get Groups
 
-```java
+<CodeGroup>
+```java Java
 // Get all groups
 api.group().getAllGroups()
     .thenAccept(groups -> groups.forEach(g -> System.out.println(g.getName())));
@@ -31,6 +32,33 @@ api.group().getGroupById("group-uuid")
     .thenAccept(group -> System.out.println(group.getName()));
 ```
 
+```kotlin Kotlin
+// in a coroutine scope (e.g. plugin lifecycle or launch { })
+
+// Get all groups
+val groups = api.group().getAllGroups().await()
+groups.forEach { g -> println(g.name) }
+
+// Get all groups with query filters
+val query = GroupQuery.create()
+    .filterByType(GroupServerType.SERVER)
+    .filterByTag("minigame")
+    .sortBy("name")
+    .sortOrder("asc")
+    .limit(10)
+val filteredGroups = api.group().getAllGroups(query).await()
+filteredGroups.forEach { g -> println(g.name) }
+
+// Get group by name
+val group = api.group().getGroupByName("lobby").await()
+println(group.serverGroupId)
+
+// Get group by ID
+val groupById = api.group().getGroupById("group-uuid").await()
+println(groupById.name)
+```
+</CodeGroup>
+
 ## GroupQuery
 
 Use `GroupQuery.create()` to build filtered queries:
@@ -47,7 +75,8 @@ Use `GroupQuery.create()` to build filtered queries:
 
 `CreateGroupRequest` uses a constructor + setter chaining pattern:
 
-```java
+<CodeGroup>
+```java Java
 ScalingConfig scaling = new ScalingConfig();
 scaling.setMinServers(1);
 scaling.setMaxServers(10);
@@ -71,11 +100,39 @@ api.group().createGroup(request)
     .thenAccept(group -> System.out.println("Created: " + group.getServerGroupId()));
 ```
 
+```kotlin Kotlin
+val scaling = ScalingConfig().apply {
+    minServers = 1
+    maxServers = 10
+    scalingMode = ScalingMode.SLOTS
+    availableSlots = 4
+}
+
+val source = SourceConfig().apply {
+    type = SourceType.BLUEPRINT
+    blueprint = "paper-1.21"
+}
+
+val request = CreateGroupRequest("bedwars")
+    .setType(GroupServerType.SERVER)
+    .setMinMemory(512)
+    .setMaxMemory(1024)
+    .setMaxPlayers(16)
+    .setActive(true)
+    .setScaling(scaling)
+    .setSource(source)
+
+val createdGroup = api.group().createGroup(request).await()
+println("Created: ${createdGroup.serverGroupId}")
+```
+</CodeGroup>
+
 ## Update Group
 
 `UpdateGroupRequest` follows the same constructor + setter pattern. Only fields you set are changed:
 
-```java
+<CodeGroup>
+```java Java
 UpdateGroupRequest update = new UpdateGroupRequest()
     .setMaxPlayers(32)
     .setActive(true);
@@ -84,12 +141,29 @@ api.group().updateGroup("group-uuid", update)
     .thenAccept(group -> System.out.println("Updated: " + group.getName()));
 ```
 
+```kotlin Kotlin
+val update = UpdateGroupRequest()
+    .setMaxPlayers(32)
+    .setActive(true)
+
+val updatedGroup = api.group().updateGroup("group-uuid", update).await()
+println("Updated: ${updatedGroup.name}")
+```
+</CodeGroup>
+
 ## Delete Group
 
-```java
+<CodeGroup>
+```java Java
 api.group().deleteGroup("group-uuid")
     .thenRun(() -> System.out.println("Deleted"));
 ```
+
+```kotlin Kotlin
+api.group().deleteGroup("group-uuid").await()
+println("Deleted")
+```
+</CodeGroup>
 
 <Warning>
   Deleting a group does not stop running servers. It prevents new servers from being created for that group.
@@ -99,7 +173,8 @@ api.group().deleteGroup("group-uuid")
 
 Groups support custom properties for metadata. Values can be any JSON-compatible type:
 
-```java
+<CodeGroup>
+```java Java
 // Add or update properties (deep merge with existing)
 api.group().updateGroupProperties("group-uuid", Map.of(
     "gameMode", "ADVENTURE",
@@ -118,6 +193,28 @@ api.group().deleteGroupProperties("group-uuid", List.of("region"))
 api.group().deleteGroupProperty("group-uuid", "region")
     .thenAccept(remaining -> System.out.println("Remaining: " + remaining));
 ```
+
+```kotlin Kotlin
+// Add or update properties (deep merge with existing)
+val props = api.group().updateGroupProperties("group-uuid", mapOf(
+    "gameMode" to "ADVENTURE",
+    "region" to "eu-west"
+)).await()
+println("Updated properties: $props")
+
+// Update a single property
+val updatedProps = api.group().updateGroupProperty("group-uuid", "region", "us-east").await()
+println("Updated: $updatedProps")
+
+// Remove specific properties
+val remaining = api.group().deleteGroupProperties("group-uuid", listOf("region")).await()
+println("Remaining: $remaining")
+
+// Remove a single property
+val remainingAfter = api.group().deleteGroupProperty("group-uuid", "region").await()
+println("Remaining: $remainingAfter")
+```
+</CodeGroup>
 
 ## Group Model
 
@@ -277,7 +374,8 @@ The start queue lets you request server starts that the reconciler processes on 
 
 ### Queue a server start
 
-```java
+<CodeGroup>
+```java Java
 // Request a start by server group ID
 api.group().requestServerStart("group-uuid")
     .thenRun(() -> System.out.println("Start request accepted"));
@@ -288,9 +386,22 @@ api.group().getGroupByName("lobby")
     .thenRun(() -> System.out.println("Start request accepted for lobby"));
 ```
 
+```kotlin Kotlin
+// Request a start by server group ID
+api.group().requestServerStart("group-uuid").await()
+println("Start request accepted")
+
+// Request a start using a Group object
+val lobbyGroup = api.group().getGroupByName("lobby").await()
+api.group().requestServerStart(lobbyGroup).await()
+println("Start request accepted for lobby")
+```
+</CodeGroup>
+
 ### Inspect the queue
 
-```java
+<CodeGroup>
+```java Java
 api.group().getServerStartQueue()
     .thenAccept(queue -> {
         System.out.println("Groups with queue data: " + queue.getCount());
@@ -311,9 +422,30 @@ api.group().getServerStartQueue()
     });
 ```
 
+```kotlin Kotlin
+val queue = api.group().getServerStartQueue().await()
+println("Groups with queue data: ${queue.count}")
+println("Total queued starts: ${queue.queuedStarts}")
+println("Total failed starts: ${queue.failedStarts}")
+
+// Look up a specific group
+val lobby = queue.findByServerGroupName("lobby")
+if (lobby != null) {
+    println("Lobby starts: ${lobby.totalStarts}")
+    for (item in lobby.starts) {
+        println("  ${item.id}: ${item.status}")
+        if (item.failureReason != null) {
+            println("  Reason: ${item.failureReason}")
+        }
+    }
+}
+```
+</CodeGroup>
+
 ### Clear the queue
 
-```java
+<CodeGroup>
+```java Java
 // Clear all queued starts for a group by ID
 api.group().clearServerStartQueue("group-uuid")
     .thenRun(() -> System.out.println("Queue cleared"));
@@ -323,6 +455,18 @@ api.group().getGroupByName("lobby")
     .thenCompose(group -> api.group().clearServerStartQueue(group))
     .thenRun(() -> System.out.println("Queue cleared for lobby"));
 ```
+
+```kotlin Kotlin
+// Clear all queued starts for a group by ID
+api.group().clearServerStartQueue("group-uuid").await()
+println("Queue cleared")
+
+// Clear using a Group object
+val lobbyGroup = api.group().getGroupByName("lobby").await()
+api.group().clearServerStartQueue(lobbyGroup).await()
+println("Queue cleared for lobby")
+```
+</CodeGroup>
 
 ### GroupStartQueue model
 
