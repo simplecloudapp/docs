@@ -237,6 +237,13 @@
                   "de/developer/guides/server-management",
                   "de/developer/guides/event-handling"
                 ]
+              },
+              {
+                "group": "REST API Referenz",
+                "openapi": {
+                  "source": "https://controller.simplecloud.app/swagger/doc.json",
+                  "directory": "de/developer/api-reference"
+                }
               }
             ]
           }
