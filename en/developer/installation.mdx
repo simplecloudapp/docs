@@ -1,9 +1,9 @@
 ---
-title: 'Installation'
-description: 'Add the Cloud API to your Minecraft plugin or standalone application'
+title: "Installation"
+description: "Add the Cloud API to your Minecraft plugin or standalone application"
 ---
 
-import { DependencySnippet } from '/snippets/DependencySnippet.jsx'
+import { DependencySnippet } from "/snippets/DependencySnippet.jsx";
 
 ## Add Dependencies
 
@@ -11,11 +11,15 @@ Add the Cloud API to your build configuration. The version is fetched automatica
 
 <DependencySnippet
   dependencies={[
-    { groupId: "app.simplecloud.api", artifactId: "api", type: "implementation" }
+    {
+      groupId: "app.simplecloud.api",
+      artifactId: "api",
+      type: "implementation",
+    },
   ]}
   repositories={[
     { id: "simplecloud", url: "https://repo.simplecloud.app/snapshots" },
-    { id: "buf", url: "https://buf.build/gen/maven" }
+    { id: "buf", url: "https://buf.build/gen/maven" },
   ]}
   type="snapshot"
 />
@@ -43,9 +47,7 @@ depend: [simplecloud-api]
   "name": "My Plugin",
   "version": "1.0.0",
   "main": "com.example.MyPlugin",
-  "dependencies": [
-    { "id": "simplecloud-api", "optional": false }
-  ]
+  "dependencies": [{ "id": "simplecloud-api", "optional": false }]
 }
 ```
 
@@ -63,7 +65,8 @@ depends: [simplecloud-api]
 </Tabs>
 
 <Warning>
-  Don't shade the Cloud API into your plugin. Depend on the `simplecloud-api` plugin instead.
+  Don't shade the Cloud API into your plugin. Depend on the `simplecloud-api`
+  plugin instead.
 </Warning>
 
 ## Initialize the API
@@ -117,7 +120,7 @@ For standalone applications or custom setups, provide configuration options:
 CloudApi api = CloudApi.create(CloudApiOptions.builder()
     .networkId("your-network-id")
     .networkSecret("your-secret")
-    .controllerUrl("https://controller.platform.simplecloud.app")
+    .controllerUrl("https://controller.simplecloud.app")
     .natsUrl("nats://platform.simplecloud.app:4222")
     .build());
 ```
@@ -129,7 +132,7 @@ CloudApi api = CloudApi.create(CloudApiOptions.builder()
 val api = CloudApi.create(CloudApiOptions.builder()
     .networkId("your-network-id")
     .networkSecret("your-secret")
-    .controllerUrl("https://controller.platform.simplecloud.app")
+    .controllerUrl("https://controller.simplecloud.app")
     .natsUrl("nats://platform.simplecloud.app:4222")
     .build())
 ```
@@ -141,15 +144,16 @@ val api = CloudApi.create(CloudApiOptions.builder()
 
 The API reads these environment variables by default:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SIMPLECLOUD_NETWORK_ID` | `"default"` | Your network identifier |
-| `SIMPLECLOUD_NETWORK_SECRET` | `""` | Authentication secret |
-| `SIMPLECLOUD_CONTROLLER_URL` | `"https://controller.platform.simplecloud.app"` | Controller API endpoint |
-| `SIMPLECLOUD_NATS_URL` | `"nats://platform.simplecloud.app:4222"` | NATS server for events |
+| Variable                     | Default                                  | Description             |
+| ---------------------------- | ---------------------------------------- | ----------------------- |
+| `SIMPLECLOUD_NETWORK_ID`     | `"default"`                              | Your network identifier |
+| `SIMPLECLOUD_NETWORK_SECRET` | `""`                                     | Authentication secret   |
+| `SIMPLECLOUD_CONTROLLER_URL` | `"https://controller.simplecloud.app"`   | Controller API endpoint |
+| `SIMPLECLOUD_NATS_URL`       | `"nats://platform.simplecloud.app:4222"` | NATS server for events  |
 
 <Note>
-  Inside SimpleCloud servers, these variables are set automatically. You only need to configure them for standalone applications or external services.
+  Inside SimpleCloud servers, these variables are set automatically. You only
+  need to configure them for standalone applications or external services.
 </Note>
 
 ## Best Practices
@@ -167,6 +171,7 @@ The API reads these environment variables by default:
         CloudApi api = CloudApi.create(); // Don't do this
     }
     ```
+
   </Accordion>
 
   <Accordion title="Handle async operations properly">
@@ -181,6 +186,7 @@ The API reads these environment variables by default:
     // Avoid - blocking
     List<Server> servers = api.server().getAllServers().join(); // Don't block!
     ```
+
   </Accordion>
 
   <Accordion title="Clean up event subscriptions">
@@ -192,6 +198,7 @@ The API reads these environment variables by default:
     // When shutting down
     sub.close();
     ```
+
   </Accordion>
 </AccordionGroup>
 
@@ -207,6 +214,7 @@ The API reads these environment variables by default:
        - `https://buf.build/gen/maven`
     2. Refresh: `gradle --refresh-dependencies` or `mvn -U clean install`
     3. Check network access to repository URLs
+
   </Accordion>
 
   <Accordion title="NoClassDefFoundError at runtime">
@@ -218,6 +226,7 @@ The API reads these environment variables by default:
     1. Don't shade the API - use `compileOnly` scope
     2. Add `simplecloud-api` to plugin descriptor dependencies
     3. Verify SimpleCloud API plugin loads before yours
+
   </Accordion>
 
   <Accordion title="API initialization fails">
@@ -231,6 +240,7 @@ The API reads these environment variables by default:
     **If authentication failed:**
     - Check `SIMPLECLOUD_NETWORK_ID` is correct
     - Check `SIMPLECLOUD_NETWORK_SECRET` matches
+
   </Accordion>
 
   <Accordion title="Version conflicts">
@@ -240,5 +250,6 @@ The API reads these environment variables by default:
     1. Use `compileOnly` scope (not `implementation`)
     2. Check other plugins for bundled API versions
     3. Match API version to your SimpleCloud installation
+
   </Accordion>
 </AccordionGroup>
