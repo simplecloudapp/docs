@@ -1,9 +1,9 @@
 ---
-title: 'Installation'
-description: 'Cloud API zu deinem Minecraft-Plugin oder Standalone-Anwendung hinzufügen'
+title: "Installation"
+description: "Cloud API zu deinem Minecraft-Plugin oder Standalone-Anwendung hinzufügen"
 ---
 
-import { DependencySnippet } from '/snippets/DependencySnippet.jsx'
+import { DependencySnippet } from "/snippets/DependencySnippet.jsx";
 
 ## Dependencies hinzufügen
 
@@ -11,11 +11,15 @@ Füge die Cloud API zu deiner Build-Konfiguration hinzu. Die Version wird automa
 
 <DependencySnippet
   dependencies={[
-    { groupId: "app.simplecloud.api", artifactId: "api", type: "implementation" }
+    {
+      groupId: "app.simplecloud.api",
+      artifactId: "api",
+      type: "implementation",
+    },
   ]}
   repositories={[
     { id: "simplecloud", url: "https://repo.simplecloud.app/snapshots" },
-    { id: "buf", url: "https://buf.build/gen/maven" }
+    { id: "buf", url: "https://buf.build/gen/maven" },
   ]}
   type="snapshot"
 />
@@ -43,9 +47,7 @@ depend: [simplecloud-api]
   "name": "Mein Plugin",
   "version": "1.0.0",
   "main": "com.example.MeinPlugin",
-  "dependencies": [
-    { "id": "simplecloud-api", "optional": false }
-  ]
+  "dependencies": [{ "id": "simplecloud-api", "optional": false }]
 }
 ```
 
@@ -63,7 +65,8 @@ depends: [simplecloud-api]
 </Tabs>
 
 <Warning>
-  Shade die Cloud API nicht in dein Plugin. Hänge stattdessen vom `simplecloud-api` Plugin ab.
+  Shade die Cloud API nicht in dein Plugin. Hänge stattdessen vom
+  `simplecloud-api` Plugin ab.
 </Warning>
 
 ## API initialisieren
@@ -117,7 +120,7 @@ Für Standalone-Anwendungen oder eigene Setups, gib Konfigurationsoptionen an:
 CloudApi api = CloudApi.create(CloudApiOptions.builder()
     .networkId("deine-netzwerk-id")
     .networkSecret("dein-secret")
-    .controllerUrl("https://controller.platform.simplecloud.app")
+    .controllerUrl("https://controller.simplecloud.app")
     .natsUrl("nats://platform.simplecloud.app:4222")
     .build());
 ```
@@ -129,7 +132,7 @@ CloudApi api = CloudApi.create(CloudApiOptions.builder()
 val api = CloudApi.create(CloudApiOptions.builder()
     .networkId("deine-netzwerk-id")
     .networkSecret("dein-secret")
-    .controllerUrl("https://controller.platform.simplecloud.app")
+    .controllerUrl("https://controller.simplecloud.app")
     .natsUrl("nats://platform.simplecloud.app:4222")
     .build())
 ```
@@ -141,15 +144,17 @@ val api = CloudApi.create(CloudApiOptions.builder()
 
 Die API liest standardmäßig diese Umgebungsvariablen:
 
-| Variable | Standard | Beschreibung |
-|----------|----------|--------------|
-| `SIMPLECLOUD_NETWORK_ID` | `"default"` | Deine Netzwerk-Kennung |
-| `SIMPLECLOUD_NETWORK_SECRET` | `""` | Authentifizierungs-Secret |
-| `SIMPLECLOUD_CONTROLLER_URL` | `"https://controller.platform.simplecloud.app"` | Controller API-Endpunkt |
-| `SIMPLECLOUD_NATS_URL` | `"nats://platform.simplecloud.app:4222"` | NATS-Server für Events |
+| Variable                     | Standard                                 | Beschreibung              |
+| ---------------------------- | ---------------------------------------- | ------------------------- |
+| `SIMPLECLOUD_NETWORK_ID`     | `"default"`                              | Deine Netzwerk-Kennung    |
+| `SIMPLECLOUD_NETWORK_SECRET` | `""`                                     | Authentifizierungs-Secret |
+| `SIMPLECLOUD_CONTROLLER_URL` | `"https://controller.simplecloud.app"`   | Controller API-Endpunkt   |
+| `SIMPLECLOUD_NATS_URL`       | `"nats://platform.simplecloud.app:4222"` | NATS-Server für Events    |
 
 <Note>
-  Innerhalb von SimpleCloud-Servern werden diese Variablen automatisch gesetzt. Du musst sie nur für Standalone-Anwendungen oder externe Services konfigurieren.
+  Innerhalb von SimpleCloud-Servern werden diese Variablen automatisch gesetzt.
+  Du musst sie nur für Standalone-Anwendungen oder externe Services
+  konfigurieren.
 </Note>
 
 ## Best Practices
@@ -167,6 +172,7 @@ Die API liest standardmäßig diese Umgebungsvariablen:
         CloudApi api = CloudApi.create(); // Das nicht tun
     }
     ```
+
   </Accordion>
 
   <Accordion title="Async-Operationen richtig behandeln">
@@ -181,6 +187,7 @@ Die API liest standardmäßig diese Umgebungsvariablen:
     // Vermeiden - blockieren
     List<Server> servers = api.server().getAllServers().join(); // Nicht blockieren!
     ```
+
   </Accordion>
 
   <Accordion title="Event-Subscriptions aufräumen">
@@ -192,5 +199,6 @@ Die API liest standardmäßig diese Umgebungsvariablen:
     // Beim Herunterfahren
     sub.close();
     ```
+
   </Accordion>
 </AccordionGroup>

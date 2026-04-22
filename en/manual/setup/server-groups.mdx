@@ -208,5 +208,18 @@ Permanently delete the group:
     3. Check disk space
     4. Test plugin downloads manually
   </Accordion>
+
+  <Accordion title="Orphaned server records in database">
+    **Symptom:** Server records remain in the database after the process has terminated, causing incorrect server counts or preventing new servers from starting.
+
+    **Cause:** The server process was terminated without the controller recording the stop (e.g., a host crash or forced kill).
+
+    **Solution:**
+    Use the `DELETE /v0/servers/database` REST API endpoint to remove the stale record directly. See the [Servers API reference](/en/developer/api/servers#delete-server-record) for details.
+
+    <Warning>
+    This only removes the database row. It does not stop any running process or trigger cleanup workflows.
+    </Warning>
+  </Accordion>
 </AccordionGroup>
 

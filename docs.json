@@ -83,10 +83,7 @@
             "groups": [
               {
                 "group": "Getting Started",
-                "pages": [
-                  "en/developer/overview",
-                  "en/developer/installation"
-                ]
+                "pages": ["en/developer/overview", "en/developer/installation"]
               },
               {
                 "group": "Cloud API",
@@ -108,7 +105,7 @@
               {
                 "group": "REST API Reference",
                 "openapi": {
-                  "source": "https://controller.platform.simplecloud.app/swagger/doc.json",
+                  "source": "https://controller.simplecloud.app/swagger/doc.json",
                   "directory": "en/developer/api-reference"
                 }
               }
@@ -182,10 +179,7 @@
             "groups": [
               {
                 "group": "Getting Started",
-                "pages": [
-                  "de/developer/overview",
-                  "de/developer/installation"
-                ]
+                "pages": ["de/developer/overview", "de/developer/installation"]
               },
               {
                 "group": "Cloud API",

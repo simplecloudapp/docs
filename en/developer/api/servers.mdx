@@ -61,7 +61,36 @@ api.server().updateServer("server-uuid", update)
     .thenAccept(server -> System.out.println("Updated: " + server.getMaxPlayers()));
 ```
 
-## Server Properties
+## Delete server record
+
+To remove a server record directly from the database without stopping the process or publishing lifecycle events, use the REST API endpoint `DELETE /v0/servers/database`. This is useful for cleaning up stale or orphaned records when the server process has already terminated.
+
+<Warning>
+This operation only removes the database row. It does not stop the server process, trigger cleanup workflows, or emit events. Use `stopServer` for normal shutdown.
+</Warning>
+
+```bash
+curl -X DELETE "https://your-controller/v0/servers/database?server_id=SERVER_UUID" \
+  -H "X-Network-ID: your-network-id" \
+  -H "X-Network-Secret: your-network-secret"
+```
+
+**Response:**
+
+```json
+{
+  "server_id": "123e4567-e89b-12d3-a456-426614174000",
+  "message": "Server row deleted successfully"
+}
+```
+
+| Parameter | Location | Required | Description |
+|-----------|----------|----------|-------------|
+| `server_id` | Query | Yes | UUID of the server record to delete |
+| `X-Network-ID` | Header | Yes | Your network identifier |
+| `X-Network-Secret` | Header | Yes | Your network secret |
+
+## Server properties
 
 Servers inherit properties from their group, but you can override them per-instance:
 
