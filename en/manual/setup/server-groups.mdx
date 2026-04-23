@@ -1,9 +1,7 @@
 ---
 title: 'Server Groups'
-description: 'Create and manage server groups with auto-scaling in the SimpleCloud dashboard'
+description: 'Create auto-scaling Minecraft server groups in SimpleCloud that share configurations and automatically scale based on demand.'
 ---
-
-Groups are the core building blocks of your SimpleCloud infrastructure. A group defines a template for servers that share the same configuration, and can automatically scale based on player demand.
 
 <Note>
   Looking for static servers? They've been replaced by [Persistent Servers](/en/manual/setup/persistent-servers) - single instances that keep their data between restarts and don't auto-scale.
@@ -20,10 +18,14 @@ A **group** is a collection of servers that:
 
 There are two types of groups:
 
-- **Server Groups** - Minecraft game servers (Spigot, Paper, Fabric, etc.)
-- **Proxy Groups** - Load balancers that route players to servers (Velocity, BungeeCord)
+- **Server Groups**: Minecraft game servers (Spigot, Paper, Fabric, etc.)
+- **Proxy Groups**: Proxy servers that route players to servers (Velocity, BungeeCord)
 
 ## Creating a Group
+
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
+</Frame>
 
 <Steps>
   <Step title="Navigate to Groups">
@@ -66,17 +68,20 @@ There are two types of groups:
 
 ## Group Status
 
-| Status | Meaning |
-|--------|---------|
-| **Healthy** | Running normally, meeting minimum server requirements |
-| **Scaling** | Currently scaling up to meet player demand |
-| **Down** | No servers running - verify the group is activated, at least one server host is enabled in deployment settings, and hosts have available resources |
-| **Inactive** | Group is deactivated - enable it in general settings |
-| **Disabled** | Minimum servers set to 0 - increase min servers to start scaling |
+| Status                                 | Meaning                                                                                                                                            |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <Badge color="green">Healthy</Badge>   | Running normally, meeting minimum server requirements                                                                                              |
+| <Badge color="blue">Scaling</Badge>    | Currently scaling up to meet player demand                                                                                                         |
+| <Badge color="red">Down</Badge>        | No servers running - verify the group is activated, at least one server host is enabled in deployment settings, and hosts have available resources |
+| <Badge color="orange">Inactive</Badge> | Group is deactivated - enable it in general settings                                                                                               |
+| <Badge color="gray">Disabled</Badge>   | Minimum servers set to 0 - increase min servers to start scaling                                                                                   |
 
 ## Group Settings
 
 ### General Settings
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
+</Frame>
 
 - **Active Toggle**: Enable or disable auto-scaling
 - **Memory**: Adjust min/max memory allocation
@@ -84,17 +89,28 @@ There are two types of groups:
 - **Tags**: Add organizational tags for filtering
 
 ### Scaling Settings
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
+</Frame>
 
 Fine-tune auto-scaling behavior:
 
-- **Scaling Mode**: Switch between Slots and Servers mode
-- **Start Policy**: Controls when the reconciler starts new servers. Set to `immediate` to start servers as soon as scaling rules require them, or `when_deleted` to only replace servers after one is removed. Defaults to `immediate` for Server groups and `when_deleted` for Proxy groups.
+- **Scaling Mode**:
+  - `Slots` keeps free player slots available.
+  - `Servers` keeps enough server instances available.
+- **Start Policy**:
+  - `immediate` starts servers as soon as needed.
+  - `when_deleted` only replaces removed servers.
+  - Defaults to `immediate` for Server groups and `when_deleted` for Proxy groups.
 - **Server Limits**: Adjust min/max server counts
 - **Player Threshold**: When to trigger scaling (as decimal, e.g., 0.8 = 80%)
 - **Available Slots**: Target number of open slots to maintain
 - **Idle Time**: How long before scaling down idle servers (e.g., "3m", "1h")
 
 ### Deployment Settings
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
+</Frame>
 
 Control where servers are deployed:
 
@@ -107,6 +123,9 @@ Control where servers are deployed:
 </Tip>
 
 ### Blueprint Settings
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
+</Frame>
 
 Modify the underlying server template:
 
@@ -115,6 +134,9 @@ Modify the underlying server template:
 - Edit JVM options and runtime arguments
 
 ### Properties Settings
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
+</Frame>
 
 Add custom key-value properties to your group:
 
@@ -124,6 +146,9 @@ Add custom key-value properties to your group:
 - Use cases: game modes, map names, custom settings for your plugins
 
 ### Workflows Settings
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
+</Frame>
 
 Automate tasks with workflows:
 
@@ -132,6 +157,9 @@ Automate tasks with workflows:
 - **On Stop Workflows**: Run when servers stop
 
 ### Plugins Settings
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
+</Frame>
 
 Manage plugins for the group:
 
@@ -140,6 +168,9 @@ Manage plugins for the group:
 - Remove plugins from the group
 
 ### Danger Zone
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
+</Frame>
 
 Permanently delete the group:
 
@@ -222,4 +253,3 @@ Permanently delete the group:
     </Warning>
   </Accordion>
 </AccordionGroup>
-
