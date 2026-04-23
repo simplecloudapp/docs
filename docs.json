@@ -118,7 +118,21 @@
                 "group": "Releases",
                 "pages": [
                   "en/changelogs/platform",
-                  "en/changelogs/plugins"
+                  {
+                    "group": "Plugins",
+                    "expanded": true,
+                    "pages": [
+                      "en/changelogs/plugin/server-connection",
+                      "en/changelogs/plugin/cloud-command",
+                      "en/changelogs/plugin/proxy-essentials",
+                      "en/changelogs/plugin/notify",
+                      "en/changelogs/plugin/server-menu",
+                      "en/changelogs/plugin/prefixes",
+                      "en/changelogs/plugin/signs",
+                      "en/changelogs/plugin/npcs",
+                      "en/changelogs/plugin/placeholders"
+                    ]
+                  }
                 ]
               }
             ]
