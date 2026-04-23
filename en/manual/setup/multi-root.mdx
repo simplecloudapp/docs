@@ -3,6 +3,7 @@ title: "Multi-Root Setup"
 description: "Run SimpleCloud across multiple machines with distributed serverhosts"
 ---
 
+## What is Multi-Root?
 A multi-root setup allows you to run Minecraft servers across multiple physical or virtual machines, all managed by a single SimpleCloud controller. This guide covers adding serverhosts and synchronizing files between them.
 
 ## Prerequisites
@@ -13,42 +14,90 @@ A multi-root setup allows you to run Minecraft servers across multiple physical 
 
 ## Part 1: Adding Serverhosts
 
-### Install SimpleCloud on Each Machine
+You can add another server host through either the Dashboard or the CLI. For the simplest setup, we recommend using the Dashboard.
 
-On each machine that will run a serverhost, install the SimpleCloud CLI:
+<Tabs>
+  <Tab title="Dashboard">
+    <Steps>
+      <Step title="Open the Add Host Dialog">
+        <Frame>
+          <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
+        </Frame>
+        Go to the [SimpleCloud Dashboard](https://dash.simplecloud.app), sign in and open the **Server Hosts** tab in the settings.
+        Click **Add Host** above the list of existing server hosts to open a dialog with a command you can copy.
+      </Step>
+      <Step title="Run the Command on Your New Server Host">
+        <Frame>
+          <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
+        </Frame>
+        Copy the command and run it on your new server host.
+        SimpleCloud will be installed automatically and connected to your organization.
+        This may take a few minutes to complete.
+      </Step>
+      <Step title="Verify Connection">
+        
+        After adding, verify the serverhost is connected:
 
-```bash
-/bin/bash -c "$(curl -fsSL get.simplecloud.app)"
-```
+        ```bash
+        sc serverhost list
+        ```
 
-### Add Serverhost to Network
+        You should see all serverhosts in your network with their status.
 
-Use the CLI to add a new serverhost to your existing network:
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="CLI">
+    <Steps>
+      <Step title="Install SimpleCloud on Each Machine">
+        On each machine that will run a serverhost, install the SimpleCloud CLI:
+        ```bash
+        /bin/bash -c "$(curl -fsSL get.simplecloud.app)"
+        ```
+      </Step>
+      <Step title="Add Serverhost to Network">
+                
+        Use the CLI to add a new serverhost to your existing network:
 
-```bash
-sc serverhost add
-```
+        ```bash
+        sc serverhost add
+        ```
 
-The CLI will prompt you to:
+        The CLI will prompt you to:
 
-1. **Select your network** - Choose the network your controller manages
-2. **Authenticate** - Log in with your SimpleCloud account
-3. **Configure the serverhost** - Set port ranges and other options
+        1. **Select your network** - Choose the network your controller manages
+        2. **Authenticate** - Log in with your SimpleCloud account
+        3. **Configure the serverhost** - Set port ranges and other options
 
-<Tip>
-  Each serverhost needs a unique identity. The CLI generates credentials
-  automatically and stores them in the `secrets/` directory.
-</Tip>
+        <Tip>
+          Each serverhost needs a unique identity. The CLI generates credentials
+          automatically and stores them in the `secrets/` directory.
+        </Tip>
 
-### Verify Connection
+      </Step>
+      <Step title="Verify Connection">
+                
+        After adding, verify the serverhost is connected:
 
-After adding, verify the serverhost is connected:
+        ```bash
+        sc serverhost list
+        ```
 
-```bash
-sc serverhost list
-```
+        You should see all serverhosts in your network with their status.
 
-You should see all serverhosts in your network with their status.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+### 
+
+
+
+
+### 
+
+### 
 
 ## Part 2: Synchronizing Files
 
