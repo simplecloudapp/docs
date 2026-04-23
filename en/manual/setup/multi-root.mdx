@@ -70,28 +70,6 @@ With multiple serverhosts, you need to keep templates and workflows synchronized
   unique identity credentials.
 </Warning>
 
-### Finding Your SimpleCloud Directory
-
-The installation path is user-configurable. Your serverhost directory contains:
-
-<Tree>
-  <Tree.Folder name="simplecloud" defaultOpen>
-    <Tree.Folder name="templates" defaultOpen>
-      <Tree.File name="Sync this" />
-    </Tree.Folder>
-    <Tree.Folder name="workflows" defaultOpen>
-      <Tree.File name="Sync this" />
-    </Tree.Folder>
-    <Tree.Folder name="options">
-      <Tree.File name="Sync this" />
-    </Tree.Folder>
-    <Tree.Folder name="secrets">
-      <Tree.File name="DO NOT sync" />
-    </Tree.Folder>
-    <Tree.Folder name="running" />
-  </Tree.Folder>
-</Tree>
-
 ### Install Syncthing
 
 On each serverhost machine:
@@ -221,30 +199,6 @@ cat $CLOUD_DIR/templates/sync-test.txt
 rm $CLOUD_DIR/templates/sync-test.txt
 ```
 
-## Best Practices
-
-### Server Distribution
-
-Configure groups to specify which serverhosts can run them:
-
-| Strategy       | Use Case                                          |
-| -------------- | ------------------------------------------------- |
-| Any host       | Load balancing across all machines                |
-| Specific hosts | Dedicated hardware for resource-intensive servers |
-| Geographic     | Players connect to nearest serverhost             |
-
-### File Sync Settings
-
-| Setting            | Recommended    | Reason                             |
-| ------------------ | -------------- | ---------------------------------- |
-| Folder Type        | Send & Receive | Allows changes from any serverhost |
-| File Versioning    | Simple         | Keeps backup copies                |
-| Ignore Permissions | Enabled        | Avoids permission conflicts        |
-
-### Exclude Cache from Sync
-
-The `templates/cache/` folder contains locally generated files. Consider excluding it from synchronization to avoid unnecessary transfers.
-
 ## Troubleshooting
 
 <AccordionGroup>
@@ -303,9 +257,3 @@ The `templates/cache/` folder contains locally generated files. Consider excludi
 
   </Accordion>
 </AccordionGroup>
-
-## Related Topics
-
-- [Templates](/en/manual/setup/templates) - Template hierarchy and management
-- [Workflows](/en/manual/configuration/workflows) - Workflow configuration
-- [Serverhost](/en/manual/architecture/serverhost) - Serverhost architecture
