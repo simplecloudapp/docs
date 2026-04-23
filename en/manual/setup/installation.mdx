@@ -1,80 +1,65 @@
 ---
 title: "Installation"
-description: "Get started with SimpleCloud by creating your account and connecting your first server host"
+description: "Get started with SimpleCloud in just a few steps by creating your account and connecting your first server host. The dashboard will guide you through the entire process."
 ---
 
-Getting started with SimpleCloud takes just a few steps. The dashboard will guide you through the entire process - this page provides an overview of what to expect.
-
-## Create Your Account
-
+## Install SimpleCloud
 <Steps>
-  <Step title="Open the Dashboard">
-    Go to the [SimpleCloud Dashboard](https://dash.simplecloud.app)
-  </Step>
-  <Step title="Sign In">
+  <Step title="Create Your Account">
+    Go to the [SimpleCloud Dashboard](https://dash.simplecloud.app).
+
     Create an account or sign in using one of the following options:
 
     - **Magic Link** - Enter your email and receive a login link
     - **SSO** - Sign in with Google, Discord, or GitHub
+  </Step>
+  <Step title="Create or Join a Network">
+    After signing in, you'll choose how to get started:
+
+    1. Enter a name for your network (e.g., "My Minecraft Network")
+    2. The URL slug is auto-generated but can be customized
+    3. Optionally add a description
+    4. Click **Create Network**
+
+    The setup wizard will then guide you through installing the CLI and connecting your first server host.
+  </Step>
+  <Step title="Install the CLI">
+        
+    The setup wizard will display the installation command for you. Simply copy and run it in your terminal.
+
+    <Tabs>
+      <Tab title="Linux / macOS">
+        ```bash
+        /bin/bash -c "$(curl -fsSL https://get.simplecloud.app)"
+        ```
+
+        Verify the installation:
+
+        ```bash
+        simplecloud --version
+        ```
+
+      </Tab>
+      <Tab title="Windows">
+        <Note>
+          Windows support is coming soon.
+        </Note>
+      </Tab>
+    </Tabs>
 
   </Step>
-</Steps>
-
-## Create or Join a Network
-
-After signing in, you'll choose how to get started:
-
-1. Enter a name for your network (e.g., "My Minecraft Network")
-2. The URL slug is auto-generated but can be customized
-3. Optionally add a description
-4. Click **Create Network**
-
-The setup wizard will then guide you through installing the CLI and connecting your first server host.
-
-## Install the CLI
-
-The setup wizard will display the installation command for you. Simply copy and run it in your terminal.
-
-<Tabs>
-  <Tab title="Linux / macOS">
-    ```bash
-    /bin/bash -c "$(curl -fsSL https://get.simplecloud.app)"
-    ```
-
-    Verify the installation:
-
-    ```bash
-    simplecloud --version
-    ```
-
-  </Tab>
-  <Tab title="Windows">
-    <Note>
-      Windows support is coming soon.
-    </Note>
-  </Tab>
-</Tabs>
-
-## Connect Your Server Host
-
-A server host is the machine that will run your Minecraft servers.
-
-<Steps>
-  <Step title="Run the Setup Command">
+  <Step title="Connect Your Server Host">
+    A server host is the machine that will run your Minecraft servers.
     The dashboard displays a setup command with your unique code. Copy and run it on your server:
 
     ```bash
     simplecloud setup --code=YOUR_CODE
     ```
-
-  </Step>
-  <Step title="Wait for Setup">
     The setup will:
     - Check that all requirements are installed
     - Download necessary components
     - Register your machine as a server host
-  </Step>
-  <Step title="Done">
+
     Once complete, the dashboard automatically detects your server host and takes you to the main dashboard.
   </Step>
 </Steps>
