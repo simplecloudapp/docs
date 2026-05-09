@@ -57,6 +57,50 @@ api.server().updateServer("server-uuid", update)
     .thenAccept(server -> System.out.println("Aktualisiert: " + server.getMaxPlayers()));
 ```
 
+## Server auflisten (REST)
+
+Um Server in einem Netzwerk mit optionalen Filtern aufzulisten, verwende den REST-API-Endpunkt `GET /v0/servers`. Die Antwort enthält Server-Details, Server-Gruppen- oder Persistent-Server-Metadaten, Blueprint-Informationen und Workflow-Konfigurationen.
+
+```bash
+curl "https://your-controller/v0/servers?state=AVAILABLE&type=lobby" \
+  -H "X-Network-ID: your-network-id" \
+  -H "X-Network-Secret: your-network-secret"
+```
+
+| Parameter | Ort | Erforderlich | Beschreibung |
+|-----------|-----|--------------|--------------|
+| `X-Network-ID` | Header | Ja | Deine Netzwerk-ID |
+| `X-Network-Secret` | Header | Ja | Dein Netzwerk-Secret |
+| `server_group_id` | Query | Nein | Nach Server-Gruppen-ID(s) filtern, kommagetrennt |
+| `state` | Query | Nein | Nach Status filtern, kommagetrennt (z.B. `AVAILABLE,STARTING`) |
+| `serverhost_id` | Query | Nein | Nach Serverhost-ID filtern |
+| `persistent_server_id` | Query | Nein | Nach Persistent-Server-ID filtern |
+| `type` | Query | Nein | Nach Typ(en) filtern, kommagetrennt (Server-Gruppen- ODER Persistent-Server-Typ) |
+| `name` | Query | Nein | Nach Name(n) filtern, kommagetrennt (Server-Gruppen- ODER Persistent-Server-Name) |
+| `tags` | Query | Nein | Nach Tag(s) filtern, kommagetrennt (matcht wenn irgendein Tag passt) |
+| `numerical_id` | Query | Nein | Nach numerischer ID filtern, kommagetrennt (z.B. `1,5,10`) |
+| `sort_by` | Query | Nein | Sortierfeld: `created_at`, `updated_at`, `numerical_id`, `state` |
+| `sort_order` | Query | Nein | Sortierreihenfolge: `asc` (Standard) oder `desc` |
+
+### Response-Cache
+
+Um die Datenbanklast durch hochfrequente Aufrufer (Dashboards, Panels, Polling-Clients) zu reduzieren, cached der Controller die zugrundeliegenden Datenbankzeilen für `GET /v0/servers` für **2 Sekunden**. Identische, aufeinanderfolgende Anfragen innerhalb dieses Fensters werden aus dem In-Memory-Response-Cache bedient anstatt Postgres erneut abzufragen.
+
+Caching greift nur, wenn der Aufrufer keine benutzerspezifische Berechtigungsfilterung anwendet. Berechtigungsgefilterte Aufrufer umgehen den Cache immer, um zu verhindern, dass Ergebnisse zwischen Aufrufern mit unterschiedlichen Berechtigungen vermischt werden.
+
+Wenn Caching aktiv ist, enthält die Antwort einen `X-DB-Cache`-Header zur Beobachtbarkeit:
+
+| Header-Wert | Bedeutung |
+|-------------|-----------|
+| `X-DB-Cache: HIT` | Zeilen wurden aus dem Response-Cache bedient |
+| `X-DB-Cache: MISS` | Zeilen wurden aus der Datenbank geladen und in den Cache geschrieben |
+
+Der Header wird bei berechtigungsgefilterten Anfragen (die den Cache immer umgehen) und wenn der Response-Cache nicht konfiguriert ist, nicht gesetzt.
+
+<Note>
+Die TTL von 2 Sekunden ist kurz genug, damit Antworten für UI-Anwendungsfälle effektiv in Echtzeit bleiben. Wenn striktere Aktualitätsgarantien benötigt werden, behandle jede Antwort mit `X-DB-Cache: HIT` als bis zu 2 Sekunden veraltet.
+</Note>
+
 ## Server-Datensatz löschen
 
 Um einen Server-Datensatz direkt aus der Datenbank zu entfernen, ohne den Prozess zu stoppen oder Lifecycle-Events auszulösen, verwende den REST-API-Endpunkt `DELETE /v0/servers/database`. Dies ist nützlich, um veraltete oder verwaiste Datensätze zu bereinigen, wenn der Serverprozess bereits beendet wurde.
