@@ -75,6 +75,7 @@ curl "https://your-controller/v0/servers?state=AVAILABLE&type=lobby" \
 |-----------|----------|----------|-------------|
 | `X-Network-ID` | Header | Yes | Your network identifier |
 | `X-Network-Secret` | Header | Yes | Your network secret |
+| `X-SC-Component` | Header | No | Optional caller component name (for example, `serverhost`). When set, the value is attached to the controller's request wide event as the `component` field so request logs can be filtered by the originating SimpleCloud component. Leading and trailing whitespace is trimmed. |
 | `server_group_id` | Query | No | Filter by server group ID(s), comma-separated |
 | `state` | Query | No | Filter by state(s), comma-separated (e.g., `AVAILABLE,STARTING`) |
 | `serverhost_id` | Query | No | Filter by serverhost ID |
@@ -133,6 +134,7 @@ curl -X DELETE "https://your-controller/v0/servers/database?server_id=SERVER_UUI
 | `server_id` | Query | Yes | UUID of the server record to delete |
 | `X-Network-ID` | Header | Yes | Your network identifier |
 | `X-Network-Secret` | Header | Yes | Your network secret |
+| `X-SC-Component` | Header | No | Optional caller component name attached to the controller's request wide event as the `component` field. Leading and trailing whitespace is trimmed. |
 
 ## Server properties
 
