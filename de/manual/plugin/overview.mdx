@@ -28,18 +28,20 @@ Beim Erstellen oder Bearbeiten einer Gruppe kannst du Plugins aus den Plugin-Ein
 ### Via CLI
 
 ```bash
-# Installierte Plugins auflisten
-sc local plugins list
+# Plugins einer Gruppe auflisten
+sc group plugin list lobby
 
-# Ein Plugin hinzufügen
-sc local plugins add proxy-essentials
+# Plugin zu einer Gruppe hinzufügen
+sc group plugin add lobby proxy-essentials
 
-# Alle verfügbaren Plugins hinzufügen
-sc local plugins add --all
+# Plugin zu einem persistenten Server hinzufügen
+sc persistent-server plugin add spawn proxy-essentials
 
-# Ein Plugin entfernen
-sc local plugins remove proxy-essentials
+# Plugin von einer Gruppe entfernen
+sc group plugin remove lobby proxy-essentials
 ```
+
+Die optionale Plugin-Query kann ein Suchbegriff, ein Modrinth-Slug wie `mr:luckperms`, eine Spigot-ID wie `sp:28140` oder eine Plugin-URL sein.
 
 ### Manuell
 

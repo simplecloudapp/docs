@@ -18,7 +18,7 @@ A multi-root setup allows you to run Minecraft servers across multiple physical 
 On each machine that will run a serverhost, install the SimpleCloud CLI:
 
 ```bash
-/bin/bash -c "$(curl -fsSL get.simplecloud.app)"
+/bin/bash -c "$(curl -fsSL https://get.simplecloud.app)"
 ```
 
 ### Add Serverhost to Network
@@ -42,13 +42,13 @@ The CLI will prompt you to:
 
 ### Verify Connection
 
-After adding, verify the serverhost is connected:
+After adding, verify the local serverhost component is running:
 
 ```bash
-sc serverhost list
+sc status serverhost
 ```
 
-You should see all serverhosts in your network with their status.
+You should also see the new serverhost in the dashboard after it connects to the Controller.
 
 ## Part 2: Synchronizing Files
 
@@ -92,119 +92,56 @@ The installation path is user-configurable. Your serverhost directory contains:
   </Tree.Folder>
 </Tree>
 
-### Install Syncthing
+### Initialize Sync on the Primary Serverhost
 
-On each serverhost machine:
-
-```bash
-sudo apt update
-sudo apt install syncthing jq
-```
-
-Enable the Syncthing service:
+Run this on the serverhost that should act as your primary sync host:
 
 ```bash
-systemctl --user enable --now syncthing.service
+sc sync init --name serverhost-1
 ```
+
+The CLI prepares the managed directories, ignores `templates/cache/`, configures Syncthing for `templates/`, `workflows/`, and `options/`, stores the folder IDs in `.simplecloud-sync.json`, and prints a `sc sync join ...` command for the next serverhost.
 
 <Note>
-  If running as root, use `systemctl enable --now syncthing@root.service`
-  instead.
+  If you run SimpleCloud as root, add `--as-root` so the CLI uses
+  `syncthing@root.service`.
 </Note>
 
-### Get Device IDs
+### Join from Another Serverhost
 
-Each Syncthing instance has a unique device ID:
-
-```bash
-DEVICE_ID=$(syncthing cli show system | jq -r .myID)
-echo "$DEVICE_ID"
-```
-
-Save this ID - you'll need it when configuring other serverhosts.
-
-Example output:
-
-```
-U6NJVMO-CC3K7WZ-TDLCCF6-SAGNJC4-S2CFP4J-QIF6Z7Z-WI7VO32-4QAA4AP
-```
-
-### Generate Folder IDs
-
-Create unique folder IDs for your sync folders. These must be the same across all serverhosts:
+On the new serverhost, run the `sc sync join ...` command printed by `sc sync init` or `sc sync add`.
 
 ```bash
-# Generate unique IDs (run once, use on all hosts)
-TEMPLATES_ID=$(dd if=/dev/random bs=1 count=1024 2>/dev/null | sha1sum | cut -d' ' -f1)
-WORKFLOWS_ID=$(dd if=/dev/random bs=1 count=1024 2>/dev/null | sha1sum | cut -d' ' -f1)
-
-echo "Templates folder ID: $TEMPLATES_ID"
-echo "Workflows folder ID: $WORKFLOWS_ID"
+sc sync join \
+  --primary-device-id PRIMARY_DEVICE_ID \
+  --primary-name serverhost-1 \
+  --templates-id TEMPLATES_FOLDER_ID \
+  --workflows-id WORKFLOWS_FOLDER_ID \
+  --options-id OPTIONS_FOLDER_ID \
+  --name serverhost-2
 ```
 
-<Tip>Save these folder IDs. You'll use the same IDs on every serverhost.</Tip>
+After the join command finishes, it prints a `sc sync approve ...` command.
 
-### Configure Syncthing
+### Approve the Joining Serverhost
 
-Perform these steps on each serverhost. Replace the placeholder values with your actual device IDs and paths.
-
-**Step 1: Add remote devices**
-
-On Serverhost 1, add Serverhost 2:
+Run the printed approve command on the primary serverhost:
 
 ```bash
-syncthing cli config devices add \
-    --device-id "DEVICE-ID-OF-SERVERHOST-2" \
-    --name "serverhost-2"
+sc sync approve --device-id JOINING_DEVICE_ID --name serverhost-2
 ```
 
-On Serverhost 2, add Serverhost 1:
+For additional serverhosts later, run this on the primary serverhost to generate a fresh join command:
 
 ```bash
-syncthing cli config devices add \
-    --device-id "DEVICE-ID-OF-SERVERHOST-1" \
-    --name "serverhost-1"
+sc sync add --join-name serverhost-3
 ```
 
-**Step 2: Set your SimpleCloud directory**
+Check synchronization status on any host:
 
 ```bash
-CLOUD_DIR="/path/to/your/simplecloud"
+sc sync status
 ```
-
-**Step 3: Add templates folder**
-
-```bash
-syncthing cli config folders add \
-    --id "$TEMPLATES_ID" \
-    --label "templates" \
-    --path "$CLOUD_DIR/templates"
-
-syncthing cli config folders "$TEMPLATES_ID" devices add \
-    --device-id "DEVICE-ID-OF-OTHER-SERVERHOST"
-```
-
-**Step 4: Add workflows folder**
-
-```bash
-syncthing cli config folders add \
-    --id "$WORKFLOWS_ID" \
-    --label "workflows" \
-    --path "$CLOUD_DIR/workflows"
-
-syncthing cli config folders "$WORKFLOWS_ID" devices add \
-    --device-id "DEVICE-ID-OF-OTHER-SERVERHOST"
-```
-
-**Step 5: Repeat for additional serverhosts**
-
-For each new serverhost:
-
-- Install Syncthing
-- Get its device ID
-- Add it to all existing serverhosts
-- Add all existing devices to it
-- Configure folders with the same folder IDs
 
 ### Verify Synchronization
 
@@ -264,9 +201,9 @@ The `templates/cache/` folder contains locally generated files. Consider excludi
 
     **Solutions:**
     1. Ensure firewall allows port 22000 TCP and UDP
-    2. Verify both devices have each other added
-    3. Check device IDs are correct
-    4. Confirm Syncthing is running: `systemctl --user status syncthing`
+    2. Run `sc sync status` on each host
+    3. Verify the `sc sync approve ...` command was run on the primary host
+    4. If running as root, include `--as-root` with each `sc sync` command
 
   </Accordion>
 
@@ -274,10 +211,10 @@ The `templates/cache/` folder contains locally generated files. Consider excludi
     **Symptom:** Template changes don't appear on other serverhosts.
 
     **Solutions:**
-    1. Verify folder IDs match on all hosts
-    2. Check folder is shared with correct devices
-    3. View sync status: `syncthing cli show folders`
-    4. Check for sync errors: `syncthing cli show system`
+    1. Run `sc sync status` and check that `templates`, `workflows`, and `options` are configured
+    2. Verify the folder IDs in `.simplecloud-sync.json` match across hosts
+    3. Confirm the joining host was approved with `sc sync approve`
+    4. Review Syncthing connection errors reported by `sc sync status`
 
   </Accordion>
 
@@ -287,7 +224,7 @@ The `templates/cache/` folder contains locally generated files. Consider excludi
     **Solutions:**
     1. Check group configuration for host restrictions
     2. Verify all serverhosts have required templates synced
-    3. Review serverhost availability in `sc serverhost list`
+    3. Review serverhost availability in the dashboard
 
   </Accordion>
 
@@ -308,4 +245,4 @@ The `templates/cache/` folder contains locally generated files. Consider excludi
 
 - [Templates](/en/manual/setup/templates) - Template hierarchy and management
 - [Workflows](/en/manual/configuration/workflows) - Workflow configuration
-- [Serverhost](/en/manual/architecture/serverhost) - Serverhost architecture
+- [Serverhost](/en/manual/introduction/architecture/serverhost) - Serverhost architecture

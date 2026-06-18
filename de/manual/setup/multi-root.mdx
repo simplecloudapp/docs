@@ -18,7 +18,7 @@ Eine Multi-Root-Einrichtung ermöglicht es dir, Minecraft-Server über mehrere p
 Installiere auf jeder Maschine, die einen Serverhost ausführen soll, die SimpleCloud CLI:
 
 ```bash
-/bin/bash -c "$(curl -fsSL get.simplecloud.app)"
+/bin/bash -c "$(curl -fsSL https://get.simplecloud.app)"
 ```
 
 ### Serverhost zum Netzwerk hinzufügen
@@ -42,13 +42,13 @@ Die CLI wird dich auffordern:
 
 ### Verbindung überprüfen
 
-Überprüfe nach dem Hinzufügen, ob der Serverhost verbunden ist:
+Überprüfe nach dem Hinzufügen, ob die lokale Serverhost-Komponente läuft:
 
 ```bash
-sc serverhost list
+sc status serverhost
 ```
 
-Du solltest alle Serverhosts in deinem Netzwerk mit ihrem Status sehen.
+Der neue Serverhost sollte außerdem im Dashboard erscheinen, sobald er mit dem Controller verbunden ist.
 
 ## Teil 2: Dateien synchronisieren
 
@@ -92,118 +92,56 @@ Der Installationspfad ist benutzerkonfigurierbar. Dein Serverhost-Verzeichnis en
   </Tree.Folder>
 </Tree>
 
-### Syncthing installieren
+### Sync auf dem primären Serverhost initialisieren
 
-Auf jeder Serverhost-Maschine:
-
-```bash
-sudo apt update
-sudo apt install syncthing jq
-```
-
-Aktiviere den Syncthing-Dienst:
+Führe dies auf dem Serverhost aus, der als primärer Sync-Host dienen soll:
 
 ```bash
-systemctl --user enable --now syncthing.service
+sc sync init --name serverhost-1
 ```
+
+Die CLI bereitet die verwalteten Verzeichnisse vor, ignoriert `templates/cache/`, konfiguriert Syncthing für `templates/`, `workflows/` und `options/`, speichert die Ordner-IDs in `.simplecloud-sync.json` und gibt einen `sc sync join ...`-Befehl für den nächsten Serverhost aus.
 
 <Note>
-  Wenn du als root arbeitest, verwende stattdessen `systemctl enable --now syncthing@root.service`.
+  Wenn du SimpleCloud als root ausführst, füge `--as-root` hinzu, damit die CLI
+  `syncthing@root.service` verwendet.
 </Note>
 
-### Geräte-IDs abrufen
+### Von einem weiteren Serverhost beitreten
 
-Jede Syncthing-Instanz hat eine eindeutige Geräte-ID:
-
-```bash
-DEVICE_ID=$(syncthing cli show system | jq -r .myID)
-echo "$DEVICE_ID"
-```
-
-Speichere diese ID - du wirst sie beim Konfigurieren anderer Serverhosts benötigen.
-
-Beispielausgabe:
-
-```
-U6NJVMO-CC3K7WZ-TDLCCF6-SAGNJC4-S2CFP4J-QIF6Z7Z-WI7VO32-4QAA4AP
-```
-
-### Ordner-IDs generieren
-
-Erstelle eindeutige Ordner-IDs für deine Sync-Ordner. Diese müssen auf allen Serverhosts identisch sein:
+Führe auf dem neuen Serverhost den `sc sync join ...`-Befehl aus, den `sc sync init` oder `sc sync add` ausgegeben hat.
 
 ```bash
-# Eindeutige IDs generieren (einmal ausführen, auf allen Hosts verwenden)
-TEMPLATES_ID=$(dd if=/dev/random bs=1 count=1024 2>/dev/null | sha1sum | cut -d' ' -f1)
-WORKFLOWS_ID=$(dd if=/dev/random bs=1 count=1024 2>/dev/null | sha1sum | cut -d' ' -f1)
-
-echo "Templates-Ordner-ID: $TEMPLATES_ID"
-echo "Workflows-Ordner-ID: $WORKFLOWS_ID"
+sc sync join \
+  --primary-device-id PRIMARY_DEVICE_ID \
+  --primary-name serverhost-1 \
+  --templates-id TEMPLATES_FOLDER_ID \
+  --workflows-id WORKFLOWS_FOLDER_ID \
+  --options-id OPTIONS_FOLDER_ID \
+  --name serverhost-2
 ```
 
-<Tip>Speichere diese Ordner-IDs. Du wirst dieselben IDs auf jedem Serverhost verwenden.</Tip>
+Nach Abschluss gibt der Join-Befehl einen `sc sync approve ...`-Befehl aus.
 
-### Syncthing konfigurieren
+### Beitretenden Serverhost genehmigen
 
-Führe diese Schritte auf jedem Serverhost aus. Ersetze die Platzhalterwerte durch deine tatsächlichen Geräte-IDs und Pfade.
-
-**Schritt 1: Remote-Geräte hinzufügen**
-
-Auf Serverhost 1, füge Serverhost 2 hinzu:
+Führe den ausgegebenen Approve-Befehl auf dem primären Serverhost aus:
 
 ```bash
-syncthing cli config devices add \
-    --device-id "DEVICE-ID-OF-SERVERHOST-2" \
-    --name "serverhost-2"
+sc sync approve --device-id JOINING_DEVICE_ID --name serverhost-2
 ```
 
-Auf Serverhost 2, füge Serverhost 1 hinzu:
+Für weitere Serverhosts erzeugst du später auf dem primären Serverhost einen neuen Join-Befehl:
 
 ```bash
-syncthing cli config devices add \
-    --device-id "DEVICE-ID-OF-SERVERHOST-1" \
-    --name "serverhost-1"
+sc sync add --join-name serverhost-3
 ```
 
-**Schritt 2: SimpleCloud-Verzeichnis festlegen**
+Prüfe den Synchronisierungsstatus auf einem beliebigen Host:
 
 ```bash
-CLOUD_DIR="/pfad/zu/deinem/simplecloud"
+sc sync status
 ```
-
-**Schritt 3: Templates-Ordner hinzufügen**
-
-```bash
-syncthing cli config folders add \
-    --id "$TEMPLATES_ID" \
-    --label "templates" \
-    --path "$CLOUD_DIR/templates"
-
-syncthing cli config folders "$TEMPLATES_ID" devices add \
-    --device-id "DEVICE-ID-OF-OTHER-SERVERHOST"
-```
-
-**Schritt 4: Workflows-Ordner hinzufügen**
-
-```bash
-syncthing cli config folders add \
-    --id "$WORKFLOWS_ID" \
-    --label "workflows" \
-    --path "$CLOUD_DIR/workflows"
-
-syncthing cli config folders "$WORKFLOWS_ID" devices add \
-    --device-id "DEVICE-ID-OF-OTHER-SERVERHOST"
-```
-
-**Schritt 5: Für zusätzliche Serverhosts wiederholen**
-
-Für jeden neuen Serverhost:
-
-- Installiere Syncthing
-- Rufe seine Geräte-ID ab
-- Füge ihn zu allen bestehenden Serverhosts hinzu
-- Füge alle bestehenden Geräte zu ihm hinzu
-- Konfiguriere Ordner mit denselben Ordner-IDs
 
 ### Synchronisierung überprüfen
 
@@ -263,9 +201,9 @@ Der Ordner `templates/cache/` enthält lokal generierte Dateien. Erwäge, ihn vo
 
     **Lösungen:**
     1. Stelle sicher, dass die Firewall Port 22000 TCP und UDP erlaubt
-    2. Überprüfe, ob beide Geräte gegenseitig hinzugefügt wurden
-    3. Überprüfe, ob die Geräte-IDs korrekt sind
-    4. Bestätige, dass Syncthing läuft: `systemctl --user status syncthing`
+    2. Führe `sc sync status` auf jedem Host aus
+    3. Prüfe, ob der `sc sync approve ...`-Befehl auf dem primären Host ausgeführt wurde
+    4. Wenn du als root arbeitest, verwende `--as-root` bei jedem `sc sync`-Befehl
 
   </Accordion>
 
@@ -273,10 +211,10 @@ Der Ordner `templates/cache/` enthält lokal generierte Dateien. Erwäge, ihn vo
     **Symptom:** Template-Änderungen erscheinen nicht auf anderen Serverhosts.
 
     **Lösungen:**
-    1. Überprüfe, ob die Ordner-IDs auf allen Hosts übereinstimmen
-    2. Überprüfe, ob der Ordner mit den richtigen Geräten geteilt wird
-    3. Zeige den Sync-Status an: `syncthing cli show folders`
-    4. Überprüfe auf Sync-Fehler: `syncthing cli show system`
+    1. Führe `sc sync status` aus und prüfe, ob `templates`, `workflows` und `options` konfiguriert sind
+    2. Prüfe, ob die Ordner-IDs in `.simplecloud-sync.json` auf allen Hosts übereinstimmen
+    3. Bestätige, dass der beitretende Host mit `sc sync approve` genehmigt wurde
+    4. Prüfe die von `sc sync status` gemeldeten Syncthing-Verbindungsfehler
 
   </Accordion>
 
@@ -286,7 +224,7 @@ Der Ordner `templates/cache/` enthält lokal generierte Dateien. Erwäge, ihn vo
     **Lösungen:**
     1. Überprüfe die Gruppenkonfiguration für Host-Beschränkungen
     2. Überprüfe, ob alle Serverhosts die erforderlichen Templates synchronisiert haben
-    3. Überprüfe die Serverhost-Verfügbarkeit in `sc serverhost list`
+    3. Überprüfe die Serverhost-Verfügbarkeit im Dashboard
 
   </Accordion>
 
@@ -307,4 +245,4 @@ Der Ordner `templates/cache/` enthält lokal generierte Dateien. Erwäge, ihn vo
 
 - [Templates](/de/manual/setup/templates) - Template-Hierarchie und -Verwaltung
 - [Workflows](/de/manual/configuration/workflows) - Workflow-Konfiguration
-- [Serverhost](/de/manual/architecture/serverhost) - Serverhost-Architektur
+- [Serverhost](/de/manual/introduction/architecture/serverhost) - Serverhost-Architektur
