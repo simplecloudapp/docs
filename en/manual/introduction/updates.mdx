@@ -25,29 +25,34 @@ SimpleCloud supports rolling updates for all components. When an update is appli
 
 ## Manual Updates
 
-If you prefer to trigger updates manually, use the update command:
+If you prefer to trigger updates manually, use the upgrade command:
 
 ```bash
-simplecloud update
+simplecloud upgrade
 ```
 
-This updates all installed components to their latest versions. You can also update specific components:
+With no targets, this upgrades the CLI and all installed components. You can also upgrade specific targets:
 
 ```bash
-simplecloud update [components..]
+simplecloud upgrade [targets..]
 ```
+
+Targets can be `cli`, component IDs, or component version pins such as `serverhost@1.2.3`.
+
+<Note>
+  `simplecloud update` still works as an alias for `simplecloud upgrade`.
+</Note>
 
 ## Updating the CLI
 
 The CLI itself can be updated separately using:
 
 ```bash
-simplecloud upgrade
+simplecloud upgrade cli
 ```
 
-This command checks for a newer version of the CLI, downloads it, and replaces your current installation.
+This command checks for a newer CLI version, downloads it, and replaces your current installation. Use `simplecloud upgrade cli --cli-force` to reinstall the latest CLI even when it is already current.
 
 <Note>
   The CLI will automatically prompt you to update if it is more than 5 versions behind the latest release.
 </Note>
-

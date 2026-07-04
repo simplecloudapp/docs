@@ -81,11 +81,11 @@ Der Standard-Ausführungsmodus mit Terminal-Multiplexern:
 - **Screen** - Bevorzugt, weit verbreitet auf Linux
 - **Tmux** - Alternative wenn Screen nicht verfügbar
 
-Server laufen als detached Prozesse mit Konsolenzugriff via:
+SimpleCloud-Komponenten laufen als detached Prozesse mit Komponenten-Konsolenzugriff via:
 
 ```bash
-# An Server-Konsole anhängen
-sc attach <server-name>
+# An die Serverhost-Komponenten-Konsole anhängen
+sc attach serverhost
 ```
 
 ### Docker
@@ -203,16 +203,18 @@ flowchart TD
 
 ## Konfiguration
 
-Serverhost-Konfiguration via CLI-Parameter:
+Serverhost-Setup verwendet die aktuellen CLI-Setup-Optionen:
 
 | Parameter | Beschreibung | Standard |
 |-----------|--------------|----------|
-| `--network-id` | Netzwerk-Identifier | Aus env |
-| `--controller-url` | Controller-API-URL | platform.simplecloud.app |
-| `--nats-url` | NATS-Server-URL | platform.simplecloud.app |
-| `--deployment-type` | Ausführungsmodus | `local` |
-| `--port-range` | Verfügbarer Port-Bereich | `25565-25665` |
-| `--multiplexer` | Screen oder Tmux | Auto-detect |
+| `--network` | Network-ID oder Slug | Interaktive Auswahl |
+| `--install-dir` | Serverhost-Installationsverzeichnis | Interaktive Abfrage |
+| `--host-name` | Anzeigename des Serverhosts | Interaktive Abfrage |
+| `--max-memory` | Maximaler Serverhost-Speicher, z. B. `80%` oder `32gb` | Aus Systemspeicher erkannt |
+| `--start` / `--no-start` | SimpleCloud nach dem Setup starten oder Start überspringen | Interaktive Abfrage |
+| `--auto-install-deps` / `--no-auto-install-deps` | Erforderliche Abhängigkeiten automatisch installieren oder Installation überspringen | Interaktive Abfrage |
+| `--install` | Setup-Installables installieren, z. B. `--install java:21` | Keine |
+| `-y, --yes` | Wo möglich nicht-interaktive Defaults verwenden | `false` |
 
 ## Monitoring
 
@@ -234,6 +236,7 @@ sc server logs <group> <id>
 Der Serverhost sendet periodische Keep-Alive-Nachrichten:
 
 - Meldet aktuelle Version
+- Meldet installierte Java-Runtime-Versionen (als `installed_java_versions` in den Serverhost-API-Antworten verfügbar)
 - Empfängt Update-Benachrichtigungen
 - Hält Verbindung zum Controller aufrecht
 

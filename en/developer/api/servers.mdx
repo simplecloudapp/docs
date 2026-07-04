@@ -61,6 +61,51 @@ api.server().updateServer("server-uuid", update)
     .thenAccept(server -> System.out.println("Updated: " + server.getMaxPlayers()));
 ```
 
+## List servers (REST)
+
+To list servers in a network with optional filters, use the REST API endpoint `GET /v0/servers`. The response includes server details, server group or persistent server metadata, blueprint information, and workflow configurations.
+
+```bash
+curl "https://your-controller/v0/servers?state=AVAILABLE&type=lobby" \
+  -H "X-Network-ID: your-network-id" \
+  -H "X-Network-Secret: your-network-secret"
+```
+
+| Parameter | Location | Required | Description |
+|-----------|----------|----------|-------------|
+| `X-Network-ID` | Header | Yes | Your network identifier |
+| `X-Network-Secret` | Header | Yes | Your network secret |
+| `X-SC-Component` | Header | No | Optional caller component name (for example, `serverhost`). When set, the value is attached to the controller's request wide event as the `component` field so request logs can be filtered by the originating SimpleCloud component. Leading and trailing whitespace is trimmed. |
+| `server_group_id` | Query | No | Filter by server group ID(s), comma-separated |
+| `state` | Query | No | Filter by state(s), comma-separated (e.g., `AVAILABLE,STARTING`) |
+| `serverhost_id` | Query | No | Filter by serverhost ID |
+| `persistent_server_id` | Query | No | Filter by persistent server ID |
+| `type` | Query | No | Filter by type(s), comma-separated (matches server group OR persistent server type) |
+| `name` | Query | No | Filter by name(s), comma-separated (matches server group OR persistent server name) |
+| `tags` | Query | No | Filter by tag(s), comma-separated (matches if any tag matches in server group OR persistent server) |
+| `numerical_id` | Query | No | Filter by numerical ID(s), comma-separated (e.g., `1,5,10`) |
+| `sort_by` | Query | No | Sort field: `created_at`, `updated_at`, `numerical_id`, `state` |
+| `sort_order` | Query | No | Sort order: `asc` (default) or `desc` |
+
+### Response cache
+
+To reduce database load from high-frequency callers (dashboards, panels, polling clients), the controller caches the underlying database rows for `GET /v0/servers` for **2 seconds**. Identical back-to-back requests within this window are served from the in-memory response cache instead of re-querying Postgres.
+
+Caching only applies when the caller has no per-user permission filtering applied. Permission-filtered callers always bypass the cache to prevent leaking results between callers with different permissions.
+
+When caching is in effect, the response includes an `X-DB-Cache` header for observability:
+
+| Header value | Meaning |
+|--------------|---------|
+| `X-DB-Cache: HIT` | Rows were served from the response cache |
+| `X-DB-Cache: MISS` | Rows were fetched from the database and written into the cache |
+
+The header is omitted entirely for permission-filtered requests (which always bypass the cache) and when the response cache is not configured.
+
+<Note>
+The 2-second TTL is short enough that responses remain effectively real-time for UI use cases. If you need stricter freshness guarantees, treat any response with `X-DB-Cache: HIT` as up to 2 seconds stale.
+</Note>
+
 ## Delete server record
 
 To remove a server record directly from the database without stopping the process or publishing lifecycle events, use the REST API endpoint `DELETE /v0/servers/database`. This is useful for cleaning up stale or orphaned records when the server process has already terminated.
@@ -89,6 +134,7 @@ curl -X DELETE "https://your-controller/v0/servers/database?server_id=SERVER_UUI
 | `server_id` | Query | Yes | UUID of the server record to delete |
 | `X-Network-ID` | Header | Yes | Your network identifier |
 | `X-Network-Secret` | Header | Yes | Your network secret |
+| `X-SC-Component` | Header | No | Optional caller component name attached to the controller's request wide event as the `component` field. Leading and trailing whitespace is trimmed. |
 
 ## Server properties
 

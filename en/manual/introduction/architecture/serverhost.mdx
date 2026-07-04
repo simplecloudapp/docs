@@ -81,11 +81,11 @@ The default execution mode using terminal multiplexers:
 - **Screen** - Preferred, widely available on Linux
 - **Tmux** - Alternative if Screen is unavailable
 
-Servers run as detached processes with console access via:
+SimpleCloud components run as detached processes with component console access via:
 
 ```bash
-# Attach to a server console
-sc attach <server-name>
+# Attach to the serverhost component console
+sc attach serverhost
 ```
 
 ### Docker
@@ -194,16 +194,18 @@ flowchart TD
 
 ## Configuration
 
-Serverhost configuration via CLI parameters:
+Serverhost setup uses the current CLI setup options:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `--network-id` | Network identifier | From env |
-| `--controller-url` | Controller API URL | platform.simplecloud.app |
-| `--nats-url` | NATS server URL | platform.simplecloud.app |
-| `--deployment-type` | Execution mode | `local` |
-| `--port-range` | Available port range | `25565-25665` |
-| `--multiplexer` | Screen or Tmux | Auto-detect |
+| `--network` | Network ID or slug | Interactive selection |
+| `--install-dir` | Serverhost installation directory | Interactive prompt |
+| `--host-name` | Serverhost display name | Interactive prompt |
+| `--max-memory` | Maximum serverhost memory, such as `80%` or `32gb` | Detected from system memory |
+| `--start` / `--no-start` | Start SimpleCloud after setup or skip startup | Interactive prompt |
+| `--auto-install-deps` / `--no-auto-install-deps` | Install required dependencies automatically or skip dependency installation | Interactive prompt |
+| `--install` | Install setup installables, such as `--install java:21` | None |
+| `-y, --yes` | Use non-interactive defaults where possible | `false` |
 
 ## Monitoring
 
@@ -225,6 +227,7 @@ sc server logs <group> <id>
 The Serverhost sends periodic keep-alive messages:
 
 - Reports current version
+- Reports installed Java runtime versions (exposed as `installed_java_versions` on serverhost API responses)
 - Receives update notifications
 - Maintains connection with Controller
 

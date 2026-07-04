@@ -28,18 +28,20 @@ When creating or editing a group, you can add plugins from the Plugins settings.
 ### Via CLI
 
 ```bash
-# List installed plugins
-sc local plugins list
+# List plugins for a group
+sc group plugin list lobby
 
-# Add a plugin
-sc local plugins add proxy-essentials
+# Add a plugin to a group
+sc group plugin add lobby proxy-essentials
 
-# Add all available plugins
-sc local plugins add --all
+# Add a plugin to a persistent server
+sc persistent-server plugin add spawn proxy-essentials
 
-# Remove a plugin
-sc local plugins remove proxy-essentials
+# Remove a plugin from a group
+sc group plugin remove lobby proxy-essentials
 ```
+
+The optional plugin query can be a search term, a Modrinth slug such as `mr:luckperms`, a Spigot ID such as `sp:28140`, or a plugin URL.
 
 ### Manually
 

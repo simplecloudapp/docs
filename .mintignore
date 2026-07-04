@@ -1,3 +1,8 @@
 CLAUDE.md
 README.md
+.agents/
+.claude/
+.codex/
 .cursor/
+.opencode/
+AGENTS.md
