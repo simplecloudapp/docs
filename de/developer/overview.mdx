@@ -3,16 +3,18 @@ title: 'Cloud API'
 description: 'Baue Integrationen mit SimpleCloud über unsere Java/Kotlin API'
 ---
 
-Die Cloud API ist eine Java-Bibliothek zur programmatischen Interaktion mit deinem SimpleCloud-Netzwerk. Verwende sie zum Verwalten von Gruppen, Servern, Spielern und zur Reaktion auf Events in Echtzeit.
+Die Cloud API ist eine Java-Bibliothek zur programmatischen Interaktion mit deinem SimpleCloud-Netzwerk. Verwende sie zum Verwalten von Gruppen, laufenden Servern, Persistent Servern, Spielern, Cache-Zustand und Events in Echtzeit.
 
 ## API-Architektur
 
 | Methode | Gibt zurück | Beschreibung |
 |---------|-------------|--------------|
 | `api.group()` | `GroupApi` | Gruppen erstellen, lesen, aktualisieren, löschen |
-| `api.server()` | `ServerApi` | Server starten, stoppen, abfragen |
+| `api.server()` | `ServerApi` | Laufende Server abfragen, stoppen und aktualisieren |
+| `api.persistentServer()` | `PersistentServerApi` | Persistent Server erstellen, lesen, aktualisieren, löschen |
 | `api.player()` | `PlayerApi` | Spielerdaten, Verbindungen, Messaging |
 | `api.event()` | `EventApi` | Echtzeit-Events abonnieren |
+| `api.cache()` | `QueryCache` | Lokale Query-Cache-Eintraege ansehen, invalidieren und leeren |
 
 ### Event API Unterkategorien
 
@@ -29,6 +31,8 @@ Die Cloud API ist eine Java-Bibliothek zur programmatischen Interaktion mit dein
 - **Typsichere Modelle** - Stark typisierte Domain-Objekte für Gruppen, Server, Spieler
 - **Echtzeit-Events** - Änderungen über NATS-Messaging abonnieren
 - **Adventure-Integration** - Spieler implementieren Adventure's `Audience` für Rich-Text-Messaging
+- **Persistent-Server-Support** - Lang laufende Server über `api.persistentServer()` verwalten
+- **Query Cache** - Stale-while-revalidate Cache mit automatischer Event-Invalidierung
 - **Umgebungs-bewusst** - Auto-Konfiguration aus `SIMPLECLOUD_*` Umgebungsvariablen
 
 ## Schnellbeispiel
@@ -45,9 +49,10 @@ api.server().getServersByGroup("lobby").thenAccept(servers -> {
     System.out.println("Lobby-Server: " + servers.size());
 });
 
-// Neuen Server starten
-api.server().startServer(new StartServerRequest("group-id", "lobby"))
-    .thenAccept(server -> System.out.println("Gestartet: " + server.getServerId()));
+// Serverstart für eine Gruppe anfordern
+api.group().getGroupByName("lobby")
+    .thenCompose(group -> api.group().requestServerStart(group))
+    .thenRun(() -> System.out.println("Start-Anfrage akzeptiert"));
 
 // Nachricht an Spieler senden (Adventure-Integration)
 api.player().get(playerUUID).thenAccept(player -> {
@@ -73,9 +78,10 @@ val api = CloudApi.create()
 val servers = api.server().getServersByGroup("lobby").await()
 println("Lobby-Server: ${servers.size}")
 
-// Neuen Server starten
-val server = api.server().startServer(StartServerRequest("group-id", "lobby")).await()
-println("Gestartet: ${server.serverId}")
+// Serverstart für eine Gruppe anfordern
+val group = api.group().getGroupByName("lobby").await()
+api.group().requestServerStart(group).await()
+println("Start-Anfrage akzeptiert")
 
 // Nachricht an Spieler senden (Adventure-Integration)
 api.player().get(playerUUID).await()?.let { player ->
@@ -99,6 +105,9 @@ val sub = api.event().server().onStarted { event ->
   </Card>
   <Card title="Servers API" icon="server" href="/de/developer/api/servers">
     Server-Instanzen verwalten
+  </Card>
+  <Card title="Persistent Servers API" icon="hard-drive" href="/de/developer/api/persistent-servers">
+    Lang laufende Server verwalten
   </Card>
   <Card title="Players API" icon="users" href="/de/developer/api/players">
     Spielerdaten und Messaging

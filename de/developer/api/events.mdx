@@ -10,25 +10,28 @@ Die Events API ermöglicht das Reagieren auf Änderungen in deinem Netzwerk in E
 | Methode | Events |
 |---------|--------|
 | `api.event().group()` | Gruppe erstellt, aktualisiert, gelöscht |
-| `api.event().server()` | Server gestartet, gestoppt, Status geändert |
-| `api.event().persistentServer()` | Persistente Server Events |
+| `api.event().server()` | Server gestartet, gestoppt, Status geändert, aktualisiert, gelöscht |
+| `api.event().persistentServer()` | Persistenter Server erstellt, gestartet, gestoppt, aktualisiert, gelöscht |
 | `api.event().blueprint()` | Blueprint erstellt, aktualisiert, gelöscht |
+
+Alle Event-Objekte stellen `getNetworkId()` und `getTimestamp()` bereit.
 
 ## Server Events
 
-Server Events werden sowohl für gruppenbasierte Server als auch für persistente Server ausgelöst. Bei einem persistenten Server ist `persistentServerId` gesetzt und `groupName` leer. Bei einem Gruppen-Server ist `groupName` gesetzt und `persistentServerId` leer.
+Server Events werden für laufende Instanzen ausgelöst. Ein Server kann aus einer Gruppe oder aus einem persistenten Server stammen. Nutze das enthaltene `Server`-Model, um die Quelle zu prüfen.
 
 ### Server gestartet
 
 ```java
 Subscription sub = api.event().server().onStarted(event -> {
+    Server server = event.getServer();
+
     System.out.println("Server gestartet: " + event.getServerId());
 
-    // Prüfen ob es ein Gruppen- oder persistenter Server ist
-    if (event.getPersistentServerId() != null && !event.getPersistentServerId().isEmpty()) {
-        System.out.println("Persistenter Server: " + event.getPersistentServerId());
+    if (server.isFromPersistentServer()) {
+        System.out.println("Persistenter Server: " + server.getPersistentServerId());
     } else {
-        System.out.println("Gruppe: " + event.getGroupName());
+        System.out.println("Gruppe: " + server.getGroup().getName());
     }
 });
 ```
@@ -38,6 +41,11 @@ Subscription sub = api.event().server().onStarted(event -> {
 ```java
 api.event().server().onStopped(event -> {
     System.out.println("Server gestoppt: " + event.getServerId());
+
+    if (event.getCrashed()) {
+        System.out.println("Exit-Code: " + event.getExitCode());
+        System.out.println("Grund: " + event.getReason());
+    }
 });
 ```
 
@@ -46,33 +54,89 @@ api.event().server().onStopped(event -> {
 ```java
 api.event().server().onStateChanged(event -> {
     System.out.println(event.getServerId() + ": " +
-        event.getOldState() + " → " + event.getNewState());
+        event.getOldState() + " -> " + event.getNewState());
+});
+```
+
+### Server aktualisiert und gelöscht
+
+```java
+api.event().server().onUpdated(event -> {
+    System.out.println("Server aktualisiert: " + event.getServerId());
+});
+
+api.event().server().onDeleted(event -> {
+    System.out.println("Server gelöscht: " + event.getServerId());
 });
 ```
 
 ## Gruppen Events
 
 ```java
-// Erstellt
 api.event().group().onCreated(event -> {
-    System.out.println("Gruppe erstellt: " + event.getServerGroupId());
+    System.out.println("Gruppe erstellt: " + event.getGroup().getName());
 });
 
-// Aktualisiert
-api.event().group().onUpdated(event -> { ... });
+api.event().group().onUpdated(event -> {
+    System.out.println("Gruppe aktualisiert: " + event.getGroup().getName());
+});
 
-// Gelöscht
-api.event().group().onDeleted(event -> { ... });
+api.event().group().onDeleted(event -> {
+    System.out.println("Gruppe gelöscht: " + event.getName());
+});
+```
+
+## Persistent Server Events
+
+```java
+api.event().persistentServer().onCreated(event -> {
+    System.out.println("Persistenter Server erstellt: " + event.getPersistentServerId());
+});
+
+api.event().persistentServer().onStarted(event -> {
+    System.out.println("Persistenter Server gestartet: " + event.getPersistentServerId());
+    System.out.println("Laufender Server: " + event.getServerId());
+});
+
+api.event().persistentServer().onStopped(event -> {
+    System.out.println("Persistenter Server gestoppt: " + event.getPersistentServerId());
+});
+
+api.event().persistentServer().onUpdated(event -> {
+    System.out.println("Persistenter Server aktualisiert: " + event.getName());
+});
+
+api.event().persistentServer().onDeleted(event -> {
+    System.out.println("Persistenter Server gelöscht: " + event.getName());
+});
+```
+
+## Blueprint Events
+
+```java
+api.event().blueprint().onCreated(event -> {
+    System.out.println("Blueprint erstellt: " + event.getBlueprint().getName());
+});
+
+api.event().blueprint().onUpdated(event -> {
+    System.out.println("Blueprint aktualisiert: " + event.getBlueprint().getName());
+});
+
+api.event().blueprint().onDeleted(event -> {
+    System.out.println("Blueprint gelöscht: " + event.getName());
+});
 ```
 
 ## Subscriptions verwalten
 
-Subscriptions implementieren `AutoCloseable`. Immer aufräumen wenn fertig:
+Subscriptions implementieren `AutoCloseable`. Räume sie immer auf, wenn du fertig bist.
 
 ### Manuelles Aufräumen
 
 ```java
-Subscription sub = api.event().server().onStarted(event -> { ... });
+Subscription sub = api.event().server().onStarted(event -> {
+    System.out.println("Gestartet: " + event.getServer().getServerId());
+});
 
 // Später, beim Herunterfahren
 sub.close();
@@ -88,6 +152,7 @@ public class MeinPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         api = CloudApi.create();
+
         subscriptions.add(api.event().server().onStarted(this::handleServerStart));
         subscriptions.add(api.event().server().onStopped(this::handleServerStop));
     }
@@ -109,24 +174,226 @@ public class MeinPlugin extends JavaPlugin {
 
 ## Event-Referenz
 
+Felder entsprechen Java-Gettern. `serverId` wird zum Beispiel über `getServerId()` bereitgestellt.
+
+Jedes Event enthält diese gemeinsamen Felder:
+
+<ResponseField name="networkId" type="string">
+  Netzwerk-ID, zu der das Event gehört.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  ISO-8601-Zeitpunkt, zu dem das Event ausgelöst wurde.
+</ResponseField>
+
 ### Server Events
 
-| Event | Properties |
-|-------|------------|
-| `ServerStartedEvent` | `serverId`, `groupName`, `persistentServerId` |
-| `ServerStoppedEvent` | `serverId`, `groupName`, `persistentServerId` |
-| `ServerStateChangedEvent` | `serverId`, `oldState`, `newState` |
-| `ServerUpdatedEvent` | `serverId` |
-| `ServerDeletedEvent` | `serverId` |
+<AccordionGroup>
+  <Accordion title="ServerStartedEvent">
+    <ResponseField name="serverId" type="string">
+      ID der gestarteten Serverinstanz.
+    </ResponseField>
 
-<Note>
-`ServerStartedEvent` und `ServerStoppedEvent` werden sowohl für Gruppen-Server als auch für persistente Server ausgelöst. Bei persistenten Servern ist `persistentServerId` gesetzt und `groupName` leer. Bei Gruppen-Servern ist `groupName` gesetzt und `persistentServerId` leer.
-</Note>
+    <ResponseField name="serverGroupId" type="string">
+      ID der Servergruppe, zu der dieser Server gehört.
+    </ResponseField>
+
+    <ResponseField name="server" type="Server">
+      Gestartete Serverinstanz mit vollständiger Konfiguration und Laufzeitinformationen.
+    </ResponseField>
+  </Accordion>
+
+  <Accordion title="ServerStoppedEvent">
+    <ResponseField name="serverId" type="string">
+      ID der gestoppten Serverinstanz.
+    </ResponseField>
+
+    <ResponseField name="serverGroupId" type="string">
+      ID der Servergruppe, zu der dieser Server gehört.
+    </ResponseField>
+
+    <ResponseField name="server" type="Server">
+      Gestoppte Serverinstanz mit vollständiger Konfiguration und Laufzeitinformationen.
+    </ResponseField>
+
+    <ResponseField name="crashed" type="boolean">
+      Gibt an, ob der Server unerwartet gestoppt wurde.
+    </ResponseField>
+
+    <ResponseField name="exitCode" type="integer | null">
+      Exit-Code des Prozesses oder `null`, wenn kein Exit-Code verfügbar ist.
+    </ResponseField>
+
+    <ResponseField name="reason" type="string | null">
+      Stop-Grund oder `null`, wenn kein Grund verfügbar ist.
+    </ResponseField>
+  </Accordion>
+
+  <Accordion title="ServerStateChangedEvent">
+    <ResponseField name="serverId" type="string">
+      ID des Servers, dessen Status sich geändert hat.
+    </ResponseField>
+
+    <ResponseField name="oldState" type="ServerState">
+      Vorheriger Serverstatus.
+    </ResponseField>
+
+    <ResponseField name="newState" type="ServerState">
+      Neuer Serverstatus.
+    </ResponseField>
+
+    <ResponseField name="server" type="Server">
+      Aktuelle Serverinstanz mit vollständiger Konfiguration und Laufzeitinformationen.
+    </ResponseField>
+  </Accordion>
+
+  <Accordion title="ServerUpdatedEvent">
+    <ResponseField name="serverId" type="string">
+      ID der aktualisierten Serverinstanz.
+    </ResponseField>
+
+    <ResponseField name="serverGroupId" type="string">
+      ID der Servergruppe, zu der dieser Server gehört.
+    </ResponseField>
+
+    <ResponseField name="server" type="Server">
+      Aktualisierte Serverinstanz mit vollständiger Konfiguration und Laufzeitinformationen.
+    </ResponseField>
+  </Accordion>
+
+  <Accordion title="ServerDeletedEvent">
+    <ResponseField name="serverId" type="string">
+      ID der gelöschten Serverinstanz.
+    </ResponseField>
+
+    <ResponseField name="serverGroupId" type="string">
+      ID der Servergruppe, zu der dieser Server gehörte.
+    </ResponseField>
+
+    <ResponseField name="server" type="Server">
+      Gelöschte Serverinstanz mit den zuletzt verfügbaren Konfigurations- und Laufzeitinformationen.
+    </ResponseField>
+  </Accordion>
+</AccordionGroup>
 
 ### Gruppen Events
 
-| Event | Properties |
-|-------|------------|
-| `GroupCreatedEvent` | `serverGroupId` |
-| `GroupUpdatedEvent` | `serverGroupId` |
-| `GroupDeletedEvent` | `serverGroupId` |
+<AccordionGroup>
+  <Accordion title="GroupCreatedEvent">
+    <ResponseField name="serverGroupId" type="string">
+      ID der erstellten Servergruppe.
+    </ResponseField>
+
+    <ResponseField name="group" type="Group">
+      Erstelltes Gruppenmodell.
+    </ResponseField>
+  </Accordion>
+
+  <Accordion title="GroupUpdatedEvent">
+    <ResponseField name="serverGroupId" type="string">
+      ID der aktualisierten Servergruppe.
+    </ResponseField>
+
+    <ResponseField name="group" type="Group">
+      Aktualisiertes Gruppenmodell.
+    </ResponseField>
+  </Accordion>
+
+  <Accordion title="GroupDeletedEvent">
+    <ResponseField name="serverGroupId" type="string">
+      ID der gelöschten Servergruppe.
+    </ResponseField>
+
+    <ResponseField name="name" type="string | null">
+      Name der gelöschten Gruppe oder `null`, wenn der Name nicht mehr verfügbar ist.
+    </ResponseField>
+  </Accordion>
+</AccordionGroup>
+
+### Persistent Server Events
+
+<AccordionGroup>
+  <Accordion title="PersistentServerCreatedEvent">
+    <ResponseField name="persistentServerId" type="string">
+      ID des erstellten persistenten Servers.
+    </ResponseField>
+
+    <ResponseField name="name" type="string | null">
+      Name des erstellten persistenten Servers oder `null`, wenn kein Name verfügbar ist.
+    </ResponseField>
+  </Accordion>
+
+  <Accordion title="PersistentServerStartedEvent">
+    <ResponseField name="persistentServerId" type="string">
+      ID des gestarteten persistenten Servers.
+    </ResponseField>
+
+    <ResponseField name="serverId" type="string | null">
+      ID der zugehörigen laufenden Serverinstanz oder `null`, wenn sie nicht verfügbar ist.
+    </ResponseField>
+  </Accordion>
+
+  <Accordion title="PersistentServerStoppedEvent">
+    <ResponseField name="persistentServerId" type="string">
+      ID des gestoppten persistenten Servers.
+    </ResponseField>
+
+    <ResponseField name="serverId" type="string | null">
+      ID der zugehörigen Serverinstanz oder `null`, wenn sie nicht verfügbar ist.
+    </ResponseField>
+  </Accordion>
+
+  <Accordion title="PersistentServerUpdatedEvent">
+    <ResponseField name="persistentServerId" type="string">
+      ID des aktualisierten persistenten Servers.
+    </ResponseField>
+
+    <ResponseField name="name" type="string | null">
+      Name des aktualisierten persistenten Servers oder `null`, wenn kein Name verfügbar ist.
+    </ResponseField>
+  </Accordion>
+
+  <Accordion title="PersistentServerDeletedEvent">
+    <ResponseField name="persistentServerId" type="string">
+      ID des gelöschten persistenten Servers.
+    </ResponseField>
+
+    <ResponseField name="name" type="string | null">
+      Name des gelöschten persistenten Servers oder `null`, wenn der Name nicht mehr verfügbar ist.
+    </ResponseField>
+  </Accordion>
+</AccordionGroup>
+
+### Blueprint Events
+
+<AccordionGroup>
+  <Accordion title="BlueprintCreatedEvent">
+    <ResponseField name="blueprintId" type="string">
+      ID des erstellten Blueprints.
+    </ResponseField>
+
+    <ResponseField name="blueprint" type="Blueprint">
+      Erstelltes Blueprint-Modell.
+    </ResponseField>
+  </Accordion>
+
+  <Accordion title="BlueprintUpdatedEvent">
+    <ResponseField name="blueprintId" type="string">
+      ID des aktualisierten Blueprints.
+    </ResponseField>
+
+    <ResponseField name="blueprint" type="Blueprint">
+      Aktualisiertes Blueprint-Modell.
+    </ResponseField>
+  </Accordion>
+
+  <Accordion title="BlueprintDeletedEvent">
+    <ResponseField name="blueprintId" type="string">
+      ID des gelöschten Blueprints.
+    </ResponseField>
+
+    <ResponseField name="name" type="string | null">
+      Name des gelöschten Blueprints oder `null`, wenn der Name nicht mehr verfügbar ist.
+    </ResponseField>
+  </Accordion>
+</AccordionGroup>

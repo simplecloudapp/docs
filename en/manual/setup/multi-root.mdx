@@ -19,17 +19,11 @@ You can add another server host through either the Dashboard or the CLI. For the
 <Tabs>
   <Tab title="Dashboard">
     <Steps>
-      <Step title="Open the Add Host Dialog">
-        <Frame>
-          <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
-        </Frame>
+      <Step title="Open the Server Hosts settings">
         Go to the [SimpleCloud Dashboard](https://dash.simplecloud.app), sign in and open the **Server Hosts** tab in the settings.
         Click **Add Host** above the list of existing server hosts to open a dialog with a command you can copy.
       </Step>
-      <Step title="Run the Command on Your New Server Host">
-        <Frame>
-          <img src="https://github.com/simplecloudapp/branding/blob/main/media/cli/create-group-proxy.gif?raw=true" alt="Descriptive alt text" />
-        </Frame>
+      <Step title="Run the command on the new serverhost">
         Copy the command and run it on your new server host.
         SimpleCloud will be installed automatically and connected to your organization.
         This may take a few minutes to complete.
@@ -55,7 +49,6 @@ You can add another server host through either the Dashboard or the CLI. For the
         ```
       </Step>
       <Step title="Add Serverhost to Network">
-                
         Use the CLI to add a new serverhost to your existing network:
 
         ```bash
@@ -185,14 +178,16 @@ sc sync status
 Test that synchronization works:
 
 ```bash
+CLOUD_DIR=/path/to/simplecloud
+
 # On Serverhost 1
-echo "sync test" > $CLOUD_DIR/templates/sync-test.txt
+echo "sync test" > "$CLOUD_DIR/templates/sync-test.txt"
 
 # Wait a few seconds, then check on Serverhost 2
-cat $CLOUD_DIR/templates/sync-test.txt
+cat "$CLOUD_DIR/templates/sync-test.txt"
 
 # Clean up
-rm $CLOUD_DIR/templates/sync-test.txt
+rm "$CLOUD_DIR/templates/sync-test.txt"
 ```
 
 ## Troubleshooting

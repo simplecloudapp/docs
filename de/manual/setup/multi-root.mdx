@@ -148,14 +148,16 @@ sc sync status
 Teste, ob die Synchronisierung funktioniert:
 
 ```bash
+CLOUD_DIR=/pfad/zu/simplecloud
+
 # Auf Serverhost 1
-echo "sync test" > $CLOUD_DIR/templates/sync-test.txt
+echo "sync test" > "$CLOUD_DIR/templates/sync-test.txt"
 
 # Warte ein paar Sekunden, dann prüfe auf Serverhost 2
-cat $CLOUD_DIR/templates/sync-test.txt
+cat "$CLOUD_DIR/templates/sync-test.txt"
 
 # Aufräumen
-rm $CLOUD_DIR/templates/sync-test.txt
+rm "$CLOUD_DIR/templates/sync-test.txt"
 ```
 
 ## Best Practices

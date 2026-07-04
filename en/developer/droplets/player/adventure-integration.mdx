@@ -3,6 +3,11 @@ title: 'Adventure Integration'
 description: 'Using Adventure with the SimpleCloud Player API'
 ---
 
+<Warning>
+  This is legacy Player API documentation. For new integrations, use the
+  Adventure examples in the current [Players API](/en/developer/api/players).
+</Warning>
+
 ## Initialization
 
 Before you can use [Adventure](https://docs.papermc.io/adventure/), you need to initialize the Player API. Please refer to the [Initialization](/en/developer/installation) guide for more information.
@@ -43,11 +48,11 @@ player.sendMessage(
 // Send interactive message with click and hover events
 player.sendMessage(
     Component.text()
-        .content("Click here to visit our website!")
+        .content("Visit the SimpleCloud website")
         .color(NamedTextColor.AQUA)
         .clickEvent(ClickEvent.openUrl("https://example.com"))
         .hoverEvent(HoverEvent.showText(
-            Component.text("Click to open website")
+            Component.text("Open the website")
                 .color(NamedTextColor.GRAY)
         ))
         .build()
@@ -84,11 +89,11 @@ player.sendMessage(
 // Send interactive message with click and hover events
 player.sendMessage(
     Component.text()
-        .content("Click here to visit our website!")
+        .content("Visit the SimpleCloud website")
         .color(NamedTextColor.AQUA)
         .clickEvent(ClickEvent.openUrl("https://example.com"))
         .hoverEvent(HoverEvent.showText(
-            Component.text("Click to open website")
+            Component.text("Open the website")
                 .color(NamedTextColor.GRAY)
         ))
         .build()

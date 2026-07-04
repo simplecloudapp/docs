@@ -18,7 +18,11 @@ api.player().get(uuid)
 
 // Spieler nach Username
 api.player().get("Steve")
-    .thenAccept(player -> { ... });
+    .thenAccept(player -> {
+        if (player != null) {
+            System.out.println("Gefunden: " + player.getUniqueId());
+        }
+    });
 
 // Alle Online-Spieler
 api.player().getOnlinePlayers()
@@ -96,12 +100,49 @@ player.sendActionBar(Component.text("⚔ Kampfmodus aktiviert")
 
 ## CloudPlayer Model
 
-| Property | Typ | Beschreibung |
-|----------|-----|--------------|
-| `uniqueId` | `UUID` | Spieler-UUID |
-| `name` | `String` | Spieler-Username |
-| `connectedServerName` | `String` | Aktueller Server-Name |
-| `connectedProxyName` | `String` | Verbundener Proxy-Name |
+<ResponseField name="uniqueId" type="UUID" required>
+  Spieler-UUID.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Spieler-Username.
+</ResponseField>
+
+<ResponseField name="displayName" type="string">
+  Anzeigename des Spielers.
+</ResponseField>
+
+<ResponseField name="connectedServerName" type="string">
+  Aktueller Server-Name.
+</ResponseField>
+
+<ResponseField name="connectedProxyName" type="string">
+  Verbundener Proxy-Name.
+</ResponseField>
+
+<ResponseField name="online" type="boolean" required>
+  Ob der Spieler aktuell online ist.
+</ResponseField>
+
+<ResponseField name="onlineTimeSeconds" type="long" required>
+  Gesamte Online-Zeit in Sekunden.
+</ResponseField>
+
+<ResponseField name="sessionId" type="string | null">
+  Aktive Session-ID oder `null`, wenn sie nicht verfügbar ist.
+</ResponseField>
+
+<ResponseField name="firstSeen" type="string">
+  Erster Login-Zeitpunkt im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="lastSeen" type="string">
+  Letzter Login-Zeitpunkt im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="properties" type="object">
+  Spieler-spezifische Properties.
+</ResponseField>
 
 ## ConnectResult
 

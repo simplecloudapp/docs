@@ -3,7 +3,11 @@ title: 'Servers API'
 description: 'Query and manage running server instances'
 ---
 
-The Servers API lets you query, start, stop, and update running servers. Access it via `api.server()`.
+The Servers API manages running server instances. Use it to query, stop, and update servers via `api.server()`.
+
+<Info>
+  Starting a new group server is handled by the Groups API with `api.group().requestServerStart(...)`. The Servers API only works with server instances that already exist.
+</Info>
 
 ## Get Servers
 
@@ -13,8 +17,15 @@ api.server().getAllServers()
     .thenAccept(servers -> System.out.println("Total: " + servers.size()));
 
 // Get servers with query filters
-api.server().getAllServers(new ServerQuery())
-    .thenAccept(servers -> { ... });
+ServerQuery query = ServerQuery.create()
+    .filterByServerGroupName("lobby")
+    .filterByState(ServerState.AVAILABLE, ServerState.INGAME)
+    .sortBy("numerical_id")
+    .sortOrder("asc");
+
+api.server().getAllServers(query)
+    .thenAccept(servers -> servers.forEach(server ->
+        System.out.println(server.getServerId() + ": " + server.getState())));
 
 // Get server by ID
 api.server().getServerById("server-uuid")
@@ -22,33 +33,70 @@ api.server().getServerById("server-uuid")
 
 // Get servers in a group
 api.server().getServersByGroup("lobby")
-    .thenAccept(servers -> servers.forEach(s ->
-        System.out.println(s.getServerId() + ": " + s.getState())));
+    .thenAccept(servers -> servers.forEach(server ->
+        System.out.println(server.getServerId() + ": " + server.getState())));
 
-// Get server by group and numerical ID (e.g., Lobby-1)
+// Get server by group and numerical ID, for example Lobby-1
 api.server().getServerByNumericalId("lobby", 1)
     .thenAccept(server -> System.out.println(server.getServerId()));
 
-// Get current server (from within a running server)
+// Get current server from inside a running server
 api.server().getCurrentServer()
     .thenAccept(server -> System.out.println("Running on: " + server.getServerId()));
 ```
 
-## Start Server
+## Request a Group Server
+
+Queue one new server start for a group with `api.group()`. The reconciler processes the request on its next tick and creates the server when group limits allow it.
 
 ```java
-StartServerRequest request = new StartServerRequest("group-uuid", "lobby");
-
-api.server().startServer(request)
-    .thenAccept(server -> System.out.println("Started: " + server.getServerId()));
+api.group().getGroupByName("lobby")
+    .thenCompose(group -> {
+        if (group == null) {
+            return CompletableFuture.failedFuture(
+                new IllegalArgumentException("Group not found: lobby"));
+        }
+        return api.group().requestServerStart(group);
+    })
+    .thenRun(() -> System.out.println("Start request accepted for lobby"));
 ```
+
+<Note>
+  `requestServerStart` completes when the request is accepted, not when the server is ready. Subscribe to `api.event().server().onStateChanged(...)` or query the group to find the new server once it reaches `AVAILABLE`.
+</Note>
 
 ## Stop Server
 
 ```java
 api.server().stopServer("server-uuid")
-    .thenAccept(success -> System.out.println("Stopped: " + success));
+    .thenRun(() -> System.out.println("Stop requested"));
 ```
+
+### Stop Server (REST)
+
+Use `DELETE /v0/servers` when you want the controller to stop the server normally and run the server lifecycle.
+
+<RequestExample>
+  ```bash cURL
+  curl -X DELETE "https://your-controller/v0/servers?server_id=123e4567-e89b-12d3-a456-426614174000" \
+    -H "X-Network-ID: your-network-id" \
+    -H "X-Network-Secret: your-network-secret"
+  ```
+</RequestExample>
+
+<ResponseExample>
+  ```json 200 OK
+  {
+    "message": "Server stop request sent successfully",
+    "server_id": "123e4567-e89b-12d3-a456-426614174000",
+    "state": "STOPPING"
+  }
+  ```
+</ResponseExample>
+
+<ParamField query="server_id" type="string" required>
+  ID of the server instance to stop.
+</ParamField>
 
 ## Update Server
 
@@ -61,121 +109,250 @@ api.server().updateServer("server-uuid", update)
     .thenAccept(server -> System.out.println("Updated: " + server.getMaxPlayers()));
 ```
 
-## List servers (REST)
+## Server Properties
 
-To list servers in a network with optional filters, use the REST API endpoint `GET /v0/servers`. The response includes server details, server group or persistent server metadata, blueprint information, and workflow configurations.
-
-```bash
-curl "https://your-controller/v0/servers?state=AVAILABLE&type=lobby" \
-  -H "X-Network-ID: your-network-id" \
-  -H "X-Network-Secret: your-network-secret"
-```
-
-| Parameter | Location | Required | Description |
-|-----------|----------|----------|-------------|
-| `X-Network-ID` | Header | Yes | Your network identifier |
-| `X-Network-Secret` | Header | Yes | Your network secret |
-| `X-SC-Component` | Header | No | Optional caller component name (for example, `serverhost`). When set, the value is attached to the controller's request wide event as the `component` field so request logs can be filtered by the originating SimpleCloud component. Leading and trailing whitespace is trimmed. |
-| `server_group_id` | Query | No | Filter by server group ID(s), comma-separated |
-| `state` | Query | No | Filter by state(s), comma-separated (e.g., `AVAILABLE,STARTING`) |
-| `serverhost_id` | Query | No | Filter by serverhost ID |
-| `persistent_server_id` | Query | No | Filter by persistent server ID |
-| `type` | Query | No | Filter by type(s), comma-separated (matches server group OR persistent server type) |
-| `name` | Query | No | Filter by name(s), comma-separated (matches server group OR persistent server name) |
-| `tags` | Query | No | Filter by tag(s), comma-separated (matches if any tag matches in server group OR persistent server) |
-| `numerical_id` | Query | No | Filter by numerical ID(s), comma-separated (e.g., `1,5,10`) |
-| `sort_by` | Query | No | Sort field: `created_at`, `updated_at`, `numerical_id`, `state` |
-| `sort_order` | Query | No | Sort order: `asc` (default) or `desc` |
-
-### Response cache
-
-To reduce database load from high-frequency callers (dashboards, panels, polling clients), the controller caches the underlying database rows for `GET /v0/servers` for **2 seconds**. Identical back-to-back requests within this window are served from the in-memory response cache instead of re-querying Postgres.
-
-Caching only applies when the caller has no per-user permission filtering applied. Permission-filtered callers always bypass the cache to prevent leaking results between callers with different permissions.
-
-When caching is in effect, the response includes an `X-DB-Cache` header for observability:
-
-| Header value | Meaning |
-|--------------|---------|
-| `X-DB-Cache: HIT` | Rows were served from the response cache |
-| `X-DB-Cache: MISS` | Rows were fetched from the database and written into the cache |
-
-The header is omitted entirely for permission-filtered requests (which always bypass the cache) and when the response cache is not configured.
-
-<Note>
-The 2-second TTL is short enough that responses remain effectively real-time for UI use cases. If you need stricter freshness guarantees, treat any response with `X-DB-Cache: HIT` as up to 2 seconds stale.
-</Note>
-
-## Delete server record
-
-To remove a server record directly from the database without stopping the process or publishing lifecycle events, use the REST API endpoint `DELETE /v0/servers/database`. This is useful for cleaning up stale or orphaned records when the server process has already terminated.
-
-<Warning>
-This operation only removes the database row. It does not stop the server process, trigger cleanup workflows, or emit events. Use `stopServer` for normal shutdown.
-</Warning>
-
-```bash
-curl -X DELETE "https://your-controller/v0/servers/database?server_id=SERVER_UUID" \
-  -H "X-Network-ID: your-network-id" \
-  -H "X-Network-Secret: your-network-secret"
-```
-
-**Response:**
-
-```json
-{
-  "server_id": "123e4567-e89b-12d3-a456-426614174000",
-  "message": "Server row deleted successfully"
-}
-```
-
-| Parameter | Location | Required | Description |
-|-----------|----------|----------|-------------|
-| `server_id` | Query | Yes | UUID of the server record to delete |
-| `X-Network-ID` | Header | Yes | Your network identifier |
-| `X-Network-Secret` | Header | Yes | Your network secret |
-| `X-SC-Component` | Header | No | Optional caller component name attached to the controller's request wide event as the `component` field. Leading and trailing whitespace is trimmed. |
-
-## Server properties
-
-Servers inherit properties from their group, but you can override them per-instance:
+Servers inherit properties from their group or persistent server, but you can override them per instance:
 
 ```java
 // Add or update properties (merges with existing)
-Map<String, String> props = Map.of("map", "castle", "mode", "competitive");
-api.server().updateServerProperties("server-uuid", props);
+Map<String, Object> props = Map.of("map", "castle", "mode", "competitive");
+api.server().updateServerProperties("server-uuid", props)
+    .thenAccept(updated -> System.out.println("Properties: " + updated));
 
 // Remove specific properties
 api.server().deleteServerProperties("server-uuid", List.of("mode"));
 ```
 
+## List Servers (REST)
+
+To list servers in a network with optional filters, use the REST API endpoint `GET /v0/servers`. The response includes server details, group or persistent server metadata, blueprint information, and workflow configurations.
+
+<RequestExample>
+  ```bash cURL
+  curl "https://your-controller/v0/servers?state=AVAILABLE&type=lobby" \
+    -H "X-Network-ID: your-network-id" \
+    -H "X-Network-Secret: your-network-secret"
+  ```
+</RequestExample>
+
+<ResponseExample>
+  ```json 200 OK
+  {
+    "count": 1,
+    "servers": [
+      {
+        "server_id": "123e4567-e89b-12d3-a456-426614174000",
+        "network_id": "production",
+        "server_group_id": "lobby",
+        "persistent_server_id": null,
+        "serverhost_id": "host-eu-1",
+        "numerical_id": 1,
+        "ip": "127.0.0.1",
+        "port": 25565,
+        "state": "AVAILABLE",
+        "player_count": 12,
+        "max_players": 100,
+        "min_memory": 512,
+        "max_memory": 1024,
+        "properties": {
+          "map": "castle"
+        }
+      }
+    ]
+  }
+  ```
+</ResponseExample>
+
+<ParamField header="X-Network-ID" type="string" required>
+  Your network identifier.
+</ParamField>
+
+<ParamField header="X-Network-Secret" type="string" required>
+  Your network secret.
+</ParamField>
+
+<ParamField header="X-SC-Component" type="string">
+  Optional caller component name attached to the controller request event.
+</ParamField>
+
+<ParamField query="server_group_id" type="string">
+  Filter by one or more server group IDs. Use commas to pass multiple IDs.
+</ParamField>
+
+<ParamField query="state" type="string">
+  Filter by one or more server states, for example `AVAILABLE,STARTING`.
+</ParamField>
+
+<ParamField query="serverhost_id" type="string">
+  Filter by serverhost ID.
+</ParamField>
+
+<ParamField query="persistent_server_id" type="string">
+  Filter by persistent server ID.
+</ParamField>
+
+<ParamField query="type" type="string">
+  Filter by server group or persistent server type.
+</ParamField>
+
+<ParamField query="name" type="string">
+  Filter by server group or persistent server name.
+</ParamField>
+
+<ParamField query="tags" type="string">
+  Filter by group or persistent server tags.
+</ParamField>
+
+<ParamField query="numerical_id" type="string">
+  Filter by one or more numerical IDs. Use commas to pass multiple IDs.
+</ParamField>
+
+<ParamField query="sort_by" type="string">
+  Sort field. Supported values are `created_at`, `updated_at`, `numerical_id`, and `state`.
+</ParamField>
+
+<ParamField query="sort_order" type="string">
+  Sort order. Use `asc` or `desc`.
+</ParamField>
+
+### Response Cache
+
+The controller can cache database rows for `GET /v0/servers` for 2 seconds to reduce load from dashboards and polling clients. When active, responses include `X-DB-Cache: HIT` or `X-DB-Cache: MISS`. Permission-filtered requests always bypass this cache.
+
+## Delete Server Record
+
+To remove a stale server record directly from the database without stopping a process or publishing lifecycle events, use `DELETE /v0/servers/database`.
+
+<Warning>
+  This operation only removes the database row. It does not stop the server process, trigger cleanup workflows, or emit lifecycle events. Use `stopServer` for normal shutdown.
+</Warning>
+
+<RequestExample>
+  ```bash cURL
+  curl -X DELETE "https://your-controller/v0/servers/database?server_id=123e4567-e89b-12d3-a456-426614174000" \
+    -H "X-Network-ID: your-network-id" \
+    -H "X-Network-Secret: your-network-secret"
+  ```
+</RequestExample>
+
+<ResponseExample>
+  ```json 200 OK
+  {
+    "message": "Server row deleted successfully",
+    "server_id": "123e4567-e89b-12d3-a456-426614174000"
+  }
+  ```
+</ResponseExample>
+
+<ParamField query="server_id" type="string" required>
+  ID of the server row to remove from the database.
+</ParamField>
+
 ## Server Model
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `serverId` | `String` | Unique identifier |
-| `groupName` | `String` | Parent group name |
-| `numericalId` | `long` | Numerical ID within group (1, 2, 3...) |
-| `state` | `ServerState` | Current lifecycle state |
-| `host` | `String` | Server host machine |
-| `ip` | `String` | IP address |
-| `port` | `int` | Server port |
-| `minMemory` | `int` | Minimum memory (MB) |
-| `maxMemory` | `int` | Maximum memory (MB) |
-| `maxPlayers` | `int` | Player limit |
-| `playerCount` | `int` | Current online players |
-| `properties` | `Map<String, String>` | Custom metadata |
-| `createdAt` | `Instant` | Creation timestamp |
+<ResponseField name="serverId" type="string" required>
+  Unique server instance ID.
+</ResponseField>
+
+<ResponseField name="persistentServerId" type="string | null">
+  Persistent server ID, if the instance was spawned from a persistent server.
+</ResponseField>
+
+<ResponseField name="numericalId" type="integer" required>
+  Numerical ID within the source group or persistent server.
+</ResponseField>
+
+<ResponseField name="serverGroupId" type="string | null">
+  Server group ID, if the instance was spawned from a group.
+</ResponseField>
+
+<ResponseField name="serverhostId" type="string" required>
+  Host running the server.
+</ResponseField>
+
+<ResponseField name="networkId" type="string" required>
+  Network identifier.
+</ResponseField>
+
+<ResponseField name="ip" type="string | null">
+  Assigned IP address.
+</ResponseField>
+
+<ResponseField name="port" type="integer | null">
+  Assigned port.
+</ResponseField>
+
+<ResponseField name="minMemory" type="integer" required>
+  Minimum memory in MB.
+</ResponseField>
+
+<ResponseField name="maxMemory" type="integer" required>
+  Maximum memory in MB.
+</ResponseField>
+
+<ResponseField name="cpuUsage" type="number | null">
+  Current CPU usage percentage.
+</ResponseField>
+
+<ResponseField name="memoryUsage" type="number | null">
+  Current memory usage in MB.
+</ResponseField>
+
+<ResponseField name="playerCount" type="integer | null">
+  Current online player count.
+</ResponseField>
+
+<ResponseField name="maxPlayers" type="integer" required>
+  Player limit.
+</ResponseField>
+
+<ResponseField name="state" type="ServerState" required>
+  Current lifecycle state.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string" required>
+  Creation timestamp in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string" required>
+  Last update timestamp in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="lastActivity" type="string | null">
+  Last activity timestamp.
+</ResponseField>
+
+<ResponseField name="properties" type="object | null">
+  Instance-specific metadata.
+</ResponseField>
+
+<ResponseField name="blueprint" type="Blueprint | null">
+  Blueprint used to create the server.
+</ResponseField>
+
+<ResponseField name="serverBase" type="ServerBase" required>
+  Common group or persistent server configuration.
+</ResponseField>
+
+<ResponseField name="group" type="Group | null">
+  Source group, if this is a group server.
+</ResponseField>
+
+<ResponseField name="persistentServer" type="PersistentServer | null">
+  Source persistent server, if this is a persistent server.
+</ResponseField>
 
 ## ServerState
 
 | State | Description |
 |-------|-------------|
-| `PREPARING` | Copying template files |
-| `STARTING` | JVM process launching |
+| `UNKNOWN_STATE` | Unknown or unspecified state |
+| `PREPARING` | Preparing files and runtime data |
+| `STARTING` | Server process is starting |
 | `AVAILABLE` | Ready for players |
-| `INGAME` | Has active players |
-| `STOPPING` | Shutdown in progress |
+| `INGAME` | In game with active players |
+| `STOPPING` | Shutdown is in progress |
+| `CLEANUP` | Server stopped and cleanup is running |
 
 ## Environment Variables
 
@@ -192,4 +369,4 @@ String maxPlayers = System.getenv("SIMPLECLOUD_MAX_PLAYERS");
 String maxMemory = System.getenv("SIMPLECLOUD_MAX_MEMORY");
 ```
 
-Custom group properties are also available with `SIMPLECLOUD_` prefix (uppercase, dashes become underscores).
+Custom group properties are also available with the `SIMPLECLOUD_` prefix. Property names are uppercased and dashes become underscores.

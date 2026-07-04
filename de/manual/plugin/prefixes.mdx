@@ -1,6 +1,165 @@
 ---
 title: 'Prefixes'
-description: 'Description for Prefixes'
+description: 'Konfiguriere das SimpleCloud Prefixes Plugin für Spielerränge, Chat-Formatierung und Tablist-Namen'
+tag: 'Server'
 ---
 
-## Prefixes
+## Überblick
+
+Das Prefixes Plugin zeigt Ranginformationen in Chat und Tablist an. Es liest LuckPerms-Gruppen, übernimmt Prefix, Suffix, Farbe und Weight, und rendert Texte mit Adventure Components und MiniMessage.
+
+Nutze das Plugin, wenn ein Server dieselbe Rangidentität im Chat und in der Tablist anzeigen soll.
+
+## Unterstützte Software
+
+| Runtime | Paket | Voraussetzungen | Status |
+| ------- | ----- | --------------- | ------ |
+| Paper und Forks | Paper-Plugin | LuckPerms und CustomNames | Unterstützt |
+| Minestom | Minestom-Extension | LuckPerms Minestom API | Experimentell |
+
+<Warning>
+  Das Paper-Plugin benötigt LuckPerms und CustomNames. Die Minestom-Extension existiert im Source Tree, aber die LuckPerms-Integration ist als experimentell markiert.
+</Warning>
+
+## Schnellstart
+
+<Steps>
+  <Step title="Abhängigkeiten installieren">
+    Installiere LuckPerms und CustomNames auf dem Server-Template, das Prefixes anzeigen soll.
+  </Step>
+
+  <Step title="Prefixes installieren">
+    Lade das Plugin von [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases) herunter und lege es im `plugins/`-Ordner des Server-Templates ab.
+  </Step>
+
+  <Step title="Konfiguration erzeugen">
+    Starte den Server einmal, damit das Plugin `config.json` erzeugt.
+  </Step>
+
+  <Step title="LuckPerms-Gruppen konfigurieren">
+    Setze Prefix, Suffix, Farbe und Weight pro Gruppe in LuckPerms. Prefixes nutzt das LuckPerms-Gruppengewicht als Tablist-Priorität.
+
+    ```bash
+    /lp group admin meta addprefix 100 "<red>[Admin] "
+    /lp group admin meta addsuffix 100 " <gray>*"
+    /lp group admin meta set color "#FF0000"
+    /lp group admin setweight 100
+    ```
+  </Step>
+
+  <Step title="Chat-Format anpassen">
+    Bearbeite `config.json`, wenn du ändern möchtest, wie Chat-Nachrichten gerendert werden.
+
+    <Check>
+      Wenn ein Spieler beitritt, sollten Chat-Name und Tablist-Name Prefix, Suffix, Farbe und Weight aus seiner primären LuckPerms-Gruppe verwenden.
+    </Check>
+  </Step>
+</Steps>
+
+## Konfiguration
+
+`config.json` steuert das Chat-Format. Das Standardformat ist:
+
+```json config.json
+{
+  "chatFormat": "<prefix><name_colored><suffix><gray>:</gray> <white><message></white>"
+}
+```
+
+## Chat-Platzhalter
+
+| Platzhalter | Beschreibung |
+| ----------- | ------------ |
+| `<prefix>` | Prefix aus der aufgelösten Prefixes-Gruppe des Spielers |
+| `<suffix>` | Suffix aus der aufgelösten Prefixes-Gruppe des Spielers |
+| `<name>` | Spielername ohne Teamfarbe |
+| `<name_colored>` | Spielername mit aufgelöster Teamfarbe |
+| `<message>` | Inhalt der Chat-Nachricht |
+
+## LuckPerms-Mapping
+
+| LuckPerms-Wert | Prefixes-Wert |
+| -------------- | ------------- |
+| Gruppenname | Prefixes-Gruppenname |
+| Gruppen-Prefix | Anzeige-Prefix |
+| Gruppen-Suffix | Anzeige-Suffix |
+| `color` Meta-Wert | Teamfarbe |
+| Gruppengewicht | Tablist-Priorität |
+| Primäre Benutzergruppe | Aktive Prefixes-Gruppe des Spielers |
+
+## API-Nutzung
+
+### API abrufen
+
+<Tabs>
+<Tab title="Paper">
+
+```kotlin
+import app.simplecloud.plugin.prefixes.api.PrefixesApi
+import org.bukkit.Bukkit
+
+val registration = Bukkit.getServicesManager()
+    .getRegistration(PrefixesApi::class.java)
+val prefixesApi = registration?.provider
+    ?: error("PrefixesApi is not registered")
+```
+
+</Tab>
+<Tab title="Minestom">
+
+```kotlin
+import app.simplecloud.plugin.prefixes.api.PrefixesApi
+import app.simplecloud.plugin.prefixes.minestom.PrefixesExtension
+
+val prefixesApi: PrefixesApi = PrefixesExtension.getApi()
+```
+
+</Tab>
+</Tabs>
+
+### Spieler aktualisieren
+
+```kotlin
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+
+prefixesApi.setPrefix(player.uniqueId, Component.text("[VIP] "))
+prefixesApi.setSuffix(player.uniqueId, Component.text(" *"))
+prefixesApi.setColor(player.uniqueId, NamedTextColor.GOLD)
+```
+
+### Eigene Gruppe registrieren
+
+```kotlin
+import app.simplecloud.plugin.prefixes.api.PrefixesGroup
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+
+class VipGroup : PrefixesGroup {
+    override fun getName(): String = "vip"
+    override fun getPrefix(): Component = Component.text("[VIP] ")
+    override fun getSuffix(): Component = Component.text(" *")
+    override fun getColor(): TextColor = NamedTextColor.GOLD
+    override fun getPriority(): Int = 50
+
+    override fun containsPlayer(uniqueId: UUID): Boolean {
+        return containsPlayerFuture(uniqueId).join()
+    }
+
+    override fun containsPlayerFuture(uniqueId: UUID): CompletableFuture<Boolean> {
+        return CompletableFuture.completedFuture(false)
+    }
+}
+
+prefixesApi.addGroup(VipGroup())
+```
+
+## Best Practices
+
+- Nutze eindeutige LuckPerms-Gewichte, damit die Tablist-Reihenfolge vorhersehbar bleibt.
+- Speichere Prefixes und Suffixes als MiniMessage-Strings in LuckPerms.
+- Nutze den `color` Meta-Wert für die Teamfarbe, statt die Namensfarbe in jeden Prefix einzubauen.
+- Halte `chatFormat` einfach genug, damit Chat auch auf kleinen Bildschirmen lesbar bleibt.

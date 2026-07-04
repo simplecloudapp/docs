@@ -13,6 +13,8 @@ Templates are the file structures that get copied to new server instances. They 
 
 When SimpleCloud starts a server, templates are applied in a specific order. Each layer can add or overwrite files from previous layers, giving you flexible control over your server configurations.
 
+Default workflows copy these folders from the template base directory, usually `templates/`.
+
 ```mermaid
 flowchart LR
     A[every/] --> B[every_type/]
@@ -24,9 +26,9 @@ flowchart LR
 
 | Order | Directory | Description |
 |-------|-----------|-------------|
-| 1 | `_every/every/` | Base files for all servers |
-| 2 | `_every/every_{type}/` | Type-specific (`every_proxy/`, `every_server/`) |
-| 3 | `_every/every_{software}/` | Software-specific (`every_paper/`, `every_velocity/`) |
+| 1 | `every/` | Base files for all servers |
+| 2 | `every_{type}/` | Type-specific (`every_proxy/`, `every_server/`) |
+| 3 | `every_{software}/` | Software-specific (`every_paper/`, `every_velocity/`) |
 | 4 | `_tagged/{tag}/` | Tag-based templates |
 | 5 | `{group-name}/` | Group-specific templates |
 | 6 | `cache/{group}/` | Cached files from previous runs |
@@ -45,22 +47,20 @@ For a server in the `lobby` group with Paper software and the `premium` tag:
 
 <Tree>
   <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="_every" defaultOpen>
-      <Tree.Folder name="every">
-        <Tree.File name="Applied to all proxy servers" />
-      </Tree.Folder>
-      <Tree.Folder name="every_proxy">
-        <Tree.File name="Applied to all proxy servers" />
-      </Tree.Folder>
-      <Tree.Folder name="every_server">
-        <Tree.File name="Applied to all game servers" />
-      </Tree.Folder>
-      <Tree.Folder name="every_paper">
-        <Tree.File name="Applied to all Paper servers" />
-      </Tree.Folder>
-      <Tree.Folder name="every_velocity">
-        <Tree.File name="Applied to all Velocity servers" />
-      </Tree.Folder>
+    <Tree.Folder name="every" defaultOpen>
+      <Tree.File name="Applied to all servers" />
+    </Tree.Folder>
+    <Tree.Folder name="every_proxy">
+      <Tree.File name="Applied to all proxy servers" />
+    </Tree.Folder>
+    <Tree.Folder name="every_server">
+      <Tree.File name="Applied to all game servers" />
+    </Tree.Folder>
+    <Tree.Folder name="every_paper">
+      <Tree.File name="Applied to all Paper servers" />
+    </Tree.Folder>
+    <Tree.Folder name="every_velocity">
+      <Tree.File name="Applied to all Velocity servers" />
     </Tree.Folder>
     <Tree.Folder name="_tagged" defaultOpen>
       <Tree.Folder name="minigames">

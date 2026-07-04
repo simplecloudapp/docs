@@ -1,6 +1,65 @@
 ---
 title: 'Dashboard'
-description: 'Description for Dashboard'
+description: 'Greife über das SimpleCloud Dashboard auf dein Minecraft-Netzwerk zu und verwalte es'
 ---
 
-## Dashboard
+## Überblick
+
+Das SimpleCloud Dashboard ist eine Weboberfläche, mit der du dein Minecraft-Servernetzwerk im Browser verwaltest.
+
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/dashboard/serveroverview.png?raw=true" alt="SimpleCloud Dashboard mit Serverübersicht" />
+</Frame>
+
+Mit dem Dashboard kannst du:
+
+- Servergruppen erstellen und verwalten
+- Server starten, stoppen und überwachen
+- Logs und Spieleraktivität ansehen
+- Ressourcen deines Netzwerks verwalten
+
+## Dashboard öffnen
+
+Öffne das Dashboard im Browser:
+
+[dash.simplecloud.app](https://dash.simplecloud.app)
+
+Melde dich mit deinem SimpleCloud-Konto an. Wenn du auf derselben Maschine auch die CLI authentifizieren möchtest, führe aus:
+
+```bash
+simplecloud login
+```
+
+## Servergruppe erstellen
+
+Nach dem Login kannst du im Bereich **Groups** eine neue Servergruppe erstellen.
+
+<Steps>
+  <Step title="Groups öffnen">
+    Öffne den Tab **Groups**, um bestehende Gruppen zu sehen oder eine neue Gruppe zu erstellen.
+  </Step>
+
+  <Step title="Neue Gruppe erstellen">
+    Klicke auf **Create Group**.
+  </Step>
+
+  <Step title="Gruppentyp auswählen">
+    Wähle **Proxy** für Proxy-Software wie Velocity oder BungeeCord, oder **Server** für Spielserver wie Paper oder Spigot.
+  </Step>
+
+  <Step title="Server-Software konfigurieren">
+    Gib eine Download-URL für deine Server-Software an oder nutze die Suche, wenn sie für deine Software verfügbar ist.
+  </Step>
+
+  <Step title="Ressourcen festlegen">
+    Konfiguriere Port, Speicher, Online-Anzahl und weitere Gruppeneinstellungen.
+  </Step>
+
+  <Step title="Gruppe erstellen">
+    Prüfe die Einstellungen und erstelle die Gruppe.
+
+    <Check>
+      Die Gruppe erscheint danach im Dashboard und kann Server starten, sobald ihre Konfiguration vollständig ist.
+    </Check>
+  </Step>
+</Steps>

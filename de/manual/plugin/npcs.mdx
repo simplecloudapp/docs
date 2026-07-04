@@ -1,6 +1,175 @@
 ---
-title: 'Npcs'
-description: 'Description for Npcs'
+title: 'NPCs'
+description: 'Nutze SimpleCloud NPCs für interaktive Servernavigation und Hologramme'
+tag: 'Server'
 ---
 
-## Npcs
+## Überblick
+
+Das SimpleCloud NPC Plugin fügt NPCs aus unterstützten NPC-Plugins SimpleCloud-Aktionen, Hologramme und Feedback-Optionen hinzu. Du erstellst den NPC in deinem NPC-System und verwendest danach `/scnpc apply <id>`, damit SimpleCloud Interaktionen für diesen NPC verwaltet.
+
+<Warning>
+  Dieses Plugin benötigt ein unterstütztes NPC-Plugin auf dem Server. Ein
+  Standalone-Namespace-Modul existiert im Repository, wird vom aktuellen Paper
+  Plugin aber nicht geladen.
+</Warning>
+
+## Unterstützte Software
+
+| Servertyp      | Plugin-Unterstützung |
+| -------------- | --------------------- |
+| Paper & Forks  | Ja                    |
+| Spigot         | Nein                  |
+
+## Unterstützte NPC-Plugins
+
+| Plugin | Status | Hinweise |
+| ------ | ------ | -------- |
+| [Citizens](https://citizensnpcs.co) | Unterstützt | Links- und Rechtsklick |
+| [FancyNpcs](https://fancyplugins.de/FancyNpcs) | Unterstützt | Nutzt FancyNpcs-Namen als IDs |
+| [MythicMobs](https://www.spigotmc.org/resources/5702) | Unterstützt | Rechtsklick und Shift-Rechtsklick |
+| [ZNPCsPlus](https://github.com/Pyrbu/ZNPCsPlus) | Unterstützt | Nutzt ZNPCsPlus-NPC-IDs |
+
+## Schnellstart
+
+1. Lade das SimpleCloud NPC Plugin von [GitHub](https://github.com/simplecloudapp/npc-plugin/releases) herunter.
+2. Installiere ein unterstütztes NPC-Plugin.
+3. Stelle sicher, dass das `simplecloud-api` Plugin auf dem Server installiert ist.
+4. Lege die Plugins im `plugins/`-Ordner deines Server-Templates ab.
+5. Starte den Server.
+6. Erstelle einen NPC mit deinem NPC-Plugin.
+7. Führe `/scnpc apply <id>` aus, um eine SimpleCloud-Konfiguration für ihn zu erstellen.
+
+## Befehle
+
+Der Befehl ist als `/simplecloudnpc`, `/scnpc` und `/cloudnpc` verfügbar.
+
+| Befehl | Beschreibung |
+| ------ | ------------ |
+| `/scnpc` | Hilfe anzeigen |
+| `/scnpc apply <id>` | SimpleCloud-Konfiguration für einen existierenden NPC erstellen |
+| `/scnpc <id>` | Hilfe für einen NPC anzeigen |
+| `/scnpc <id> setHologramServerBase <name>` | Gruppe, Server oder Persistent Server für Hologramm-Platzhalter setzen |
+| `/scnpc <id> setOption <key> <value>` | Globale Player-Feedback-Option setzen |
+| `/scnpc <id> getOption <key>` | Globalen Optionswert anzeigen |
+| `/scnpc <id> removeOption <key>` | Globale Option entfernen |
+| `/scnpc <id> interact <interaction>` | Interaktionsdetails anzeigen |
+| `/scnpc <id> interact <interaction> setAction <action>` | Aktion für eine Interaktion setzen |
+| `/scnpc <id> interact <interaction> setOption <key> <value>` | Interaktionsoption setzen |
+| `/scnpc <id> interact <interaction> getOption <key>` | Interaktionsoption anzeigen |
+| `/scnpc <id> interact <interaction> removeOption <key>` | Interaktionsoption entfernen |
+
+## Berechtigungen
+
+| Berechtigung | Beschreibung |
+| ------------ | ------------ |
+| `simplecloud.command.npc` | Alle NPC-Befehle verwenden |
+
+## Interaktionen
+
+Die Standard-Interaktionen sind:
+
+- `RIGHT_CLICK`
+- `LEFT_CLICK`
+- `SHIFT_RIGHT_CLICK`
+- `SHIFT_LEFT_CLICK`
+
+<Note>
+  Ein Namespace kann weniger Interaktionen anbieten. MythicMobs unterstützt
+  aktuell `RIGHT_CLICK` und `SHIFT_RIGHT_CLICK`.
+</Note>
+
+## Aktionen
+
+| Aktion | Erforderliche Optionen | Beschreibung |
+| ------ | ---------------------- | ------------ |
+| `RUN_COMMAND` | `command.name` | Führt einen Befehl als Spieler aus |
+| `RUN_CONSOLE_COMMAND` | `command.name` | Führt einen Befehl als Konsole aus |
+| `CONNECT_TO_SERVER` | `server.name` | Sendet den Spieler zu einem Proxy-registrierten Server |
+| `TRANSFER_TO_SERVER` | `server.ip`, `server.port` | Transferiert den Spieler zu einem externen Server |
+| `QUICK_JOIN` | `group.name` | Findet einen Server in einer Gruppe und sendet den Spieler dorthin |
+
+`RUN_COMMAND` und `RUN_CONSOLE_COMMAND` unterstützen `<playername>` und `<playeruuid>` in `command.name`.
+
+### Quick-Join-Optionen
+
+| Option | Standard | Beschreibung |
+| ------ | -------- | ------------ |
+| `group.name` | Erforderlich | Gruppe, die durchsucht wird |
+| `server.name.pattern` | `<group_name>-<numerical_id>` | Servername, der an den Proxy übergeben wird |
+| `filter.player.count` | `LEAST` | `LEAST` oder `MOST` für die Spielerauswahl |
+| `filter.server.state` | `AVAILABLE` | Erforderlicher Serverstatus |
+| `message.failed.server.finder` | Leer | Optionale Nachricht, wenn kein Server passt |
+
+## Feedback-Optionen
+
+Feedback-Optionen können global auf dem NPC oder auf einer Interaktion gesetzt werden. Sie laufen zusätzlich zur Interaktionsaktion.
+
+| Option | Beschreibung |
+| ------ | ------------ |
+| `send.message` | Chatnachricht senden |
+| `send.actionbar` | Actionbar-Nachricht senden |
+| `send.title` | Titel anzeigen |
+| `send.subtitle` | Untertitel anzeigen |
+| `play.sound` | Adventure-Sound-Key abspielen |
+| `sound.volume` | Lautstärke, Standard `3F` |
+| `sound.pitch` | Pitch, Standard `2F` |
+| `sound.source` | Soundquelle, Standard `master` |
+
+## NPC-Konfiguration
+
+Die erzeugte NPC-Konfiguration speichert Hologramme, Interaktionen und globale Optionen.
+
+```yaml
+version: "3"
+id: "0"
+
+hologramConfiguration:
+  placeholderServerBaseName: "lobby"
+  holograms:
+    - startHeight: 2.073
+      joinState: ""
+      lores:
+        - text: "<#38bdf8><bold><group_name>"
+          billboard: CENTER
+          alignment: CENTER
+        - text: "waiting for <#a3a3a3><group_player_count:available> players"
+          billboard: CENTER
+          alignment: CENTER
+
+actions:
+  - playerInteraction: LEFT_CLICK
+    action: QUICK_JOIN
+    options:
+      group.name: lobby
+      filter.player.count: LEAST
+      filter.server.state: AVAILABLE
+      server.name.pattern: "<group_name>-<numerical_id>"
+
+  - playerInteraction: RIGHT_CLICK
+    action: TRANSFER_TO_SERVER
+    options:
+      server.ip: demo-server.com
+      server.port: "25565"
+
+options:
+  send.message: "<#38bdf8>Choose a server"
+  play.sound: block.chest.open
+  sound.pitch: "2F"
+  sound.volume: "3F"
+  sound.source: master
+```
+
+## Hologramm-Platzhalter
+
+`placeholderServerBaseName` kann eine Gruppe, einen konkreten Servernamen wie `lobby-1` oder einen Persistent Server referenzieren. Das Plugin nutzt die gemeinsamen SimpleCloud-Platzhalter für dieses Ziel.
+
+Beispiele:
+
+- Gruppenplatzhalter: `<group_name>`
+- Gruppen-Spielerzahl: `<group_player_count:available>`
+- Serverplatzhalter-Prefix: `<server_...>`
+
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/npcs/npc.png?raw=true" alt="SimpleCloud NPC-Beispiel mit Hologramm" />
+</Frame>

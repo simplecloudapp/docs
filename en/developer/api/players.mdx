@@ -18,7 +18,11 @@ api.player().get(uuid)
 
 // Get player by username
 api.player().get("Steve")
-    .thenAccept(player -> { ... });
+    .thenAccept(player -> {
+        if (player != null) {
+            System.out.println("Found: " + player.getUniqueId());
+        }
+    });
 
 // Get all online players
 api.player().getOnlinePlayers()
@@ -76,7 +80,7 @@ player.sendMessage(Component.text("Important")
     .decorate(TextDecoration.BOLD));
 
 // Clickable text
-player.sendMessage(Component.text("Click here")
+player.sendMessage(Component.text("Run /help")
     .clickEvent(ClickEvent.runCommand("/help"))
     .hoverEvent(HoverEvent.showText(Component.text("Run /help"))));
 ```
@@ -141,23 +145,53 @@ player.sendPlayerListHeaderAndFooter(
 );
 ```
 
-For more detailed examples in both Java and Kotlin, see [Adventure Integration](/en/developer/droplets/player/adventure-integration).
+For full transfer workflows, see [Player transfer](/en/developer/guides/player-transfer).
 
 ## CloudPlayer Model
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `uniqueId` | `UUID` | Player's UUID |
-| `name` | `String` | Player's username |
-| `displayName` | `String` | Player's display name |
-| `connectedServerName` | `String` | Current server name |
-| `connectedProxyName` | `String` | Connected proxy name |
-| `online` | `boolean` | Whether the player is currently online |
-| `onlineTimeSeconds` | `long` | Accumulated online time in seconds |
-| `sessionId` | `String` | Active session ID, null if unavailable |
-| `firstSeen` | `String` | First login timestamp (ISO-8601) |
-| `lastSeen` | `String` | Last login timestamp (ISO-8601) |
-| `properties` | `Map<String, String>` | Player's properties |
+<ResponseField name="uniqueId" type="UUID" required>
+  Player's UUID.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Player's username.
+</ResponseField>
+
+<ResponseField name="displayName" type="string">
+  Player's display name.
+</ResponseField>
+
+<ResponseField name="connectedServerName" type="string">
+  Current server name.
+</ResponseField>
+
+<ResponseField name="connectedProxyName" type="string">
+  Connected proxy name.
+</ResponseField>
+
+<ResponseField name="online" type="boolean" required>
+  Whether the player is currently online.
+</ResponseField>
+
+<ResponseField name="onlineTimeSeconds" type="long" required>
+  Accumulated online time in seconds.
+</ResponseField>
+
+<ResponseField name="sessionId" type="string | null">
+  Active session ID, or `null` if unavailable.
+</ResponseField>
+
+<ResponseField name="firstSeen" type="string">
+  First login timestamp in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="lastSeen" type="string">
+  Last login timestamp in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="properties" type="object">
+  Player-specific properties.
+</ResponseField>
 
 ## ConnectResult
 

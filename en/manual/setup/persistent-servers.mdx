@@ -1,102 +1,153 @@
 ---
 title: 'Persistent Servers'
-description: 'Create always-on server instances that maintain state between restarts'
+description: 'Create single server instances that keep their identity and data across restarts.'
 ---
 
-Persistent servers are single, always-on server instances. Use them for servers that need to keep their world and data between restarts - like Citybuild, Skyblock, SMP, or Build servers.
+Persistent servers are single, long-lived server configurations. Use them for servers that need stable identity, local files, or world data between restarts, such as SMP, Citybuild, Skyblock, build servers, or a manually managed lobby.
 
-For servers that should scale based on player demand, use [Groups](/en/manual/setup/groups) instead.
+<Info>
+  Need SimpleCloud to create multiple interchangeable servers based on player demand? Use [Server Groups](/en/manual/setup/server-groups) instead.
+</Info>
 
-## Creating a Persistent Server
+## When to use a persistent server
+
+| Use a persistent server when... | Use a group when... |
+| ------------------------------- | ------------------- |
+| The server has long-lived world data | Servers can be recreated from a shared template |
+| You want one named server, such as `survival` | You want multiple instances, such as `lobby-1`, `lobby-2` |
+| You choose the serverhost during setup | SimpleCloud should distribute servers across hosts |
+| You want manual, predictable capacity | You want automatic scaling |
+
+## Create a persistent server
 
 <Steps>
-  <Step title="Navigate to Servers">
-    Click **Servers** in the navigation to view your existing persistent servers. Click the **New Server** button in the top right.
+  <Step title="Open the server wizard">
+    In the dashboard, open **Servers** and click **New Server**.
   </Step>
-  <Step title="Configure Basics">
-    - **Name**: Enter a unique name for your server (e.g., "Hub", "Proxy", "Lobby")
-    - **Type**: Choose **Server** for game servers or **Proxy** for load balancers
-    - **Server Host**: Select which host should run this server
-    - **Activate on creation**: Toggle on to start the server immediately after creation
+
+  <Step title="Choose the basic identity">
+    Set the fields that identify the server:
+
+    - **Name**: Use a stable name such as `survival`, `spawn`, or `build`.
+    - **Type**: Choose **Server** for game servers or **Proxy** for load balancers.
+    - **Server host**: Select the machine that should run this server.
+    - **Activate on creation**: Enable this if the server should start immediately.
   </Step>
-  <Step title="Select Software">
-    - **Software**: Choose your server software (Paper, Spigot, Purpur, Fabric, Velocity, etc.)
-    - **Version**: Select the Minecraft/software version
-    - **Custom URL**: Alternatively, provide a direct download URL for custom server JARs
-    - **Configurator**: Select how your server should be configured (appears for Server type)
+
+  <Step title="Select software">
+    Choose the server software and version. For custom server jars, provide a direct download URL.
+
+    For game servers, also choose the configurator that prepares the server files.
   </Step>
-  <Step title="Set Resources">
-    - **Memory**: Use a preset or set custom min/max memory allocation (in MB)
-    - **Max Players**: Maximum players allowed on this server
+
+  <Step title="Set resources">
+    Configure the resources assigned to this server:
+
+    - **Memory**: Minimum and maximum memory in MB.
+    - **Max players**: Player limit for this server.
   </Step>
-  <Step title="Network (Proxy only)">
-    For proxy servers, configure the **Port** for incoming player connections.
+
+  <Step title="Configure proxy networking">
+    For proxy servers, set the **Port** for incoming player connections.
   </Step>
-  <Step title="Add Plugins (Optional)">
-    Search and select plugins from Modrinth to automatically install. You can also add plugins later in server settings.
+
+  <Step title="Add plugins">
+    Add plugins from Modrinth, GitHub, direct URLs, or your configured plugin sources. You can also add plugins later in server settings.
   </Step>
-  <Step title="Review and Create">
-    Review your configuration summary and click **Create Server** to finish.
+
+  <Step title="Review and create">
+    Review the summary and click **Create Server**.
+
+    <Check>
+      If the server is active, SimpleCloud should start or keep one running instance for this persistent server.
+    </Check>
   </Step>
 </Steps>
 
-## Server Status
+## Understand server status
 
-| Status | Meaning |
-|--------|---------|
-| **Active** | Server is enabled and running (or ready to run) |
-| **Inactive** | Server is disabled - enable it in general settings to start |
+| Status | Meaning | What to check |
+| ------ | ------- | ------------- |
+| **Active** | The server is enabled and should run | Host availability and server logs if no instance starts |
+| **Inactive** | The server is disabled | Enable it in general settings if it should run |
 
-## Server Settings
+## Configure an existing persistent server
 
-### General Settings
+<AccordionGroup>
+  <Accordion title="General settings">
+    Enable or disable the server, adjust memory, change the player limit, and add tags for filtering.
+  </Accordion>
 
-- **Active Toggle**: Enable or disable the server
-- **Memory**: Adjust min/max memory allocation
-- **Max Players**: Change player limit
-- **Tags**: Add organizational tags for filtering
+  <Accordion title="Deployment settings">
+    Persistent servers run on one assigned serverhost. Change this only when you intentionally move the server to another machine.
 
-### Deployment Settings
+    <Warning>
+      Moving a persistent server does not automatically move local world files. Copy required data before you start the server on a new host.
+    </Warning>
+  </Accordion>
 
-Shows the assigned server host. Unlike groups, persistent servers run on a single host which is set during creation.
+  <Accordion title="Blueprint settings">
+    Change the server template, including software version, configurator settings, JVM options, and runtime arguments.
 
-### Blueprint Settings
+    Restart the running server when it needs to pick up blueprint changes.
+  </Accordion>
 
-Modify the underlying server template:
+  <Accordion title="Properties settings">
+    Add custom key-value data that your plugins and integrations can read.
 
-- View current software and version
-- Change configurator settings
-- Edit JVM options and runtime arguments
+    Properties are available through the [Cloud API](/en/developer/api/persistent-servers) and as `SIMPLECLOUD_` environment variables on the running server.
+  </Accordion>
 
-### Properties Settings
+  <Accordion title="Workflows settings">
+    Configure automation that runs during server lifecycle events:
 
-Add custom key-value properties to your server:
+    - **Manual workflows**: Run on demand.
+    - **On start workflows**: Run when the server starts.
+    - **On stop workflows**: Run when the server stops.
+  </Accordion>
 
-- Properties are metadata you define for your own use
-- Access them in your plugins via the [Cloud API](/en/developer/controller/servers)
-- Available as environment variables (prefixed with `SIMPLECLOUD_`)
-- Use cases: server type identifiers, custom settings for your plugins
+  <Accordion title="Plugins settings">
+    Add, inspect, or remove plugins for the server.
 
-### Workflows Settings
+    Plugin changes apply the next time the server is prepared or restarted, depending on the plugin and workflow setup.
+  </Accordion>
 
-Automate tasks with workflows:
+  <Accordion title="Danger zone">
+    Delete the persistent server only after stopping its running instance and backing up any data you need.
 
-- **Manual Workflows**: Trigger on demand
-- **On Start Workflows**: Run when the server starts
-- **On Stop Workflows**: Run when the server stops
+    <Warning>
+      Deleting the persistent server removes its SimpleCloud configuration. It does not automatically back up or migrate local world files.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
 
-### Plugins Settings
+## Troubleshooting
 
-Manage plugins for the server:
+<AccordionGroup>
+  <Accordion title="Server does not start">
+    **Likely cause:** The server is inactive, the assigned host is unavailable, or the host has no capacity.
 
-- Add plugins from Modrinth, GitHub, or direct URLs
-- View installed plugins with source information
-- Remove plugins from the server
+    **What to check:**
 
-### Danger Zone
+    1. Confirm the server is active.
+    2. Verify the assigned serverhost is online with `sc status serverhost`.
+    3. Check available memory on the host.
+    4. Review logs with `sc logs serverhost`.
+  </Accordion>
 
-Permanently delete the server:
+  <Accordion title="World data is missing after moving hosts">
+    **Likely cause:** The persistent server was assigned to a new host without copying local files.
 
-- Removes the server and its configuration
-- Stop the server first before deleting
-- Requires confirmation by typing the server name
+    **What to check:**
+
+    1. Stop the server.
+    2. Copy the world and plugin data from the old host to the new host.
+    3. Start the server again.
+  </Accordion>
+
+  <Accordion title="Plugin changes do not appear">
+    **Likely cause:** The running server has not been restarted or prepared with the updated plugin set.
+
+    Restart the server after plugin changes, then check the server logs for plugin load errors.
+  </Accordion>
+</AccordionGroup>

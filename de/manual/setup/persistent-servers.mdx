@@ -1,102 +1,153 @@
 ---
 title: 'Persistente Server'
-description: 'Erstelle dauerhaft laufende Server-Instanzen, die ihren Zustand zwischen Neustarts behalten'
+description: 'Erstelle einzelne Server-Instanzen, die ihre Identität und Daten über Neustarts hinweg behalten.'
 ---
 
-Persistente Server sind einzelne, dauerhaft laufende Server-Instanzen. Verwende sie für Server, die ihre Welt und Daten zwischen Neustarts behalten müssen - wie Citybuild, Skyblock, SMP oder Build-Server.
+Persistente Server sind einzelne, langlebige Server-Konfigurationen. Nutze sie für Server, die eine stabile Identität, lokale Dateien oder Weltdaten zwischen Neustarts behalten müssen, zum Beispiel SMP, Citybuild, Skyblock, Build-Server oder eine manuell verwaltete Lobby.
 
-Für Server, die basierend auf Spielerbedarf skalieren sollen, verwende stattdessen [Gruppen](/de/manual/setup/groups).
+<Info>
+  Soll SimpleCloud mehrere austauschbare Server je nach Spielerbedarf erstellen? Nutze stattdessen [Server-Gruppen](/de/manual/setup/server-groups).
+</Info>
+
+## Wann du einen persistenten Server verwendest
+
+| Nutze einen persistenten Server, wenn ... | Nutze eine Gruppe, wenn ... |
+| ---------------------------------------- | --------------------------- |
+| Der Server langlebige Weltdaten hat | Server aus einer gemeinsamen Vorlage neu erstellt werden können |
+| Du einen benannten Server wie `survival` willst | Du mehrere Instanzen wie `lobby-1`, `lobby-2` willst |
+| Du den Serverhost beim Setup auswählst | SimpleCloud Server auf Hosts verteilen soll |
+| Du planbare, manuelle Kapazität willst | Du automatische Skalierung willst |
 
 ## Persistenten Server erstellen
 
 <Steps>
-  <Step title="Zu Servers navigieren">
-    Klicke auf **Servers** in der Navigation, um deine bestehenden persistenten Server anzuzeigen. Klicke auf **New Server** oben rechts.
+  <Step title="Server-Wizard öffnen">
+    Öffne im Dashboard **Servers** und klicke auf **New Server**.
   </Step>
-  <Step title="Grundlagen konfigurieren">
-    - **Name**: Gib einen eindeutigen Namen für deinen Server ein (z.B. "Hub", "Proxy", "Lobby")
-    - **Type**: Wähle **Server** für Game-Server oder **Proxy** für Load-Balancer
-    - **Server Host**: Wähle welcher Host diesen Server ausführen soll
-    - **Activate on creation**: Aktivieren, um den Server direkt nach Erstellung zu starten
+
+  <Step title="Grunddaten festlegen">
+    Lege fest, wie der Server heißt und wofür er verwendet wird:
+
+    - **Name**: Verwende einen stabilen Namen wie `survival`, `spawn` oder `build`.
+    - **Type**: Wähle **Server** für Game-Server oder **Proxy** für Load Balancer.
+    - **Server host**: Wähle die Maschine, die diesen Server ausführen soll.
+    - **Activate on creation**: Aktiviere dies, wenn der Server sofort starten soll.
   </Step>
+
   <Step title="Software auswählen">
-    - **Software**: Wähle deine Server-Software (Paper, Spigot, Purpur, Fabric, Velocity, etc.)
-    - **Version**: Wähle die Minecraft/Software-Version
-    - **Custom URL**: Alternativ eine direkte Download-URL für eigene Server-JARs angeben
-    - **Configurator**: Wähle wie dein Server konfiguriert werden soll (erscheint bei Server-Typ)
+    Wähle Server-Software und Version. Für eigene Server-JARs kannst du eine direkte Download-URL angeben.
+
+    Für Game-Server wählst du außerdem den Configurator, der die Server-Dateien vorbereitet.
   </Step>
+
   <Step title="Ressourcen festlegen">
-    - **Memory**: Nutze ein Preset oder setze eigene min/max Speicherzuweisung (in MB)
-    - **Max Players**: Maximale Spieleranzahl auf diesem Server
+    Konfiguriere die Ressourcen für diesen Server:
+
+    - **Memory**: Minimaler und maximaler Speicher in MB.
+    - **Max players**: Spielerlimit für diesen Server.
   </Step>
-  <Step title="Netzwerk (nur Proxy)">
-    Für Proxy-Server konfiguriere den **Port** für eingehende Spieler-Verbindungen.
+
+  <Step title="Proxy-Netzwerk konfigurieren">
+    Für Proxy-Server legst du den **Port** für eingehende Spieler-Verbindungen fest.
   </Step>
-  <Step title="Plugins hinzufügen (Optional)">
-    Suche und wähle Plugins von Modrinth zur automatischen Installation. Du kannst auch später Plugins in den Server-Einstellungen hinzufügen.
+
+  <Step title="Plugins hinzufügen">
+    Füge Plugins von Modrinth, GitHub, direkten URLs oder deinen konfigurierten Plugin-Quellen hinzu. Du kannst Plugins auch später in den Server-Einstellungen ergänzen.
   </Step>
-  <Step title="Überprüfen und Erstellen">
-    Überprüfe deine Konfigurations-Zusammenfassung und klicke **Create Server** zum Abschließen.
+
+  <Step title="Prüfen und erstellen">
+    Prüfe die Zusammenfassung und klicke auf **Create Server**.
+
+    <Check>
+      Wenn der Server aktiv ist, sollte SimpleCloud eine laufende Instanz für diesen persistenten Server starten oder online halten.
+    </Check>
   </Step>
 </Steps>
 
-## Server-Status
+## Serverstatus verstehen
 
-| Status | Bedeutung |
-|--------|-----------|
-| **Active** | Server ist aktiviert und läuft (oder bereit zum Starten) |
-| **Inactive** | Server ist deaktiviert - in den allgemeinen Einstellungen aktivieren zum Starten |
+| Status | Bedeutung | Prüfen |
+| ------ | --------- | ------ |
+| **Active** | Der Server ist aktiviert und sollte laufen | Host-Verfügbarkeit und Server-Logs, wenn keine Instanz startet |
+| **Inactive** | Der Server ist deaktiviert | In den allgemeinen Einstellungen aktivieren, wenn er laufen soll |
 
-## Server-Einstellungen
+## Bestehenden persistenten Server konfigurieren
 
-### Allgemeine Einstellungen
+<AccordionGroup>
+  <Accordion title="Allgemeine Einstellungen">
+    Aktiviere oder deaktiviere den Server, passe Speicher an, ändere das Spielerlimit und füge Tags zum Filtern hinzu.
+  </Accordion>
 
-- **Active Toggle**: Server aktivieren oder deaktivieren
-- **Memory**: Min/max Speicherzuweisung anpassen
-- **Max Players**: Spielerlimit ändern
-- **Tags**: Organisatorische Tags zum Filtern hinzufügen
+  <Accordion title="Deployment">
+    Persistente Server laufen auf einem zugewiesenen Serverhost. Ändere diesen nur, wenn du den Server bewusst auf eine andere Maschine verschiebst.
 
-### Deployment-Einstellungen
+    <Warning>
+      Das Verschieben eines persistenten Servers verschiebt lokale Weltdaten nicht automatisch. Kopiere benötigte Daten, bevor du den Server auf einem neuen Host startest.
+    </Warning>
+  </Accordion>
 
-Zeigt den zugewiesenen Server-Host. Anders als bei Gruppen laufen persistente Server auf einem einzelnen Host, der bei der Erstellung festgelegt wird.
+  <Accordion title="Blueprint">
+    Ändere die Server-Vorlage, zum Beispiel Software-Version, Configurator-Einstellungen, JVM-Optionen und Runtime-Argumente.
 
-### Blueprint-Einstellungen
+    Starte den laufenden Server neu, wenn er Blueprint-Änderungen übernehmen soll.
+  </Accordion>
 
-Das zugrunde liegende Server-Template bearbeiten:
+  <Accordion title="Properties">
+    Füge eigene Key-Value-Daten hinzu, die Plugins und Integrationen lesen können.
 
-- Aktuelle Software und Version anzeigen
-- Configurator-Einstellungen ändern
-- JVM-Optionen und Laufzeit-Argumente bearbeiten
+    Properties sind über die [Cloud API](/de/developer/api/persistent-servers) und als `SIMPLECLOUD_`-Umgebungsvariablen auf dem laufenden Server verfügbar.
+  </Accordion>
 
-### Properties-Einstellungen
+  <Accordion title="Workflows">
+    Konfiguriere Automatisierung für Server-Lifecycle-Events:
 
-Eigene Key-Value-Eigenschaften zum Server hinzufügen:
+    - **Manual workflows**: Manuell ausführen.
+    - **On start workflows**: Beim Start des Servers ausführen.
+    - **On stop workflows**: Beim Stoppen des Servers ausführen.
+  </Accordion>
 
-- Properties sind Metadaten, die du für eigene Zwecke definierst
-- Greife in deinen Plugins über die [Cloud API](/de/developer/controller/servers) darauf zu
-- Verfügbar als Umgebungsvariablen (mit `SIMPLECLOUD_` Präfix)
-- Anwendungsfälle: Server-Typ-Identifikatoren, eigene Einstellungen für deine Plugins
+  <Accordion title="Plugins">
+    Füge Plugins hinzu, prüfe installierte Plugins oder entferne sie für den Server.
 
-### Workflows-Einstellungen
+    Plugin-Änderungen gelten je nach Plugin- und Workflow-Setup beim nächsten Vorbereiten oder Neustarten des Servers.
+  </Accordion>
 
-Aufgaben mit Workflows automatisieren:
+  <Accordion title="Danger zone">
+    Lösche den persistenten Server erst, nachdem du seine laufende Instanz gestoppt und benötigte Daten gesichert hast.
 
-- **Manual Workflows**: Bei Bedarf auslösen
-- **On Start Workflows**: Beim Server-Start ausführen
-- **On Stop Workflows**: Beim Server-Stop ausführen
+    <Warning>
+      Das Löschen des persistenten Servers entfernt seine SimpleCloud-Konfiguration. Es sichert oder migriert lokale Weltdaten nicht automatisch.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
 
-### Plugins-Einstellungen
+## Fehlerbehebung
 
-Plugins für den Server verwalten:
+<AccordionGroup>
+  <Accordion title="Server startet nicht">
+    **Wahrscheinliche Ursache:** Der Server ist inaktiv, der zugewiesene Host ist nicht verfügbar oder der Host hat keine Kapazität.
 
-- Plugins von Modrinth, GitHub oder direkten URLs hinzufügen
-- Installierte Plugins mit Quell-Informationen anzeigen
-- Plugins vom Server entfernen
+    **Das solltest du prüfen:**
 
-### Danger Zone
+    1. Prüfe, ob der Server aktiv ist.
+    2. Prüfe den zugewiesenen Serverhost mit `sc status serverhost`.
+    3. Prüfe freien Speicher auf dem Host.
+    4. Prüfe Logs mit `sc logs serverhost`.
+  </Accordion>
 
-Server permanent löschen:
+  <Accordion title="Weltdaten fehlen nach Host-Wechsel">
+    **Wahrscheinliche Ursache:** Der persistente Server wurde einem neuen Host zugewiesen, ohne lokale Dateien zu kopieren.
 
-- Entfernt den Server und seine Konfiguration
-- Server zuerst stoppen vor dem Löschen
-- Erfordert Bestätigung durch Eingabe des Server-Namens
+    **Das solltest du prüfen:**
+
+    1. Stoppe den Server.
+    2. Kopiere Welt- und Plugin-Daten vom alten Host auf den neuen Host.
+    3. Starte den Server wieder.
+  </Accordion>
+
+  <Accordion title="Plugin-Änderungen erscheinen nicht">
+    **Wahrscheinliche Ursache:** Der laufende Server wurde noch nicht mit der aktualisierten Plugin-Liste neu gestartet oder vorbereitet.
+
+    Starte den Server nach Plugin-Änderungen neu und prüfe anschließend die Logs auf Plugin-Ladefehler.
+  </Accordion>
+</AccordionGroup>

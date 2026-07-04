@@ -1,151 +1,202 @@
 ---
 title: 'Proxy Essentials'
-description: "Learn about SimpleCloud's proxy essentials plugin for customizable MOTD, Tablist, and Joinstates"
+description: "Configure SimpleCloud MOTDs, tablists, join states, player counts, and proxy layouts"
 tag: 'Proxy'
 ---
 
 ## Overview
 
-This plugin enhances your server network with customizable MOTD (Server Info), Tablist, and Joinstates features. All settings are synchronized across all proxies, offering extensive customization through simple configuration files.
+Proxy Essentials adds the common proxy-facing features a SimpleCloud network needs: server list MOTDs, tablist headers and footers, join states, whitelisting, summed player counts, and configurable hub-style commands.
+
+All configuration is file-based and can be reloaded from the proxy.
 
 ## Supported Software
 
 | Software   | Plugin Support |
 | ---------- | -------------- |
-| Velocity   | ✅ Yes         |
-| Bungeecord | ✅ Yes         |
-
-<Note>
-  Want to add support for another server software? Submit a pull request on
-  [GitHub](https://github.com/simplecloudapp/proxy-plugin)!
-</Note>
+| Velocity   | Yes            |
+| BungeeCord | Yes            |
 
 ## Quick Setup
 
-1. Download the plugin from [GitHub](https://github.com/simplecloudapp/proxy-essentials-plugin/releases)
-2. Place it in your proxy template's plugins folder
-3. Start your proxy server
-4. Set a joinstate for your group (e.g., `maintenance` for your proxy group)
+<Steps>
+  <Step title="Install the plugin">
+    Download the plugin from [GitHub](https://github.com/simplecloudapp/proxy-essentials-plugin/releases) and place it in your proxy template's `plugins/` folder.
+  </Step>
 
-## Features
+  <Step title="Install the API plugin">
+    Make sure the `simplecloud-api` plugin is installed on the same proxy template. Proxy Essentials uses it for player counts and SimpleCloud-aware proxy state.
+  </Step>
 
-### Server Info (MOTD)
+  <Step title="Generate configuration files">
+    Start the proxy once so the plugin creates `config.yml`, `layout/*.yml`, `placeholder.yml`, and `messages.yml`.
+  </Step>
 
-Create multiple layouts in the `layout/` folder for dynamic server information display:
+  <Step title="Configure proxy behavior">
+    Configure join states, MOTD layouts, tablists, and player counts.
 
-```yaml
-first-lines:
-  - <color:#0ea5e9>A simplecloud.app network
-second-lines:
-  - " "
-player-info: []
-version-name: ""
-max-player-display-type: REAL # or DYNAMIC
-dynamic-player-range: 1 # Only enabled if max-player-display-type is DYNAMIC
-```
+    <Check>
+      After reloading or restarting the proxy, `/scproxy reload` should reload Proxy Essentials configuration without errors.
+    </Check>
+  </Step>
+</Steps>
 
-<Frame>
-  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/proxy-essentials/server-info.png?raw=true" alt="Server Info Example" />
-</Frame>
+## Generated Files
 
-<Note>
-  When running locally, actual slots are displayed due to controller health
-  checks. Players see different information based on your configuration.
-</Note>
+| File | Purpose |
+| ---- | ------- |
+| `config.yml` | Join states, whitelist, player count, and tablist settings |
+| `layout/*.yml` | Server list MOTD layouts |
+| `placeholder.yml` | Date, time, and ping color formatting |
+| `messages.yml` | Kick and command messages |
 
-### Tablist Header and Footer
+## Join States
 
-Create engaging tablist headers and footers with support for static and animated content:
-
-```yaml
-groups:
-  - group-or-service: "*"
-    tab-lists:
-      - header:
-          - ""
-          - <color:#0ea5e9>SimpleCloud v3
-          - "Frame 1"
-        footer:
-          - ""
-          - " <color:#ffffff><online_players> players <color:#cbd5e1>are playing on your network "
-          - <color:#64748b>  sɪᴍᴘʟᴇᴄʟᴏᴜᴅ.ᴀᴘᴘ
-          - ""
-      # Create another list entry for rotation
-      - header:
-          - ""
-          - <color:#0ea5e9>SimpleCloud v3
-          - "Frame 2"
-        footer:
-          - ""
-          - " <color:#ffffff><online_players> players <color:#cbd5e1>are playing on your network "
-          - <color:#64748b>  sɪᴍᴘʟᴇᴄʟᴏᴜᴅ.ᴀᴘᴘ
-          - ""
-tab-list-update-time: 1000 # Update interval in milliseconds
-```
-
-<Frame>
-  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/proxy-essentials/tablist.png?raw=true" alt="Tablist Example" />
-</Frame>
-
-### Joinstates
-
-Manage server access with customizable states:
+Join states decide whether a player may join and which MOTD layout should be forced while the state is active.
 
 ```yaml
-# Default state for new groups
-default-state: public
+version: "2"
+initial-state: public
+initial-layout: public
 
-join-states:
+joinstates:
   - name: public
-    join-permission: "" # Empty for public access
-    full-join-permission: simplecloud.join.full.public
-    motd-layout-by-proxy: public
-
-  - name: closedBeta
-    join-permission: simplecloud.join.closedbeta
-    full-join-permission: simplecloud.join.full.closedbeta
-    motd-layout-by-proxy: closed_beta
+    permission:
+      join: ""
+      full: "simplecloud.proxy-essentials.join.full.public"
+    forced-motd-layout: null
 
   - name: maintenance
-    join-permission: simplecloud.join.maintenance
-    full-join-permission: simplecloud.join.full.maintenance
-    motd-layout-by-proxy: maintenance
+    permission:
+      join: "simplecloud.proxy-essentials.join.maintenance"
+      full: "simplecloud.proxy-essentials.join.maintenance"
+    forced-motd-layout: maintenance
+
+whitelist:
+  enabled: true
+  players:
+    - Notch
+```
+
+### Player Count
+
+The player count can include this proxy group plus extra groups or persistent servers. The update interval is configured in ticks.
+
+```yaml
+player-count:
+  enabled: true
+  additional-groups: []
+  additional-persistent-servers: []
+  update-time: 20
+```
+
+## Server List Layouts
+
+Create MOTD layouts in the `layout/` directory. Join states can force a layout with `forced-motd-layout`, and the `/scproxy layout` command can store a layout on a group.
+
+```yaml
+config-version: "2"
+
+motd:
+  enabled: true
+  update-type: RANDOM # RANDOM or QUEUE
+  layouts:
+    - name: public
+      line1: "<color:#0ea5e9>A simplecloud.app network"
+      line2: " "
+
+server-icon:
+  enabled: true
+  file: simplecloud.png
+
+player-list:
+  enabled: true
+  player-list:
+    - ""
+    - "simplecloud.app"
+    - ""
+
+version:
+  name:
+    enabled: false
+    text: "Example"
+  slots:
+    enabled: true
+    type: REAL # REAL, FAKE, or DYNAMIC
+    fake-slots: 100
+    dynamic-player-range: 5
+```
+
+## Tablist
+
+Tablist layouts live in `config.yml`. The update time is configured in ticks.
+
+```yaml
+tablist:
+  - name: global
+    layout:
+      - header: "<br><color:#0ea5e9>SimpleCloud v3<br>"
+        footer: "<br> <color:#ffffff><online_players> players <color:#cbd5e1>are playing on your network<br>"
+    update-time: 20
 ```
 
 ## Commands
 
-| Command                                           | Description            |
-| ------------------------------------------------- | ---------------------- |
-| `/joinstate group <group> <state>`                | Set group joinstate    |
-| `/joinstate server <group> <numericalId> <state>` | Set server joinstate   |
-| `/joinstate help`                                 | Show command help      |
-| `/joinstate groups`                               | List groups and states |
-| `/joinstate states`                               | List all joinstates    |
+| Command | Description |
+| ------- | ----------- |
+| `/scproxy` | Show available Proxy Essentials commands |
+| `/scproxy help` | Show command help |
+| `/scproxy reload` | Reload `config.yml`, `placeholder.yml`, `messages.yml`, and MOTD layouts |
+| `/scproxy joinstate help` | Show join state commands |
+| `/scproxy joinstate info <group>` | Show the join state for a group |
+| `/scproxy joinstate info <group> <id>` | Show the join state for one server |
+| `/scproxy joinstate set <group> <joinstate>` | Set the join state for a group and its servers |
+| `/scproxy joinstate set <group> <id> <joinstate>` | Set the join state for one server |
+| `/scproxy layout help` | Show layout commands |
+| `/scproxy layout info` | Show the default MOTD layout |
+| `/scproxy layout info <group>` | Show the layout used by a group |
+| `/scproxy layout set <group> <layout>` | Store a MOTD layout on a group and its running servers |
 
 ## Placeholders
 
-| Placeholder        | MOTD | Tablist | Description             |
-| ------------------ | ---- | ------- | ----------------------- |
-| `<online_players>` | ✅   | ✅      | Current online players  |
-| `<max_players>`    | ✅   | ✅      | Maximum network players |
-| `<date>`           | ✅   | ✅      | Current date            |
-| `<env:NAME>`       | ✅   | ✅      | Environment variable    |
-| `<server_name>`    | ❌   | ✅      | Player's current server |
-| `<ping>`           | ❌   | ✅      | Player's ping           |
+| Placeholder | Context | Description |
+| ----------- | ------- | ----------- |
+| `<online_players>` | MOTD, tablist | Summed online player count |
+| `<max_players>` | MOTD, tablist | Max player count based on layout slot mode |
+| `<date:FORMAT>` | MOTD, tablist | Current date/time using a MiniMessage date format |
+| `<env:NAME>` | MOTD, tablist | Environment variable value |
+| `<env:NAME:default>` | MOTD, tablist | Environment variable value with fallback |
+| `<server_name>` | Tablist | Player's current server |
+| `<ping>` | Tablist | Player ping with configured ping color |
+
+Configure date and ping rendering in `placeholder.yml`:
+
+```yaml
+currentDateFormat: "dd.MM.yyyy"
+currentTimeFormat: "HH:mm:ss"
+pingColors:
+  - ping: 0
+    color: "<green>"
+  - ping: 100
+    color: "<gold>"
+  - ping: 200
+    color: "<dark_red>"
+```
 
 ## Permissions
 
-| Permission                             | Description            |
-| -------------------------------------- | ---------------------- |
-| `simplecloud.command.joinstate.*`      | All joinstate commands |
-| `simplecloud.command.joinstate.help`   | View command help      |
-| `simplecloud.command.joinstate.groups` | View groups and states |
-| `simplecloud.command.joinstate.states` | View all joinstates    |
-| `simplecloud.command.joinstate.server` | Set server joinstate   |
-| `simplecloud.command.joinstate.group`  | Set group joinstate    |
+| Permission | Description |
+| ---------- | ----------- |
+| `simplecloud.proxy-essentials.command.help` | Use `/scproxy`, `/scproxy help`, and `/scproxy reload` |
+| `simplecloud.proxy-essentials.command.joinstate.help` | View join state help |
+| `simplecloud.proxy-essentials.command.joinstate.info` | View join states |
+| `simplecloud.proxy-essentials.command.joinstate.set` | Change join states |
+| `simplecloud.proxy-essentials.command.layout.help` | View layout help |
+| `simplecloud.proxy-essentials.command.layout.info` | View layout assignments |
+| `simplecloud.proxy-essentials.command.layout.set` | Change a group's MOTD layout |
+| `simplecloud.proxy-essentials.join.maintenance` | Join while the maintenance state is active |
+| `simplecloud.proxy-essentials.join.full.public` | Join a full public network |
 
-## API Integration
-
-<Warning>
-  API documentation will be available once the API is ready and public.
-</Warning>
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/proxy-essentials/server-info.png?raw=true" alt="Proxy Essentials server list MOTD example" />
+</Frame>
