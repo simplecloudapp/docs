@@ -70,7 +70,7 @@ curl "https://your-controller/v0/servers?state=AVAILABLE&type=lobby" \
 | Parameter | Ort | Erforderlich | Beschreibung |
 |-----------|-----|--------------|--------------|
 | `X-Network-ID` | Header | Ja | Deine Netzwerk-ID |
-| `X-Network-Secret` | Header | Ja | Dein Netzwerk-Secret |
+| `X-Network-Secret` | Header | Ja | Dein Netzwerk-Secret **oder** ein App-JWT für das Zielnetzwerk. Wenn der Controller mit JWT-Authentifizierung konfiguriert ist, werden beide Credential-Typen akzeptiert. JWTs müssen für das in `X-Network-ID` angegebene Netzwerk gültig sein und werden mit subject-basierten Berechtigungen gescoped; Netzwerk-Secrets gewähren vollen Netzwerkzugriff. |
 | `X-SC-Component` | Header | Nein | Optionaler Name der aufrufenden Komponente (zum Beispiel `serverhost`). Wenn gesetzt, wird der Wert dem Request-Wide-Event des Controllers als Feld `component` angehängt, sodass Request-Logs nach der ursprünglichen SimpleCloud-Komponente gefiltert werden können. Führende und nachgestellte Leerzeichen werden entfernt. |
 | `server_group_id` | Query | Nein | Nach Server-Gruppen-ID(s) filtern, kommagetrennt |
 | `state` | Query | Nein | Nach Status filtern, kommagetrennt (z.B. `AVAILABLE,STARTING`) |
@@ -129,7 +129,7 @@ curl -X DELETE "https://your-controller/v0/servers/database?server_id=SERVER_UUI
 |-----------|-----|--------------|--------------|
 | `server_id` | Query | Ja | UUID des zu löschenden Server-Datensatzes |
 | `X-Network-ID` | Header | Ja | Deine Netzwerk-ID |
-| `X-Network-Secret` | Header | Ja | Dein Netzwerk-Secret |
+| `X-Network-Secret` | Header | Ja | Dein Netzwerk-Secret **oder** ein App-JWT für das Zielnetzwerk. Wenn der Controller mit JWT-Authentifizierung konfiguriert ist, werden beide Credential-Typen akzeptiert. |
 | `X-SC-Component` | Header | Nein | Optionaler Name der aufrufenden Komponente, der dem Request-Wide-Event des Controllers als Feld `component` angehängt wird. Führende und nachgestellte Leerzeichen werden entfernt. |
 
 ## Server Model

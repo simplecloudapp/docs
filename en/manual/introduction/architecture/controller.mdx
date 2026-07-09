@@ -125,8 +125,9 @@ For production deployments, you can run multiple Controller instances:
 
     **Solution:**
     1. Verify `X-Network-ID` header matches your network
-    2. Verify `X-Network-Secret` header is correct
-    3. Check credentials in `secrets/` directory
+    2. Verify `X-Network-Secret` header is correct. It accepts either your network secret or an app JWT valid for the target network (JWT support requires the controller to have JWT authentication configured).
+    3. If using a JWT, check that the token has not expired and that its `iss` and `aud` claims match the controller's `AUTH_JWT_ISSUER` and `AUTH_JWT_AUDIENCE` configuration.
+    4. Check credentials in `secrets/` directory
   </Accordion>
 
   <Accordion title="API returns 500">
