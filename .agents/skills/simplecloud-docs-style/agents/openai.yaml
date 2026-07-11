@@ -1,0 +1,4 @@
+interface:
+  display_name: "SimpleCloud Docs Style"
+  short_description: "Write clear, user-focused SimpleCloud docs"
+  default_prompt: "Use $simplecloud-docs-style to create or revise this SimpleCloud documentation page."
