@@ -1,121 +1,112 @@
 ---
 title: 'Configurators'
-description: 'Automatic server configuration based on server software'
+description: 'Customize software configuration files before a server starts'
 ---
 
-## What configurators do
+Before a server starts, SimpleCloud uses a configurator to write values such as the assigned port and player limit to the server software's configuration files. The dashboard selects a built-in configurator when you create a group or persistent server, so a standard setup needs no extra work.
 
-Configurators edit server software files during preparation. They set values such as ports, forwarding secrets, online mode, and player limits before the server process starts.
+Create a custom configurator when you need to add settings that the built-in configurator does not manage. Use [templates](/en/manual/setup/templates) instead when you only need to copy the same files to your servers.
 
-The serverhost loads configurators from `options/configurators/{name}.yml`. A group or persistent server selects the configurator through its blueprint settings.
+<Warning>
+  A custom configurator replaces the selected built-in configurator. Keep the built-in settings that your server needs, especially its port and proxy settings.
+</Warning>
 
-## Configurator structure
+## Create a custom configurator
 
-Each configurator has a `paths` list. Every entry names a file, the file type, and the data that should be written or merged.
+This example extends the **Paper/Spigot Standalone** configurator with a difficulty and view distance. If your server connects through a proxy, start with the matching proxy configurator instead.
 
-```yaml
-# options/configurators/paper_velocity.yml
-paths:
-  - path: "server.properties"
-    type: "PROPERTIES"
-    data:
-      server-ip: "0.0.0.0"
-      server-port: %port%
-      max-players: %max-players%
-      online-mode: false
+<Steps>
+  <Step title="Create the configurator file">
+    On the serverhost, create `options/configurators/paper_survival.yml`:
 
-  - path: "config/paper-global.yml"
-    type: "YML"
-    data:
-      proxies:
-        velocity:
-          enabled: "true"
-          online-mode: "true"
-          secret: "%forwarding-secret%"
-```
+    ```yaml options/configurators/paper_survival.yml
+    paths:
+      - path: "server.properties"
+        type: "PROPERTIES"
+        data:
+          server-ip: "0.0.0.0"
+          server-port: %port%
+          max-players: %max-players%
+          online-mode: true
+          difficulty: "hard"
+          view-distance: 10
+    ```
 
-## Supported file types
+    Each `path` is relative to the server's own directory. The file can contain several path entries when you need to configure more than one file.
+  </Step>
 
-| Type | Use for |
-| ---- | ------- |
-| `YML` | YAML files such as `config.yml`, `spigot.yml`, or `paper-global.yml` |
-| `PROPERTIES` | Java `.properties` files such as `server.properties` |
-| `TOML` | TOML files such as `velocity.toml` |
-| `JSON` | JSON configuration files |
-| `TXT` | Plain text files such as `forwarding.secret` |
+  <Step title="Select the configurator">
+    Open the group or persistent server in the dashboard, then go to **Settings > Blueprint**. Under **Software Configuration**, select **Custom**, enter `paper_survival`, and save.
+  </Step>
 
-## Placeholders
+  <Step title="Apply the changes">
+    Restart the group or persistent server. SimpleCloud applies the configurator to every server that uses its blueprint before that server starts.
+  </Step>
+</Steps>
 
-Configurators use percent placeholders. The serverhost replaces them before it parses the YAML file.
+<Warning>
+  If the server can run on multiple serverhosts, add the configurator file to each one.
+</Warning>
 
-| Placeholder | Description |
-| ----------- | ----------- |
-| `%port%` | Assigned server port |
-| `%group%` | Group name |
-| `%numerical-id%` | Numerical server ID inside the group |
-| `%type%` | Server type |
-| `%min-memory%` | Minimum memory in MB |
-| `%max-memory%` | Maximum memory in MB |
-| `%max-players%` | Maximum player count |
-| `%forwarding-secret%` | Proxy forwarding secret |
-| `%velocity-config-version%` | Velocity config version when available |
+## Configurator reference
 
-Server and blueprint properties can also be exposed as placeholders by the runtime. Keep custom property names stable so templates and configurators do not drift.
+Each entry under `paths` identifies a configuration file, its format, and the values to apply.
 
-## Velocity example
+<AccordionGroup>
+  <Accordion title="Supported file types">
+    | Type | File format |
+    | --- | --- |
+    | `YML` | YAML |
+    | `JSON` | JSON |
+    | `TOML` | TOML |
+    | `PROPERTIES` | Java properties |
+    | `TXT` | Plain text |
 
-```yaml
-# options/configurators/velocity.yml
-paths:
-  - path: "velocity.toml"
-    type: "TOML"
-    data:
-      bind: "0.0.0.0:%port%"
-      show-max-players: %max-players%
-      forwarding-secret-file: "forwarding.secret"
-      player-info-forwarding-mode: "MODERN"
+    Structured files keep values that are not specified in the configurator. `TXT` replaces the complete file.
+  </Accordion>
 
-  - path: "forwarding.secret"
-    type: "TXT"
-    data: "%forwarding-secret%"
-```
+  <Accordion title="Available placeholders">
+    Use placeholders when a value depends on the server instance.
 
-## Built-in configurators
+    | Placeholder | Value |
+    | --- | --- |
+    | `%port%` | Assigned port |
+    | `%group%` | Group or persistent server name |
+    | `%numerical-id%` | Instance number |
+    | `%type%` | Server or proxy type |
+    | `%min-memory%` | Minimum memory in MB |
+    | `%max-memory%` | Maximum memory in MB |
+    | `%max-players%` | Player limit |
+    | `%forwarding-secret%` | Proxy forwarding secret |
+    | `%velocity-config-version%` | Velocity configuration version |
 
-| Configurator | Purpose |
-| ------------ | ------- |
-| `spigot` | Spigot or Paper behind a BungeeCord-style proxy |
-| `spigot_standalone` | Standalone Spigot or Paper server |
-| `paper_velocity` | Paper behind Velocity modern forwarding |
-| `velocity` | Velocity proxy |
-| `bungeecord` | BungeeCord proxy |
-| `waterfall` | Waterfall proxy |
-| `luckperms` | LuckPerms storage configuration template |
+    Quote placeholders whose resulting value must be text:
 
-## Apply a configurator
+    ```yaml
+    server-name: "%group%"
+    server-port: %port%
+    ```
 
-The default setup action calls `configurate` with the configured blueprint value:
-
-```yaml
-- name: configurate-server
-  uses: simplecloud/configurate
-  with:
-    configurator: "{{ runtime.configurator }}"
-    dir: "{{ runtime.server-dir }}"
-```
+    Custom properties from the group or persistent server are also available as placeholders. For example, a property named `motd` can be used as `%motd%`.
+  </Accordion>
+</AccordionGroup>
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="Configuration is not applied">
-    Check that the blueprint selects the expected configurator name and that `options/configurators/{name}.yml` exists on the serverhost.
+  <Accordion title="The configurator cannot be found">
+    Confirm that `options/configurators/{name}.yml` exists on every serverhost that can run the server. The custom name in the dashboard must match the filename without `.yml`.
   </Accordion>
 
-  <Accordion title="A placeholder remains in the generated file">
-    Use percent syntax such as `%port%`, not `{{port}}`. Also verify the runtime actually provides the placeholder you used.
+  <Accordion title="A setting does not change">
+    Restart the server first. If the value still does not change, check that `path` is relative to the server directory, `type` matches the file format, and the setting is nested correctly under `data`.
   </Accordion>
 
-  <Accordion title="The configurator fails to parse">
-    Check that every entry has `path`, uppercase `type`, and `data`. The `type` must be one of `YML`, `PROPERTIES`, `TOML`, `JSON`, or `TXT`.
+  <Accordion title="A placeholder remains in the file">
+    Check the placeholder spelling and use percent syntax such as `%port%`. For a custom placeholder, add a property with the same name to the group or persistent server.
+  </Accordion>
+
+  <Accordion title="The server does not start after selecting the configurator">
+    Check the serverhost log for a configurator error. Common causes are invalid YAML, an unsupported `type`, or a value whose structure does not match the target file.
   </Accordion>
 </AccordionGroup>

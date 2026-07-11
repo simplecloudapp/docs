@@ -1,56 +1,81 @@
 ---
-title: 'Updates'
-description: 'Keep your SimpleCloud installation up to date with our built-in update mechanisms'
+title: "Updates"
+description: "Keep the SimpleCloud CLI and serverhost up to date"
 ---
 
-## Version Checks
+The serverhost updates itself automatically and restarts when a new version is assigned to it. This restart does not stop the Minecraft servers running on the serverhost. The CLI does not update automatically, but it tells you when a new version is available.
 
-SimpleCloud components and the CLI can check whether newer releases are available. The CLI will prompt you when it is too far behind the latest release, so you know when an upgrade is required.
+These updates only cover SimpleCloud. They do not update your Minecraft server software or plugins.
 
-- Use `simplecloud upgrade cli` to update the CLI itself.
-- Use `simplecloud upgrade` when you want the CLI to upgrade supported installed targets.
-- Review component restarts before upgrading production hosts.
-- Keep configuration and template backups before changing runtime components.
+## Update the CLI
 
-<Note>
-  The CLI prompts you to update when it is more than 5 versions behind the latest release.
-</Note>
-
-## Operational Impact
-
-Updates can restart SimpleCloud components. Plan them like any other infrastructure change:
-
-- Update one serverhost first when possible.
-- Confirm server startup and shutdown still work.
-- Roll the same update to the remaining hosts.
-- Watch dashboard status and serverhost logs during the rollout.
-
-## Manual Updates
-
-If you prefer to trigger updates manually, use the upgrade command:
+Run:
 
 ```bash
-simplecloud upgrade
+sc upgrade cli
 ```
 
-With no targets, this upgrades the CLI and all installed components. You can also upgrade specific targets:
+The command replaces the CLI with the latest release. It does not restart the serverhost or any Minecraft servers.
+
+Run `sc --version` afterward to confirm the installed version.
+
+## Update the serverhost now
+
+You normally do not need to update the serverhost yourself. To install an available update immediately, run this command from your SimpleCloud installation directory:
 
 ```bash
-simplecloud upgrade [targets..]
+sc restart --update
 ```
 
-Targets can be `cli`, component IDs, or component version pins such as `serverhost@1.2.3`.
+<Warning>
+  This command updates and restarts the serverhost. Run it during a maintenance window. SimpleCloud asks whether it should also stop the Minecraft servers running on this serverhost, unless you saved this choice earlier.
+</Warning>
 
-<Note>
-  `simplecloud update` still works as an alias for `simplecloud upgrade`.
-</Note>
-
-## Updating the CLI
-
-The CLI itself can be updated separately using:
+After the command completes, confirm that the serverhost is running:
 
 ```bash
-simplecloud upgrade cli
+sc status serverhost
 ```
 
-This command checks for a newer CLI version, downloads it, and replaces your current installation. Use `simplecloud upgrade cli --cli-force` to reinstall the latest CLI even when it is already current.
+If the serverhost does not start, inspect its logs:
+
+```bash
+sc logs serverhost
+```
+
+Fix the reported problem, then run `sc start serverhost` to start it again.
+
+## Other update options
+
+<AccordionGroup>
+  <Accordion title="Download updates without restarting">
+    Use `sc upgrade` to update the CLI and all installed SimpleCloud components, or `sc upgrade serverhost` to download only the serverhost update.
+
+    ```bash
+    sc upgrade
+    sc upgrade serverhost
+    ```
+
+    These commands do not restart running components. Restart the serverhost when you are ready to use its new version.
+  </Accordion>
+
+  <Accordion title="Install a specific serverhost version">
+    To test or roll back a release, download the version you want:
+
+    ```bash
+    sc upgrade serverhost@<version>
+    ```
+
+    The command does not restart the serverhost. Run `sc restart serverhost` when you are ready to use the selected version.
+  </Accordion>
+
+  <Accordion title="Fix a CLI update">
+    If the CLI installation is not writable by your user, run `sudo sc upgrade cli`. If the installation is damaged but already current, reinstall it with:
+
+    ```bash
+    sc upgrade cli --cli-force
+    ```
+
+    When the CLI is several releases behind, it may require an update before other commands can run.
+  </Accordion>
+</AccordionGroup>

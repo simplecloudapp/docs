@@ -1,238 +1,128 @@
 ---
 title: 'Server Groups'
-description: 'Create scalable Minecraft server groups that share one configuration and start or stop servers based on demand.'
+description: 'Create a group of Minecraft servers and configure how it scales.'
 ---
 
-<Info>
-  Need one long-lived server with persistent world data? Use [Persistent Servers](/en/manual/setup/persistent-servers) instead.
-</Info>
+A server group creates replaceable servers from one shared configuration. Use a group when you want several identical servers or want SimpleCloud to adjust the number of servers for you.
 
-## When to use a group
+| Use a group for | Use a persistent server for |
+| --- | --- |
+| Proxies, lobbies, and minigames | SMP, Citybuild, and build servers |
+| Servers that can be replaced at any time | A server that must keep its world or other local files |
+| Several servers with the same setup | One long-running server |
 
-| Use a group when... | Use a persistent server when... |
-| ------------------- | ------------------------------- |
-| You need multiple servers with the same setup | You need exactly one server with long-lived data |
-| Servers can be replaced without preserving local files | The server owns a world, database, or local state |
-| Player demand should control server count | You want to manually choose the serverhost |
-| Examples: lobbies, minigames, proxies | Examples: SMP, Citybuild, Skyblock, build servers |
+See [Persistent Servers](/en/manual/setup/persistent-servers) if the right-hand column matches what you are creating.
 
-## How groups work
+Before you start, [connect at least one serverhost](/en/manual/setup/installation) to your network.
 
-1. You define the group configuration: software, memory, plugins, scaling, deployment, and workflows.
-2. The controller compares the group's desired state with the currently running servers.
-3. Serverhosts start or stop server instances to match that desired state.
-4. Plugins and properties from the group are applied to every server instance.
+## Choose a group type
 
-Groups can be one of two types:
+| Type | Choose it for | Examples |
+| --- | --- | --- |
+| **Server** | Game servers that players join | Paper, Purpur, Spigot, Fabric |
+| **Proxy** | Proxies that route players to game servers | Velocity, BungeeCord |
 
-| Type | Purpose |
-| ---- | ------- |
-| `SERVER` | Minecraft game servers such as Paper, Purpur, Fabric, or Spigot |
-| `PROXY` | Proxy servers such as Velocity or BungeeCord that route players |
-
-## Create a group
+## Create a server group
 
 <Steps>
-  <Step title="Open the group wizard">
-    In the dashboard, open **Groups** and click **Add Group**.
+  <Step title="Open the creation page">
+    In the dashboard, open **Server Groups** and click **Add Group**.
   </Step>
 
-  <Step title="Choose the basic identity">
-    Set the fields that identify the group:
+  <Step title="Choose the type and name">
+    Choose **Server** or **Proxy**, then enter a unique name.
 
-    - **Name**: Use a short, unique name such as `lobby`, `skywars`, or `proxy`.
-    - **Type**: Choose **Server** for game servers or **Proxy** for load balancers.
-    - **Activate on creation**: Enable this if the group should start servers immediately.
+    Enable **Activate on creation** if SimpleCloud should start the group immediately.
   </Step>
 
-  <Step title="Select software">
-    Choose the server software and version. For custom server jars, provide a direct download URL.
+  <Step title="Choose the software">
+    Select the server software and the available version options.
 
-    For game servers, also choose a configurator. The configurator prepares files for the selected server software.
+    If the software is not listed, choose **Custom** and fill in the required fields.
   </Step>
 
-  <Step title="Set resources">
-    Configure the resources each server instance receives:
+  <Step title="Set the resources">
+    Choose the player limit and memory for each server. Make sure your serverhosts have enough memory for the number of servers you plan to run.
 
-    - **Memory**: Minimum and maximum memory in MB.
-    - **Max players**: Player limit for each server instance.
+    For a proxy group, also enter its starting port.
   </Step>
 
-  <Step title="Configure scaling">
-    Choose how SimpleCloud decides when to start or stop servers.
-
-    | Scaling mode | Use when |
-    | ------------ | -------- |
-    | `Slots` | You want to keep a target number of free player slots available |
-    | `Servers` | You want to keep a target number of server instances available |
-
-    Set **Min servers** to the baseline that should always run and **Max servers** to the upper limit.
-  </Step>
-
-  <Step title="Configure proxy networking">
-    For proxy groups, set the **Starting port** for incoming player connections.
-  </Step>
-
-  <Step title="Add plugins">
-    Add plugins from Modrinth, Hangar, Spigot, direct URLs, or your configured plugin sources. You can also add plugins later in the group settings.
-  </Step>
-
-  <Step title="Review and create">
-    Review the summary and click **Create Group**.
-
-    <Check>
-      After creation, an active group with **Minimum Servers** greater than `0` should begin starting servers automatically.
-    </Check>
+  <Step title="Create the group">
+    Review the configuration, add any plugins you need, and click **Create Group**.
   </Step>
 </Steps>
 
-## Understand group status
+## Activate or deactivate a group
 
-| Status | Meaning | What to check |
-| ------ | ------- | ------------- |
-| <Badge color="green">Healthy</Badge> | The group meets its configured server count | No action needed |
-| <Badge color="blue">Scaling</Badge> | SimpleCloud is starting or stopping servers | Wait for the next reconciliation cycle |
-| <Badge color="red">Down</Badge> | No servers are running | Activation, minimum servers, deployment hosts, and host resources |
-| <Badge color="orange">Inactive</Badge> | The group is disabled | Enable the group in general settings |
-| <Badge color="gray">Disabled</Badge> | Minimum servers is `0` | Increase minimum servers if the group should run |
+An active group starts and stops servers to meet its scaling configuration. An inactive group does not run any servers.
 
-## Configure an existing group
+**Activate on creation** is enabled by default. After creating the group, open its **Servers** tab to follow the first server as it starts. You can activate or deactivate the group later from its action menu.
 
-Most changes happen in the group's settings page. Open only the section you need.
+## Configure scaling
 
-<AccordionGroup>
-  <Accordion title="General settings">
-    Use this section to enable or disable scaling, adjust memory, change player limits, and add tags for filtering.
+Scaling controls how many servers SimpleCloud keeps ready. Open the group, then go to **Settings > Scaling**.
 
-    <Tip>
-      Tags are useful for dashboards, automation, filtering, and plugin behavior. Use stable labels such as `region:eu`, `mode:lobby`, or `environment:prod`.
-    </Tip>
-  </Accordion>
+Both modes use these limits:
 
-  <Accordion title="Scaling settings">
-    Fine-tune how many servers SimpleCloud keeps online.
+- **Minimum Servers** is the baseline number of servers the group keeps running.
+- **Maximum Servers** is the most servers the group may run.
 
-    | Setting | Purpose |
-    | ------- | ------- |
-    | **Scaling mode** | Choose whether scaling is based on free slots or server count |
-    | **Min servers** | Keep this many servers running whenever the group is active |
-    | **Max servers** | Prevent the group from scaling beyond this count |
-    | **Player threshold** | Start more servers when usage crosses this percentage |
-    | **Available slots** | Keep this many player slots free across the group |
-    | **Idle time** | Stop idle servers after this duration |
-  </Accordion>
+Then choose the mode that matches how you want the group to grow.
 
-  <Accordion title="Deployment settings">
-    Choose which serverhosts may run the group.
+### Scale by player slots
 
-    - Enable hosts that are allowed to run servers for this group.
-    - Disable hosts that should not receive deployments.
-    - Reorder hosts when you need a preferred host order.
+Choose **Slots** when SimpleCloud should adjust the number of servers according to player capacity. Set **Available Slots** to the number of free player spaces you want to keep across the group.
 
-    <Tip>
-      If every host is enabled, SimpleCloud distributes servers automatically. Disable hosts only when you need placement control.
-    </Tip>
-  </Accordion>
+SimpleCloud starts servers when more capacity is needed and stops unused servers when enough capacity remains. It always stays between your minimum and maximum.
 
-  <Accordion title="Blueprint settings">
-    Change the server template behind the group, including software version, configurator settings, JVM options, and runtime arguments.
+For example, if each server allows 100 players and **Available Slots** is `50`, SimpleCloud starts another server when the group has fewer than 50 free player spaces.
 
-    Changes affect new server instances. Running servers may need a restart before they pick up template changes.
-  </Accordion>
+<Warning>
+  **Idle Time** does not currently delay scale-down. SimpleCloud may stop an unused server as soon as the group has enough spare capacity.
+</Warning>
 
-  <Accordion title="Properties settings">
-    Add custom key-value data that your plugins and integrations can read.
+### Scale by available servers
 
-    Properties are exposed to running servers as `SIMPLECLOUD_` environment variables.
-  </Accordion>
+Choose **Servers** when you want a set number of servers ready for players. **Player Threshold** decides when a server is too full to count as ready.
 
-  <Accordion title="Workflows settings">
-    Configure automation that runs during server lifecycle events:
+For example, with **Minimum Servers** set to `2` and **Player Threshold** set to `0.75`, SimpleCloud keeps two servers below 75% capacity ready when possible. It starts more servers as those servers fill, up to **Maximum Servers**.
 
-    - **Manual workflows**: Run on demand.
-    - **On start workflows**: Run when a server starts.
-    - **On stop workflows**: Run when a server stops.
-  </Accordion>
+<Note>
+  **Servers** mode only starts servers. It does not stop extra servers automatically. Choose **Slots** if the group should also scale down.
+</Note>
 
-  <Accordion title="Plugins settings">
-    Add, inspect, or remove plugins installed for every server in the group.
+Save your changes, then watch the **Servers** tab to confirm the group moves toward the new capacity.
 
-    Plugin changes apply to newly prepared servers. Restart or recreate running servers if they need the updated plugin set.
-  </Accordion>
+## Choose where servers can run
 
-  <Accordion title="Danger zone">
-    Delete the group only after you understand the impact.
+Open **Settings > Deployment** to choose which serverhosts may run the group. Leave every serverhost enabled unless the group must run on specific machines.
 
-    <Warning>
-      The dashboard deactivates the group, waits for running servers to stop, and then deletes the group and its associated blueprint.
-    </Warning>
-  </Accordion>
-</AccordionGroup>
+When you enable only some serverhosts, drag them into the order SimpleCloud should prefer them. SimpleCloud can use another enabled serverhost when a preferred one has no capacity.
+
+If you disable every serverhost, SimpleCloud cannot start a new server for the group.
+
+## Apply group changes
+
+Changes to software, plugins, or server files apply when new servers start. After saving a change, open the group's action menu and use **Hold to rolling restart** to apply it to running servers.
+
+A rolling restart replaces the group's servers one at a time so capacity remains available during the change. **Restart all** stops the current servers together, and deactivating the group stops them without starting replacements.
+
+<Warning>
+  Files stored only inside a group server are temporary. Use a persistent server for data that must survive replacement.
+</Warning>
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="Servers stay in QUEUED">
-    **Likely cause:** No serverhost is available or the allowed hosts have no capacity.
-
-    **What to check:**
-
-    1. Run `sc status serverhost`.
-    2. Verify deployment settings allow at least one host.
-    3. Check available memory on the host.
-    4. Review controller logs with `sc logs controller`.
+  <Accordion title="No server starts">
+    Make sure the group is active, **Minimum Servers** is at least `1`, and at least one enabled serverhost is online with enough free memory.
   </Accordion>
 
-  <Accordion title="Group shows Down">
-    **Likely cause:** The group is not configured to keep any servers online.
-
-    **What to check:**
-
-    1. Enable the group.
-    2. Set **Min servers** to at least `1`.
-    3. Enable at least one serverhost in deployment settings.
-    4. Verify the selected host has enough free memory.
+  <Accordion title="A server does not finish starting">
+    Open the affected server's logs and the serverhost logs. They show whether software setup, a workflow, or the server process failed.
   </Accordion>
 
-  <Accordion title="Servers do not scale up">
-    **Likely cause:** The scaling threshold has not been reached or the group is already at its maximum server count.
-
-    **What to check:**
-
-    1. Confirm the scaling mode matches your goal.
-    2. Lower the player threshold if scaling starts too late.
-    3. Increase **Max servers** if the group is capped.
-    4. Verify servers report player counts.
-  </Accordion>
-
-  <Accordion title="Servers scale down too quickly">
-    **Likely cause:** Idle time is too short or the scaling target is too aggressive.
-
-    **What to check:**
-
-    1. Increase idle time, for example from `1m` to `5m`.
-    2. Raise the player threshold.
-    3. Increase **Min servers** if you always need a baseline online.
-  </Accordion>
-
-  <Accordion title="Servers stay in PREPARING">
-    **Likely cause:** A workflow, blueprint, plugin download, or filesystem operation fails during preparation.
-
-    **What to check:**
-
-    1. Review serverhost logs with `sc logs serverhost`.
-    2. Check disk space.
-    3. Verify plugin download URLs.
-    4. Confirm template and workflow paths exist.
-  </Accordion>
-
-  <Accordion title="Orphaned server records remain">
-    **Likely cause:** A server process stopped without the controller recording the lifecycle event, for example after a host crash.
-
-    Open **Servers**, select the stale server, and use **Hold to force delete** after you confirm the process is no longer running.
-
-    <Warning>
-      Force delete only removes the server record. It does not stop a running process or trigger cleanup workflows.
-    </Warning>
+  <Accordion title="The group does not scale as expected">
+    Check **Minimum Servers**, **Maximum Servers**, and the setting used by your mode: **Available Slots** for Slots mode or **Player Threshold** for Servers mode. Remember that only Slots mode automatically stops extra servers.
   </Accordion>
 </AccordionGroup>

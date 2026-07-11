@@ -1,132 +1,97 @@
 ---
 title: "Installation"
-description: "Start SimpleCloud from the dashboard, then use the CLI when you need to connect or manage serverhosts."
+description: "Connect your first machine to SimpleCloud."
 ---
 
-## Start in the dashboard
+Install SimpleCloud from the dashboard. When setup finishes, the dashboard automatically detects your serverhost and opens your network.
 
-The dashboard is the main onboarding path. It creates or joins your network, builds the correct install command for your machine, and detects the first serverhost automatically.
+## Before you begin
+
+You need a Linux or macOS machine with `curl` and an internet connection. Use Linux for a production serverhost; macOS is useful for local testing. Windows is not supported yet.
+
+Run setup with an account that can create files in the installation location. On Linux, the account also needs `sudo` access if setup must install a missing requirement.
+
+## Connect your first serverhost
 
 <Steps>
-  <Step title="Open the dashboard">
-    Go to the [SimpleCloud Dashboard](https://dash.simplecloud.app) and sign in or create an account.
-
-    You can use a magic link or one of the available SSO providers.
+  <Step title="Sign in to the dashboard">
+    Open the [SimpleCloud Dashboard](https://dash.simplecloud.app) and sign in.
   </Step>
 
   <Step title="Create or join a network">
-    Create a new network if you are starting fresh, or join an existing network with an invitation.
-
-    After the network exists, the dashboard opens the onboarding wizard if no serverhost is connected yet.
+    Create a network, or join an existing one with an invitation code. The dashboard opens the setup wizard when your network does not have a serverhost yet.
   </Step>
 
-  <Step title="Configure the first serverhost">
-    Choose the operating system, host name, memory limit, Java runtimes, and whether SimpleCloud should start after setup.
+  <Step title="Configure the serverhost">
+    Choose the operating system, enter a recognizable name, and select how much memory SimpleCloud may use.
 
-    Linux is the recommended production target. macOS is useful for local testing. Windows setup is not available yet.
+    The memory limit is the capacity available to Minecraft servers on this machine, so leave enough memory for the operating system. Keep Java 21 or newer selected. Setup installs the selected Java versions and other required software.
   </Step>
 
-  <Step title="Run the generated command">
-    Copy the command from the dashboard and run it on the machine that should host Minecraft servers.
+  <Step title="Run the setup command">
+    Open a terminal on the machine and change to the directory that should contain the installation. The command installs into a `simplecloud` folder there.
 
-    The command installs the CLI, authenticates with a generated login code, registers the machine as a serverhost, and starts it when requested.
+    Run the command shown in the dashboard and follow any prompts in the terminal.
+
+    <Warning>
+      The command contains a temporary login code. Do not share it or save it in scripts or documentation.
+    </Warning>
   </Step>
 
-  <Step title="Wait for detection">
-    Keep the dashboard open while the command runs. Once the serverhost connects, the dashboard detects it and opens the main network view.
+  <Step title="Finish setup">
+    Wait for the terminal to show **Setup complete**. The dashboard automatically detects the serverhost and opens your network.
   </Step>
 </Steps>
-
-## Install the CLI later
-
-Use this when you only need the CLI on a machine that is not going through the full onboarding flow.
-
-<Tabs>
-  <Tab title="Linux / macOS">
-    ```bash
-    curl -fsSL https://get.simplecloud.app | bash
-    ```
-
-    Verify the installation:
-
-    ```bash
-    simplecloud --version
-    ```
-
-    You can use `sc` anywhere the docs show `simplecloud`.
-  </Tab>
-
-  <Tab title="Windows">
-    <Note>
-      The CLI installer does not support Windows yet. Use Linux for production or macOS for local testing.
-    </Note>
-  </Tab>
-</Tabs>
 
 ## Add another serverhost
 
-After onboarding, add more machines from the dashboard instead of reusing the first setup command.
+Open **Settings > Server Hosts**, select **Add Host**, and run the generated command on the new machine. Use a new command for every serverhost.
 
-<Steps>
-  <Step title="Open Server Hosts settings">
-    In the dashboard, open **Settings** and go to **Server Hosts**.
-  </Step>
+If you want to use several machines together, continue with [Multi-root setup](/en/manual/setup/multi-root).
 
-  <Step title="Create a fresh command">
-    Click **Add Host**. The dashboard creates a new login code and a command for the current network.
-  </Step>
+## Install only the CLI
 
-  <Step title="Run it on the new machine">
-    Copy the generated command to the new machine and run it there.
+The dashboard command already installs the CLI. To install only the CLI on a Linux or macOS machine, run:
 
-    The command has this shape, but you should use the exact command from your dashboard because it includes your network, login code, and host name:
+```bash
+curl -fsSL https://get.simplecloud.app | bash
+```
 
-    ```bash
-    curl -fsSL https://get.simplecloud.app | bash ; ~/.bun/bin/simplecloud setup \
-      --yes \
-      --auto-install-deps \
-      --start \
-      --network your-network \
-      --code YOUR_LOGIN_CODE \
-      --host-name host-2
-    ```
-  </Step>
-</Steps>
+Confirm that it is available:
 
-## Invite team members
+```bash
+sc --version
+```
 
-To add others to your network:
-
-1. Open **Settings** in the dashboard.
-2. Go to **Members**.
-3. Click **Invite Member**.
-4. Enter their email address and choose a role.
+This does not connect the machine as a serverhost. Use a dashboard-generated setup command when you want it to run Minecraft servers.
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="The dashboard cannot generate a login code">
-    Close the dialog or onboarding step, open it again, and generate a fresh command.
-
-    If the issue continues, sign out and back in so the dashboard can create a new authenticated device code.
+  <Accordion title="The shell cannot find sc">
+    Open a new terminal and try `sc --version` again.
   </Accordion>
 
-  <Accordion title="The installer cannot download files">
-    Make sure the machine can reach the internet over HTTPS.
+  <Accordion title="The setup command has expired">
+    Return to the dashboard and generate a new command.
+  </Accordion>
 
-    The installer needs outbound access to `get.simplecloud.app` and the release download hosts used by SimpleCloud.
+  <Accordion title="Setup cannot install a requirement">
+    Make sure the machine has internet access. On Linux, use an account that can run `sudo`. Then run the setup command again.
   </Accordion>
 
   <Accordion title="The serverhost does not appear in the dashboard">
-    1. Check whether the command finished without errors.
-    2. Verify the serverhost is running with `sc status serverhost`.
-    3. Review serverhost logs with `sc logs serverhost`.
-    4. Generate a fresh **Add Host** command if the login code was old or copied incorrectly.
-  </Accordion>
+    First check whether the terminal reached **Setup complete**. If it did, check the serverhost status and recent logs:
 
-  <Accordion title="Setup fails while installing dependencies">
-    Run the generated dashboard command on Linux with a user that can install required packages, or install the missing dependencies manually before retrying.
+    ```bash
+    sc status serverhost
+    sc logs serverhost
+    ```
 
-    For local testing on macOS, make sure the command runs in a normal shell with access to your user profile.
+    If setup did not finish, fix the error shown in the terminal, generate a new command in the dashboard, and try again from the same parent directory.
   </Accordion>
 </AccordionGroup>
+
+## Next step
+
+Create a [server group](/en/manual/setup/server-groups) for servers that scale with demand, or a [persistent server](/en/manual/setup/persistent-servers) for one long-lived Minecraft server.

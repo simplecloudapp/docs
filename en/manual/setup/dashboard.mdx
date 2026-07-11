@@ -1,54 +1,51 @@
 ---
-title: 'Dashboard'
-description: 'Access and manage your Minecraft network with the SimpleCloud Dashboard'
+title: "Dashboard"
+description: "Set up and manage your Minecraft network from the SimpleCloud Dashboard."
 ---
 
-## Overview
+The SimpleCloud Dashboard is the browser interface for your network. Use it to create servers, open their consoles and files, check players, and manage your network.
 
-The SimpleCloud Dashboard is the main place to create networks, run onboarding, manage server groups and persistent servers, inspect logs, and invite team members.
+Open [dash.simplecloud.app](https://dash.simplecloud.app) and sign in with your SimpleCloud account.
 
-<Frame>
-  <img src="https://github.com/simplecloudapp/branding/blob/main/media/dashboard/serveroverview.png?raw=true" alt="SimpleCloud Dashboard" />
-</Frame>
+## Set up your network
 
-## Open the dashboard
-
-Open the dashboard in your browser:
-
-[dash.simplecloud.app](https://dash.simplecloud.app)
-
-Sign in with your SimpleCloud account. If the network has no connected serverhost yet, the dashboard opens the onboarding wizard and generates the setup command for you.
-
-## Create a server group
-
-Use groups for scalable sets of interchangeable servers, such as proxies, lobbies, or minigames.
+After signing in, create a network for your servers or join an existing network with an invitation code. A new network opens the onboarding guide, which connects the first machine that will run your Minecraft servers.
 
 <Steps>
-  <Step title="Open Groups">
-    Open **Groups** in the dashboard and click **Add Group**.
+  <Step title="Configure the machine">
+    Choose its operating system, name, memory limit, and Java versions.
   </Step>
 
-  <Step title="Set the group identity">
-    Choose the name, type, and whether the group should activate immediately.
-  </Step>
-
-  <Step title="Choose software and resources">
-    Select the server software, memory, player limit, scaling mode, and host deployment settings.
-  </Step>
-
-  <Step title="Add plugins">
-    Add plugins from the supported plugin sources, or skip this step and add them later in group settings.
-  </Step>
-
-  <Step title="Create the group">
-    Review the summary and click **Create Group**.
+  <Step title="Run the install command">
+    Copy the generated command and run it in a terminal on that machine. The dashboard detects the installation automatically and then lets you create your first server group or open the dashboard.
   </Step>
 </Steps>
 
-For the full workflow, see [Server Groups](/en/manual/setup/server-groups).
+For system requirements and troubleshooting, follow the [installation guide](/en/manual/setup/installation).
 
-## Related pages
+## Create your first server
 
-- [Installation](/en/manual/setup/installation) - Dashboard-first onboarding
-- [Server Groups](/en/manual/setup/server-groups) - Scalable server groups
-- [Persistent Servers](/en/manual/setup/persistent-servers) - Single long-lived servers
+Choose how your server should behave:
+
+<CardGroup cols={2}>
+  <Card title="Server group" icon="boxes" href="/en/manual/setup/server-groups">
+    Use a group for proxies, lobbies, minigames, and other servers that can share one configuration and scale together.
+  </Card>
+
+  <Card title="Persistent server" icon="server" href="/en/manual/setup/persistent-servers">
+    Use a persistent server for an SMP, build server, or another single server that keeps its files and identity.
+  </Card>
+</CardGroup>
+
+Open **Server Groups** and select **Add Group**, or open **Persistent Servers** and select **Add Server**. The dashboard guides you through the remaining settings.
+
+## Manage your servers
+
+Use **Server Groups** and **Persistent Servers** to configure what SimpleCloud should run. Use **Servers** to see the server instances that are currently running. Select an instance to view its status, open its console, manage its files, or check its performance.
+
+Other common areas include:
+
+- **Players** for player activity and history
+- **Resources** for files and plugin collections
+- **Monitoring** for network-wide performance
+- **Settings** for serverhosts, members, roles, and network settings

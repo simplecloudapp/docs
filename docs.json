@@ -32,7 +32,6 @@
                     "expanded": false,
                     "root": "en/manual/introduction/architecture/overview",
                     "pages": [
-                      "en/manual/introduction/architecture/controller",
                       "en/manual/introduction/architecture/serverhost",
                       "en/manual/introduction/architecture/cli"
                     ]
@@ -46,6 +45,7 @@
                 "group": "Setup",
                 "pages": [
                   "en/manual/setup/installation",
+                  "en/manual/setup/dashboard",
                   "en/manual/setup/server-groups",
                   "en/manual/setup/persistent-servers",
                   "en/manual/setup/servers",

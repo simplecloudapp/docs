@@ -1,206 +1,82 @@
 ---
-title: 'Serverhost'
-description: 'The execution agent responsible for running Minecraft servers'
+title: "Serverhost"
+description: "Connect a machine that SimpleCloud can use to run Minecraft servers"
 ---
 
-## What the serverhost does
+A serverhost is a machine that runs Minecraft servers for your SimpleCloud network. Install one serverhost on each machine whose CPU and memory you want SimpleCloud to use.
 
-The serverhost runs on every machine that should start Minecraft servers for your SimpleCloud network. It connects to the controller, receives start requests, prepares server files, launches the server process, reports state, and cleans up after dynamic servers stop.
+The serverhost runs in the background. You manage the Minecraft servers and decide which serverhosts may run them through the dashboard. Use the CLI on a serverhost when you need to start, stop, update, or troubleshoot the serverhost itself.
 
-## Responsibilities
+## What a serverhost does
 
-### Server lifecycle
+A serverhost:
 
-The serverhost owns the local lifecycle of each server:
+- Prepares Minecraft server files from your templates
+- Starts and stops Minecraft servers
+- Applies the software, plugins, memory, and other settings you configure
+- Sends server status, logs, and resource usage to SimpleCloud
 
-1. **Preparation** - Run start workflows, copy templates, and load configured plugins
-2. **Configuration** - Apply configurators for ports, forwarding secrets, player limits, and related files
-3. **Execution** - Launch the server with the configured runner
-4. **Monitoring** - Track the local process, stream logs, and report state changes
-5. **Cleanup** - Run stop workflows and remove temporary dynamic server directories
+## Add a serverhost
 
-### Workflow execution
+In the dashboard, open **Settings > Server Hosts** and select **Add Host**. Configure the host, then run the generated setup command on the machine you want to add.
 
-Workflows define the preparation and cleanup steps. The default setup workflow copies cache data, shared templates, tag templates, and the named template before it loads plugins and applies the selected configurator.
+The command installs SimpleCloud, connects the serverhost to your network, and starts it. For prerequisites and the complete setup process, follow the [installation guide](/en/manual/setup/installation).
 
-### Plugin loading
+Use **Settings > Server Hosts** to view and change a host's settings. Choose which hosts may run servers when you configure a server group.
 
-The serverhost can load configured plugins from multiple sources:
+## Check or control a serverhost
 
-| Source | Description |
-| ------ | ----------- |
-| Modrinth | Plugin or mod versions from Modrinth |
-| Hangar | PaperMC Hangar projects |
-| Spigot | SpigotMC resources |
-| URL | Direct HTTP(S) download |
-
-## Architecture
-
-```mermaid
-flowchart TB
-    subgraph Serverhost["Serverhost"]
-        NATS["NATS connection"]
-        KeepAlive["Keep-alive"]
-        FileBrowser["File browser API"]
-
-        subgraph Workflow["Workflow engine"]
-            Copy["copy/delete"]
-            Plugins["load-plugins"]
-            Config["configurate"]
-            Archives["compress/upload"]
-        end
-
-        subgraph Deploy["Deployment manager"]
-            Screen["Screen/Tmux"]
-            Docker["Docker"]
-        end
-
-        subgraph Configs["Configurators"]
-            YAML["YML"]
-            JSON["JSON"]
-            Props["PROPERTIES"]
-            TOML["TOML"]
-            Text["TXT"]
-        end
-    end
-```
-
-## Runner modes
-
-### Screen or Tmux
-
-The local runner starts servers as detached processes through a terminal multiplexer.
+Run these commands from the SimpleCloud installation directory:
 
 ```bash
-sc start --runner screen
-```
-
-Use `sc attach serverhost` to attach to the serverhost component console.
-
-### Docker
-
-The Docker runner starts each server in its own container. Use it when you want stronger process isolation and Docker-managed resource limits.
-
-```bash
-sc start --runner docker
-```
-
-Docker must be installed on the serverhost machine.
-
-## Directory structure
-
-<Tree>
-  <Tree.Folder name="secrets" defaultOpen>
-    <Tree.File name="network-id.key" />
-    <Tree.File name="network-secret.key" />
-    <Tree.File name="serverhost-id.key" />
-  </Tree.Folder>
-  <Tree.Folder name="options" defaultOpen>
-    <Tree.Folder name="configurators">
-      <Tree.File name="paper_velocity.yml" />
-      <Tree.File name="velocity.yml" />
-    </Tree.Folder>
-    <Tree.File name="platform-mappings.yml" />
-  </Tree.Folder>
-  <Tree.Folder name="workflows" defaultOpen>
-    <Tree.Folder name="internal">
-      <Tree.File name="setup.yml" />
-      <Tree.File name="cleanup.yml" />
-    </Tree.Folder>
-  </Tree.Folder>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="_every">
-      <Tree.Folder name="every" />
-      <Tree.Folder name="every_proxy" />
-      <Tree.Folder name="every_server" />
-      <Tree.Folder name="every_paper" />
-      <Tree.Folder name="every_velocity" />
-    </Tree.Folder>
-    <Tree.Folder name="_tagged">
-      <Tree.Folder name="minigames" />
-    </Tree.Folder>
-    <Tree.Folder name="lobby" />
-    <Tree.Folder name="cache" />
-  </Tree.Folder>
-  <Tree.Folder name="running" />
-  <Tree.Folder name="logs" />
-</Tree>
-
-## Server preparation flow
-
-When a start request arrives:
-
-```mermaid
-flowchart TD
-    A[Receive start request] --> B[Check local deployment]
-    B --> C[Find available port]
-    C --> D[Build runtime context]
-    D --> E[Run start workflows]
-
-    subgraph Setup["Default setup workflow"]
-        E --> F[Restore cache]
-        F --> G[Copy _every templates]
-        G --> H[Copy tagged templates]
-        H --> I[Copy named template]
-        I --> J[Load configured plugins]
-        J --> K[Apply configurator]
-    end
-
-    K --> L[Build launch command]
-    L --> M[Start with Screen/Tmux or Docker]
-    M --> N[Report state to controller]
-```
-
-Dynamic group servers use temporary directories under `running/`. Persistent servers keep their runtime directory between restarts.
-
-## Communication
-
-The serverhost communicates with the controller through NATS and controller HTTP APIs:
-
-| Channel | Purpose |
-| ------- | ------- |
-| Start requests | The controller asks a specific serverhost to deploy a server |
-| Keep-alive | The serverhost reports version, uptime, and installed Java versions |
-| Server events | The serverhost reports starting, stopped, and cleanup-complete events |
-| Log forwarding | The serverhost forwards server logs for dashboard and CLI views |
-| File browser API | The dashboard can browse and edit allowed serverhost files |
-
-Every serverhost also synchronizes controller state and stops orphaned local servers that no longer belong to the controller state.
-
-## Setup options
-
-Serverhost setup uses the current CLI setup options:
-
-| Option | Description |
-| ------ | ----------- |
-| `--network` | Network ID or slug |
-| `--install-dir` | Serverhost installation directory |
-| `--host-name` | Serverhost display name |
-| `--max-memory` | Maximum memory available for server processes, such as `80%` or `32gb` |
-| `--start` / `--no-start` | Start SimpleCloud after setup or skip startup |
-| `--auto-install-deps` / `--no-auto-install-deps` | Install required dependencies automatically or skip dependency installation |
-| `--install` | Install setup installables, such as `--install java:21` |
-| `-y, --yes` | Use non-interactive defaults where possible |
-
-## Monitoring
-
-```bash
-# Check serverhost status
+# Show whether the serverhost is running
 sc status serverhost
 
-# View serverhost logs
-sc logs serverhost
+# Read recent serverhost logs
+sc logs serverhost --lines 200
 
-# View a server log
-sc server logs <group> <id>
+# Start or stop the serverhost
+sc start serverhost
+sc stop serverhost
+
+# Restart it and install an available update
+sc restart serverhost --update
 ```
 
-<Note>
-  When a serverhost restarts, it compares local deployments with the controller state and reattaches to servers it still owns where possible.
-</Note>
+### What happens to running Minecraft servers
 
-## Related topics
+When you stop or restart a serverhost, the CLI asks whether it should also stop the Minecraft servers running on that machine.
 
-- [Templates](/en/manual/setup/templates) - Template hierarchy and file layout
-- [Configurators](/en/manual/configuration/configurators) - Server configuration system
-- [Workflows](/en/manual/configuration/workflows) - Server preparation and cleanup workflows
+- Choose **Yes** when taking the machine offline or when the Minecraft servers must stop too.
+- Choose **No** for short serverhost maintenance if the Minecraft servers should remain online. The serverhost reconnects to them after it starts again.
+
+<Warning>
+  Do not shut down or reboot the machine while Minecraft servers are still running. Stop them first so they can save their data cleanly.
+</Warning>
+
+## Troubleshoot a serverhost
+
+If a serverhost is offline or a server cannot start, check that:
+
+- The serverhost is online.
+- It has enough free memory for the server.
+- The required Java version is installed.
+- The group is allowed to use that serverhost.
+
+Use `sc logs serverhost --lines 200` for more information. You can also review the affected Minecraft server's logs in the dashboard.
+
+## Use multiple serverhosts
+
+With multiple serverhosts, SimpleCloud can distribute servers across the machines allowed by each group. This adds capacity, but the machines do not share a filesystem.
+
+- Keep templates, workflows, and configurator files synchronized so a server can start correctly on any eligible host.
+- While a server is running, its files and logs exist only on the serverhost that started it.
+- A persistent server's files stay on its assigned serverhost. Changing its serverhost does not move those files.
+
+Follow the [multi-root setup guide](/en/manual/setup/multi-root) to add another machine and synchronize the shared files.
+
+## Related pages
+
+- [Templates](/en/manual/setup/templates) explains how server files are prepared.
+- [Configurators](/en/manual/configuration/configurators) explains automatic configuration changes.
+- [Workflows](/en/manual/configuration/workflows) explains advanced preparation and cleanup steps.

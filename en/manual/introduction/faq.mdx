@@ -1,45 +1,62 @@
 ---
-title: 'FAQ'
-description: 'Frequently asked questions about SimpleCloud'
+title: "FAQ"
+description: "Answers to common questions about setting up and using SimpleCloud."
 ---
 
 <AccordionGroup>
   <Accordion title="What is SimpleCloud?">
-    SimpleCloud is a management system for Minecraft server networks. It handles auto-scaling, server deployment, and infrastructure management through a dashboard and CLI.
+    SimpleCloud helps you set up and manage a Minecraft server network from one
+    dashboard or the `sc` command.
 
-    Learn more in our [Overview](/en/manual/introduction/overview).
+    Read the [SimpleCloud overview](/en/manual/introduction/overview) to learn how
+    it organizes your network.
   </Accordion>
 
-  <Accordion title="Is SimpleCloud free?">
-    Yes, completely free and open-source. No premium features, subscriptions, or hidden costs.
+  <Accordion title="Where should I start?">
+    Start with the [installation guide](/en/manual/setup/installation). It takes
+    you from signing in to the dashboard to connecting your first serverhost.
   </Accordion>
 
-  <Accordion title="Who is SimpleCloud for?">
-    Anyone running a Minecraft network - from small servers for friends to large public networks. It scales with your needs.
+  <Accordion title="Should I create a server group or a persistent server?">
+    Use a **server group** when every server should share the same setup and its
+    local files do not need to survive replacement. Groups work well for
+    lobbies, minigames, and proxies.
+
+    Use a **persistent server** for one named server that keeps its files, such
+    as an SMP, Skyblock, or build server.
+
+    Compare the options in [Server groups](/en/manual/setup/server-groups) and
+    [Persistent servers](/en/manual/setup/persistent-servers).
   </Accordion>
 
-  <Accordion title="What operating systems are supported?">
-    Linux is recommended for production. macOS works for development and local testing. The CLI installer does not support Windows yet.
+  <Accordion title="Which operating systems can I use?">
+    Your serverhost can run on Linux or macOS. Linux is recommended for
+    production, while macOS is useful for local testing. Windows serverhosts are
+    not supported yet.
+
+    You can use the web dashboard from a different device.
+
+    See the [installation guide](/en/manual/setup/installation) for the system
+    requirements.
   </Accordion>
 
-  <Accordion title="What server software is supported?">
-    SimpleCloud can run Java server processes. Built-in configurators focus on common Paper, Spigot, Velocity, BungeeCord, and Waterfall setups; other software may need custom templates and configurators.
+  <Accordion title="Which Minecraft server software can I use?">
+    Choose one of the software options offered by the dashboard. If it is not listed,
+    choose **Custom** and fill in the required fields.
+
+    Follow the creation steps for a [server group](/en/manual/setup/server-groups#create-a-server-group)
+    or a [persistent server](/en/manual/setup/persistent-servers#create-a-persistent-server).
   </Accordion>
 
-  <Accordion title="Do I need technical knowledge?">
-    Basic command line and networking knowledge helps, but our [Installation guide](/en/manual/setup/installation) walks you through everything step by step.
+  <Accordion title="Do I need advanced technical knowledge?">
+    Basic setup does not require advanced technical knowledge. You should be
+    comfortable opening a terminal and running the command provided by the
+    dashboard. More advanced customization may require familiarity with your
+    Minecraft server software.
   </Accordion>
 
-  <Accordion title="Is Docker or Kubernetes supported?">
-    Docker support is in development. Kubernetes is not planned - tools like [Agones](https://agones.dev/) are better suited for that use case.
-  </Accordion>
-
-  <Accordion title="Where do I configure plugins?">
-    Start with [Plugins](/en/manual/plugin/overview). You can install official plugins through the dashboard, the CLI, or templates depending on how you manage your servers.
-  </Accordion>
-
-  <Accordion title="How do I get support?">
-    - [Discord](https://discord.simplecloud.app) - Real-time community help
-    - [GitHub](https://github.com/simplecloudapp) - Bug reports and feature requests
+  <Accordion title="Where can I get help?">
+    Join the [SimpleCloud Discord](https://discord.simplecloud.app) for community
+    help.
   </Accordion>
 </AccordionGroup>

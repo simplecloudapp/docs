@@ -1,617 +1,129 @@
 ---
 title: "CLI"
-description: "The command-line interface for managing your SimpleCloud installation"
+description: "Set up and manage SimpleCloud from your terminal"
 ---
 
-## What is the CLI?
+The SimpleCloud CLI lets you set up a serverhost and manage your network from the terminal. Use it to control the SimpleCloud installation on the current machine or manage groups and Minecraft servers across your network.
 
-The SimpleCloud CLI is your primary tool for installing SimpleCloud, authenticating with the dashboard, managing contexts, controlling components, and operating groups, servers, blueprints, persistent servers, serverhosts, and multi-root synchronization.
+<Tip>
+  Run `sc --help` to see all commands, or `sc <command> --help` for help with a specific command.
+</Tip>
 
-## Installation
+## Install the CLI
 
-Install the released CLI with the official install script:
+Run the installer on the machine that will host SimpleCloud:
 
 ```bash
 curl -fsSL https://get.simplecloud.app | bash
 ```
 
-The released binaries are `sc` and `simplecloud`. The `scl` command is only a local development alias used when testing the CLI from source.
-
-## Command Structure
+Then check that the CLI is available:
 
 ```bash
-sc <command> [subcommand] [arguments] [options]
+sc --version
 ```
 
-You can use `simplecloud` anywhere the examples use `sc`.
+For the complete first-time setup, follow [Installation](/en/manual/setup/installation).
 
-## Global Options
+## Set up your serverhost
 
-| Option          | Description                 |
-| --------------- | --------------------------- |
-| `-c, --context` | Override the active context |
-| `-h, --help`    | Show help                   |
-| `-v, --version` | Show version number         |
-
----
-
-## Authentication
-
-### Login
-
-Authenticate with SimpleCloud.
-
-```bash
-sc login
-```
-
-| Option         | Description                                |
-| -------------- | ------------------------------------------ |
-| `--no-browser` | Do not open the browser automatically      |
-| `--code`       | Use a pre-approved code from the dashboard |
-
-### Logout
-
-Log out from SimpleCloud.
-
-```bash
-sc logout
-```
-
-### Who Am I
-
-Show current user information.
-
-```bash
-sc whoami
-```
-
----
-
-## Global Configuration
-
-Use `config` to manage global endpoint and TLS settings.
-
-```bash
-sc config show
-sc config controller-url set <url>
-sc config controller-url unset
-sc config auth-url set <url>
-sc config auth-url unset
-sc config cert add <path>
-sc config cert remove <path>
-sc config cert clear
-```
-
-| Command | Description |
-| ------- | ----------- |
-| `sc config show` | Show the active global CLI configuration |
-| `sc config controller-url set <url>` | Set the global Controller base URL |
-| `sc config controller-url unset` | Reset the Controller URL to the default |
-| `sc config auth-url set <url>` | Set the global auth/dashboard base URL |
-| `sc config auth-url unset` | Reset the auth/dashboard URL to the default |
-| `sc config cert add <path>` | Trust an additional CA certificate file for HTTPS requests |
-| `sc config cert remove <path>` | Remove a trusted CA certificate file |
-| `sc config cert clear` | Remove all trusted CA certificate files |
-
----
-
-## Setup and Installation
-
-### Setup
-
-Set up SimpleCloud: authenticate, configure a context, install dependencies, and register a serverhost.
+Start the setup wizard:
 
 ```bash
 sc setup
 ```
 
-| Option | Description |
-| ------ | ----------- |
-| `-n, --network` | Network ID or slug to use, skipping interactive selection |
-| `--code` | Use a pre-approved code from the dashboard for login |
-| `--install-dir` | Installation directory for the serverhost files |
-| `--host-name` | Serverhost display name |
-| `--max-memory` | Maximum serverhost memory, such as `80%`, `32gb`, `4096mb`, or `4096` |
-| `--start` / `--no-start` | Start SimpleCloud after setup or skip startup |
-| `--auto-install-deps` / `--no-auto-install-deps` | Automatically install required dependencies or skip dependency installation |
-| `--install` | Install manifest installables during setup, such as `--install java:21` |
-| `-y, --yes` | Use non-interactive mode, auto-accept defaults, and skip confirmations where possible |
+The wizard signs you in, connects the machine to your network, and installs the serverhost. When it finishes, you can manage SimpleCloud from the CLI or dashboard.
 
-### Install Components
+## Manage SimpleCloud on this machine
 
-Install components from the component registry.
+Use these commands to operate the local installation:
+
+| Task | Command |
+| --- | --- |
+| Start SimpleCloud | `sc start` |
+| Stop SimpleCloud | `sc stop` |
+| Restart SimpleCloud | `sc restart` |
+| Check its status | `sc status` |
+| View serverhost logs | `sc logs serverhost` |
+| Open the serverhost console | `sc attach serverhost` |
+
+<Note>
+  Local commands such as `sc start` manage SimpleCloud on the current machine. Commands under `sc server` manage Minecraft servers in your network.
+</Note>
+
+## Manage groups and servers
+
+Create a server group with the interactive wizard:
 
 ```bash
-sc install [components..]
+sc group create
 ```
 
-| Argument or Option | Description |
-| ------------------ | ----------- |
-| `[components..]` | Component IDs to install. If omitted, the CLI prompts you to select components |
-| `--dry-run` | Print an installable plan without running it |
-| `-y, --yes` | Skip installable confirmation prompts |
-
-Install a Java runtime:
+You can then start a server and view the running servers:
 
 ```bash
-sc install java [javaVersion]
+sc group start lobby
+sc server list
 ```
 
-| Option | Description |
-| ------ | ----------- |
-| `[javaVersion]` | Java version to install |
-| `--list` | List common Java versions |
-| `--dry-run` | Print the install plan without running it |
-| `-y, --yes` | Skip confirmation prompts |
-
-### Upgrade CLI and Components
-
-`upgrade` is the canonical update command. `update` is an alias.
+Use these commands for common server tasks:
 
 ```bash
-sc upgrade [targets..]
-sc update [targets..]
+sc server info lobby 1
+sc server logs lobby 1 --follow
+sc server stop lobby 1
 ```
 
-| Argument or Option | Description |
-| ------------------ | ----------- |
-| `[targets..]` | Targets to upgrade. Use `cli`, component IDs, or `<component>@<version>` |
-| `-s, --set` | Pin component versions with `<component>=<version>`. Repeat for multiple pins |
-| `--cli-force` | Force reinstall the CLI even if it is already on the latest version |
+See [Server groups](/en/manual/setup/server-groups) and [Servers](/en/manual/setup/servers) for the complete workflows.
 
-Examples:
+## Update SimpleCloud
+
+Upgrade the CLI and installed SimpleCloud components with one command:
 
 ```bash
-# Upgrade the CLI and all installed components
 sc upgrade
-
-# Upgrade only the CLI
-sc upgrade cli
-
-# Upgrade a component to the latest version
-sc upgrade serverhost
-
-# Pin a component version
-sc upgrade serverhost@1.2.3
-sc upgrade --set serverhost=1.2.3
 ```
 
----
-
-## Component Lifecycle
-
-### Start
-
-Start SimpleCloud components.
+If an installed component needs to be downloaded again, run:
 
 ```bash
-sc start [components..]
+sc repair
 ```
 
-| Argument or Option | Description |
-| ------------------ | ----------- |
-| `[components..]` | Specific components to start. Defaults to all components and supports `<component>@<version>` |
-| `--runner` | Override the runner for this session. Choices: `screen`, `docker`, `native` |
-| `--configure` | Configure the default runner |
-| `--skip-version-check` | Skip the component version check before starting |
-| `--update` / `--no-update` | Auto-update outdated components or skip auto-update |
-| `-s, --set` | Pin component versions for update with `<component>=<version>` |
+## Sign in
 
-### Stop
+Run `sc login` when you need to sign in again. Use `sc whoami` to check the current account and `sc logout` to sign out.
 
-Stop SimpleCloud components.
+## Switch between networks
 
-```bash
-sc stop [components..]
-```
-
-| Argument or Option | Description |
-| ------------------ | ----------- |
-| `[components..]` | Specific components to stop. Defaults to all components |
-| `--stop-servers` / `--no-stop-servers` | Stop all servers on serverhost before stopping, or skip that step |
-
-### Restart
-
-Restart SimpleCloud components by stopping and starting them.
-
-```bash
-sc restart [components..]
-```
-
-| Argument or Option | Description |
-| ------------------ | ----------- |
-| `[components..]` | Specific components to restart. Defaults to all components and supports `<component>@<version>` |
-| `--runner` | Override the runner for this session. Choices: `screen`, `docker`, `native` |
-| `--skip-version-check` | Skip the component version check before starting |
-| `--update` / `--no-update` | Auto-update outdated components or skip auto-update |
-| `-s, --set` | Pin component versions for update with `<component>=<version>` |
-| `--stop-servers` / `--no-stop-servers` | Stop all servers on serverhost before stopping, or skip that step |
-
-### Status
-
-Check SimpleCloud component status.
-
-```bash
-sc status [components..]
-```
-
-| Argument | Description |
-| -------- | ----------- |
-| `[components..]` | Specific components to check. Defaults to all components |
-
-### Logs
-
-View logs for a component.
-
-```bash
-sc logs <component>
-```
-
-| Argument or Option | Description |
-| ------------------ | ----------- |
-| `<component>` | Component to view logs for |
-| `-n, --lines` | Number of lines to show. Default: `100` |
-
-### Attach
-
-Attach to a running component console.
-
-```bash
-sc attach <component>
-```
-
-| Argument | Description |
-| -------- | ----------- |
-| `<component>` | Component to attach to |
-
----
-
-## Context Management
-
-Manage connection contexts. Aliases: `contexts`, `ctx`.
+The CLI saves each network as a context and sends network commands to the active one. Setup creates your first context automatically.
 
 ```bash
 sc context list
 sc context use <name>
-sc context add [name]
-sc context remove <name>
-sc context current
 ```
 
-| Command | Description |
-| ------- | ----------- |
-| `sc context list` | List all contexts. Alias: `ls` |
-| `sc context use <name>` | Switch to a context |
-| `sc context add [name]` | Add a new context |
-| `sc context remove <name>` | Remove a context. Aliases: `del`, `rm` |
-| `sc context current` | Show the current context |
+Run `sc context add` to connect the CLI to another network.
 
----
+## Add another serverhost
 
-## Group Management
-
-Manage server groups. Alias: `groups`.
-
-```bash
-sc group list
-sc group create
-sc group info <group>
-sc group start <group>
-sc group update <group>
-sc group delete <group>
-```
-
-| Command | Description |
-| ------- | ----------- |
-| `sc group list` | List all groups. Alias: `ls` |
-| `sc group create` | Create a new group. Alias: `new` |
-| `sc group info <group>` | Show group information. Aliases: `get`, `show` |
-| `sc group start <group>` | Start a server in the group |
-| `sc group update <group>` | Update group settings. Alias: `edit` |
-| `sc group delete <group>` | Delete a group. Aliases: `del`, `rm` |
-
-`sc group create` supports:
-
-| Option | Description |
-| ------ | ----------- |
-| `-y, --auto-retry` | Automatically retry with previous answers if available |
-
-`sc group update <group>` supports:
-
-| Option | Description |
-| ------ | ----------- |
-| `--name` | New group name |
-| `--type` | Group type. Choices: `SERVER`, `PROXY`, `LOBBY` |
-| `--active` | Set active status |
-| `--max-memory` | Maximum memory in MB |
-| `--min-memory` | Minimum memory in MB |
-| `--max-players` | Maximum players |
-| `--scaling-min` | Minimum servers for scaling |
-| `--scaling-max` | Maximum servers for scaling |
-
-### Group Plugins
-
-Manage plugins for a group. Alias: `plugins`.
-
-```bash
-sc group plugin add <group> [query]
-sc group plugin list <group>
-sc group plugin remove <group> <plugin>
-```
-
-| Command | Description |
-| ------- | ----------- |
-| `sc group plugin add <group> [query]` | Add plugins to a group. Query can be a search term, Modrinth slug such as `mr:name`, Spigot ID such as `sp:123`, or URL |
-| `sc group plugin list <group>` | List plugins for a group. Alias: `ls` |
-| `sc group plugin remove <group> <plugin>` | Remove a plugin from a group. Alias: `rm` |
-
----
-
-## Server Management
-
-Manage running servers. Alias: `servers`.
-
-```bash
-sc server list
-sc server info <server> [numerical-id]
-sc server stop [targets..]
-sc server logs <server> [numerical-id]
-```
-
-| Command | Description |
-| ------- | ----------- |
-| `sc server list` | List all servers. Alias: `ls` |
-| `sc server info <server> [numerical-id]` | Show server information. Aliases: `get`, `show` |
-| `sc server stop [targets..]` | Stop one or more servers |
-| `sc server logs <server> [numerical-id]` | View server logs |
-
-`sc server list` supports:
-
-| Option | Description |
-| ------ | ----------- |
-| `--filter` | Filter results by name |
-| `--group` | Filter results by group |
-| `--state` | Filter results by state |
-| `--sort` | Sort by `created`, `players`, `memory`, or `state` |
-| `--reverse` | Reverse sort order |
-
-`sc server stop [targets..]` supports server IDs, group names with numeric IDs, ranges, and `--all`:
-
-```bash
-sc server stop lobby 1-3 proxy 1
-sc server stop lobby --all
-sc server stop --all
-```
-
-| Argument or Option | Description |
-| ------------------ | ----------- |
-| `[targets..]` | Server IDs, group plus IDs such as `lobby 1-3`, or group names with `--all` |
-| `-a, --all` | Stop all servers in specified groups, or all servers globally |
-
-`sc server logs <server> [numerical-id]` supports:
-
-| Option | Description |
-| ------ | ----------- |
-| `-f, --follow` | Follow log output in real time |
-| `--severity` | Filter by severity, such as `ERROR`, `WARN`, `INFO`, or `DEBUG` |
-| `--search` | Full-text search in log messages |
-| `--from` | Start time in ISO 8601 format |
-| `--to` | End time in ISO 8601 format |
-| `--limit` | Maximum number of log entries. Default: `100`, max: `1000` |
-| `--no-prefix` | Hide the `[server-name]` prefix |
-
----
-
-## Blueprint Management
-
-Manage server blueprints. Aliases: `blueprints`, `bp`, `bps`.
-
-```bash
-sc blueprint list
-sc blueprint info <blueprint>
-sc blueprint update <blueprint>
-sc blueprint delete <blueprint>
-```
-
-| Command | Description |
-| ------- | ----------- |
-| `sc blueprint list` | List all blueprints. Alias: `ls` |
-| `sc blueprint info <blueprint>` | Show blueprint information. Aliases: `get`, `show` |
-| `sc blueprint update <blueprint>` | Update blueprint settings. Alias: `edit` |
-| `sc blueprint delete <blueprint>` | Delete a blueprint. Aliases: `del`, `rm` |
-
-`sc blueprint update <blueprint>` supports:
-
-| Option | Description |
-| ------ | ----------- |
-| `--name` | New blueprint name |
-| `--minecraft-version` | Minecraft version |
-| `--server-software` | Server software |
-| `--software-version` | Software version |
-| `--configurator` | Configurator |
-| `--server-url` | Server JAR URL |
-
----
-
-## Persistent Server Management
-
-Manage persistent servers. Aliases: `persistent-servers`, `pserver`, `pservers`, `persistentserver`, `persistentservers`, `persserver`, `persservers`.
-
-```bash
-sc persistent-server list
-sc persistent-server create
-sc persistent-server info <server>
-sc persistent-server update <server>
-sc persistent-server delete <server>
-```
-
-| Command | Description |
-| ------- | ----------- |
-| `sc persistent-server list` | List all persistent servers. Alias: `ls` |
-| `sc persistent-server create` | Create a new persistent server. Alias: `new` |
-| `sc persistent-server info <server>` | Show persistent server information. Aliases: `get`, `show` |
-| `sc persistent-server update <server>` | Update persistent server settings. Alias: `edit` |
-| `sc persistent-server delete <server>` | Delete a persistent server. Aliases: `del`, `rm` |
-
-`sc persistent-server create` supports:
-
-| Option | Description |
-| ------ | ----------- |
-| `-y, --auto-retry` | Automatically retry with previous answers if available |
-
-`sc persistent-server update <server>` supports:
-
-| Option | Description |
-| ------ | ----------- |
-| `--name` | New server name |
-| `--type` | Server type. Choices: `SERVER`, `PROXY` |
-| `--active` | Set active status |
-| `--max-memory` | Maximum memory in MB |
-| `--min-memory` | Minimum memory in MB |
-| `--max-players` | Maximum players |
-| `--serverhost` | Serverhost ID |
-
-### Persistent Server Plugins
-
-Manage plugins for a persistent server. Alias: `plugins`.
-
-```bash
-sc persistent-server plugin add <server> [query]
-sc persistent-server plugin list <server>
-sc persistent-server plugin remove <server> <plugin>
-```
-
-| Command | Description |
-| ------- | ----------- |
-| `sc persistent-server plugin add <server> [query]` | Add plugins to a persistent server. Query can be a search term, Modrinth slug such as `mr:name`, Spigot ID such as `sp:123`, or URL |
-| `sc persistent-server plugin list <server>` | List plugins for a persistent server. Alias: `ls` |
-| `sc persistent-server plugin remove <server> <plugin>` | Remove a plugin from a persistent server. Alias: `rm` |
-
----
-
-## Sync Management
-
-Manage multi-root file synchronization. Alias: `syncthing`.
-
-```bash
-sc sync init
-sc sync add
-sc sync join
-sc sync approve
-sc sync status
-sc sync reset
-```
-
-| Command | Description |
-| ------- | ----------- |
-| `sc sync init` | Initialize sync on the primary serverhost and print a join command |
-| `sc sync add` | Generate a join command for adding another serverhost to sync |
-| `sc sync join` | Join an existing sync topology from a new serverhost |
-| `sc sync approve` | Approve and share managed folders with a joining serverhost |
-| `sc sync status` | Show sync device and managed folder status |
-| `sc sync reset` | Remove all Syncthing devices and folders on this host while keeping the same device ID |
-
-Common sync options:
-
-| Option | Description |
-| ------ | ----------- |
-| `--cloud-dir` | SimpleCloud installation directory. Defaults to the current context installation |
-| `--as-root` | Use the root Syncthing service, `syncthing@root.service`, on Linux |
-| `--dry-run` | Show what would happen without changing Syncthing config where supported |
-
-Command-specific sync options:
-
-| Command | Options |
-| ------- | ------- |
-| `sc sync init` | `--name`, `--cloud-dir`, `--as-root`, `--dry-run` |
-| `sc sync add` | `--cloud-dir`, `--primary-name`, `--join-name`, `--as-root` |
-| `sc sync join` | Required: `--primary-device-id`, `--primary-name`, `--templates-id`, `--workflows-id`, `--options-id`. Optional: `--cloud-dir`, `--name`, `--as-root`, `--dry-run` |
-| `sc sync approve` | Required: `--device-id`, `--name`. Optional: `--cloud-dir`, `--as-root`, `--dry-run` |
-| `sc sync status` | `--cloud-dir`, `--as-root` |
-| `sc sync reset` | `--cloud-dir`, `--as-root`, `-y, --yes`, `--dry-run` |
-
----
-
-## Network Management
-
-Manage network configuration. Aliases: `networks`, `net`.
-
-```bash
-sc network register
-sc network verify
-```
-
-| Command | Description |
-| ------- | ----------- |
-| `sc network register` | Register a new network |
-| `sc network verify` | Verify network credentials |
-
----
-
-## Serverhost Management
-
-Manage serverhosts. Aliases: `serverhosts`, `host`, `hosts`.
+On the new machine, install the CLI and run:
 
 ```bash
 sc serverhost add
-sc serverhost register
-sc serverhost verify <id>
 ```
 
-| Command | Description |
-| ------- | ----------- |
-| `sc serverhost add` | Add a new serverhost with the interactive wizard |
-| `sc serverhost register` | Register a new serverhost |
-| `sc serverhost verify <id>` | Verify a serverhost |
+Follow [Multi-root setup](/en/manual/setup/multi-root) for the complete process.
 
----
+## Discover more commands
 
-## Local Maintenance
-
-Manage local SimpleCloud installation maintenance commands.
+The CLI also supports templates, persistent servers, multiple contexts, and advanced installation options. These workflows have their own guides, while the CLI's built-in help always shows the current command syntax:
 
 ```bash
-sc local cleanup
+sc group --help
+sc server --help
+sc persistent-server --help
 ```
 
-Aliases: `sc local clean`, `sc local fix`.
-
-| Option | Description |
-| ------ | ----------- |
-| `-n, --name` | Filter by name, type, or command, case-insensitive |
-| `-a, --all` | Show all Java processes, not just SimpleCloud-related processes |
-
----
-
-## Shell Completion
-
-Generate shell completion scripts.
-
-```bash
-sc completion
-```
-
----
-
-## Quick Reference
-
-| Task | Command |
-| ---- | ------- |
-| Set up SimpleCloud | `sc setup` |
-| Start all components | `sc start` |
-| Stop all components | `sc stop` |
-| Restart all components | `sc restart` |
-| Check component status | `sc status` |
-| View component logs | `sc logs <component>` |
-| Attach to a component console | `sc attach <component>` |
-| Upgrade CLI and components | `sc upgrade` |
-| Create a group | `sc group create` |
-| List groups | `sc group list` |
-| Start a server in a group | `sc group start <group>` |
-| List servers | `sc server list` |
-| Stop servers | `sc server stop [targets..]` |
-| View server logs | `sc server logs <server> [numerical-id]` |
-| Switch context | `sc context use <name>` |
-| Initialize multi-root sync | `sc sync init` |
-| Clean stuck local Java processes | `sc local cleanup` |
+Learn more in [Templates](/en/manual/setup/templates) and [Persistent servers](/en/manual/setup/persistent-servers).

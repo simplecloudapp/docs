@@ -1,224 +1,142 @@
 ---
-title: 'Templates'
-description: 'Templates define the files, plugins, and configurations copied into server directories'
+title: "Templates"
+description: "Add plugins, configuration, worlds, and other files to the servers that need them."
 ---
 
-## How templates work
+Templates define the files a server starts with. Add a file to a template once, and SimpleCloud copies it to every matching server when it starts.
 
-Templates are folders on each serverhost that are copied into a server directory before the server starts. Use them for plugin JARs, default worlds, configuration files, and shared resources.
+Templates work best for group servers, which start from a fresh directory. If files changed while a server is running must remain after it stops, use a [persistent server](/en/manual/setup/persistent-servers).
 
-The default setup workflow copies template layers in a fixed order. Existing files are kept unless you customize the workflow to overwrite them.
+## Choose a template folder
 
-```mermaid
-flowchart LR
-    A[cache/name] --> B[_every/every]
-    B --> C[_every/every_type]
-    C --> D[_every/every_mapped-software]
-    D --> E[_every/every_software]
-    E --> F[_tagged/tag]
-    F --> G[name]
-    G --> H[Running server]
-```
+Open **Files** in the dashboard, select a serverhost, and open `templates`. Choose the folder by how widely the files should be shared:
 
-| Order | Directory | Description |
-| ----- | --------- | ----------- |
-| 1 | `cache/{name}/` | Cached files from previous starts |
-| 2 | `_every/every/` | Base files for all servers |
-| 3 | `_every/every_{type}/` | Type-specific files, such as `every_proxy` or `every_server` |
-| 4 | `_every/every_{mapped-software}/` | Platform-mapped software files |
-| 5 | `_every/every_{software}/` | Software-specific files, such as `every_paper` or `every_velocity` |
-| 6 | `_tagged/{tag}/` | Files for each assigned tag |
-| 7 | `{name}/` | Files for one group or persistent server |
+- **One group or persistent server:** `templates/{name}/`
+- **Servers with a tag:** `templates/_tagged/{tag}/`
+- **One server software:** `templates/_every/every_{software}/`
+- **All game servers:** `templates/_every/every_server/`
+- **All proxies:** `templates/_every/every_proxy/`
+- **Every server:** `templates/_every/every/`
 
-<Note>
-  Need world or player data to survive restarts? Use a [Persistent Server](/en/manual/setup/persistent-servers) instead of a group.
-</Note>
-
-## Template directory structure
-
-<Tree>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="_every" defaultOpen>
-      <Tree.Folder name="every">
-        <Tree.File name="Applied to all servers" />
-      </Tree.Folder>
-      <Tree.Folder name="every_proxy">
-        <Tree.File name="Applied to all proxy servers" />
-      </Tree.Folder>
-      <Tree.Folder name="every_server">
-        <Tree.File name="Applied to all game servers" />
-      </Tree.Folder>
-      <Tree.Folder name="every_paper">
-        <Tree.File name="Applied to all Paper servers" />
-      </Tree.Folder>
-      <Tree.Folder name="every_velocity">
-        <Tree.File name="Applied to all Velocity servers" />
-      </Tree.Folder>
-    </Tree.Folder>
-    <Tree.Folder name="_tagged" defaultOpen>
-      <Tree.Folder name="minigames">
-        <Tree.File name="Applied to servers with the minigames tag" />
-      </Tree.Folder>
-      <Tree.Folder name="premium">
-        <Tree.File name="Applied to servers with the premium tag" />
-      </Tree.Folder>
-    </Tree.Folder>
-    <Tree.Folder name="lobby">
-      <Tree.File name="Applied to the lobby group or persistent server" />
-    </Tree.Folder>
-    <Tree.Folder name="bedwars">
-      <Tree.File name="Applied to the bedwars group" />
-    </Tree.Folder>
-    <Tree.Folder name="cache">
-      <Tree.File name="Managed cache files" />
-    </Tree.Folder>
-  </Tree.Folder>
-</Tree>
-
-## Shared templates
-
-### `_every/every`
-
-Use `_every/every/` for files every server should receive, including proxies and game servers.
-
-<Tree>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="_every" defaultOpen>
-      <Tree.Folder name="every" defaultOpen>
-        <Tree.Folder name="plugins">
-          <Tree.File name="shared-plugin.jar" />
-        </Tree.Folder>
-      </Tree.Folder>
-    </Tree.Folder>
-  </Tree.Folder>
-</Tree>
-
-### `_every/every_{type}`
-
-Use type templates when a file should apply to all proxies or all game servers.
-
-| Directory | Use for |
-| --------- | ------- |
-| `_every/every_proxy/` | Proxy plugins and proxy configuration |
-| `_every/every_server/` | Game server plugins and shared server configuration |
-
-### `_every/every_{software}`
-
-Use software templates when a file belongs to a specific server software.
-
-| Directory | Use for |
-| --------- | ------- |
-| `_every/every_paper/` | Paper-specific plugins and configuration |
-| `_every/every_spigot/` | Spigot-specific plugins and configuration |
-| `_every/every_velocity/` | Velocity-specific plugins and configuration |
-
-## Tagged templates
-
-Tags let you share files across multiple groups or persistent servers without duplicating their named template folder.
-
-1. Create a tag folder in `templates/_tagged/`.
-2. Add the same tag in the dashboard when you create or edit the group or persistent server.
-
-<Tree>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="_tagged" defaultOpen>
-      <Tree.Folder name="minigames" defaultOpen>
-        <Tree.Folder name="plugins">
-          <Tree.File name="minigame-core.jar" />
-        </Tree.Folder>
-      </Tree.Folder>
-    </Tree.Folder>
-  </Tree.Folder>
-</Tree>
-
-## Named templates
-
-The folder named after a group or persistent server is the most specific template layer.
-
-<Tree>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="bedwars" defaultOpen>
-      <Tree.Folder name="plugins">
-        <Tree.File name="bedwars-plugin.jar" />
-      </Tree.Folder>
-      <Tree.Folder name="world">
-        <Tree.File name="level.dat" />
-        <Tree.Folder name="region" />
-      </Tree.Folder>
-    </Tree.Folder>
-  </Tree.Folder>
-</Tree>
-
-For group servers, files changed while the server is running are removed when the dynamic server stops. For persistent servers, the runtime directory is kept between restarts.
-
-## Managing template files
-
-### Add plugins
-
-Place plugin JARs in the layer where they should apply:
-
-```bash
-# For all servers
-cp shared-plugin.jar templates/_every/every/plugins/
-
-# For all Paper servers
-cp paper-plugin.jar templates/_every/every_paper/plugins/
-
-# For one group or persistent server
-cp bedwars.jar templates/bedwars/plugins/
-```
-
-New server starts include the plugin. Already-running servers need a restart.
-
-### Move generated configuration back into a template
-
-1. Start a server once so the plugin creates its default files.
-2. Stop the server.
-3. Copy the generated configuration from `running/` into the matching template folder.
-4. Edit the template copy.
-5. Start the server again to verify the result.
-
-### Add world files
-
-Place a world folder in the named template when each new dynamic server should start from the same map:
-
-<Tree>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="bedwars" defaultOpen>
-      <Tree.Folder name="world">
-        <Tree.File name="level.dat" />
-        <Tree.Folder name="region" />
-      </Tree.Folder>
-    </Tree.Folder>
-  </Tree.Folder>
-</Tree>
-
-Changes made during gameplay are lost when a dynamic group server stops. Use a persistent server for worlds that players should keep building on.
-
-## Cache files
-
-The default cleanup workflow stores selected generated files in `templates/cache/{name}/` so later starts can reuse them. The serverhost manages this folder.
+For example, files used only by the `lobby` group belong in `templates/lobby/`. A plugin needed by every Paper server belongs in `templates/_every/every_paper/`.
 
 <Tip>
-  If a dynamic server starts with stale generated files, stop the affected servers and clear that group's folder under `templates/cache/`.
+  Use the narrowest folder that includes every server that needs the files. This keeps unrelated servers and templates easier to manage.
 </Tip>
+
+## Keep the server's folder structure
+
+Everything below the chosen template folder maps directly to the server directory. Use the same relative path in both places.
+
+For example, this template file:
+
+```text
+templates/lobby/plugins/Lobby/config.yml
+```
+
+becomes this file in a running `lobby` server:
+
+```text
+running/lobby/lobby-1/plugins/Lobby/config.yml
+```
+
+The generated server name, such as `lobby-1`, can differ between starts. The path below that name remains the same.
+
+<Steps>
+  <Step title="Open the matching template folder">
+    Open the folder for the group, tag, software, or server type you want to change. Create the folder if it does not exist.
+  </Step>
+
+  <Step title="Add the files at their server-relative paths">
+    To place a plugin in the server's `plugins` folder, create a `plugins` folder in the template and upload the JAR there. Keep any configuration and world folders in the same structure they use inside a running server.
+  </Step>
+
+  <Step title="Start a matching server">
+    Start a server and open its **Files** page to confirm that the files appear in the expected locations.
+  </Step>
+</Steps>
+
+## Apply template changes
+
+Group servers receive their matching template files each time they start. A server that is already running does not change, so stop it and start another server after updating a template.
+
+Persistent servers also read their templates when they start, but keep their server directory between starts. A template can add a missing file, but it does not replace a file that the persistent server already has. Edit an existing persistent-server file directly from its **Files** page.
+
+## Reuse generated configuration
+
+Some plugins create their configuration only after their first start. For a group server:
+
+1. Start one server and let the plugin create its files.
+2. While the server is still running, open its folder under `running/{group}/{server}/`.
+3. Copy or download the generated file, then place it at the same relative path in the group's template.
+4. Edit the template copy.
+5. Stop the running server and start another one to test the template.
+
+For example, copy:
+
+```text
+running/lobby/lobby-1/plugins/Lobby/config.yml
+```
+
+to:
+
+```text
+templates/lobby/plugins/Lobby/config.yml
+```
+
+<Warning>
+  Copy files from a group server before stopping it. SimpleCloud removes that server's `running` directory when it stops.
+</Warning>
+
+For a persistent server, its files are stored in `running/persistent/{name}/` and remain after it stops. Edit those files directly unless you want a template to provide a file only when it is missing.
+
+## Share files with tags
+
+Tags let unrelated groups or persistent servers use the same files without duplicating them in each named template.
+
+Create a folder such as `templates/_tagged/minigames/`, then add the `minigames` tag to every group or persistent server that should receive its files. The tag and folder names must match.
+
+## Avoid conflicts between template folders
+
+A server can match several template folders. SimpleCloud copies the matching template folders in this order:
+
+1. `templates/_every/every/`
+2. The matching server-type folder, such as `templates/_every/every_server/`
+3. The mapped software family, such as `templates/_every/every_paper/` for Purpur
+4. The exact software folder, such as `templates/_every/every_purpur/`
+5. Each matching folder in `templates/_tagged/`
+6. The named folder, such as `templates/lobby/`
+
+If the same relative path appears more than once, the first file copied is kept. Later folders do not replace it. For example, `templates/lobby/server.properties` does not override `templates/_every/every/server.properties`.
+
+Keep each file in only one matching template folder to make the result predictable. Do not rely on the order of multiple matching tag folders that contain the same path.
+
+The `templates/cache/` folder is managed by SimpleCloud and should not be used for your own template files.
+
+## Use templates on multiple serverhosts
+
+Templates belong to the serverhost where they are stored. If a group can run on several serverhosts, each one needs the same template files. Use [Multi-root setup](/en/manual/setup/multi-root) to synchronize the `templates` folder between them.
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="A file is not copied">
-    Check the exact folder name. The shared folders live under `_every/`, for example `templates/_every/every_paper/`, not `templates/every_paper/`.
+  <Accordion title="A file is missing">
+    Check that the folder matches the group name, tag, software, or server type. Then confirm that the path below the template folder matches the path you expect inside the server. Start a new group server after making changes.
   </Accordion>
 
-  <Accordion title="A template change does not affect a running server">
-    Templates are copied during server preparation. Restart the affected server so the setup workflow runs again.
+  <Accordion title="A template change does not appear">
+    Templates do not change a running server. For a group, stop the current server and start another one. For a persistent server, edit an existing file directly because templates only add files that are missing.
   </Accordion>
 
-  <Accordion title="A file is not overwritten">
-    The default setup workflow keeps existing files for most template layers. This protects cache and persistent-server data. Use a configurator or a custom workflow when a value must be enforced on every start.
+  <Accordion title="The server uses a different version of a file">
+    Search the other matching template folders for the same relative path. The first matching copy is kept, so remove the duplicate or keep the file in the earlier shared folder.
   </Accordion>
 
-  <Accordion title="A tag template does not apply">
-    Make sure the tag is assigned in the dashboard and that the folder name under `templates/_tagged/` matches the tag exactly.
+  <Accordion title="A tagged template does not apply">
+    Confirm that the tag is assigned to the group or persistent server and that its spelling matches the folder below `templates/_tagged/`.
+  </Accordion>
+
+  <Accordion title="The change appears on only one serverhost">
+    Synchronize the `templates` folder across every serverhost that can run the group.
   </Accordion>
 </AccordionGroup>
