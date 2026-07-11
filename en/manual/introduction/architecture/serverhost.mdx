@@ -3,108 +3,91 @@ title: 'Serverhost'
 description: 'The execution agent responsible for running Minecraft servers'
 ---
 
-## What is the Serverhost?
+## What the serverhost does
 
-The Serverhost is a distributed execution agent that runs on each machine in your SimpleCloud infrastructure. It receives commands from the Controller and manages the actual lifecycle of Minecraft servers - from preparation to execution to cleanup.
+The serverhost runs on every machine that should start Minecraft servers for your SimpleCloud network. It connects to the controller, receives start requests, prepares server files, launches the server process, reports state, and cleans up after dynamic servers stop.
 
-## Key Responsibilities
+## Responsibilities
 
-### Server Lifecycle
+### Server lifecycle
 
-The Serverhost manages the complete server lifecycle:
+The serverhost owns the local lifecycle of each server:
 
-1. **Preparation** - Execute workflows, copy templates, install plugins
-2. **Configuration** - Apply configurators to set ports, secrets, etc.
-3. **Execution** - Launch the server process (Screen/Tmux or Docker)
-4. **Monitoring** - Track server health and stream logs
-5. **Cleanup** - Stop process and remove temporary files
+1. **Preparation** - Run start workflows, copy templates, and load configured plugins
+2. **Configuration** - Apply configurators for ports, forwarding secrets, player limits, and related files
+3. **Execution** - Launch the server with the configured runner
+4. **Monitoring** - Track the local process, stream logs, and report state changes
+5. **Cleanup** - Run stop workflows and remove temporary dynamic server directories
 
-### Workflow Execution
+### Workflow execution
 
-Workflows define the server preparation process:
+Workflows define the preparation and cleanup steps. The default setup workflow copies cache data, shared templates, tag templates, and the named template before it loads plugins and applies the selected configurator.
 
-- Copy template files to server directory
-- Download and install plugins from registries
-- Apply configuration based on server software
-- Execute custom setup steps
+### Plugin loading
 
-### Plugin Management
-
-Automatic plugin installation from multiple sources:
+The serverhost can load configured plugins from multiple sources:
 
 | Source | Description |
-|--------|-------------|
-| Modrinth | Modern plugin/mod registry |
-| Hangar | PaperMC's plugin repository |
-| Spigot | SpigotMC resource pages |
-| URL | Direct download from any HTTP(S) URL |
+| ------ | ----------- |
+| Modrinth | Plugin or mod versions from Modrinth |
+| Hangar | PaperMC Hangar projects |
+| Spigot | SpigotMC resources |
+| URL | Direct HTTP(S) download |
 
 ## Architecture
 
 ```mermaid
 flowchart TB
     subgraph Serverhost["Serverhost"]
-        subgraph NATS["NATS Receiver"]
-            Start["Start requests"]
-            Status["Status reports"]
+        NATS["NATS connection"]
+        KeepAlive["Keep-alive"]
+        FileBrowser["File browser API"]
+
+        subgraph Workflow["Workflow engine"]
+            Copy["copy/delete"]
+            Plugins["load-plugins"]
+            Config["configurate"]
+            Archives["compress/upload"]
         end
 
-        subgraph Workflow["Workflow Engine"]
-            Copy["Copy"]
-            Delete["Delete"]
-            ForEach["ForEach"]
-            Plugins["Plugin loading"]
-            Config["Configurator actions"]
-        end
-
-        subgraph Deploy["Deployment Manager"]
+        subgraph Deploy["Deployment manager"]
             Screen["Screen/Tmux"]
             Docker["Docker"]
         end
 
         subgraph Configs["Configurators"]
-            YAML["YAML"]
+            YAML["YML"]
             JSON["JSON"]
-            Props["Properties"]
+            Props["PROPERTIES"]
             TOML["TOML"]
-            Text["Text"]
+            Text["TXT"]
         end
     end
 ```
 
-## Execution Modes
+## Runner modes
 
-### Screen/Tmux (Local)
+### Screen or Tmux
 
-The default execution mode using terminal multiplexers:
-
-- **Screen** - Preferred, widely available on Linux
-- **Tmux** - Alternative if Screen is unavailable
-
-SimpleCloud components run as detached processes with component console access via:
+The local runner starts servers as detached processes through a terminal multiplexer.
 
 ```bash
-# Attach to the serverhost component console
-sc attach serverhost
-```
-
-### Docker
-
-Container-based execution for isolation:
-
-- Each server runs in its own container
-- Resource limits enforced by Docker
-- Better isolation between servers
-- Requires Docker to be installed
-
-Configure the runner mode when starting:
-
-```bash
-sc start --runner docker
 sc start --runner screen
 ```
 
-## Directory Structure
+Use `sc attach serverhost` to attach to the serverhost component console.
+
+### Docker
+
+The Docker runner starts each server in its own container. Use it when you want stronger process isolation and Docker-managed resource limits.
+
+```bash
+sc start --runner docker
+```
+
+Docker must be installed on the serverhost machine.
+
+## Directory structure
 
 <Tree>
   <Tree.Folder name="secrets" defaultOpen>
@@ -112,104 +95,94 @@ sc start --runner screen
     <Tree.File name="network-secret.key" />
     <Tree.File name="serverhost-id.key" />
   </Tree.Folder>
-  <Tree.Folder name="workflows" defaultOpen>
-    <Tree.Folder name="internal" defaultOpen>
-      <Tree.File name="setup.yml" />
-      <Tree.File name="cleanup.yml" />
-    </Tree.Folder>
-  </Tree.Folder>
   <Tree.Folder name="options" defaultOpen>
     <Tree.Folder name="configurators">
       <Tree.File name="paper_velocity.yml" />
       <Tree.File name="velocity.yml" />
     </Tree.Folder>
-    <Tree.File name="modrinth-platform-mappings.yml" />
+    <Tree.File name="platform-mappings.yml" />
+  </Tree.Folder>
+  <Tree.Folder name="workflows" defaultOpen>
+    <Tree.Folder name="internal">
+      <Tree.File name="setup.yml" />
+      <Tree.File name="cleanup.yml" />
+    </Tree.Folder>
   </Tree.Folder>
   <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="every" />
-    <Tree.Folder name="every_proxy" />
-    <Tree.Folder name="every_server" />
-    <Tree.Folder name="every_paper" />
-    <Tree.Folder name="every_velocity" />
+    <Tree.Folder name="_every">
+      <Tree.Folder name="every" />
+      <Tree.Folder name="every_proxy" />
+      <Tree.Folder name="every_server" />
+      <Tree.Folder name="every_paper" />
+      <Tree.Folder name="every_velocity" />
+    </Tree.Folder>
     <Tree.Folder name="_tagged">
       <Tree.Folder name="minigames" />
     </Tree.Folder>
+    <Tree.Folder name="lobby" />
     <Tree.Folder name="cache" />
   </Tree.Folder>
   <Tree.Folder name="running" />
   <Tree.Folder name="logs" />
 </Tree>
 
-## Template Hierarchy
-
-Templates are applied in a specific order, with later templates overwriting earlier ones. See [Templates](/en/manual/setup/templates) for full details and examples.
-
-## Communication
-
-### NATS Messaging
-
-The Serverhost communicates with the Controller via NATS:
-
-**Inbound (from Controller):**
-- `{networkId}.serverhost.{id}.start` - Start server request
-
-**Outbound (to Controller):**
-- `{networkId}.server.{id}.status` - Server status updates
-- `{networkId}.server.{id}.logs` - Log streaming
-- `{networkId}.internal.serverhost.{id}.keep-alive` - Health checks
-
-### State Synchronization
-
-Every minute, the Serverhost:
-
-1. Fetches active servers from Controller
-2. Compares with locally running servers
-3. Stops orphaned servers not in Controller's state
-
-## Server Preparation Flow
+## Server preparation flow
 
 When a start request arrives:
 
 ```mermaid
 flowchart TD
-    A[Receive StartServerRequest] --> B[Validate server doesn't exist]
+    A[Receive start request] --> B[Check local deployment]
     B --> C[Find available port]
-    C --> D[Execute setup workflow]
+    C --> D[Build runtime context]
+    D --> E[Run start workflows]
 
-    subgraph Workflow["Setup Workflow"]
-        D --> E[Copy from cache]
-        E --> F[Copy 'every' templates]
-        F --> G[Copy type-specific templates]
-        G --> H[Copy software-specific templates]
-        H --> I[Copy tagged templates]
-        I --> J[Copy server-specific template]
-        J --> K[Load plugins]
-        K --> L[Apply configurator]
+    subgraph Setup["Default setup workflow"]
+        E --> F[Restore cache]
+        F --> G[Copy _every templates]
+        G --> H[Copy tagged templates]
+        H --> I[Copy named template]
+        I --> J[Load configured plugins]
+        J --> K[Apply configurator]
     end
 
-    L --> M[Build JVM command]
-    M --> N[Launch via Screen/Docker]
-    N --> O[Report status to Controller]
+    K --> L[Build launch command]
+    L --> M[Start with Screen/Tmux or Docker]
+    M --> N[Report state to controller]
 ```
 
-## Configuration
+Dynamic group servers use temporary directories under `running/`. Persistent servers keep their runtime directory between restarts.
+
+## Communication
+
+The serverhost communicates with the controller through NATS and controller HTTP APIs:
+
+| Channel | Purpose |
+| ------- | ------- |
+| Start requests | The controller asks a specific serverhost to deploy a server |
+| Keep-alive | The serverhost reports version, uptime, and installed Java versions |
+| Server events | The serverhost reports starting, stopped, and cleanup-complete events |
+| Log forwarding | The serverhost forwards server logs for dashboard and CLI views |
+| File browser API | The dashboard can browse and edit allowed serverhost files |
+
+Every serverhost also synchronizes controller state and stops orphaned local servers that no longer belong to the controller state.
+
+## Setup options
 
 Serverhost setup uses the current CLI setup options:
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `--network` | Network ID or slug | Interactive selection |
-| `--install-dir` | Serverhost installation directory | Interactive prompt |
-| `--host-name` | Serverhost display name | Interactive prompt |
-| `--max-memory` | Maximum serverhost memory, such as `80%` or `32gb` | Detected from system memory |
-| `--start` / `--no-start` | Start SimpleCloud after setup or skip startup | Interactive prompt |
-| `--auto-install-deps` / `--no-auto-install-deps` | Install required dependencies automatically or skip dependency installation | Interactive prompt |
-| `--install` | Install setup installables, such as `--install java:21` | None |
-| `-y, --yes` | Use non-interactive defaults where possible | `false` |
+| Option | Description |
+| ------ | ----------- |
+| `--network` | Network ID or slug |
+| `--install-dir` | Serverhost installation directory |
+| `--host-name` | Serverhost display name |
+| `--max-memory` | Maximum memory available for server processes, such as `80%` or `32gb` |
+| `--start` / `--no-start` | Start SimpleCloud after setup or skip startup |
+| `--auto-install-deps` / `--no-auto-install-deps` | Install required dependencies automatically or skip dependency installation |
+| `--install` | Install setup installables, such as `--install java:21` |
+| `-y, --yes` | Use non-interactive defaults where possible |
 
 ## Monitoring
-
-### Via CLI
 
 ```bash
 # Check serverhost status
@@ -218,25 +191,16 @@ sc status serverhost
 # View serverhost logs
 sc logs serverhost
 
-# View specific server logs
+# View a server log
 sc server logs <group> <id>
 ```
 
-### Keep-Alive
-
-The Serverhost sends periodic keep-alive messages:
-
-- Reports current version
-- Reports installed Java runtime versions (exposed as `installed_java_versions` on serverhost API responses)
-- Receives update notifications
-- Maintains connection with Controller
-
 <Note>
-  Serverhosts automatically restart servers if the Serverhost itself restarts,
-  based on synchronization with the Controller's state.
+  When a serverhost restarts, it compares local deployments with the controller state and reattaches to servers it still owns where possible.
 </Note>
 
-## Related Topics
+## Related topics
 
+- [Templates](/en/manual/setup/templates) - Template hierarchy and file layout
 - [Configurators](/en/manual/configuration/configurators) - Server configuration system
-- [Workflows](/en/manual/configuration/workflows) - Server preparation workflows
+- [Workflows](/en/manual/configuration/workflows) - Server preparation and cleanup workflows

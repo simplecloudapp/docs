@@ -5,13 +5,13 @@ description: 'Häufig gestellte Fragen zu SimpleCloud'
 
 <AccordionGroup>
   <Accordion title="Was ist SimpleCloud?">
-    SimpleCloud ist ein Management-System für Minecraft Server-Netzwerke mit Auto-Scaling, einem Dashboard und Entwickler-APIs.
+    SimpleCloud ist ein Management-System für Minecraft-Server-Netzwerke mit Auto-Scaling, Dashboard und CLI.
 
     Mehr erfahren in der [Übersicht](/de/manual/introduction/overview).
   </Accordion>
 
   <Accordion title="Welche Minecraft-Versionen werden unterstützt?">
-    SimpleCloud unterstützt alle Server-Software, die als Java-Prozess läuft - Paper, Spigot, Purpur, Velocity, BungeeCord, und mehr.
+    SimpleCloud kann Java-Serverprozesse ausführen. Eingebaute Configurators fokussieren gängige Setups mit Paper, Spigot, Velocity, BungeeCord und Waterfall; andere Software kann eigene Templates und Configurators benötigen.
 
     Blueprints für gängige Plattformen findest du in der [Gruppen-Dokumentation](/de/manual/setup/server-groups).
   </Accordion>
@@ -35,11 +35,11 @@ description: 'Häufig gestellte Fragen zu SimpleCloud'
   <Accordion title="Was ist der Unterschied zwischen Plugins und Droplets?">
     Plugins laufen innerhalb von Minecraft-Servern für In-Game-Features. Droplets sind unabhängige Dienste für Infrastruktur-Aufgaben.
 
-    Siehe [Plugins](/de/manual/plugin/overview) und die [Developer-Dokumentation](/de/developer/overview).
+    Starte mit der [Plugin-Übersicht](/de/manual/plugin/overview).
   </Accordion>
 
   <Accordion title="Wie aktualisiere ich SimpleCloud?">
-    Updates werden automatisch heruntergeladen. Das CLI wird bei jedem Start aktualisiert, andere Komponenten beim Neustart.
+    Nutze `simplecloud upgrade cli` für die CLI und `simplecloud upgrade` für unterstützte installierte Targets. Die CLI weist dich darauf hin, wenn sie zu weit hinter der neuesten Version liegt.
 
     Mehr unter [Updates](/de/manual/introduction/updates).
   </Accordion>

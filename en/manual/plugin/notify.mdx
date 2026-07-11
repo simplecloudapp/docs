@@ -110,11 +110,15 @@ notifications:
 | `notify.state.server.starting`  | Receive server starting messages      |
 | `notify.state.server.available` | Receive server available messages     |
 | `notify.state.server.stopping`  | Receive server stopping messages      |
-| `notify.state.server.deleted`   | Receive server stopped messages       |
+| `notify.state.server.stopped`   | Receive server stopped messages       |
 | `notify.state.group.created`    | Receive group created messages        |
 | `notify.state.group.deleted`    | Receive group deleted messages        |
 
 <Note>
   The permission check happens per notification. Give staff only the event
   categories they should receive.
+</Note>
+
+<Note>
+  `notify.state.server.deleted` is still accepted as a legacy alias for stopped-server notifications.
 </Note>

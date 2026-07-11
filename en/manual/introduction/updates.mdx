@@ -3,25 +3,27 @@ title: 'Updates'
 description: 'Keep your SimpleCloud installation up to date with our built-in update mechanisms'
 ---
 
-## Automatic Updates
+## Version Checks
 
-SimpleCloud features a fully automatic update system. When we release a new version, your installation automatically downloads and applies the update - no action required on your part.
+SimpleCloud components and the CLI can check whether newer releases are available. The CLI will prompt you when it is too far behind the latest release, so you know when an upgrade is required.
 
-- Updates are downloaded automatically in the background
-- Your configuration files are preserved during updates
-- Components restart without downtime - your servers continue running
-- Players remain connected without interruption
+- Use `simplecloud upgrade cli` to update the CLI itself.
+- Use `simplecloud upgrade` when you want the CLI to upgrade supported installed targets.
+- Review component restarts before upgrading production hosts.
+- Keep configuration and template backups before changing runtime components.
 
-This hands-off approach ensures you're always running the latest version without manual intervention.
+<Note>
+  The CLI prompts you to update when it is more than 5 versions behind the latest release.
+</Note>
 
-## Zero-Downtime Updates
+## Operational Impact
 
-SimpleCloud supports rolling updates for all components. When an update is applied:
+Updates can restart SimpleCloud components. Plan them like any other infrastructure change:
 
-- Components are updated and restarted one by one
-- Your Minecraft servers continue running throughout the update process
-- Players remain connected without interruption
-- The update completes automatically in the background
+- Update one serverhost first when possible.
+- Confirm server startup and shutdown still work.
+- Roll the same update to the remaining hosts.
+- Watch dashboard status and serverhost logs during the rollout.
 
 ## Manual Updates
 
@@ -52,7 +54,3 @@ simplecloud upgrade cli
 ```
 
 This command checks for a newer CLI version, downloads it, and replaces your current installation. Use `simplecloud upgrade cli --cli-force` to reinstall the latest CLI even when it is already current.
-
-<Note>
-  The CLI will automatically prompt you to update if it is more than 5 versions behind the latest release.
-</Note>

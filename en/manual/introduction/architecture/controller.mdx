@@ -46,24 +46,22 @@ This loop ensures your infrastructure matches your configuration, even after fai
 
 Scale based on total available player slots:
 
-```yaml
-scaling:
-  mode: SLOTS
-  min_servers: 1
-  max_servers: 5
-  player_threshold: 0.8  # Scale up when 80% full
-```
+| Setting | Example | Meaning |
+| ------- | ------- | ------- |
+| Scaling mode | Slots | Scale from player slot pressure |
+| Minimum Servers | `1` | Keep at least one server online |
+| Maximum Servers | `5` | Never start more than five servers |
+| Player threshold | `80%` | Start another server when usage crosses this threshold |
 
 ### Server-Based Scaling
 
 Maintain a fixed number of servers:
 
-```yaml
-scaling:
-  mode: SERVER
-  min_servers: 2
-  max_servers: 2
-```
+| Setting | Example | Meaning |
+| ------- | ------- | ------- |
+| Scaling mode | Servers | Scale from server count |
+| Minimum Servers | `2` | Keep two servers online |
+| Maximum Servers | `2` | Do not scale above two servers |
 
 ## High Availability
 
@@ -159,6 +157,6 @@ sc attach controller
 
 ## Related
 
-- [Developer API](/en/developer/overview) - Full API documentation
+- [Self-hosting](/en/manual/setup/self-hosting) - Operating your own controller and backing services
 - [Servers](/en/manual/setup/servers) - Server lifecycle and states
 - [Architecture Overview](/en/manual/introduction/architecture/overview) - System architecture diagram

@@ -169,6 +169,20 @@ tablist:
 | `<server_name>` | Tablist | Aktueller Server des Spielers |
 | `<ping>` | Tablist | Ping des Spielers mit konfigurierter Farbe |
 
+Konfiguriere Datums- und Ping-Darstellung in `placeholder.yml`:
+
+```yaml
+currentDateFormat: "dd.MM.yyyy"
+currentTimeFormat: "HH:mm:ss"
+pingColors:
+  - ping: 0
+    color: "<green>"
+  - ping: 100
+    color: "<gold>"
+  - ping: 200
+    color: "<dark_red>"
+```
+
 ## Berechtigungen
 
 | Berechtigung | Beschreibung |

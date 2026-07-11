@@ -6,7 +6,7 @@ tag: 'Server'
 
 ## Overview
 
-The Signs plugin lets players click signs to connect to SimpleCloud group servers or persistent servers. Signs update automatically with server state, player counts, MiniMessage text, optional animations, and optional behind-block changes.
+The Signs plugin lets players click signs to connect to SimpleCloud group servers. Signs update automatically with server state, player counts, MiniMessage text, and optional animations.
 
 ## Supported Software
 
@@ -21,7 +21,7 @@ The Signs plugin lets players click signs to connect to SimpleCloud group server
 2. Place it in your server template's `plugins/` folder.
 3. Make sure the `simplecloud-api` plugin is installed on the server.
 4. Start the server once to generate the default layouts.
-5. Look at a sign in-game and register it with `/sign add group <group>` or `/sign add persistent <persistentServer>`.
+5. Look at a sign in-game and register it with `/sign add <group>`.
 
 ## Commands
 
@@ -31,8 +31,7 @@ The command is available as `/simplecloudsign`, `/simplecloudsigns`, `/scsigns`,
 | ------- | ----------- |
 | `/sign help` | Show command help |
 | `/sign list [page] [group]` | List registered signs, optionally filtered by target |
-| `/sign add group <group>` | Register the sign you are looking at for a server group |
-| `/sign add persistent <persistentServer>` | Register the sign you are looking at for a persistent server |
+| `/sign add <group>` | Register the sign you are looking at for a server group |
 | `/sign remove` | Unregister the sign you are looking at |
 | `/sign remove <group>` | Remove all signs for a registered target key |
 
@@ -50,7 +49,6 @@ The command is available as `/simplecloudsign`, `/simplecloudsigns`, `/scsigns`,
 | `simplecloud.command.signs.add` | Register signs |
 | `simplecloud.command.signs.remove` | Remove the targeted sign |
 | `simplecloud.command.signs.remove.group` | Remove all signs for a target |
-| `simplecloud.command.signs.tp` | Teleport from clickable list entries |
 
 ## Layouts
 
@@ -58,11 +56,9 @@ Layouts define what a sign displays for a matching server state. The plugin ship
 
 ```yaml
 name: "online_default"
-type: ALL
 rule: "ONLINE"
 priority: 9
-serverName: "%server-name%"
-behind-block: "LIME_CONCRETE"
+serverName: "%group%-%numerical-id%"
 frame-update-interval: 1250
 
 frames:
@@ -76,11 +72,9 @@ frames:
 | Field | Description |
 | ----- | ----------- |
 | `name` | Unique layout name |
-| `type` | `ALL`, `GROUP`, or `PERSISTENT` |
 | `rule` | Built-in rule name used to decide when the layout applies |
 | `priority` | Higher priority layouts win when multiple layouts match |
 | `serverName` | Name pattern used to resolve target servers |
-| `behind-block` | Optional block material placed behind the sign |
 | `frame-update-interval` | Animation interval in milliseconds |
 | `frames` | One or more four-line sign frames |
 
@@ -90,11 +84,9 @@ Use MiniMessage placeholder syntax inside layout lines.
 
 | Placeholder | Description |
 | ----------- | ----------- |
-| `<server-name>` | Resolved server name for the sign target |
 | `<group>` | Group name for group servers |
 | `<numerical-id>` | Numerical ID for group servers |
-| `<persistent-server>` | Persistent server name |
-| `<server-id>` | Server UUID |
+| `<type>` | Server type |
 | `<host>` | Serverhost ID |
 | `<ip>` | Server IP address |
 | `<port>` | Server port |
@@ -103,10 +95,8 @@ Use MiniMessage placeholder syntax inside layout lines.
 | `<max-players>` | Maximum players |
 | `<player-count>` | Current player count |
 | `<state>` | Server state |
-| `<property:name>` | Server property value |
-| `<property:name:default>` | Server property value with fallback |
-| `<player_name>` / `<player-name>` | Player name when a player-specific update runs |
-| `<player_sender>` / `<player-sender>` | Player's current server when available |
+| `<player_name>` | Player name when a player-specific update runs |
+| `<player_sender>` | Player's current server when available |
 
 ## Server Name Patterns
 
@@ -114,10 +104,8 @@ The `serverName` field supports these replacement tokens:
 
 | Token | Description |
 | ----- | ----------- |
-| `%server-name%` | Default target server name |
 | `%group%` | Group name |
 | `%numerical-id%` | Numerical ID |
-| `%persistent-server%` | Persistent server name |
 
 <Frame>
   <img src="https://raw.githubusercontent.com/simplecloudapp/branding/refs/heads/main/media/plugin/signs/preview.png" alt="SimpleCloud signs in-game preview" />

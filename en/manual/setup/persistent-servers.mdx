@@ -3,8 +3,6 @@ title: 'Persistent Servers'
 description: 'Create single server instances that keep their identity and data across restarts.'
 ---
 
-Persistent servers are single, long-lived server configurations. Use them for servers that need stable identity, local files, or world data between restarts, such as SMP, Citybuild, Skyblock, build servers, or a manually managed lobby.
-
 <Info>
   Need SimpleCloud to create multiple interchangeable servers based on player demand? Use [Server Groups](/en/manual/setup/server-groups) instead.
 </Info>
@@ -22,7 +20,7 @@ Persistent servers are single, long-lived server configurations. Use them for se
 
 <Steps>
   <Step title="Open the server wizard">
-    In the dashboard, open **Servers** and click **New Server**.
+    In the dashboard, open **Persistent Servers** and click **Add Server**.
   </Step>
 
   <Step title="Choose the basic identity">
@@ -52,7 +50,7 @@ Persistent servers are single, long-lived server configurations. Use them for se
   </Step>
 
   <Step title="Add plugins">
-    Add plugins from Modrinth, GitHub, direct URLs, or your configured plugin sources. You can also add plugins later in server settings.
+    Add plugins from Modrinth, Hangar, Spigot, direct URLs, or your configured plugin sources. You can also add plugins later in server settings.
   </Step>
 
   <Step title="Review and create">
@@ -95,7 +93,7 @@ Persistent servers are single, long-lived server configurations. Use them for se
   <Accordion title="Properties settings">
     Add custom key-value data that your plugins and integrations can read.
 
-    Properties are available through the [Cloud API](/en/developer/api/persistent-servers) and as `SIMPLECLOUD_` environment variables on the running server.
+    Properties are exposed to the running server as `SIMPLECLOUD_` environment variables.
   </Accordion>
 
   <Accordion title="Workflows settings">
@@ -113,10 +111,10 @@ Persistent servers are single, long-lived server configurations. Use them for se
   </Accordion>
 
   <Accordion title="Danger zone">
-    Delete the persistent server only after stopping its running instance and backing up any data you need.
+    Delete the persistent server only after backing up any local data you need.
 
     <Warning>
-      Deleting the persistent server removes its SimpleCloud configuration. It does not automatically back up or migrate local world files.
+      The dashboard deactivates the persistent server, waits for the running instance to stop, and then deletes the persistent server and its associated blueprint. It does not automatically back up or migrate local world files.
     </Warning>
   </Accordion>
 </AccordionGroup>

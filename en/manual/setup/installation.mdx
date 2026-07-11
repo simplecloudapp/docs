@@ -1,153 +1,132 @@
 ---
 title: "Installation"
-description: "Get started with SimpleCloud in just a few steps by creating your account and connecting your first server host. The dashboard will guide you through the entire process."
+description: "Start SimpleCloud from the dashboard, then use the CLI when you need to connect or manage serverhosts."
 ---
 
-## Install SimpleCloud
+## Start in the dashboard
+
+The dashboard is the main onboarding path. It creates or joins your network, builds the correct install command for your machine, and detects the first serverhost automatically.
+
 <Steps>
-  <Step title="Create Your Account">
-    Go to the [SimpleCloud Dashboard](https://dash.simplecloud.app).
+  <Step title="Open the dashboard">
+    Go to the [SimpleCloud Dashboard](https://dash.simplecloud.app) and sign in or create an account.
 
-    Create an account or sign in using one of the following options:
-
-    - **Magic Link** - Enter your email and receive a login link
-    - **SSO** - Sign in with Google, Discord, or GitHub
+    You can use a magic link or one of the available SSO providers.
   </Step>
-  <Step title="Create or Join a Network">
-    After signing in, you'll choose how to get started:
 
-    1. Enter a name for your network (e.g., "My Minecraft Network")
-    2. The URL slug is auto-generated but can be customized
-    3. Optionally add a description
-    4. Click **Create Network**
+  <Step title="Create or join a network">
+    Create a new network if you are starting fresh, or join an existing network with an invitation.
 
-    The setup wizard will then guide you through installing the CLI and connecting your first server host.
+    After the network exists, the dashboard opens the onboarding wizard if no serverhost is connected yet.
   </Step>
-  <Step title="Install the CLI">
-        
-    The setup wizard will display the installation command for you. Simply copy and run it in your terminal.
 
-    <Tabs>
-      <Tab title="Linux / macOS">
-        ```bash
-        /bin/bash -c "$(curl -fsSL https://get.simplecloud.app)"
-        ```
+  <Step title="Configure the first serverhost">
+    Choose the operating system, host name, memory limit, Java runtimes, and whether SimpleCloud should start after setup.
 
-        Verify the installation:
-
-        ```bash
-        simplecloud --version
-        ```
-
-      </Tab>
-      <Tab title="Windows">
-        <Note>
-          The CLI installer does not support Windows yet. Use Linux for
-          production or macOS for local testing.
-        </Note>
-      </Tab>
-    </Tabs>
-
+    Linux is the recommended production target. macOS is useful for local testing. Windows setup is not available yet.
   </Step>
-  <Step title="Connect Your Server Host">
-    A server host is the machine that will run your Minecraft servers.
-    The dashboard displays a setup command with your unique code. Copy and run it on your server:
 
-    ```bash
-    simplecloud setup --code=YOUR_CODE
-    ```
-    The setup will:
-    - Check that all requirements are installed
-    - Download necessary components
-    - Register your machine as a server host
+  <Step title="Run the generated command">
+    Copy the command from the dashboard and run it on the machine that should host Minecraft servers.
 
-    Once complete, the dashboard automatically detects your server host and takes you to the main dashboard.
+    The command installs the CLI, authenticates with a generated login code, registers the machine as a serverhost, and starts it when requested.
+  </Step>
+
+  <Step title="Wait for detection">
+    Keep the dashboard open while the command runs. Once the serverhost connects, the dashboard detects it and opens the main network view.
   </Step>
 </Steps>
 
-## Inviting Team Members
+## Install the CLI later
+
+Use this when you only need the CLI on a machine that is not going through the full onboarding flow.
+
+<Tabs>
+  <Tab title="Linux / macOS">
+    ```bash
+    curl -fsSL https://get.simplecloud.app | bash
+    ```
+
+    Verify the installation:
+
+    ```bash
+    simplecloud --version
+    ```
+
+    You can use `sc` anywhere the docs show `simplecloud`.
+  </Tab>
+
+  <Tab title="Windows">
+    <Note>
+      The CLI installer does not support Windows yet. Use Linux for production or macOS for local testing.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Add another serverhost
+
+After onboarding, add more machines from the dashboard instead of reusing the first setup command.
+
+<Steps>
+  <Step title="Open Server Hosts settings">
+    In the dashboard, open **Settings** and go to **Server Hosts**.
+  </Step>
+
+  <Step title="Create a fresh command">
+    Click **Add Host**. The dashboard creates a new login code and a command for the current network.
+  </Step>
+
+  <Step title="Run it on the new machine">
+    Copy the generated command to the new machine and run it there.
+
+    The command has this shape, but you should use the exact command from your dashboard because it includes your network, login code, and host name:
+
+    ```bash
+    curl -fsSL https://get.simplecloud.app | bash ; ~/.bun/bin/simplecloud setup \
+      --yes \
+      --auto-install-deps \
+      --start \
+      --network your-network \
+      --code YOUR_LOGIN_CODE \
+      --host-name host-2
+    ```
+  </Step>
+</Steps>
+
+## Invite team members
 
 To add others to your network:
 
-1. Go to **Settings** → **Members**
-2. Click **Invite Member**
-3. Enter their email and choose their role
+1. Open **Settings** in the dashboard.
+2. Go to **Members**.
+3. Click **Invite Member**.
+4. Enter their email address and choose a role.
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="curl: command not found">
-    **Symptom:** Install script fails because curl is not installed.
+  <Accordion title="The dashboard cannot generate a login code">
+    Close the dialog or onboarding step, open it again, and generate a fresh command.
 
-    **Solution:** Install curl for your system:
-    ```bash
-    # Debian/Ubuntu
-    sudo apt install curl
-
-    # CentOS/RHEL
-    sudo yum install curl
-
-    # macOS
-    brew install curl
-    ```
-
+    If the issue continues, sign out and back in so the dashboard can create a new authenticated device code.
   </Accordion>
 
-  <Accordion title="Permission denied during install">
-    **Symptom:** Install script fails with permission errors.
+  <Accordion title="The installer cannot download files">
+    Make sure the machine can reach the internet over HTTPS.
 
-    **Cause:** Script needs write access to `/usr/local/bin`.
-
-    **Solution:**
-    - Run with sudo: `sudo /bin/bash -c "$(curl -fsSL ...)"`
-    - Or install to a user directory and add to PATH
-
+    The installer needs outbound access to `get.simplecloud.app` and the release download hosts used by SimpleCloud.
   </Accordion>
 
-  <Accordion title="Network timeout or connection refused">
-    **Symptom:** Install script hangs or fails to download.
-
-    **Cause:** Firewall blocking outbound connections.
-
-    **Solution:** Allow HTTPS (port 443) to:
-    - `raw.githubusercontent.com`
-    - `github.com`
-
+  <Accordion title="The serverhost does not appear in the dashboard">
+    1. Check whether the command finished without errors.
+    2. Verify the serverhost is running with `sc status serverhost`.
+    3. Review serverhost logs with `sc logs serverhost`.
+    4. Generate a fresh **Add Host** command if the login code was old or copied incorrectly.
   </Accordion>
 
-  <Accordion title="Setup code not working">
-    **Symptom:** `simplecloud setup --code=...` fails with invalid code error.
+  <Accordion title="Setup fails while installing dependencies">
+    Run the generated dashboard command on Linux with a user that can install required packages, or install the missing dependencies manually before retrying.
 
-    **Cause:** Code expired or copied incorrectly.
-
-    **Solution:**
-    1. Generate a fresh code from the dashboard
-    2. Copy the entire code without extra spaces
-    3. Run the command immediately (codes expire quickly)
-
-  </Accordion>
-
-  <Accordion title="Server host not appearing in dashboard">
-    **Symptom:** Setup completes but host doesn't show in dashboard.
-
-    **Solution:**
-    1. Check terminal for setup errors
-    2. Verify serverhost is running: `sc status serverhost`
-    3. Check network connectivity to SimpleCloud
-    4. Review logs: `sc logs serverhost`
-
-  </Accordion>
-
-  <Accordion title="Requirements check failed">
-    **Symptom:** Setup fails because required software is missing.
-
-    **Solution:** Install missing requirements:
-
-    | Requirement | Install Command |
-    |-------------|-----------------|
-    | Java 21+ | `sudo apt install openjdk-21-jdk` |
-    | screen/tmux | `sudo apt install screen` |
-    | Docker | [docs.docker.com/engine/install](https://docs.docker.com/engine/install/) |
-
+    For local testing on macOS, make sure the command runs in a normal shell with access to your user profile.
   </Accordion>
 </AccordionGroup>

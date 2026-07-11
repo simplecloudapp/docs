@@ -3,8 +3,6 @@ title: 'Server-Gruppen'
 description: 'Erstelle skalierbare Minecraft-Server-Gruppen, die eine gemeinsame Konfiguration nutzen und Server je nach Bedarf starten oder stoppen.'
 ---
 
-Server-Gruppen sind Vorlagen für Server, die skalieren sollen. Nutze eine Gruppe, wenn SimpleCloud mehrere austauschbare Server aus derselben Konfiguration erstellen soll, zum Beispiel Lobbys, Minigame-Arenen oder Proxy-Instanzen.
-
 <Info>
   Brauchst du einen einzelnen langlebigen Server mit persistenten Weltdaten? Nutze stattdessen [Persistente Server](/de/manual/setup/persistent-servers).
 </Info>
@@ -36,7 +34,7 @@ Gruppen haben einen von zwei Typen:
 
 <Steps>
   <Step title="Gruppen-Wizard öffnen">
-    Öffne im Dashboard **Groups** und klicke auf **New Group**.
+    Öffne im Dashboard **Groups** und klicke auf **Add Group**.
   </Step>
 
   <Step title="Grunddaten festlegen">
@@ -76,14 +74,14 @@ Gruppen haben einen von zwei Typen:
   </Step>
 
   <Step title="Plugins hinzufügen">
-    Füge Plugins von Modrinth, GitHub, direkten URLs oder deinen konfigurierten Plugin-Quellen hinzu. Du kannst Plugins auch später in den Gruppeneinstellungen ergänzen.
+    Füge Plugins von Modrinth, Hangar, Spigot, direkten URLs oder deinen konfigurierten Plugin-Quellen hinzu. Du kannst Plugins auch später in den Gruppeneinstellungen ergänzen.
   </Step>
 
   <Step title="Prüfen und erstellen">
     Prüfe die Zusammenfassung und klicke auf **Create Group**.
 
     <Check>
-      Nach der Erstellung sollte eine aktive Gruppe mit `min_servers` größer als `0` automatisch Server starten.
+      Nach der Erstellung sollte eine aktive Gruppe mit **Minimum Servers** größer als `0` automatisch Server starten.
     </Check>
   </Step>
 </Steps>
@@ -107,7 +105,7 @@ Die meisten Änderungen nimmst du in der Einstellungsseite der Gruppe vor. Öffn
     Aktiviere oder deaktiviere Skalierung, passe Speicher an, ändere Spielerlimits und füge Tags zum Filtern hinzu.
 
     <Tip>
-      Tags helfen bei Dashboards, Automatisierung und API-Abfragen. Nutze stabile Labels wie `region:eu`, `mode:lobby` oder `environment:prod`.
+      Tags helfen bei Dashboards, Automatisierung, Filtern und Plugin-Verhalten. Nutze stabile Labels wie `region:eu`, `mode:lobby` oder `environment:prod`.
     </Tip>
   </Accordion>
 
@@ -117,7 +115,6 @@ Die meisten Änderungen nimmst du in der Einstellungsseite der Gruppe vor. Öffn
     | Einstellung | Zweck |
     | ----------- | ----- |
     | **Scaling mode** | Legt fest, ob nach freien Slots oder Serveranzahl skaliert wird |
-    | **Start policy** | Legt fest, ob Server sofort starten oder nur gelöschte Server ersetzt werden |
     | **Min servers** | Hält diese Anzahl online, wenn die Gruppe aktiv ist |
     | **Max servers** | Begrenzt die maximale Serveranzahl |
     | **Player threshold** | Startet zusätzliche Server, wenn diese Auslastung erreicht wird |
@@ -146,7 +143,7 @@ Die meisten Änderungen nimmst du in der Einstellungsseite der Gruppe vor. Öffn
   <Accordion title="Properties">
     Füge eigene Key-Value-Daten hinzu, die Plugins und Integrationen lesen können.
 
-    Properties sind über die [Cloud API](/de/developer/api/groups) und als `SIMPLECLOUD_`-Umgebungsvariablen auf laufenden Servern verfügbar.
+    Properties werden laufenden Servern als `SIMPLECLOUD_`-Umgebungsvariablen bereitgestellt.
   </Accordion>
 
   <Accordion title="Workflows">
@@ -167,7 +164,7 @@ Die meisten Änderungen nimmst du in der Einstellungsseite der Gruppe vor. Öffn
     Lösche die Gruppe nur, wenn du die Auswirkungen verstehst.
 
     <Warning>
-      Das Löschen einer Gruppe entfernt ihre Konfiguration. Es löscht keine bereits laufenden Serverprozesse. Stoppe Server zuerst, wenn du sauber herunterfahren möchtest.
+      Das Dashboard deaktiviert die Gruppe, wartet bis laufende Server gestoppt sind, und löscht danach die Gruppe und den zugehörigen Blueprint.
     </Warning>
   </Accordion>
 </AccordionGroup>
@@ -232,10 +229,10 @@ Die meisten Änderungen nimmst du in der Einstellungsseite der Gruppe vor. Öffn
   <Accordion title="Verwaiste Servereinträge bleiben bestehen">
     **Wahrscheinliche Ursache:** Ein Serverprozess wurde gestoppt, ohne dass der Controller das Lifecycle-Event gespeichert hat, zum Beispiel nach einem Host-Crash.
 
-    Nutze den REST-Endpunkt `DELETE /v0/servers/database`, um den veralteten Eintrag zu entfernen. Siehe [Server-Datensatz löschen](/de/developer/api/servers#server-datensatz-löschen).
+    Öffne **Servers**, wähle den veralteten Server aus und nutze **Hold to force delete**, nachdem du geprüft hast, dass der Prozess nicht mehr läuft.
 
     <Warning>
-      Das entfernt nur den Datenbankeintrag. Es stoppt keinen laufenden Prozess und löst keine Cleanup-Workflows aus.
+      Force Delete entfernt nur den Servereintrag. Es stoppt keinen laufenden Prozess und löst keine Cleanup-Workflows aus.
     </Warning>
   </Accordion>
 </AccordionGroup>

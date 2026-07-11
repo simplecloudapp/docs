@@ -27,8 +27,8 @@ Das SimpleCloud NPC Plugin fügt NPCs aus unterstützten NPC-Plugins SimpleCloud
 | ------ | ------ | -------- |
 | [Citizens](https://citizensnpcs.co) | Unterstützt | Links- und Rechtsklick |
 | [FancyNpcs](https://fancyplugins.de/FancyNpcs) | Unterstützt | Nutzt FancyNpcs-Namen als IDs |
-| [MythicMobs](https://www.spigotmc.org/resources/5702) | Unterstützt | Rechtsklick und Shift-Rechtsklick |
-| [ZNPCsPlus](https://github.com/Pyrbu/ZNPCsPlus) | Unterstützt | Nutzt ZNPCsPlus-NPC-IDs |
+| [MythicMobs](https://www.spigotmc.org/resources/5702) | Unterstützt | Rechtsklick |
+| PlayerNPC | Unterstützt | Nutzt PlayerNPC-IDs |
 
 ## Schnellstart
 
@@ -49,10 +49,12 @@ Der Befehl ist als `/simplecloudnpc`, `/scnpc` und `/cloudnpc` verfügbar.
 | `/scnpc` | Hilfe anzeigen |
 | `/scnpc apply <id>` | SimpleCloud-Konfiguration für einen existierenden NPC erstellen |
 | `/scnpc <id>` | Hilfe für einen NPC anzeigen |
-| `/scnpc <id> setHologramServerBase <name>` | Gruppe, Server oder Persistent Server für Hologramm-Platzhalter setzen |
+| `/scnpc <id> setHologramGroup <name>` | Gruppe für Hologramm-Platzhalter setzen |
 | `/scnpc <id> setOption <key> <value>` | Globale Player-Feedback-Option setzen |
 | `/scnpc <id> getOption <key>` | Globalen Optionswert anzeigen |
 | `/scnpc <id> removeOption <key>` | Globale Option entfernen |
+| `/scnpc openInventory <name>` | Konfiguriertes SimpleCloud-NPC-Inventar öffnen |
+| `/scnpc createInventory <name> <groupName>` | Inventar für eine Gruppe erstellen |
 | `/scnpc <id> interact <interaction>` | Interaktionsdetails anzeigen |
 | `/scnpc <id> interact <interaction> setAction <action>` | Aktion für eine Interaktion setzen |
 | `/scnpc <id> interact <interaction> setOption <key> <value>` | Interaktionsoption setzen |
@@ -71,12 +73,10 @@ Die Standard-Interaktionen sind:
 
 - `RIGHT_CLICK`
 - `LEFT_CLICK`
-- `SHIFT_RIGHT_CLICK`
-- `SHIFT_LEFT_CLICK`
 
 <Note>
   Ein Namespace kann weniger Interaktionen anbieten. MythicMobs unterstützt
-  aktuell `RIGHT_CLICK` und `SHIFT_RIGHT_CLICK`.
+  aktuell nur `RIGHT_CLICK`.
 </Note>
 
 ## Aktionen
@@ -88,6 +88,7 @@ Die Standard-Interaktionen sind:
 | `CONNECT_TO_SERVER` | `server.name` | Sendet den Spieler zu einem Proxy-registrierten Server |
 | `TRANSFER_TO_SERVER` | `server.ip`, `server.port` | Transferiert den Spieler zu einem externen Server |
 | `QUICK_JOIN` | `group.name` | Findet einen Server in einer Gruppe und sendet den Spieler dorthin |
+| `OPEN_INVENTORY` | `inventory.name` | Öffnet ein konfiguriertes Inventar |
 
 `RUN_COMMAND` und `RUN_CONSOLE_COMMAND` unterstützen `<playername>` und `<playeruuid>` in `command.name`.
 
@@ -125,7 +126,7 @@ version: "3"
 id: "0"
 
 hologramConfiguration:
-  placeholderServerBaseName: "lobby"
+  placeholderGroupName: "lobby"
   holograms:
     - startHeight: 2.073
       joinState: ""
@@ -162,13 +163,12 @@ options:
 
 ## Hologramm-Platzhalter
 
-`placeholderServerBaseName` kann eine Gruppe, einen konkreten Servernamen wie `lobby-1` oder einen Persistent Server referenzieren. Das Plugin nutzt die gemeinsamen SimpleCloud-Platzhalter für dieses Ziel.
+`placeholderGroupName` referenziert die Gruppe, die für Hologramm-Platzhalter verwendet wird.
 
 Beispiele:
 
 - Gruppenplatzhalter: `<group_name>`
 - Gruppen-Spielerzahl: `<group_player_count:available>`
-- Serverplatzhalter-Prefix: `<server_...>`
 
 <Frame>
   <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/npcs/npc.png?raw=true" alt="SimpleCloud NPC-Beispiel mit Hologramm" />

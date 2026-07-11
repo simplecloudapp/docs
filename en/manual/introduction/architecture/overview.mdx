@@ -73,7 +73,7 @@ Blueprints are server templates that define:
 
 - Minecraft version and server software (Paper, Velocity, etc.)
 - Runtime configuration (Java version, JVM arguments)
-- Workflow steps for server preparation
+- Workflow selection for server preparation and cleanup
 - Configurator settings
 
 Blueprints are reusable - multiple groups can reference the same blueprint.
@@ -94,7 +94,7 @@ Servers are individual running instances:
 - Created dynamically from groups based on scaling rules
 - Have unique identifiers and assigned ports
 - Report metrics (player count, memory usage)
-- Follow a lifecycle: Queued → Preparing → Starting → Available → Stopping
+- Follow a lifecycle: Queued → Preparing → Starting → Available → Stopping → Cleanup → Stopped
 
 ### Persistent Servers
 
@@ -109,13 +109,13 @@ Persistent servers are long-running instances that:
 
 Plugins can be assigned to groups or persistent servers:
 
-- Automatic download from Modrinth, Hangar, or Spigot
+- Automatic download from Modrinth, Hangar, Spigot, or direct URLs
 - Version and platform-aware installation
 - Cached for faster server startup
 
 ## Data Flow
 
-1. **Configuration**: You define blueprints, groups, and plugins via CLI or API
+1. **Configuration**: You define blueprints, groups, and plugins in the dashboard, CLI, or API
 2. **Reconciliation**: Controller compares desired state with actual state every 5 seconds
 3. **Scheduling**: Controller determines which servers to start/stop and on which serverhost
 4. **Communication**: Controller sends requests to serverhosts via NATS

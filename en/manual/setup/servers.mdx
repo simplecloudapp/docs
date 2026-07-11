@@ -3,11 +3,9 @@ title: 'Servers'
 description: 'Understanding server instances in your SimpleCloud network'
 ---
 
-A server is a running Minecraft instance - the actual Java process that players connect to. Servers are ephemeral by default: they exist only while running and can be created or destroyed as needed.
+## How Servers are Created
 
 Every server belongs to either a [Group](/en/manual/setup/server-groups) or a [Persistent Server](/en/manual/setup/persistent-servers).
-
-## How Servers are Created
 
 ### From Groups
 
@@ -40,7 +38,8 @@ stateDiagram-v2
     INGAME --> AVAILABLE : Players leave
     AVAILABLE --> STOPPING
     INGAME --> STOPPING
-    STOPPING --> STOPPED
+    STOPPING --> CLEANUP
+    CLEANUP --> STOPPED
     STOPPED --> [*]
 ```
 
@@ -52,13 +51,14 @@ stateDiagram-v2
 | **Available** | Ready for players, registered with proxy |
 | **Ingame** | Has active players connected |
 | **Stopping** | Graceful shutdown in progress |
+| **Cleanup** | Runtime files and workflow cleanup are being handled |
 | **Stopped** | Process terminated, runtime cleaned up |
 
 ## Server Properties
 
 - Each server inherits properties from its group or persistent server configuration
 - Instance-specific property overrides are possible at runtime
-- Properties are available to plugins via the Cloud API and as environment variables
+- Properties are available to plugins as environment variables on the running server
 
 ## Server Host Allocation
 

@@ -6,7 +6,7 @@ tag: 'Server'
 
 ## Überblick
 
-Das Signs Plugin lässt Spieler Schilder anklicken, um sich mit SimpleCloud-Gruppenservern oder Persistent Servern zu verbinden. Schilder aktualisieren sich automatisch mit Serverstatus, Spielerzahlen, MiniMessage-Text, Animationen und optionalen Blöcken hinter dem Schild.
+Das Signs Plugin lässt Spieler Schilder anklicken, um sich mit SimpleCloud-Gruppenservern zu verbinden. Schilder aktualisieren sich automatisch mit Serverstatus, Spielerzahlen, MiniMessage-Text und optionalen Animationen.
 
 ## Unterstützte Software
 
@@ -21,7 +21,7 @@ Das Signs Plugin lässt Spieler Schilder anklicken, um sich mit SimpleCloud-Grup
 2. Lege es im `plugins/`-Ordner deines Server-Templates ab.
 3. Stelle sicher, dass das `simplecloud-api` Plugin auf dem Server installiert ist.
 4. Starte den Server einmal, damit die Standard-Layouts erzeugt werden.
-5. Schaue im Spiel auf ein Schild und registriere es mit `/sign add group <group>` oder `/sign add persistent <persistentServer>`.
+5. Schaue im Spiel auf ein Schild und registriere es mit `/sign add <group>`.
 
 ## Befehle
 
@@ -31,8 +31,7 @@ Der Befehl ist als `/simplecloudsign`, `/simplecloudsigns`, `/scsigns`, `/scsign
 | ------ | ------------ |
 | `/sign help` | Hilfe anzeigen |
 | `/sign list [page] [group]` | Registrierte Schilder auflisten, optional nach Ziel gefiltert |
-| `/sign add group <group>` | Das anvisierte Schild für eine Servergruppe registrieren |
-| `/sign add persistent <persistentServer>` | Das anvisierte Schild für einen Persistent Server registrieren |
+| `/sign add <group>` | Das anvisierte Schild für eine Servergruppe registrieren |
 | `/sign remove` | Das anvisierte Schild entfernen |
 | `/sign remove <group>` | Alle Schilder für einen registrierten Zielschlüssel entfernen |
 
@@ -50,7 +49,6 @@ Der Befehl ist als `/simplecloudsign`, `/simplecloudsigns`, `/scsigns`, `/scsign
 | `simplecloud.command.signs.add` | Schilder registrieren |
 | `simplecloud.command.signs.remove` | Anvisiertes Schild entfernen |
 | `simplecloud.command.signs.remove.group` | Alle Schilder eines Ziels entfernen |
-| `simplecloud.command.signs.tp` | Teleport aus klickbaren Listeneinträgen verwenden |
 
 ## Layouts
 
@@ -58,11 +56,9 @@ Layouts definieren, was ein Schild für einen passenden Serverstatus anzeigt. Da
 
 ```yaml
 name: "online_default"
-type: ALL
 rule: "ONLINE"
 priority: 9
-serverName: "%server-name%"
-behind-block: "LIME_CONCRETE"
+serverName: "%group%-%numerical-id%"
 frame-update-interval: 1250
 
 frames:
@@ -76,11 +72,9 @@ frames:
 | Feld | Beschreibung |
 | ---- | ------------ |
 | `name` | Eindeutiger Layoutname |
-| `type` | `ALL`, `GROUP` oder `PERSISTENT` |
 | `rule` | Eingebaute Regel, die entscheidet, wann das Layout gilt |
 | `priority` | Höhere Prioritäten gewinnen, wenn mehrere Layouts passen |
 | `serverName` | Namensmuster zum Auflösen des Zielservers |
-| `behind-block` | Optionales Blockmaterial hinter dem Schild |
 | `frame-update-interval` | Animationsintervall in Millisekunden |
 | `frames` | Ein oder mehrere vierzeilige Schild-Frames |
 
@@ -90,11 +84,9 @@ Verwende MiniMessage-Platzhalter in Layout-Zeilen.
 
 | Platzhalter | Beschreibung |
 | ----------- | ------------ |
-| `<server-name>` | Aufgelöster Servername für das Schildziel |
 | `<group>` | Gruppenname für Gruppenserver |
 | `<numerical-id>` | Numerische ID für Gruppenserver |
-| `<persistent-server>` | Persistent-Server-Name |
-| `<server-id>` | Server-UUID |
+| `<type>` | Servertyp |
 | `<host>` | Serverhost-ID |
 | `<ip>` | Server-IP-Adresse |
 | `<port>` | Server-Port |
@@ -103,10 +95,8 @@ Verwende MiniMessage-Platzhalter in Layout-Zeilen.
 | `<max-players>` | Maximale Spieler |
 | `<player-count>` | Aktuelle Spieleranzahl |
 | `<state>` | Serverstatus |
-| `<property:name>` | Wert einer Server-Property |
-| `<property:name:default>` | Server-Property mit Fallback |
-| `<player_name>` / `<player-name>` | Spielername bei spielerspezifischen Updates |
-| `<player_sender>` / `<player-sender>` | Aktueller Server des Spielers, wenn verfügbar |
+| `<player_name>` | Spielername bei spielerspezifischen Updates |
+| `<player_sender>` | Aktueller Server des Spielers, wenn verfügbar |
 
 ## Servernamen-Muster
 
@@ -114,10 +104,8 @@ Das Feld `serverName` unterstützt diese Ersetzungen:
 
 | Token | Beschreibung |
 | ----- | ------------ |
-| `%server-name%` | Standard-Zielservername |
 | `%group%` | Gruppenname |
 | `%numerical-id%` | Numerische ID |
-| `%persistent-server%` | Persistent-Server-Name |
 
 <Frame>
   <img src="https://raw.githubusercontent.com/simplecloudapp/branding/refs/heads/main/media/plugin/signs/preview.png" alt="SimpleCloud Signs Ingame-Vorschau" />

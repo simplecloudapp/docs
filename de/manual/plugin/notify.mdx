@@ -109,11 +109,15 @@ notifications:
 | `notify.state.server.starting`  | Server-Starting-Nachrichten erhalten |
 | `notify.state.server.available` | Server-Available-Nachrichten erhalten |
 | `notify.state.server.stopping`  | Server-Stopping-Nachrichten erhalten |
-| `notify.state.server.deleted`   | Server-Stopped-Nachrichten erhalten  |
+| `notify.state.server.stopped`   | Server-Stopped-Nachrichten erhalten  |
 | `notify.state.group.created`    | Gruppen-Erstellt-Nachrichten erhalten |
 | `notify.state.group.deleted`    | Gruppen-Gelöscht-Nachrichten erhalten |
 
 <Note>
   Die Berechtigung wird pro Benachrichtigung geprüft. Gib Teammitgliedern nur
   die Kategorien, die sie sehen sollen.
+</Note>
+
+<Note>
+  `notify.state.server.deleted` wird weiterhin als Legacy-Alias für Server-Stopped-Benachrichtigungen akzeptiert.
 </Note>

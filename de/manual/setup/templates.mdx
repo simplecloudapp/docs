@@ -1,194 +1,147 @@
 ---
 title: 'Templates'
-description: 'Templates definieren die Dateien, Plugins und Konfigurationen, die auf neue Server kopiert werden'
+description: 'Templates definieren Dateien, Plugins und Konfigurationen, die in Serververzeichnisse kopiert werden'
 ---
-
-Templates sind die Dateistrukturen, die auf neue Server-Instanzen kopiert werden. Sie enthalten die Plugins, Konfigurationen und Standard-Weltdateien deines Servers.
 
 ## Wie Templates funktionieren
 
-Wenn SimpleCloud einen Server startet, werden Templates in einer bestimmten Reihenfolge angewendet. Jede Ebene kann Dateien von vorherigen Ebenen hinzufügen oder überschreiben, was dir flexible Kontrolle über deine Server-Konfigurationen gibt.
+Templates sind Ordner auf jedem Serverhost, die vor dem Serverstart in das Serververzeichnis kopiert werden. Nutze sie für Plugin-JARs, Standardwelten, Konfigurationsdateien und gemeinsame Ressourcen.
+
+Der Standard-Setup-Workflow kopiert Template-Ebenen in einer festen Reihenfolge. Bestehende Dateien bleiben erhalten, solange du den Workflow nicht so anpasst, dass er sie überschreibt.
 
 ```mermaid
 flowchart LR
-    A[every/] --> B[every_type/]
-    B --> C[every_software/]
-    C --> D[_tagged/]
-    D --> E[server-specific/]
-    E --> F[Laufender Server]
+    A[cache/name] --> B[_every/every]
+    B --> C[_every/every_type]
+    C --> D[_every/every_mapped-software]
+    D --> E[_every/every_software]
+    E --> F[_tagged/tag]
+    F --> G[name]
+    G --> H[Laufender Server]
 ```
 
+| Reihenfolge | Verzeichnis | Beschreibung |
+| ----------- | ----------- | ------------ |
+| 1 | `cache/{name}/` | Gecachte Dateien von vorherigen Starts |
+| 2 | `_every/every/` | Basisdateien für alle Server |
+| 3 | `_every/every_{type}/` | Typspezifische Dateien, zum Beispiel `every_proxy` oder `every_server` |
+| 4 | `_every/every_{mapped-software}/` | Dateien für den plattformgemappten Software-Namen |
+| 5 | `_every/every_{software}/` | Softwarespezifische Dateien, zum Beispiel `every_paper` oder `every_velocity` |
+| 6 | `_tagged/{tag}/` | Dateien für jeden zugewiesenen Tag |
+| 7 | `{name}/` | Dateien für eine Gruppe oder einen persistenten Server |
+
 <Note>
-  Brauchst du persistente Daten, die Neustarts überleben? Verwende einen [Persistenten Server](/de/manual/setup/persistent-servers) anstelle einer Gruppe.
+  Brauchst du Welt- oder Spielerdaten, die Neustarts überleben? Verwende einen [Persistenten Server](/de/manual/setup/persistent-servers) anstelle einer Gruppe.
 </Note>
 
 ## Template-Verzeichnisstruktur
 
 <Tree>
   <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="every" defaultOpen>
-      <Tree.File name="Wird auf ALLE Server angewendet" />
-    </Tree.Folder>
-    <Tree.Folder name="every_proxy">
-      <Tree.File name="Wird auf alle Proxy-Server angewendet" />
-    </Tree.Folder>
-    <Tree.Folder name="every_server">
-      <Tree.File name="Wird auf alle Game-Server angewendet" />
-    </Tree.Folder>
-    <Tree.Folder name="every_paper">
-      <Tree.File name="Wird auf alle Paper-Server angewendet" />
-    </Tree.Folder>
-    <Tree.Folder name="every_velocity">
-      <Tree.File name="Wird auf alle Velocity-Server angewendet" />
+    <Tree.Folder name="_every" defaultOpen>
+      <Tree.Folder name="every">
+        <Tree.File name="Wird auf alle Server angewendet" />
+      </Tree.Folder>
+      <Tree.Folder name="every_proxy">
+        <Tree.File name="Wird auf alle Proxy-Server angewendet" />
+      </Tree.Folder>
+      <Tree.Folder name="every_server">
+        <Tree.File name="Wird auf alle Game-Server angewendet" />
+      </Tree.Folder>
+      <Tree.Folder name="every_paper">
+        <Tree.File name="Wird auf alle Paper-Server angewendet" />
+      </Tree.Folder>
+      <Tree.Folder name="every_velocity">
+        <Tree.File name="Wird auf alle Velocity-Server angewendet" />
+      </Tree.Folder>
     </Tree.Folder>
     <Tree.Folder name="_tagged" defaultOpen>
       <Tree.Folder name="minigames">
-        <Tree.File name="Wird auf Server mit 'minigames' Tag angewendet" />
+        <Tree.File name="Wird auf Server mit dem Tag minigames angewendet" />
       </Tree.Folder>
       <Tree.Folder name="premium">
-        <Tree.File name="Wird auf Server mit 'premium' Tag angewendet" />
+        <Tree.File name="Wird auf Server mit dem Tag premium angewendet" />
       </Tree.Folder>
     </Tree.Folder>
     <Tree.Folder name="lobby">
-      <Tree.File name="Wird nur auf 'lobby' Gruppe angewendet" />
+      <Tree.File name="Wird auf die Gruppe oder den persistenten Server lobby angewendet" />
     </Tree.Folder>
     <Tree.Folder name="bedwars">
-      <Tree.File name="Wird nur auf 'bedwars' Gruppe angewendet" />
+      <Tree.File name="Wird auf die Gruppe bedwars angewendet" />
     </Tree.Folder>
     <Tree.Folder name="cache">
-      <Tree.File name="Gecachte Dateien für schnellere Neustarts" />
+      <Tree.File name="Verwaltete Cache-Dateien" />
     </Tree.Folder>
   </Tree.Folder>
 </Tree>
 
-## Template-Hierarchie
+## Gemeinsame Templates
 
-Templates werden der Reihe nach angewendet. Spätere Templates überschreiben frühere:
+### `_every/every`
 
-| Reihenfolge | Verzeichnis | Beschreibung |
-|-------------|-------------|--------------|
-| 1 | `every/` | Basisdateien für alle Server |
-| 2 | `every_{type}/` | Typspezifisch (`every_proxy/`, `every_server/`) |
-| 3 | `every_{software}/` | Softwarespezifisch (`every_paper/`, `every_velocity/`) |
-| 4 | `_tagged/{tag}/` | Tag-basierte Templates |
-| 5 | `{group-name}/` | Gruppenspezifische Templates |
-| 6 | `cache/{group}/` | Gecachte Dateien von vorherigen Starts |
-
-### Beispiel: Wie ein Lobby-Server aufgebaut wird
-
-Für einen Server in der `lobby` Gruppe mit Paper-Software und dem `premium` Tag:
-
-1. **`every/`** - Basis-Plugins wie SimpleCloud-Plugin
-2. **`every_server/`** - Gemeinsame Server-Configs (nicht Proxy)
-3. **`every_paper/`** - Paper-spezifische Einstellungen
-4. **`_tagged/premium/`** - Premium-exklusive Plugins/Configs
-5. **`lobby/`** - Lobby-spezifische Welt und Plugins
-
-## Basis-Template: `every/`
-
-Der `every/` Ordner enthält Dateien, die auf **alle Server** angewendet werden - Proxies und Game-Server gleichermaßen. Nutze ihn für:
-
-- SimpleCloud-Plugins, die jeder Server braucht
-- Universelle Konfigurationsdateien
-- Gemeinsame Ressourcen
+Nutze `_every/every/` für Dateien, die jeder Server bekommen soll, also Proxies und Game-Server.
 
 <Tree>
   <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="every" defaultOpen>
-      <Tree.Folder name="plugins" defaultOpen>
-        <Tree.File name="simplecloud-plugin.jar" />
+    <Tree.Folder name="_every" defaultOpen>
+      <Tree.Folder name="every" defaultOpen>
+        <Tree.Folder name="plugins">
+          <Tree.File name="shared-plugin.jar" />
+        </Tree.Folder>
       </Tree.Folder>
     </Tree.Folder>
   </Tree.Folder>
 </Tree>
 
-## Typ-Templates: `every_{type}/`
+### `_every/every_{type}`
 
-Wende Dateien basierend auf Server-Typ an:
+Nutze Typ-Templates, wenn Dateien für alle Proxies oder alle Game-Server gelten sollen.
 
-- **`every_proxy/`** - Alle Proxy-Server (Velocity, BungeeCord)
-- **`every_server/`** - Alle Game-Server (Paper, Spigot, etc.)
+| Verzeichnis | Verwendung |
+| ----------- | ---------- |
+| `_every/every_proxy/` | Proxy-Plugins und Proxy-Konfiguration |
+| `_every/every_server/` | Game-Server-Plugins und gemeinsame Serverkonfiguration |
 
-<Tree>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="every_proxy" defaultOpen>
-      <Tree.Folder name="plugins" defaultOpen>
-        <Tree.File name="proxy-essentials.jar" />
-      </Tree.Folder>
-    </Tree.Folder>
-    <Tree.Folder name="every_server" defaultOpen>
-      <Tree.Folder name="plugins" defaultOpen>
-        <Tree.File name="worldedit.jar" />
-      </Tree.Folder>
-    </Tree.Folder>
-  </Tree.Folder>
-</Tree>
+### `_every/every_{software}`
 
-## Software-Templates: `every_{software}/`
+Nutze Software-Templates, wenn Dateien zu einer bestimmten Server-Software gehören.
 
-Wende Dateien basierend auf Server-Software an:
+| Verzeichnis | Verwendung |
+| ----------- | ---------- |
+| `_every/every_paper/` | Paper-spezifische Plugins und Konfiguration |
+| `_every/every_spigot/` | Spigot-spezifische Plugins und Konfiguration |
+| `_every/every_velocity/` | Velocity-spezifische Plugins und Konfiguration |
 
-- **`every_paper/`** - Alle Paper-Server
-- **`every_velocity/`** - Alle Velocity-Proxies
-- **`every_spigot/`** - Alle Spigot-Server
+## Tagged Templates
 
-<Tree>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="every_paper" defaultOpen>
-      <Tree.Folder name="plugins" defaultOpen>
-        <Tree.File name="paper-specific-plugin.jar" />
-      </Tree.Folder>
-    </Tree.Folder>
-  </Tree.Folder>
-</Tree>
+Tags helfen dir, Dateien über mehrere Gruppen oder persistente Server zu teilen, ohne den benannten Template-Ordner zu duplizieren.
 
-## Tagged Templates: `_tagged/{tag}/`
-
-Tags ermöglichen es dir, Konfigurationen über mehrere Gruppen zu teilen. Weise Gruppen Tags zu, und jeder Server in diesen Gruppen bekommt das Tagged-Template angewendet.
-
-### Tags einrichten
-
-1. Erstelle einen Tag-Ordner in `templates/_tagged/`:
+1. Erstelle einen Tag-Ordner in `templates/_tagged/`.
+2. Weise denselben Tag im Dashboard zu, wenn du die Gruppe oder den persistenten Server erstellst oder bearbeitest.
 
 <Tree>
   <Tree.Folder name="templates" defaultOpen>
     <Tree.Folder name="_tagged" defaultOpen>
       <Tree.Folder name="minigames" defaultOpen>
-        <Tree.Folder name="plugins" defaultOpen>
+        <Tree.Folder name="plugins">
           <Tree.File name="minigame-core.jar" />
         </Tree.Folder>
       </Tree.Folder>
-      <Tree.Folder name="premium" defaultOpen>
-        <Tree.Folder name="plugins" defaultOpen>
-          <Tree.File name="premium-features.jar" />
-        </Tree.Folder>
-      </Tree.Folder>
     </Tree.Folder>
   </Tree.Folder>
 </Tree>
 
-2. Weise deinen Gruppen Tags über CLI oder API zu beim Erstellen/Aktualisieren der Gruppe.
+## Benannte Templates
 
-### Anwendungsfälle für Tags
-
-| Tag | Zweck |
-|-----|-------|
-| `minigames` | Gemeinsame Minigame-Plugins (BedWars, SkyWars, etc.) |
-| `premium` | Premium-exklusive Features |
-| `development` | Debug-Plugins für Dev-Server |
-| `pvp` | Kampf-bezogene Plugins |
-
-## Gruppenspezifische Templates
-
-Der traditionelle Template-Ordner, benannt nach deiner Gruppe:
+Der Ordner mit dem Namen einer Gruppe oder eines persistenten Servers ist die spezifischste Template-Ebene.
 
 <Tree>
   <Tree.Folder name="templates" defaultOpen>
     <Tree.Folder name="bedwars" defaultOpen>
-      <Tree.Folder name="plugins" defaultOpen>
+      <Tree.Folder name="plugins">
         <Tree.File name="bedwars-plugin.jar" />
       </Tree.Folder>
-      <Tree.Folder name="world" defaultOpen>
+      <Tree.Folder name="world">
         <Tree.File name="level.dat" />
         <Tree.Folder name="region" />
       </Tree.Folder>
@@ -196,42 +149,43 @@ Der traditionelle Template-Ordner, benannt nach deiner Gruppe:
   </Tree.Folder>
 </Tree>
 
-Dies ist die spezifischste Ebene - Dateien hier überschreiben alles andere.
+Bei Gruppenservern werden Dateien, die während der Laufzeit geändert werden, entfernt, wenn der dynamische Server stoppt. Bei persistenten Servern bleibt das Laufzeitverzeichnis zwischen Neustarts erhalten.
 
-## Templates verwalten
+## Template-Dateien verwalten
 
 ### Plugins hinzufügen
 
-Lege Plugin-JARs in den entsprechenden Template-Ordner:
+Lege Plugin-JARs in der Ebene ab, in der sie gelten sollen:
 
 ```bash
 # Für alle Server
-cp simplecloud-plugin.jar templates/every/plugins/
+cp shared-plugin.jar templates/_every/every/plugins/
 
 # Für alle Paper-Server
-cp paper-plugin.jar templates/every_paper/plugins/
+cp paper-plugin.jar templates/_every/every_paper/plugins/
 
-# Für eine bestimmte Gruppe
+# Für eine Gruppe oder einen persistenten Server
 cp bedwars.jar templates/bedwars/plugins/
 ```
 
-Neue Server werden das Plugin enthalten. Bestehende Server brauchen einen Neustart.
+Neue Serverstarts enthalten das Plugin. Bereits laufende Server brauchen einen Neustart.
 
-### Plugins konfigurieren
+### Generierte Konfiguration zurück ins Template kopieren
 
-1. Starte einen Server einmal, um Standard-Configs zu generieren
-2. Stoppe den Server
-3. Kopiere Configs vom `running/` Verzeichnis zurück in dein Template
-4. Bearbeite nach Bedarf
+1. Starte einen Server einmal, damit das Plugin seine Standarddateien erzeugt.
+2. Stoppe den Server.
+3. Kopiere die generierte Konfiguration aus `running/` in den passenden Template-Ordner.
+4. Bearbeite die Template-Kopie.
+5. Starte den Server erneut und prüfe das Ergebnis.
 
-### Weltdateien
+### Weltdateien hinzufügen
 
-Lege Welt-Ordner im Template für eine Standard-Map ab:
+Lege einen Weltordner im benannten Template ab, wenn jeder neue dynamische Server mit derselben Map starten soll:
 
 <Tree>
   <Tree.Folder name="templates" defaultOpen>
     <Tree.Folder name="bedwars" defaultOpen>
-      <Tree.Folder name="world" defaultOpen>
+      <Tree.Folder name="world">
         <Tree.File name="level.dat" />
         <Tree.Folder name="region" />
       </Tree.Folder>
@@ -239,63 +193,32 @@ Lege Welt-Ordner im Template für eine Standard-Map ab:
   </Tree.Folder>
 </Tree>
 
-Jeder neue Server startet mit dieser Welt. Änderungen während des Spielens gehen verloren wenn der Server stoppt.
+Änderungen während des Spielens gehen verloren, wenn ein dynamischer Gruppenserver stoppt. Nutze einen persistenten Server für Welten, an denen Spieler weiterbauen sollen.
 
-## Caching
+## Cache-Dateien
 
-SimpleCloud cached bestimmte Dateien um Server-Starts zu beschleunigen:
+Der Standard-Cleanup-Workflow speichert ausgewählte generierte Dateien in `templates/cache/{name}/`, damit spätere Starts sie wiederverwenden können. Der Serverhost verwaltet diesen Ordner.
 
-- Plugin-Remapping-Daten (Paper)
-- Heruntergeladene Abhängigkeiten
-- Generierte Dateien
+<Tip>
+  Wenn ein dynamischer Server mit veralteten generierten Dateien startet, stoppe die betroffenen Server und lösche den passenden Gruppenordner unter `templates/cache/`.
+</Tip>
 
-Der Cache wird in `templates/cache/{group}/` gespeichert und automatisch verwaltet.
+## Fehlerbehebung
 
-<Note>
-  Bei Problemen mit veralteten Dateien kannst du den Cache-Ordner einer Gruppe löschen um ein frisches Setup zu erzwingen.
-</Note>
+<AccordionGroup>
+  <Accordion title="Eine Datei wird nicht kopiert">
+    Prüfe den genauen Ordnernamen. Die gemeinsamen Ordner liegen unter `_every/`, zum Beispiel `templates/_every/every_paper/`, nicht `templates/every_paper/`.
+  </Accordion>
 
-## Wann welche Template-Ebene verwenden
+  <Accordion title="Eine Template-Änderung wirkt sich nicht auf einen laufenden Server aus">
+    Templates werden während der Servervorbereitung kopiert. Starte den betroffenen Server neu, damit der Setup-Workflow erneut läuft.
+  </Accordion>
 
-| Template-Ebene | Verwenden für |
-|----------------|---------------|
-| `every/` | Plugins, die jeder Server braucht |
-| `every_{type}/` | Proxy-exklusive oder Server-exklusive Plugins |
-| `every_{software}/` | Softwarespezifische Plugins/Configs |
-| `_tagged/` | Gemeinsame Features über mehrere Gruppen |
-| `{group}/` | Gruppenspezifische Dateien und Welten |
+  <Accordion title="Eine Datei wird nicht überschrieben">
+    Der Standard-Setup-Workflow behält vorhandene Dateien in den meisten Template-Ebenen. Das schützt Cache- und Persistent-Server-Daten. Nutze einen Configurator oder einen eigenen Workflow, wenn ein Wert bei jedem Start erzwungen werden muss.
+  </Accordion>
 
-## Templates und Persistente Server
-
-Templates werden für **beide** Gruppen-Server und persistente Server verwendet. Der Workflow läuft bei jedem Server-Start und wendet Templates in der Hierarchie-Reihenfolge an.
-
-### Hauptunterschied
-
-| Aspekt | Gruppen-Server | Persistente Server |
-|--------|----------------|-------------------|
-| Verzeichnis | Neu erstellt, bei Stop gelöscht | Permanent, überlebt Neustarts |
-| Template-Anwendung | Überschreibt alles | Merged mit existierenden Dateien |
-| Weltdaten | Verloren bei Stop | Bleiben zwischen Neustarts |
-| Anwendungsfall | Minigames, Lobbys | SMP, Skyblock, Bauprojekte |
-
-### Wie es für Persistente Server funktioniert
-
-Bei jedem Neustart eines persistenten Servers:
-
-1. Der Workflow läuft und wendet Templates an
-2. Neue Dateien aus Templates werden hinzugefügt
-3. Existierende Dateien im Server-Verzeichnis werden **nicht überschrieben** (außer `replace: true`)
-4. Welt- und Spielerdaten bleiben intakt
-
-<Warning>
-  Wenn du ein Plugin in deinem Template aktualisierst, bekommt der persistente Server die neue Version nicht automatisch, es sei denn du löschst das alte Plugin manuell aus dem Server-Verzeichnis.
-</Warning>
-
-### Wann was verwenden
-
-| Szenario | Empfehlung |
-|----------|------------|
-| Minigames (BedWars, SkyWars) | Gruppe - frische Map jedes Spiel |
-| Lobby-Server | Gruppe - keine persistenten Daten nötig |
-| Proxies | Gruppe - nur Konfiguration |
-| Skyblock, SMP, Citybuild | [Persistenter Server](/de/manual/setup/persistent-servers) - behält Weltdaten |
+  <Accordion title="Ein Tag-Template wird nicht angewendet">
+    Prüfe, ob der Tag im Dashboard zugewiesen ist und ob der Ordnername unter `templates/_tagged/` exakt zum Tag passt.
+  </Accordion>
+</AccordionGroup>

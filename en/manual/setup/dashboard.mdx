@@ -3,57 +3,52 @@ title: 'Dashboard'
 description: 'Access and manage your Minecraft network with the SimpleCloud Dashboard'
 ---
 
-## What is the Dashboard?
+## Overview
 
-The SimpleCloud Dashboard is a web interface that lets you manage your Minecraft server network from any web browser.
+The SimpleCloud Dashboard is the main place to create networks, run onboarding, manage server groups and persistent servers, inspect logs, and invite team members.
 
 <Frame>
   <img src="https://github.com/simplecloudapp/branding/blob/main/media/dashboard/serveroverview.png?raw=true" alt="SimpleCloud Dashboard" />
 </Frame>
 
-With the dashboard, you can:
-
-- Create and manage server groups
-- Start, stop, and monitor servers
-- View logs and player activity
-- Manage your network's resources
-
-## Accessing the Dashboard
+## Open the dashboard
 
 Open the dashboard in your browser:
 
 [dash.simplecloud.app](https://dash.simplecloud.app)
 
-Sign in with your SimpleCloud account. If you also need to authenticate the CLI on the same machine, run:
+Sign in with your SimpleCloud account. If the network has no connected serverhost yet, the dashboard opens the onboarding wizard and generates the setup command for you.
 
-```bash
-simplecloud login
-```
+## Create a server group
 
-## Creating a Server Group
-
-After logging in, you can create a new server group by navigating to the Groups section.
+Use groups for scalable sets of interchangeable servers, such as proxies, lobbies, or minigames.
 
 <Steps>
-<Step title="Navigate to Groups">
-  Click on the **Groups** tab to view existing groups or create a new one
-</Step>
-<Step title="Create a New Group">
-  Click the **Create Group** button
-</Step>
-<Step title="Select Group Type">
-  Choose your group type: **Proxy** (e.g., Velocity, Bungeecord) or **Server** (e.g., Paper, Spigot)
-</Step>
-<Step title="Enter Server URL">
-  Provide a download URL for your server software, or use the search feature to find official software
-</Step>
-<Step title="Configure Server">
-  Set the port, memory allocation, online count range, and other configuration options
-</Step>
-<Step title="Set Template Type">
-  Choose whether your template should be dynamic or static
-</Step>
-<Step title="Finish">
-  Review your settings and click **Create** to finish the setup
-</Step>
+  <Step title="Open Groups">
+    Open **Groups** in the dashboard and click **Add Group**.
+  </Step>
+
+  <Step title="Set the group identity">
+    Choose the name, type, and whether the group should activate immediately.
+  </Step>
+
+  <Step title="Choose software and resources">
+    Select the server software, memory, player limit, scaling mode, and host deployment settings.
+  </Step>
+
+  <Step title="Add plugins">
+    Add plugins from the supported plugin sources, or skip this step and add them later in group settings.
+  </Step>
+
+  <Step title="Create the group">
+    Review the summary and click **Create Group**.
+  </Step>
 </Steps>
+
+For the full workflow, see [Server Groups](/en/manual/setup/server-groups).
+
+## Related pages
+
+- [Installation](/en/manual/setup/installation) - Dashboard-first onboarding
+- [Server Groups](/en/manual/setup/server-groups) - Scalable server groups
+- [Persistent Servers](/en/manual/setup/persistent-servers) - Single long-lived servers

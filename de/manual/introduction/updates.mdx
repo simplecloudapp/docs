@@ -3,25 +3,27 @@ title: 'Updates'
 description: 'Halte deine SimpleCloud-Installation mit unseren integrierten Update-Mechanismen aktuell'
 ---
 
-## Automatische Updates
+## Versionsprüfungen
 
-SimpleCloud verfügt über ein vollautomatisches Update-System. Wenn wir eine neue Version veröffentlichen, lädt deine Installation das Update automatisch herunter und wendet es an - ohne dass du etwas tun musst.
+SimpleCloud-Komponenten und die CLI können prüfen, ob neuere Releases verfügbar sind. Die CLI fordert dich zum Update auf, wenn sie zu weit hinter der neuesten Version liegt.
 
-- Updates werden automatisch im Hintergrund heruntergeladen
-- Deine Konfigurationsdateien bleiben bei Updates erhalten
-- Komponenten starten nahtlos ohne Ausfallzeit neu - deine Server laufen weiter
-- Spieler bleiben ohne Unterbrechung verbunden
+- Nutze `simplecloud upgrade cli`, um die CLI selbst zu aktualisieren.
+- Nutze `simplecloud upgrade`, wenn die CLI unterstützte installierte Targets aktualisieren soll.
+- Prüfe Komponenten-Neustarts, bevor du Produktionshosts aktualisierst.
+- Sichere Konfigurationen und Templates, bevor du Runtime-Komponenten änderst.
 
-Dieser automatische Ansatz stellt sicher, dass du immer die neueste Version verwendest, ohne manuell eingreifen zu muessen.
+<Note>
+  Die CLI fordert dich zum Update auf, wenn sie mehr als 5 Versionen hinter der neuesten Version liegt.
+</Note>
 
-## Updates ohne Ausfallzeit
+## Auswirkungen im Betrieb
 
-SimpleCloud unterstützt Rolling Updates für alle Komponenten. Wenn ein Update angewendet wird:
+Updates können SimpleCloud-Komponenten neu starten. Plane sie wie jede andere Infrastrukturänderung:
 
-- Komponenten werden nacheinander aktualisiert und neu gestartet
-- Deine Minecraft-Server laufen während des gesamten Update-Prozesses weiter
-- Spieler bleiben ohne Unterbrechung verbunden
-- Das Update wird automatisch im Hintergrund abgeschlossen
+- Aktualisiere nach Möglichkeit zuerst einen Serverhost.
+- Prüfe, ob Serverstart und Shutdown weiterhin funktionieren.
+- Rolle dasselbe Update danach auf die übrigen Hosts aus.
+- Beobachte Dashboard-Status und Serverhost-Logs während des Rollouts.
 
 ## Manuelle Updates
 
@@ -52,7 +54,3 @@ simplecloud upgrade cli
 ```
 
 Dieser Befehl prüft auf eine neuere CLI-Version, lädt sie herunter und ersetzt deine aktuelle Installation. Verwende `simplecloud upgrade cli --cli-force`, um die aktuelle CLI-Version erneut zu installieren, auch wenn sie bereits aktuell ist.
-
-<Note>
-  Die CLI fordert dich automatisch zum Update auf, wenn sie mehr als 5 Versionen hinter der neuesten Version liegt.
-</Note>

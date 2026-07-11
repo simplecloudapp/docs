@@ -3,8 +3,6 @@ title: 'Persistente Server'
 description: 'Erstelle einzelne Server-Instanzen, die ihre Identität und Daten über Neustarts hinweg behalten.'
 ---
 
-Persistente Server sind einzelne, langlebige Server-Konfigurationen. Nutze sie für Server, die eine stabile Identität, lokale Dateien oder Weltdaten zwischen Neustarts behalten müssen, zum Beispiel SMP, Citybuild, Skyblock, Build-Server oder eine manuell verwaltete Lobby.
-
 <Info>
   Soll SimpleCloud mehrere austauschbare Server je nach Spielerbedarf erstellen? Nutze stattdessen [Server-Gruppen](/de/manual/setup/server-groups).
 </Info>
@@ -22,7 +20,7 @@ Persistente Server sind einzelne, langlebige Server-Konfigurationen. Nutze sie f
 
 <Steps>
   <Step title="Server-Wizard öffnen">
-    Öffne im Dashboard **Servers** und klicke auf **New Server**.
+    Öffne im Dashboard **Persistent Servers** und klicke auf **Add Server**.
   </Step>
 
   <Step title="Grunddaten festlegen">
@@ -52,7 +50,7 @@ Persistente Server sind einzelne, langlebige Server-Konfigurationen. Nutze sie f
   </Step>
 
   <Step title="Plugins hinzufügen">
-    Füge Plugins von Modrinth, GitHub, direkten URLs oder deinen konfigurierten Plugin-Quellen hinzu. Du kannst Plugins auch später in den Server-Einstellungen ergänzen.
+    Füge Plugins von Modrinth, Hangar, Spigot, direkten URLs oder deinen konfigurierten Plugin-Quellen hinzu. Du kannst Plugins auch später in den Server-Einstellungen ergänzen.
   </Step>
 
   <Step title="Prüfen und erstellen">
@@ -95,7 +93,7 @@ Persistente Server sind einzelne, langlebige Server-Konfigurationen. Nutze sie f
   <Accordion title="Properties">
     Füge eigene Key-Value-Daten hinzu, die Plugins und Integrationen lesen können.
 
-    Properties sind über die [Cloud API](/de/developer/api/persistent-servers) und als `SIMPLECLOUD_`-Umgebungsvariablen auf dem laufenden Server verfügbar.
+    Properties werden dem laufenden Server als `SIMPLECLOUD_`-Umgebungsvariablen bereitgestellt.
   </Accordion>
 
   <Accordion title="Workflows">
@@ -113,10 +111,10 @@ Persistente Server sind einzelne, langlebige Server-Konfigurationen. Nutze sie f
   </Accordion>
 
   <Accordion title="Danger zone">
-    Lösche den persistenten Server erst, nachdem du seine laufende Instanz gestoppt und benötigte Daten gesichert hast.
+    Lösche den persistenten Server erst, nachdem du benötigte lokale Daten gesichert hast.
 
     <Warning>
-      Das Löschen des persistenten Servers entfernt seine SimpleCloud-Konfiguration. Es sichert oder migriert lokale Weltdaten nicht automatisch.
+      Das Dashboard deaktiviert den persistenten Server, wartet bis die laufende Instanz gestoppt ist, und löscht danach den persistenten Server und den zugehörigen Blueprint. Es sichert oder migriert lokale Weltdaten nicht automatisch.
     </Warning>
   </Accordion>
 </AccordionGroup>

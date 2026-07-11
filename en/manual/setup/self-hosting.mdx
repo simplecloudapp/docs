@@ -3,8 +3,6 @@ title: "Self-hosting"
 description: "Plan and operate a self-hosted SimpleCloud deployment with your own controller, serverhosts, and infrastructure services."
 ---
 
-Self-hosting means you run the SimpleCloud control plane and infrastructure services yourself instead of relying only on the hosted dashboard defaults. Use this path when you need full control over networking, data storage, deployment location, or high-availability behavior.
-
 <Warning>
   Self-hosting is an advanced setup. Start with the standard [installation guide](/en/manual/setup/installation) unless you already know why you need to run the controller and backing services yourself.
 </Warning>
@@ -74,7 +72,7 @@ Make sure you have:
   </Step>
 
   <Step title="Create a test group">
-    Create a small server group with `min_servers` set to `1` and confirm the controller schedules it onto a serverhost.
+    Create a small server group with **Minimum Servers** set to `1` and confirm the controller schedules it onto a serverhost.
 
     <Check>
       A successful test reaches `AVAILABLE` and appears in the dashboard or `sc` output.

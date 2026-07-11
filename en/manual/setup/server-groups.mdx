@@ -3,8 +3,6 @@ title: 'Server Groups'
 description: 'Create scalable Minecraft server groups that share one configuration and start or stop servers based on demand.'
 ---
 
-Server groups are templates for servers that should scale. Use a group when you want SimpleCloud to create multiple interchangeable servers from the same configuration, such as lobbies, minigame arenas, or proxy instances.
-
 <Info>
   Need one long-lived server with persistent world data? Use [Persistent Servers](/en/manual/setup/persistent-servers) instead.
 </Info>
@@ -36,7 +34,7 @@ Groups can be one of two types:
 
 <Steps>
   <Step title="Open the group wizard">
-    In the dashboard, open **Groups** and click **New Group**.
+    In the dashboard, open **Groups** and click **Add Group**.
   </Step>
 
   <Step title="Choose the basic identity">
@@ -76,14 +74,14 @@ Groups can be one of two types:
   </Step>
 
   <Step title="Add plugins">
-    Add plugins from Modrinth, GitHub, direct URLs, or your configured plugin sources. You can also add plugins later in the group settings.
+    Add plugins from Modrinth, Hangar, Spigot, direct URLs, or your configured plugin sources. You can also add plugins later in the group settings.
   </Step>
 
   <Step title="Review and create">
     Review the summary and click **Create Group**.
 
     <Check>
-      After creation, an active group with `min_servers` greater than `0` should begin starting servers automatically.
+      After creation, an active group with **Minimum Servers** greater than `0` should begin starting servers automatically.
     </Check>
   </Step>
 </Steps>
@@ -107,7 +105,7 @@ Most changes happen in the group's settings page. Open only the section you need
     Use this section to enable or disable scaling, adjust memory, change player limits, and add tags for filtering.
 
     <Tip>
-      Tags are useful for dashboards, automation, and API queries. Use stable labels such as `region:eu`, `mode:lobby`, or `environment:prod`.
+      Tags are useful for dashboards, automation, filtering, and plugin behavior. Use stable labels such as `region:eu`, `mode:lobby`, or `environment:prod`.
     </Tip>
   </Accordion>
 
@@ -117,7 +115,6 @@ Most changes happen in the group's settings page. Open only the section you need
     | Setting | Purpose |
     | ------- | ------- |
     | **Scaling mode** | Choose whether scaling is based on free slots or server count |
-    | **Start policy** | Decide whether servers start immediately or only replace deleted servers |
     | **Min servers** | Keep this many servers running whenever the group is active |
     | **Max servers** | Prevent the group from scaling beyond this count |
     | **Player threshold** | Start more servers when usage crosses this percentage |
@@ -146,7 +143,7 @@ Most changes happen in the group's settings page. Open only the section you need
   <Accordion title="Properties settings">
     Add custom key-value data that your plugins and integrations can read.
 
-    Properties are available through the [Cloud API](/en/developer/api/groups) and as `SIMPLECLOUD_` environment variables on running servers.
+    Properties are exposed to running servers as `SIMPLECLOUD_` environment variables.
   </Accordion>
 
   <Accordion title="Workflows settings">
@@ -167,7 +164,7 @@ Most changes happen in the group's settings page. Open only the section you need
     Delete the group only after you understand the impact.
 
     <Warning>
-      Deleting a group removes its configuration. It does not delete already running server processes. Stop servers first if you want a clean shutdown.
+      The dashboard deactivates the group, waits for running servers to stop, and then deletes the group and its associated blueprint.
     </Warning>
   </Accordion>
 </AccordionGroup>
@@ -232,10 +229,10 @@ Most changes happen in the group's settings page. Open only the section you need
   <Accordion title="Orphaned server records remain">
     **Likely cause:** A server process stopped without the controller recording the lifecycle event, for example after a host crash.
 
-    Use the `DELETE /v0/servers/database` REST API endpoint to remove the stale record. See [Delete server record](/en/developer/api/servers#delete-server-record).
+    Open **Servers**, select the stale server, and use **Hold to force delete** after you confirm the process is no longer running.
 
     <Warning>
-      This only removes the database row. It does not stop a running process or trigger cleanup workflows.
+      Force delete only removes the server record. It does not stop a running process or trigger cleanup workflows.
     </Warning>
   </Accordion>
 </AccordionGroup>
