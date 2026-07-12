@@ -1,6 +1,123 @@
 ---
 title: 'Notify'
-description: 'Description for Notify'
+description: "Lerne das SimpleCloud Notify-Plugin für Server- und Gruppenbenachrichtigungen kennen"
+tag: 'Proxy'
 ---
 
-## Notify
+## Überblick
+
+Notify sendet MiniMessage-formatierte Chat-Benachrichtigungen an berechtigte Teammitglieder, wenn sich Server- oder Gruppenstatus in deinem SimpleCloud-Netzwerk ändern.
+
+<Note>
+  Dieses Plugin benötigt das `simplecloud-api` Plattform-Plugin und verwendet
+  MiniMessage für Textformatierung. Die Syntax findest du in der
+  [MiniMessage-Dokumentation](https://docs.papermc.io/adventure/minimessage/).
+</Note>
+
+## Unterstützte Software
+
+| Software   | Plugin-Unterstützung |
+| ---------- | --------------------- |
+| Velocity   | Ja                    |
+| BungeeCord | Ja                    |
+
+## Schnellstart
+
+1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/notify-plugin/releases) herunter.
+2. Lege es im `plugins/`-Ordner deines Proxy-Templates ab.
+3. Stelle sicher, dass das `simplecloud-api` Plugin auf dem Proxy installiert ist.
+4. Starte den Proxy einmal, damit `messages.yml` erzeugt wird.
+5. Bearbeite `plugins/notify-velocity/messages.yml` oder `plugins/notify-bungeecord/messages.yml`.
+
+## Benachrichtigungen
+
+Notify abonniert den Cloud-API-Eventstream und kann Nachrichten für diese Ereignisse senden:
+
+- Serverstatus wechselt zu `STARTING`, `AVAILABLE` oder `STOPPING`
+- Server wurde gestoppt
+- Gruppe wurde erstellt
+- Gruppe wurde gelöscht
+
+Setze eine einzelne Nachricht auf `null`, um genau diese Benachrichtigung zu deaktivieren. Setze `notifications.server` oder `notifications.group` auf `null`, um eine ganze Kategorie zu deaktivieren.
+
+## Konfiguration
+
+Die erzeugte `messages.yml` enthält Nachrichten, wiederverwendbare Variablen und Formatoptionen:
+
+```yaml
+version: "1"
+
+format:
+  date: "dd.MM.yyyy HH:mm:ss"
+
+variables:
+  prefix: "<color:#0EA5E9><bold>⚡</bold></color>"
+
+notifications:
+  hover:
+    server: |-
+      <#E2E8F0>Server information
+      <br><#94A3B8>Time<#475569>: <#E2E8F0><time>
+      <br><#94A3B8>State<#475569>: <#E2E8F0><state>
+      <br><#94A3B8>Address<#475569>: <#E2E8F0><ip>:<port>
+      <br><#94A3B8>Players<#475569>: <#E2E8F0><players>/<max>
+    group: |-
+      <#E2E8F0>Group information
+      <br><#94A3B8>Time<#475569>: <#E2E8F0><time>
+
+  server:
+    starting: "<prefix> <#0EA5E9>Server <hover:show_text:'<notifications.hover.server>'><#F8FAFC><server></hover> is now starting."
+    available: "<prefix> <#A3E635>Server <hover:show_text:'<notifications.hover.server>'><#F8FAFC><server></hover> is now available."
+    stopping: "<prefix> <#F59E0B>Server <hover:show_text:'<notifications.hover.server>'><#F8FAFC><server></hover> is now stopping."
+    stopped: "<prefix> <#DC2626>Server <hover:show_text:'<notifications.hover.server>'><#F8FAFC><server></hover> is now stopped."
+
+  group:
+    created: "<prefix> <#0EA5E9>Group <hover:show_text:'<notifications.hover.group>'><#F8FAFC><group></hover> was created."
+    deleted: "<prefix> <#DC2626>Group <hover:show_text:'<notifications.hover.group>'><#F8FAFC><group></hover> was deleted."
+```
+
+## Platzhalter
+
+### Server-Benachrichtigungen
+
+| Platzhalter     | Beschreibung                                      |
+| --------------- | ------------------------------------------------- |
+| `<server>`      | Gruppen- oder Server-Basisname                    |
+| `<group>`       | Gruppenname                                       |
+| `<id>`          | Numerische ID mit führendem Leerzeichen           |
+| `<uuid>`        | Server-UUID                                       |
+| `<state>`       | Aktueller Serverstatus                            |
+| `<ip>`          | Server-IP-Adresse                                 |
+| `<port>`        | Server-Port                                       |
+| `<players>`     | Aktuelle Spieleranzahl                            |
+| `<max>`         | Maximale Spieleranzahl                            |
+| `<time>`        | Aktueller Zeitstempel mit `format.date`           |
+| `<updated>`     | Letzter Update-Zeitstempel mit `format.date`      |
+| `<create_date>` | Erstellungszeitstempel mit `format.date`          |
+
+### Gruppen-Benachrichtigungen
+
+| Platzhalter | Beschreibung                              |
+| ----------- | ----------------------------------------- |
+| `<group>`   | Gruppenname                               |
+| `<time>`    | Aktueller Zeitstempel mit `format.date`   |
+
+## Berechtigungen
+
+| Berechtigung                    | Beschreibung                         |
+| ------------------------------- | ------------------------------------ |
+| `notify.state.server.starting`  | Server-Starting-Nachrichten erhalten |
+| `notify.state.server.available` | Server-Available-Nachrichten erhalten |
+| `notify.state.server.stopping`  | Server-Stopping-Nachrichten erhalten |
+| `notify.state.server.stopped`   | Server-Stopped-Nachrichten erhalten  |
+| `notify.state.group.created`    | Gruppen-Erstellt-Nachrichten erhalten |
+| `notify.state.group.deleted`    | Gruppen-Gelöscht-Nachrichten erhalten |
+
+<Note>
+  Die Berechtigung wird pro Benachrichtigung geprüft. Gib Teammitgliedern nur
+  die Kategorien, die sie sehen sollen.
+</Note>
+
+<Note>
+  `notify.state.server.deleted` wird weiterhin als Legacy-Alias für Server-Stopped-Benachrichtigungen akzeptiert.
+</Note>

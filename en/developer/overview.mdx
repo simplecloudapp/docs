@@ -3,16 +3,18 @@ title: 'Cloud API'
 description: 'Build integrations with SimpleCloud using our Java/Kotlin API'
 ---
 
-The Cloud API is a Java library for interacting with your SimpleCloud network programmatically. Use it to manage groups, servers, players, and react to events in real-time.
+The Cloud API is a Java library for interacting with your SimpleCloud network programmatically. Use it to manage groups, running servers, persistent servers, players, cache state, and real-time events.
 
 ## API Architecture
 
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `api.group()` | `GroupApi` | Create, read, update, delete groups |
-| `api.server()` | `ServerApi` | Start, stop, query servers |
+| `api.server()` | `ServerApi` | Query, stop, and update running servers |
+| `api.persistentServer()` | `PersistentServerApi` | Create, read, update, delete persistent servers |
 | `api.player()` | `PlayerApi` | Player data, connections, messaging |
 | `api.event()` | `EventApi` | Subscribe to real-time events |
+| `api.cache()` | `QueryCache` | Inspect, invalidate, and clear local query cache entries |
 
 ### Event API Subcategories
 
@@ -29,6 +31,8 @@ The Cloud API is a Java library for interacting with your SimpleCloud network pr
 - **Type-safe models** - Strongly typed domain objects for Groups, Servers, Players
 - **Real-time events** - Subscribe to changes via NATS messaging
 - **Adventure integration** - Players implement Adventure's `Audience` for rich text messaging
+- **Persistent server support** - Manage long-lived servers through `api.persistentServer()`
+- **Query cache** - Stale-while-revalidate cache with automatic event invalidation
 - **Environment-aware** - Auto-configuration from `SIMPLECLOUD_*` environment variables
 
 ## Quick Example
@@ -109,6 +113,9 @@ val sub = api.event().server().onStarted { event ->
   </Card>
   <Card title="Servers API" icon="server" href="/en/developer/api/servers">
     Manage server instances
+  </Card>
+  <Card title="Persistent Servers API" icon="hard-drive" href="/en/developer/api/persistent-servers">
+    Manage long-lived servers
   </Card>
   <Card title="Players API" icon="users" href="/en/developer/api/players">
     Player data and messaging

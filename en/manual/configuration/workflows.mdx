@@ -1,413 +1,199 @@
 ---
-title: 'Workflows'
-description: 'Define server preparation and cleanup processes with workflow steps'
+title: "Workflows"
+description: "Run file operations when a server starts, stops, or on demand"
 ---
 
-## What are Workflows?
+Workflows run a sequence of file operations on a serverhost. You can run them manually or whenever a server starts or stops.
 
-Workflows define the sequence of actions executed during server lifecycle events. They handle everything from copying template files to installing plugins and applying configurations.
+This guide creates a backup workflow, runs it from the dashboard, and then shows you how to adapt it.
 
-## How Workflows Work
+## Run the backup workflow
 
-During server preparation:
+<Steps>
+  <Step title="Create the workflow">
+    Create `workflows/default/backup.yml` in your serverhost directory:
 
-1. Serverhost receives a start request from the Controller
-2. Loads the setup workflow from `workflows/internal/setup.yml`
-3. Executes each step in order with the server context
-4. Reports status back to the Controller
+    ```yaml workflows/default/backup.yml
+    name: Backup Workflow
 
-During cleanup:
-
-1. Server stop signal received
-2. Loads the cleanup workflow from `workflows/internal/cleanup.yml`
-3. Executes cleanup steps (cache push, directory deletion)
-
-## Workflow Structure
-
-Workflows are YAML files in the `workflows/` directory:
-
-```yaml
-# workflows/internal/setup.yml
-steps:
-  - action: copy
-    from: "{{templates}}/cache/{{group}}"
-    to: "{{server-dir}}"
-
-  - action: copy
-    from: "{{templates}}/every"
-    to: "{{server-dir}}"
-
-  - action: plugins-load
-    dir: "{{server-dir}}/plugins"
-
-  - action: configurator
-    configurator: "{{configurator}}"
-    dir: "{{server-dir}}"
-```
-
-## Built-in Workflows
-
-### Setup Workflow
-
-The default setup workflow (`workflows/internal/setup.yml`) performs:
-
-1. **Cache Pull** - Copy cached files from previous runs
-2. **Template Copy** - Apply template hierarchy (every, type, software, tagged)
-3. **Plugin Installation** - Download and install plugins
-4. **Configuration** - Apply configurators for server software
-
-### Cleanup Workflow
-
-The cleanup workflow (`workflows/internal/cleanup.yml`) performs:
-
-1. **Cache Push** - Save reusable files for faster future starts
-2. **Directory Deletion** - Remove the server directory
-
-## Workflow Actions
-
-### `copy`
-
-Copies files or directories from source to destination.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `from` | path | Source file or directory |
-| `to` | path | Destination file or directory |
-| `replace` | boolean | Overwrite existing files (default: `true`) |
-| `create-dirs` | boolean | Create parent directories if missing (default: `true`) |
-
-```yaml
-- action: copy
-  from: "{{templates}}/every"
-  to: "{{server-dir}}"
-  replace: true
-```
-
-### `delete`
-
-Deletes a file or directory.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `path` | path | File or directory to delete |
-| `force` | boolean | Force deletion of non-empty directories (default: `true`) |
-| `min-age` | duration | Only delete files/directories older than this duration (e.g. `30d`, `12h`, `60m`, `90s`) |
-
-```yaml
-- action: delete
-  path: "{{server-dir}}"
-  force: true
-  min-age: "7d"
-```
-
-### `compress`
-
-Compresses a file or directory into an archive.
-
-Supported formats: `.tar.gz`, `.tgz`, `.tar.bz2`, `.tbz2`, `.tar.xz`, `.txz`, `.zip`, `.tar`, `.7z`
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `from` | path | Source file or directory to compress |
-| `to` | path | Destination archive path  |
-| `replace` | boolean | Overwrite existing archive (default: `true`) |
-
-```yaml
-- action: compress
-  from: "{{server-dir}}/world"
-  to: "{{cache}}/{{group}}/world.tar.gz"
-  replace: true
-```
-
-### `decompress`
-
-Extracts files from an archive to a destination directory.
-
-Supported formats: `.tar.gz`, `.tgz`, `.tar.bz2`, `.tbz2`, `.tar.xz`, `.txz`, `.zip`, `.tar`, `.7z`
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `from` | path | Path to the archive file |
-| `to` | path | Destination directory to extract into |
-| `replace` | boolean | Overwrite existing files (default: `true`) |
-
-```yaml
-- action: decompress
-  from: "{{cache}}/{{group}}/world.tar.gz"
-  to: "{{server-dir}}/world"
-  replace: true
-```
-
-### `upload`
-
-Uploads a file to a remote URL via HTTP.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `from` | path | Path to the local file to upload |
-| `to` | string | Target URL |
-| `method` | string | HTTP method (default: `PUT`) |
-| `authorization-bearer` | string | Bearer token for authorization |
-
-After execution, the following context variables are set:
-
-| Variable | Description |
-|----------|-------------|
-| `upload.response.code` | HTTP response status code |
-| `upload.response.body` | HTTP response body |
-
-```yaml
-- action: upload
-  from: "{{server-dir}}/backup.tar.gz"
-  to: "https://storage.example.com/backups/{{server-name}}.tar.gz"
-  method: PUT
-  authorization-bearer: "{{$.backup-token}}"
-```
-
-### `for-each`
-
-Iterates over a list and executes nested steps for each item.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `items` | list | Items to iterate over |
-| `as` | string | Variable name for current item |
-| `steps` | list | Steps to execute for each item |
-
-```yaml
-- action: for-each
-  items: "{{tags}}"
-  as: "tag"
-  steps:
-    - action: copy
-      from: "{{templates}}/_tagged/{{tag}}"
-      to: "{{server-dir}}"
-```
-
-### `plugins-load`
-
-Installs plugins from configured sources (Modrinth, Hangar, Spigot, URL).
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `dir` | path | Directory to install plugins into |
-
-```yaml
-- action: plugins-load
-  dir: "{{server-dir}}/plugins"
-```
-
-Plugins are defined at the group level and automatically downloaded based on:
-- Server software (Paper, Velocity, etc.)
-- Minecraft version
-- Platform compatibility
-
-### `configurator`
-
-Applies a configurator to configure server files.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `configurator` | string | Configurator name (from `options/configurators/`) |
-| `dir` | path | Server directory to configure |
-
-```yaml
-- action: configurator
-  configurator: "paper_velocity"
-  dir: "{{server-dir}}"
-```
-
-See [Configurators](/en/manual/configuration/configurators) for more details.
-
-## Placeholders
-
-Workflows support dynamic placeholders replaced at runtime:
-
-### Server Context
-
-| Placeholder | Description |
-|-------------|-------------|
-| `{{server-dir}}` | Server's working directory |
-| `{{server-name}}` | Server name (e.g., `lobby-1`) |
-| `{{group}}` | Group name |
-| `{{port}}` | Assigned port |
-| `{{max-players}}` | Maximum player count |
-| `{{memory}}` | Allocated memory (MB) |
-
-### Path Context
-
-| Placeholder | Description |
-|-------------|-------------|
-| `{{templates}}` | Templates base directory |
-| `{{running}}` | Running servers directory |
-| `{{cache}}` | Cache directory |
-
-### Blueprint Context
-
-| Placeholder | Description |
-|-------------|-------------|
-| `{{configurator}}` | Configurator name from blueprint |
-| `{{software}}` | Server software (paper, velocity, etc.) |
-| `{{minecraft-version}}` | Minecraft version |
-| `{{type}}` | Server type (proxy, server, lobby) |
-
-### Custom Properties
-
-Access custom properties from the server:
-
-```yaml
-- action: copy
-  from: "{{templates}}/{{$.custom-template}}"
-  to: "{{server-dir}}"
-```
-
-The `$.` prefix accesses the server's properties map.
-
-## Default Setup Flow
-
-The built-in setup workflow follows this order:
-
-```yaml
-steps:
-  # 1. Pull from cache (faster restarts)
-  - action: copy
-    from: "{{templates}}/cache/{{group}}"
-    to: "{{server-dir}}"
-
-  # 2. Apply base templates
-  - action: copy
-    from: "{{templates}}/every"
-    to: "{{server-dir}}"
-
-  # 3. Apply type-specific templates
-  - action: copy
-    from: "{{templates}}/every_{{type}}"
-    to: "{{server-dir}}"
-
-  # 4. Apply software-specific templates
-  - action: copy
-    from: "{{templates}}/every_{{software}}"
-    to: "{{server-dir}}"
-
-  # 5. Apply tagged templates
-  - action: for-each
-    items: "{{tags}}"
-    as: "tag"
     steps:
-      - action: copy
-        from: "{{templates}}/_tagged/{{tag}}"
-        to: "{{server-dir}}"
+      - name: copy-running-to-backup
+        uses: simplecloud/copy
+        with:
+          from: "{{ runtime.server-dir }}"
+          to: "{{ runtime.templates }}/.backup/{{ runtime.name }}/{{ time.now.date }}/{{ time.now.dateTime }}-{{ runtime.nice-id }}-{{ runtime.process-id }}"
+          init-dir-if-missing: true
+    ```
+  </Step>
 
-  # 6. Apply server-specific template
-  - action: copy
-    from: "{{templates}}/{{server-name}}"
-    to: "{{server-dir}}"
+  <Step title="Load the workflow">
+    Restart the serverhost. SimpleCloud uses the file path as the workflow ID, so this workflow becomes `default/backup`.
+  </Step>
 
-  # 7. Install plugins
-  - action: plugins-load
-    dir: "{{server-dir}}/plugins"
+  <Step title="Assign the workflow">
+    In the dashboard, open a server group or persistent server and go to **Settings > Workflows**. Under **Manual Workflows**, add `default/backup`.
+  </Step>
 
-  # 8. Apply configurator
-  - action: configurator
-    configurator: "{{configurator}}"
-    dir: "{{server-dir}}"
-```
+  <Step title="Run the workflow">
+    Start the server if it is not already running. Then open its actions menu and run `default/backup` to test the workflow.
+  </Step>
 
-## Customizing Workflows
+  <Step title="Check the backup">
+    On the serverhost, open:
 
-### Override Default Workflow
+    ```text
+    templates/.backup/<name>/<date>/<date-time>-<server>-<process-id>/
+    ```
 
-Create your own setup workflow:
+    Confirm that the final directory contains the files you expected. Its timestamp and process ID keep separate backup runs apart.
+  </Step>
+</Steps>
+
+<Note>
+  A workflow is available only on serverhosts that contain its file. If the affected servers can run on multiple serverhosts, add the same file to each one and restart them.
+</Note>
+
+The manual action copies files while the Minecraft server is running. Files that change during the copy, such as worlds and plugin data, may not form a consistent backup. For those files, add `default/backup` under **On Stop Workflows** and stop the server normally. Stop workflows run after the server process exits.
+
+Place `default/backup` before `internal/cleanup`.
+
+<Warning>
+  `internal/cleanup` removes a group server's running directory. Any workflow that reads that directory must run before cleanup.
+</Warning>
+
+<Note>
+  This workflow creates file copies but does not test restores or remove old backups. Verify that you can restore the data you need and manage retention for `templates/.backup/`.
+</Note>
+
+## Understand the workflow file
+
+The backup workflow contains the same basic structure as every workflow:
+
+- `name` identifies the workflow in serverhost logs.
+- `steps` contains the operations in the order they run.
+- `name` inside a step identifies that step in logs.
+- `uses` selects the action. This workflow uses `simplecloud/copy`.
+- `with` contains the values required by the action.
+
+In this workflow, `from` points to the running server directory and `to` builds a unique backup path. If the source is missing, `init-dir-if-missing: true` creates an empty source directory instead of failing. Always verify that the resulting backup contains the expected files.
+
+### Values used by the workflow
+
+Values inside `{{ ... }}` are replaced when the workflow runs.
+
+| Value | Result |
+| --- | --- |
+| `{{ runtime.server-dir }}` | Running server directory |
+| `{{ runtime.templates }}` | Serverhost template directory |
+| `{{ runtime.name }}` | Server group or persistent server name |
+| `{{ runtime.nice-id }}` | Running server name, such as `lobby-1` |
+| `{{ runtime.process-id }}` | Running process ID |
+| `{{ time.now.date }}` | Current date |
+| `{{ time.now.dateTime }}` | Current date and time |
+
+## Adapt the backup workflow
+
+Use the backup workflow as a starting point:
+
+<Steps>
+  <Step title="Copy the workflow">
+    Copy `workflows/default/backup.yml` to a new path, such as `workflows/custom/world-backup.yml`.
+  </Step>
+
+  <Step title="Change the workflow">
+    Give it a new `name`, then change the copy paths and exclusions for your task.
+  </Step>
+
+  <Step title="Reload the workflows">
+    Restart every serverhost that contains the new file.
+  </Step>
+
+  <Step title="Assign the new ID">
+    Add `custom/world-backup` under **Settings > Workflows**. A workflow ID is always its path below `workflows/`, without `.yml`.
+  </Step>
+</Steps>
+
+### Change what gets copied
+
+The `simplecloud/copy` action accepts these settings under `with`:
+
+| Setting | Purpose |
+| --- | --- |
+| `from` | File or directory to copy |
+| `to` | Destination for the copy |
+| `replace` | Whether to overwrite existing files; defaults to `true` |
+| `exclude` | Path or list of paths to leave out |
+| `init-dir-if-missing` | Whether to create the source directory when it does not exist; defaults to `false` |
+
+For example, add an `exclude` list to skip logs and caches while keeping the rest of the backup unchanged:
 
 ```yaml
-# workflows/internal/setup.yml
-steps:
-  - action: copy
-    from: "{{templates}}/my-base"
-    to: "{{server-dir}}"
-
-  - action: plugins-load
-    dir: "{{server-dir}}/plugins"
-
-  - action: configurator
-    configurator: "{{configurator}}"
-    dir: "{{server-dir}}"
+with:
+  from: "{{ runtime.server-dir }}"
+  to: "{{ runtime.templates }}/.backup/{{ runtime.name }}/{{ time.now.date }}/{{ time.now.dateTime }}-{{ runtime.nice-id }}-{{ runtime.process-id }}"
+  init-dir-if-missing: true
+  exclude:
+    - "logs/**"
+    - "cache/**"
 ```
 
-### Add Custom Steps
+Patterns in `exclude` are relative to `from`.
 
-Extend the workflow with additional actions:
+## Available actions
 
-```yaml
-steps:
-  # ... standard setup steps ...
+<AccordionGroup>
+  <Accordion title="Copy files">
+    `simplecloud/copy` copies a file or directory from `from` to `to`. Use `replace` to control whether existing files are overwritten and `exclude` to skip matching paths.
+  </Accordion>
 
-  # Custom: Copy world from shared storage
-  - action: copy
-    from: "/shared/worlds/{{group}}"
-    to: "{{server-dir}}/world"
+  <Accordion title="Create or extract archives">
+    `simplecloud/compress` creates an archive and `simplecloud/decompress` extracts one. Both require `from` and `to`; `replace` is optional. The archive filename determines its format.
+  </Accordion>
 
-  # Custom: Download additional resources
-  - action: copy
-    from: "{{templates}}/shared-configs"
-    to: "{{server-dir}}/plugins"
-```
+  <Accordion title="Upload a file">
+    `simplecloud/upload` sends the file in `from` to the URL in `to`. It uploads files, not directories. You can also set the HTTP `method` and an `authorization-bearer` value.
+
+    <Warning>
+      Workflow files are plain text. Do not store long-lived access tokens in them.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Delete files">
+    `simplecloud/delete` removes the configured `path`. Use `min-age`, such as `7d`, to keep newer files.
+
+    <Warning>
+      Delete paths are not limited to the server directory. Check the final path before running the workflow.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Repeat steps">
+    `simplecloud/foreach` runs nested steps for each entry in `items`. Set `as` to the variable name used by the nested `steps`.
+  </Accordion>
+</AccordionGroup>
+
+## Built-in workflows
+
+| Workflow | Purpose |
+| --- | --- |
+| `internal/setup` | Prepares the server directory before startup |
+| `internal/cleanup` | Cleans up files after the server stops |
+
+<Warning>
+  Keep `internal/setup` and `internal/cleanup` assigned unless you intentionally replace their behavior.
+</Warning>
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="Workflow not executing">
-    **Symptom:** Server starts but workflow steps don't run.
-
-    **Solution:**
-    1. Verify file exists: `workflows/internal/setup.yml`
-    2. Validate YAML syntax (use a linter)
-    3. Check serverhost logs: `sc logs serverhost`
+  <Accordion title="The workflow is not listed">
+    Workflow IDs are entered manually in the dashboard. Confirm the file exists on the serverhost, restart the serverhost, and add the ID again.
   </Accordion>
 
-  <Accordion title="Placeholder not replaced">
-    **Symptom:** Files contain literal `{{name}}` instead of values.
-
-    **Solution:**
-    1. Check syntax: `{{name}}` (double braces, no spaces)
-    2. Verify property exists in server context
-    3. For custom properties use: `{{$.property-name}}`
+  <Accordion title="The workflow cannot be found">
+    Check that the ID matches the file path. For example, `custom/world-backup` must point to `workflows/custom/world-backup.yml`.
   </Accordion>
 
-  <Accordion title="Copy action fails">
-    **Symptom:** Workflow fails at copy step.
-
-    **Solution:**
-    1. Verify source path exists
-    2. Check file permissions
-    3. Add `create-dirs: true` if parent directories missing
-  </Accordion>
-
-  <Accordion title="Plugin installation fails">
-    **Symptom:** Plugins not downloaded during workflow.
-
-    **Solution:**
-    1. Check network connectivity to Modrinth/Hangar
-    2. Verify plugin exists for your Minecraft version
-    3. Check `options/modrinth-platform-mappings.yml`
-  </Accordion>
-
-  <Accordion title="Compress/decompress action fails">
-    **Symptom:** Workflow fails at compress or decompress step.
-
-    **Solution:**
-    1. Verify the archive format is supported (`.tar.gz`, `.zip`, `.7z`, etc.)
-    2. Ensure the source path exists
-    3. Check available disk space at the destination
-  </Accordion>
-
-  <Accordion title="Upload action fails">
-    **Symptom:** Workflow fails at upload step.
-
-    **Solution:**
-    1. Check network connectivity to the target URL
-    2. Verify the bearer token is valid and correctly set
-    3. Inspect the response code via `upload.response.code` context variable
-    4. Ensure the source file exists and is not a directory
+  <Accordion title="A backup is missing">
+    Check the serverhost logs for `Backup Workflow` and `copy-running-to-backup`. For an automatic backup, also confirm that `default/backup` comes before `internal/cleanup`.
   </Accordion>
 </AccordionGroup>

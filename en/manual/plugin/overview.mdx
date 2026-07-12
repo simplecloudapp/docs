@@ -9,15 +9,14 @@ Plugins are server-side extensions that run inside your Minecraft servers. They 
 
 | Plugin | Platform | Description |
 |--------|----------|-------------|
-| [Server Registration](/en/manual/plugin/server-registration) | Proxy | Registers servers with the proxy |
-| [Server Connection](/en/manual/plugin/server-connection) | Proxy | Handles player connections between servers |
-| [Cloud Command](/en/manual/plugin/cloud-command) | Both | In-game cloud management commands |
-| [Proxy Essentials](/en/manual/plugin/proxy-essentials) | Proxy | Hub command, maintenance mode, MOTD |
-| [Notify](/en/manual/plugin/notify) | Both | Server start/stop notifications |
+| [Server Connection](/en/manual/plugin/server-connection) | Proxy | Registers servers, resolves joins, fallbacks, and hub commands |
+| [Cloud Command](/en/manual/plugin/cloud-command) | Proxy | In-game cloud management commands |
+| [Proxy Essentials](/en/manual/plugin/proxy-essentials) | Proxy | MOTD, tablist, join states, layouts, and player counts |
+| [Notify](/en/manual/plugin/notify) | Proxy | Server and group event notifications |
 | [Prefixes](/en/manual/plugin/prefixes) | Server | Player prefix management |
-| [Signs](/en/manual/plugin/signs) | Server | Dynamic server status signs |
-| [NPCs](/en/manual/plugin/npcs) | Server | Clickable server selector NPCs |
-| [Placeholders](/en/manual/plugin/placeholders) | Server | PlaceholderAPI integration |
+| [Signs](/en/manual/plugin/signs) | Server | Dynamic group signs |
+| [NPCs](/en/manual/plugin/npcs) | Server | NPC interactions, holograms, and server navigation |
+| [Placeholders](/en/manual/plugin/placeholders) | Server | PlaceholderAPI integration for servers and groups |
 
 ## Installing Plugins
 
@@ -59,7 +58,7 @@ cp my-plugin.jar templates/lobby/plugins/
 | **Purpose** | In-game features | Infrastructure tasks |
 | **Examples** | Signs, NPCs, commands | Player data, resource packs |
 
-For infrastructure-level features, see [Droplets](/en/manual/droplet/overview).
+For infrastructure-level integrations, see the [Developer docs](/en/developer/overview).
 
 <Note>
   Have ideas for new plugins? Share them on our [Discord](https://discord.simplecloud.app) or contribute on [GitHub](https://github.com/simplecloudapp).

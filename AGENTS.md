@@ -147,7 +147,7 @@ const apiConfig = {
 
 #### Code group with multiple languages
 
-```mdx
+````mdx
 <CodeGroup>
 ```javascript Node.js
 const response = await fetch('/api/endpoint', {
@@ -166,11 +166,11 @@ curl -X GET '/api/endpoint' \
   -H 'Authorization: Bearer YOUR_API_KEY'
 ```
 </CodeGroup>
-```
+````
 
 #### Request/response examples
 
-```mdx
+````mdx
 <RequestExample>
 ```bash cURL
 curl -X POST 'https://api.example.com/users' \
@@ -189,13 +189,13 @@ curl -X POST 'https://api.example.com/users' \
 }
 ```
 </ResponseExample>
-```
+````
 
 ### Structural Components
 
 #### Steps for procedures
 
-```mdx
+````mdx
 <Steps>
 <Step title="Install dependencies">
   Run `npm install` to install required packages.
@@ -217,11 +217,11 @@ curl -X POST 'https://api.example.com/users' \
   </Warning>
 </Step>
 </Steps>
-```
+````
 
 #### Tabs for alternative content
 
-```mdx
+````mdx
 <Tabs>
 <Tab title="macOS">
   ```bash
@@ -244,11 +244,11 @@ curl -X POST 'https://api.example.com/users' \
   ```
 </Tab>
 </Tabs>
-```
+````
 
 #### Accordions for collapsible content
 
-```mdx
+````mdx
 <AccordionGroup>
 <Accordion title="Troubleshooting connection issues">
   - **Firewall blocking**: Ensure ports 80 and 443 are open
@@ -265,7 +265,7 @@ curl -X POST 'https://api.example.com/users' \
   ```
 </Accordion>
 </AccordionGroup>
-```
+````
 
 ### Cards and Navigation
 

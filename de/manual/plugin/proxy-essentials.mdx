@@ -1,6 +1,202 @@
 ---
 title: 'Proxy Essentials'
-description: 'Description for Proxy Essentials'
+description: 'Konfiguriere SimpleCloud MOTDs, Tablists, Joinstates, Player Counts und Proxy-Layouts'
+tag: 'Proxy'
 ---
 
-## Proxy Essentials
+## Überblick
+
+Proxy Essentials ergänzt typische Proxy-Funktionen für SimpleCloud-Netzwerke: Serverlisten-MOTDs, Tablist-Header und -Footer, Joinstates, Whitelisting, summierte Spielerzahlen und konfigurierbare Hub-Befehle.
+
+Alle Einstellungen liegen in Dateien und können vom Proxy aus neu geladen werden.
+
+## Unterstützte Software
+
+| Software   | Plugin-Unterstützung |
+| ---------- | --------------------- |
+| Velocity   | Ja                    |
+| BungeeCord | Ja                    |
+
+## Schnellstart
+
+<Steps>
+  <Step title="Plugin installieren">
+    Lade das Plugin von [GitHub](https://github.com/simplecloudapp/proxy-essentials-plugin/releases) herunter und lege es im `plugins/`-Ordner deines Proxy-Templates ab.
+  </Step>
+
+  <Step title="API-Plugin installieren">
+    Stelle sicher, dass das `simplecloud-api` Plugin im selben Proxy-Template installiert ist. Proxy Essentials nutzt es für Spielerzahlen und SimpleCloud-bezogene Proxy-Zustände.
+  </Step>
+
+  <Step title="Konfiguration erzeugen">
+    Starte den Proxy einmal, damit das Plugin `config.yml`, `layout/*.yml`, `placeholder.yml` und `messages.yml` erzeugt.
+  </Step>
+
+  <Step title="Proxy-Verhalten konfigurieren">
+    Konfiguriere Joinstates, MOTD-Layouts, Tablists und Player Counts.
+
+    <Check>
+      Nach einem Reload oder Neustart sollte `/scproxy reload` die Proxy-Essentials-Konfiguration ohne Fehler neu laden.
+    </Check>
+  </Step>
+</Steps>
+
+## Erzeugte Dateien
+
+| Datei | Zweck |
+| ----- | ----- |
+| `config.yml` | Joinstates, Whitelist, Player Count und Tablist |
+| `layout/*.yml` | Serverlisten-MOTD-Layouts |
+| `placeholder.yml` | Datums-, Zeit- und Ping-Farben |
+| `messages.yml` | Kick- und Befehlsnachrichten |
+
+## Joinstates
+
+Joinstates steuern, ob ein Spieler beitreten darf und welches MOTD-Layout erzwungen wird.
+
+```yaml
+version: "2"
+initial-state: public
+initial-layout: public
+
+joinstates:
+  - name: public
+    permission:
+      join: ""
+      full: "simplecloud.proxy-essentials.join.full.public"
+    forced-motd-layout: null
+
+  - name: maintenance
+    permission:
+      join: "simplecloud.proxy-essentials.join.maintenance"
+      full: "simplecloud.proxy-essentials.join.maintenance"
+    forced-motd-layout: maintenance
+
+whitelist:
+  enabled: true
+  players:
+    - Notch
+```
+
+### Player Count
+
+Der Player Count kann diese Proxy-Gruppe plus weitere Gruppen oder Persistent Server zusammenzaehlen. Das Update-Intervall wird in Ticks konfiguriert.
+
+```yaml
+player-count:
+  enabled: true
+  additional-groups: []
+  additional-persistent-servers: []
+  update-time: 20
+```
+
+## Serverlisten-Layouts
+
+MOTD-Layouts liegen im `layout/`-Ordner. Joinstates können mit `forced-motd-layout` ein Layout erzwingen, und `/scproxy layout` kann ein Layout auf einer Gruppe speichern.
+
+```yaml
+config-version: "2"
+
+motd:
+  enabled: true
+  update-type: RANDOM # RANDOM oder QUEUE
+  layouts:
+    - name: public
+      line1: "<color:#0ea5e9>A simplecloud.app network"
+      line2: " "
+
+server-icon:
+  enabled: true
+  file: simplecloud.png
+
+player-list:
+  enabled: true
+  player-list:
+    - ""
+    - "simplecloud.app"
+    - ""
+
+version:
+  name:
+    enabled: false
+    text: "Example"
+  slots:
+    enabled: true
+    type: REAL # REAL, FAKE oder DYNAMIC
+    fake-slots: 100
+    dynamic-player-range: 5
+```
+
+## Tablist
+
+Tablist-Layouts werden in `config.yml` konfiguriert. Die Update-Zeit ist in Ticks.
+
+```yaml
+tablist:
+  - name: global
+    layout:
+      - header: "<br><color:#0ea5e9>SimpleCloud v3<br>"
+        footer: "<br> <color:#ffffff><online_players> players <color:#cbd5e1>are playing on your network<br>"
+    update-time: 20
+```
+
+## Befehle
+
+| Befehl | Beschreibung |
+| ------ | ------------ |
+| `/scproxy` | Verfügbare Proxy-Essentials-Befehle anzeigen |
+| `/scproxy help` | Befehlshilfe anzeigen |
+| `/scproxy reload` | `config.yml`, `placeholder.yml`, `messages.yml` und MOTD-Layouts neu laden |
+| `/scproxy joinstate help` | Joinstate-Befehle anzeigen |
+| `/scproxy joinstate info <group>` | Joinstate einer Gruppe anzeigen |
+| `/scproxy joinstate info <group> <id>` | Joinstate eines Servers anzeigen |
+| `/scproxy joinstate set <group> <joinstate>` | Joinstate für eine Gruppe und ihre Server setzen |
+| `/scproxy joinstate set <group> <id> <joinstate>` | Joinstate für einen Server setzen |
+| `/scproxy layout help` | Layout-Befehle anzeigen |
+| `/scproxy layout info` | Standard-MOTD-Layout anzeigen |
+| `/scproxy layout info <group>` | Layout einer Gruppe anzeigen |
+| `/scproxy layout set <group> <layout>` | MOTD-Layout auf einer Gruppe und ihren laufenden Servern speichern |
+
+## Platzhalter
+
+| Platzhalter | Kontext | Beschreibung |
+| ----------- | ------- | ------------ |
+| `<online_players>` | MOTD, Tablist | Summierte Online-Spieler |
+| `<max_players>` | MOTD, Tablist | Maximale Spielerzahl anhand des Slot-Modus |
+| `<date:FORMAT>` | MOTD, Tablist | Aktuelles Datum/Zeit mit MiniMessage-Datumsformat |
+| `<env:NAME>` | MOTD, Tablist | Wert einer Umgebungsvariable |
+| `<env:NAME:default>` | MOTD, Tablist | Umgebungsvariable mit Fallback |
+| `<server_name>` | Tablist | Aktueller Server des Spielers |
+| `<ping>` | Tablist | Ping des Spielers mit konfigurierter Farbe |
+
+Konfiguriere Datums- und Ping-Darstellung in `placeholder.yml`:
+
+```yaml
+currentDateFormat: "dd.MM.yyyy"
+currentTimeFormat: "HH:mm:ss"
+pingColors:
+  - ping: 0
+    color: "<green>"
+  - ping: 100
+    color: "<gold>"
+  - ping: 200
+    color: "<dark_red>"
+```
+
+## Berechtigungen
+
+| Berechtigung | Beschreibung |
+| ------------ | ------------ |
+| `simplecloud.proxy-essentials.command.help` | `/scproxy`, `/scproxy help` und `/scproxy reload` verwenden |
+| `simplecloud.proxy-essentials.command.joinstate.help` | Joinstate-Hilfe anzeigen |
+| `simplecloud.proxy-essentials.command.joinstate.info` | Joinstates anzeigen |
+| `simplecloud.proxy-essentials.command.joinstate.set` | Joinstates ändern |
+| `simplecloud.proxy-essentials.command.layout.help` | Layout-Hilfe anzeigen |
+| `simplecloud.proxy-essentials.command.layout.info` | Layout-Zuweisungen anzeigen |
+| `simplecloud.proxy-essentials.command.layout.set` | MOTD-Layout einer Gruppe ändern |
+| `simplecloud.proxy-essentials.join.maintenance` | Im Maintenance-Status beitreten |
+| `simplecloud.proxy-essentials.join.full.public` | Einem vollen Public-Netzwerk beitreten |
+
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/proxy-essentials/server-info.png?raw=true" alt="Proxy Essentials Serverlisten-MOTD-Beispiel" />
+</Frame>

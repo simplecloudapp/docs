@@ -13,12 +13,17 @@ api.group().getAllGroups()
     .thenAccept(groups -> groups.forEach(g -> System.out.println(g.getName())));
 
 // Get all groups with query filters
-api.group().getAllGroups(new GroupQuery())
-    .thenAccept(groups -> { ... });
+GroupQuery query = GroupQuery.create()
+    .filterByName("lobby")
+    .filterByType(GroupServerType.SERVER);
+
+api.group().getAllGroups(query)
+    .thenAccept(groups -> groups.forEach(group ->
+        System.out.println(group.getServerGroupId())));
 
 // Get group by name
 api.group().getGroupByName("lobby")
-    .thenAccept(group -> System.out.println(group.getId()));
+    .thenAccept(group -> System.out.println(group.getServerGroupId()));
 
 // Get group by ID
 api.group().getGroupById("group-uuid")
@@ -39,7 +44,7 @@ CreateGroupRequest request = CreateGroupRequest.builder()
     .build();
 
 api.group().createGroup(request)
-    .thenAccept(group -> System.out.println("Created: " + group.getId()));
+    .thenAccept(group -> System.out.println("Created: " + group.getServerGroupId()));
 ```
 
 ## Update Group
@@ -58,7 +63,7 @@ api.group().updateGroup("group-uuid", update)
 
 ```java
 api.group().deleteGroup("group-uuid")
-    .thenAccept(success -> System.out.println("Deleted: " + success));
+    .thenRun(() -> System.out.println("Deleted group-uuid"));
 ```
 
 <Warning>
@@ -71,7 +76,7 @@ Groups support custom key-value properties for metadata:
 
 ```java
 // Add or update properties (merges with existing)
-Map<String, String> props = Map.of(
+Map<String, Object> props = Map.of(
     "gameMode", "ADVENTURE",
     "region", "eu-west"
 );
@@ -85,31 +90,79 @@ Properties are available in servers as environment variables prefixed with `SIMP
 
 ## Group Model
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `id` | `String` | Unique identifier |
-| `name` | `String` | Group name |
-| `type` | `GroupServerType` | `SERVER` or `PROXY` |
-| `minMemory` | `int` | Minimum memory (MB) |
-| `maxMemory` | `int` | Maximum memory (MB) |
-| `maxPlayers` | `int` | Player limit per server |
-| `minOnlineCount` | `int` | Minimum servers running |
-| `maxOnlineCount` | `int` | Maximum servers allowed |
-| `properties` | `Map<String, String>` | Custom metadata |
-| `scalingConfig` | `ScalingConfig` | Auto-scaling settings |
-| `deploymentConfig` | `DeploymentConfig` | Host deployment settings |
-| `sourceConfig` | `SourceConfig` | Blueprint or image source |
+<ResponseField name="serverGroupId" type="string" required>
+  Unique server group identifier.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Group name.
+</ResponseField>
+
+<ResponseField name="type" type="GroupServerType" required>
+  Group type. Use `SERVER` for game servers or `PROXY` for proxy servers.
+</ResponseField>
+
+<ResponseField name="minMemory" type="integer" required>
+  Minimum memory in MB.
+</ResponseField>
+
+<ResponseField name="maxMemory" type="integer" required>
+  Maximum memory in MB.
+</ResponseField>
+
+<ResponseField name="maxPlayers" type="integer" required>
+  Player limit per server.
+</ResponseField>
+
+<ResponseField name="minOnlineCount" type="integer" required>
+  Minimum number of servers to keep running.
+</ResponseField>
+
+<ResponseField name="maxOnlineCount" type="integer" required>
+  Maximum number of servers allowed.
+</ResponseField>
+
+<ResponseField name="properties" type="object" required>
+  Custom metadata inherited by servers in the group.
+</ResponseField>
+
+<ResponseField name="scalingConfig" type="ScalingConfig" required>
+  Auto-scaling settings.
+</ResponseField>
+
+<ResponseField name="deploymentConfig" type="DeploymentConfig" required>
+  Host deployment settings.
+</ResponseField>
+
+<ResponseField name="sourceConfig" type="SourceConfig" required>
+  Blueprint or image source used to create servers.
+</ResponseField>
 
 ## ScalingConfig
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `min_servers` | `int` | Minimum servers to keep running |
-| `max_servers` | `int` | Maximum servers allowed |
-| `scaling_mode` | `ScalingMode` | `SLOTS` or `SERVERS` |
-| `available_slots` | `int` | Open slots to maintain (Slots mode) |
-| `player_threshold` | `float` | Scale-up threshold between 0 and 1 |
-| `scale_down` | `ScaleDownConfig` | Scale-down behavior settings |
+<ResponseField name="min_servers" type="integer" required>
+  Minimum number of servers to keep running.
+</ResponseField>
+
+<ResponseField name="max_servers" type="integer" required>
+  Maximum number of servers allowed.
+</ResponseField>
+
+<ResponseField name="scaling_mode" type="ScalingMode" required>
+  Scaling strategy. Use `SLOTS` to maintain free player slots or `SERVERS` to scale by server count.
+</ResponseField>
+
+<ResponseField name="available_slots" type="integer">
+  Open slots to maintain when `scaling_mode` is `SLOTS`.
+</ResponseField>
+
+<ResponseField name="player_threshold" type="number">
+  Scale-up threshold between `0` and `1`.
+</ResponseField>
+
+<ResponseField name="scale_down" type="ScaleDownConfig" required>
+  Scale-down behavior settings.
+</ResponseField>
 
 ## Server start queue
 
@@ -171,37 +224,73 @@ api.group().clearServerStartQueue("group-uuid")
 
 `getServerStartQueue()` returns a `GroupStartQueue`.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `count` | `int` | Number of groups with queue data |
-| `queuedStarts` | `int` | Number of queued starts across all groups |
-| `failedStarts` | `int` | Number of failed starts across all groups |
-| `totalStarts` | `int` | Total number of queue items across all groups |
-| `items` | `List<GroupStartQueueEntry>` | Queue data grouped by server group |
+<ResponseField name="count" type="integer" required>
+  Number of groups with queue data.
+</ResponseField>
+
+<ResponseField name="queuedStarts" type="integer" required>
+  Number of queued starts across all groups.
+</ResponseField>
+
+<ResponseField name="failedStarts" type="integer" required>
+  Number of failed starts across all groups.
+</ResponseField>
+
+<ResponseField name="totalStarts" type="integer" required>
+  Total number of queue items across all groups.
+</ResponseField>
+
+<ResponseField name="items" type="List<GroupStartQueueEntry>" required>
+  Queue data grouped by server group.
+</ResponseField>
 
 ### Queue entry model
 
 Each `GroupStartQueueEntry` describes the queue state for one server group.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `serverGroupId` | `String?` | Server group ID |
-| `serverGroupName` | `String?` | Server group name |
-| `queuedStarts` | `int` | Number of pending starts for the group |
-| `failedStarts` | `int` | Number of failed starts for the group |
-| `totalStarts` | `int` | Total number of queue items for the group |
-| `starts` | `List<GroupStartQueueItem>` | Persisted queue items for the group |
+<ResponseField name="serverGroupId" type="string | null">
+  Server group ID.
+</ResponseField>
+
+<ResponseField name="serverGroupName" type="string | null">
+  Server group name.
+</ResponseField>
+
+<ResponseField name="queuedStarts" type="integer" required>
+  Number of pending starts for the group.
+</ResponseField>
+
+<ResponseField name="failedStarts" type="integer" required>
+  Number of failed starts for the group.
+</ResponseField>
+
+<ResponseField name="totalStarts" type="integer" required>
+  Total number of queue items for the group.
+</ResponseField>
+
+<ResponseField name="starts" type="List<GroupStartQueueItem>" required>
+  Persisted queue items for the group.
+</ResponseField>
 
 ### Queue item model
 
 Each `GroupStartQueueItem` represents one persisted start request.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `id` | `String` | Unique identifier for the queued start |
-| `createdAt` | `String?` | Timestamp when the start was queued (ISO 8601) |
-| `status` | `GroupStartQueueItemStatus` | `PENDING`, `FAILED`, or `UNKNOWN` |
-| `failureReason` | `String?` | Reason for failure, if applicable |
+<ResponseField name="id" type="string" required>
+  Unique identifier for the queued start.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string | null">
+  Timestamp when the start was queued, in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="status" type="GroupStartQueueItemStatus" required>
+  Queue item status. Possible values are `PENDING`, `FAILED`, and `UNKNOWN`.
+</ResponseField>
+
+<ResponseField name="failureReason" type="string | null">
+  Reason for failure, if applicable.
+</ResponseField>
 
 <Warning>
   Failed starts are automatically cleaned up after 1 hour. Use the list endpoint to check for failures and requeue if needed.

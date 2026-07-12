@@ -1,165 +1,40 @@
 ---
-title: 'Controller'
-description: 'The central orchestration service that manages your SimpleCloud infrastructure'
+title: "Controller"
+description: "How SimpleCloud coordinates your network in the background"
 ---
 
-## What the Controller Does
+The controller coordinates your SimpleCloud network in the background. You use the dashboard or [CLI](/en/manual/introduction/architecture/cli) to describe what you want, and the controller works with your serverhosts to make it happen.
 
-The Controller coordinates your SimpleCloud infrastructure. It tracks what servers should be running, decides when to start or stop them based on scaling rules, and tells serverhosts what to do via NATS messaging.
+It keeps track of your server groups, persistent servers, and connected [serverhosts](/en/manual/introduction/architecture/serverhost). It also keeps the dashboard and CLI updated with their current state.
 
-## When You Need to Know This
+## From configuration to running servers
 
-Understanding the Controller helps when you're:
+When you activate a group, change its scaling settings, or start a persistent server:
 
-- **Debugging server startup issues** - Why isn't my server starting? Is it queued? Is the reconciler running?
-- **Setting up high availability** - Running multiple controllers requires understanding leader election
-- **Understanding scaling behavior** - Why did a server start or stop? How does the reconciliation loop decide?
+1. The controller works out which servers should be running.
+2. It chooses an eligible serverhost with enough resources.
+3. The serverhost prepares and runs the Minecraft server.
+4. Its status, logs, and resource usage become available in the dashboard and CLI.
 
-## State Management
-
-The Controller maintains the authoritative state of your network:
-
-| Entity | Description |
-|--------|-------------|
-| Networks | Registered Minecraft networks with credentials |
-| Blueprints | Server configuration templates |
-| Groups | Scalable server collections with auto-scaling rules |
-| Servers | Running server instances and their status |
-| Persistent Servers | Long-running dedicated servers |
-| Serverhosts | Connected execution agents |
-| Plugins | Plugin definitions and assignments |
-
-## Reconciliation Loop
-
-Every 5 seconds, the Controller:
-
-1. Compares desired state (your configuration) with actual state (running servers)
-2. Determines which servers need to start or stop
-3. Selects serverhosts based on capacity and preferences
-4. Sends start/stop commands via NATS
-
-This loop ensures your infrastructure matches your configuration, even after failures or manual changes.
-
-## Auto-Scaling
-
-### Slot-Based Scaling
-
-Scale based on total available player slots:
-
-```yaml
-scaling:
-  mode: SLOTS
-  min_servers: 1
-  max_servers: 5
-  player_threshold: 0.8  # Scale up when 80% full
-```
-
-### Server-Based Scaling
-
-Maintain a fixed number of servers:
-
-```yaml
-scaling:
-  mode: SERVER
-  min_servers: 2
-  max_servers: 2
-```
-
-## High Availability
-
-For production deployments, you can run multiple Controller instances:
-
-- **Leader election** uses database-backed consensus with a 30-second lease
-- Only the leader performs network assignments and reconciliation
-- All instances can serve API requests
-- Automatic failover if the leader becomes unavailable
-
-### Infrastructure Requirements
-
-| Component | Purpose | Required |
-|-----------|---------|----------|
-| PostgreSQL | State persistence | Yes |
-| NATS | Serverhost messaging | Yes |
-| Valkey/Redis | Metrics caching | Optional |
-| ClickHouse | Log storage | Optional |
-
-## Troubleshooting
-
-<AccordionGroup>
-  <Accordion title="Controller not starting">
-    **Symptom:** Controller process exits immediately or fails to bind to port.
-
-    **Solution:**
-    1. Check PostgreSQL is running: `systemctl status postgresql`
-    2. Verify NATS is reachable: `nc -zv localhost 4222`
-    3. Check logs: `sc logs controller`
-    4. Ensure port 1337 is free: `lsof -i :1337`
-  </Accordion>
-
-  <Accordion title="Servers stuck in QUEUED">
-    **Symptom:** Servers stay in QUEUED state and never start.
-
-    **Cause:** No serverhost available to run the server.
-
-    **Solution:**
-    1. Check serverhost status: `sc status serverhost`
-    2. Verify hosts have available memory
-    3. Check deployment settings allow the serverhost
-    4. Review logs: `sc logs controller`
-  </Accordion>
-
-  <Accordion title="Scaling not working">
-    **Symptom:** Servers don't scale up when players join or down when empty.
-
-    **Cause:** Reconciliation not triggering or metrics not reported.
-
-    **Solution:**
-    1. Verify Controller is leader: look for "became leader" in logs
-    2. Check group scaling config (min/max servers, threshold)
-    3. Ensure servers report player counts
-    4. Check reconciliation logs for errors
-  </Accordion>
-
-  <Accordion title="API returns 401/403">
-    **Symptom:** API calls fail with authentication errors.
-
-    **Solution:**
-    1. Verify `X-Network-ID` header matches your network
-    2. Verify `X-Network-Secret` header is correct. It accepts either your network secret or an app JWT valid for the target network (JWT support requires the controller to have JWT authentication configured).
-    3. If using a JWT, check that the token has not expired and that its `iss` and `aud` claims match the controller's `AUTH_JWT_ISSUER` and `AUTH_JWT_AUDIENCE` configuration.
-    4. Check credentials in `secrets/` directory
-  </Accordion>
-
-  <Accordion title="API returns 500">
-    **Symptom:** API calls fail with internal server error.
-
-    **Solution:**
-    1. Check Controller logs for stack traces
-    2. Verify PostgreSQL connectivity
-    3. Check disk space and memory
-  </Accordion>
-</AccordionGroup>
-
-## CLI Access
-
-```bash
-# Check controller status
-sc status
-
-# View controller logs
-sc logs controller
-
-# Attach to controller console
-sc attach controller
-```
+The controller continues to maintain the result you configured. For example, it can start another group server when players need more capacity, or replace a group server that you stopped while the group still requires it.
 
 <Note>
-  The Controller must be running for new servers to start. Existing servers
-  continue running if the Controller temporarily goes offline.
+  The controller coordinates Minecraft servers but does not run them. Your serverhosts provide the machines and resources on which they run.
 </Note>
 
-## Related
+## What this means for you
 
-- [Developer API](/en/developer/overview) - Full API documentation
-- [Servers](/en/manual/setup/servers) - Server lifecycle and states
-- [Architecture Overview](/en/manual/architecture/overview) - System architecture diagram
+You do not need to manage the controller separately during everyday use.
+
+If a server cannot start, first check that an allowed serverhost is online and has enough free memory. Then open the server or serverhost logs to see whether preparation or the Minecraft process failed.
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Server groups" icon="layer-group" href="/en/manual/setup/server-groups">
+    Configure how SimpleCloud runs your Minecraft servers.
+  </Card>
+  <Card title="Serverhost" icon="server" href="/en/manual/introduction/architecture/serverhost">
+    Learn where your Minecraft servers run.
+  </Card>
+</CardGroup>

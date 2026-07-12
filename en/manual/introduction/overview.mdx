@@ -1,54 +1,41 @@
 ---
 title: 'Overview'
-description: 'SimpleCloud is a management system for Minecraft server networks with auto-scaling, a dashboard, and developer APIs.'
+description: 'Run and manage your Minecraft server network from one dashboard or the SimpleCloud CLI.'
 ---
 
 <Frame>
-  <img src="https://github.com/simplecloudapp/branding/blob/main/images/header.png?raw=true" alt="SimpleCloud Header" />
+  <img src="https://github.com/simplecloudapp/branding/blob/main/images/header.png?raw=true" alt="SimpleCloud logo and brand artwork" />
 </Frame>
 
-SimpleCloud is a management system for Minecraft server networks. It handles server deployment, auto-scaling, and infrastructure management through a dashboard and CLI.
+SimpleCloud helps you run a Minecraft server network across one or more machines. Use the dashboard or CLI to create servers, control them, and see their status from one place.
 
-## Who is this for?
+## Get started
 
-- **Network owners** who want automatic scaling based on player demand
-- **Server administrators** who need a central dashboard to manage multiple servers
-- **Developers** building plugins that interact with the network infrastructure
-- **Anyone** running more than one Minecraft server who wants them to work together
+Open the SimpleCloud Dashboard and sign in. Its setup wizard gives you the command that installs SimpleCloud on your first machine and connects it to your network.
 
-## What can you do with SimpleCloud?
+<Card title="Install SimpleCloud" icon="download" href="/en/manual/setup/installation">
+  Connect your first machine and create your first server.
+</Card>
 
-- **Create server groups** that automatically scale up when players join and scale down when they leave
-- **Set up persistent servers** for gamemodes like Skyblock or SMP that keep their world data
-- **Manage everything from a dashboard** - create groups, view logs, monitor performance
-- **Connect multiple machines** to distribute servers across your infrastructure
-- **Build plugins** that interact with servers, players, and groups through our API
+## Choose how your servers work
 
-## Key Features
+- A **server group** creates replaceable servers from shared settings and files. Use groups for proxies, lobbies, and game modes that may need multiple identical servers or automatic scaling.
+- A **persistent server** is one named server that keeps its own world and files. Use it for a long-running server such as an SMP or build server.
+- A **serverhost** is a machine on which SimpleCloud runs your Minecraft servers. Add another serverhost when you want to use another machine.
 
-- **Auto-scaling** - Servers spin up and shut down based on player demand
-- **Dashboard** - Web interface for managing your entire network
-- **CLI** - Command-line tool for local and remote management
-- **Developer API** - Java/Kotlin SDK and REST API for building integrations
-- **Zero-downtime updates** - Rolling updates keep your network running
-
-## Next Steps
+## Learn the essentials
 
 <CardGroup cols={2}>
-  <Card title="Installation" icon="download" href="/en/manual/setup/installation">
-    Create your account and connect your first server host
+  <Card title="Server groups" icon="layer-group" href="/en/manual/setup/server-groups">
+    Create servers that share a configuration.
   </Card>
-  <Card title="Architecture" icon="book" href="/en/manual/architecture/overview">
-    Understand how SimpleCloud's architecture works
+  <Card title="Persistent servers" icon="hard-drive" href="/en/manual/setup/persistent-servers">
+    Create a server that keeps its world and files.
   </Card>
-  <Card title="Groups" icon="layer-group" href="/en/manual/setup/groups">
-    Learn how to create auto-scaling server groups
+  <Card title="Dashboard" icon="chart-line" href="/en/manual/setup/dashboard">
+    Manage and monitor your network in the browser.
   </Card>
-  <Card title="Developer Guide" icon="code" href="/en/developer/overview">
-    Build plugins and integrations with our API
+  <Card title="CLI" icon="terminal" href="/en/manual/introduction/architecture/cli">
+    Manage your network from the terminal.
   </Card>
 </CardGroup>
-
-<Note>
-  Questions? Join our [Discord](https://discord.simplecloud.app) or check the [FAQ](/en/manual/introduction/faq).
-</Note>

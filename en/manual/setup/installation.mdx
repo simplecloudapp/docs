@@ -1,176 +1,97 @@
 ---
 title: "Installation"
-description: "Get started with SimpleCloud by creating your account and connecting your first server host"
+description: "Connect your first machine to SimpleCloud."
 ---
 
-Getting started with SimpleCloud takes just a few steps. The dashboard will guide you through the entire process - this page provides an overview of what to expect.
+Install SimpleCloud from the dashboard. When setup finishes, the dashboard automatically detects your serverhost and opens your network.
 
-## Create Your Account
+## Before you begin
+
+You need a Linux or macOS machine with `curl` and an internet connection. Use Linux for a production serverhost; macOS is useful for local testing. Windows is not supported yet.
+
+Run setup with an account that can create files in the installation location. On Linux, the account also needs `sudo` access if setup must install a missing requirement.
+
+## Connect your first serverhost
 
 <Steps>
-  <Step title="Open the Dashboard">
-    Go to the [SimpleCloud Dashboard](https://dash.simplecloud.app)
+  <Step title="Sign in to the dashboard">
+    Open the [SimpleCloud Dashboard](https://dash.simplecloud.app) and sign in.
   </Step>
-  <Step title="Sign In">
-    Create an account or sign in using one of the following options:
 
-    - **Magic Link** - Enter your email and receive a login link
-    - **SSO** - Sign in with Google, Discord, or GitHub
+  <Step title="Create or join a network">
+    Create a network, or join an existing one with an invitation code. The dashboard opens the setup wizard when your network does not have a serverhost yet.
+  </Step>
 
+  <Step title="Configure the serverhost">
+    Choose the operating system, enter a recognizable name, and select how much memory SimpleCloud may use.
+
+    The memory limit is the capacity available to Minecraft servers on this machine, so leave enough memory for the operating system. Keep Java 21 or newer selected. Setup installs the selected Java versions and other required software.
+  </Step>
+
+  <Step title="Run the setup command">
+    Open a terminal on the machine and change to the directory that should contain the installation. The command installs into a `simplecloud` folder there.
+
+    Run the command shown in the dashboard and follow any prompts in the terminal.
+
+    <Warning>
+      The command contains a temporary login code. Do not share it or save it in scripts or documentation.
+    </Warning>
+  </Step>
+
+  <Step title="Finish setup">
+    Wait for the terminal to show **Setup complete**. The dashboard automatically detects the serverhost and opens your network.
   </Step>
 </Steps>
 
-## Create or Join a Network
+## Add another serverhost
 
-After signing in, you'll choose how to get started:
+Open **Settings > Server Hosts**, select **Add Host**, and run the generated command on the new machine. Use a new command for every serverhost.
 
-<Tabs>
-  <Tab title="Create New Network">
-    1. Enter a name for your network (e.g., "My Minecraft Network")
-    2. The URL slug is auto-generated but can be customized
-    3. Optionally add a description
-    4. Click **Create Network**
+If you want to use several machines together, continue with [Multi-root setup](/en/manual/setup/multi-root).
 
-    The setup wizard will then guide you through installing the CLI and connecting your first server host.
+## Install only the CLI
 
-  </Tab>
-  <Tab title="Join Existing Network">
-    1. Paste the invitation code you received
-    2. Click **Join Network**
-  </Tab>
-</Tabs>
+The dashboard command already installs the CLI. To install only the CLI on a Linux or macOS machine, run:
 
-## Install the CLI
+```bash
+curl -fsSL https://get.simplecloud.app | bash
+```
 
-The setup wizard will display the installation command for you. Simply copy and run it in your terminal.
+Confirm that it is available:
 
-<Tabs>
-  <Tab title="Linux / macOS">
-    ```bash
-    /bin/bash -c "$(curl -fsSL https://get.simplecloud.app)"
-    ```
+```bash
+sc --version
+```
 
-    Verify the installation:
-
-    ```bash
-    simplecloud --version
-    ```
-
-  </Tab>
-  <Tab title="Windows">
-    <Note>
-      Windows support is coming soon.
-    </Note>
-  </Tab>
-</Tabs>
-
-## Connect Your Server Host
-
-A server host is the machine that will run your Minecraft servers.
-
-<Steps>
-  <Step title="Run the Setup Command">
-    The dashboard displays a setup command with your unique code. Copy and run it on your server:
-
-    ```bash
-    simplecloud setup --code=YOUR_CODE
-    ```
-
-  </Step>
-  <Step title="Wait for Setup">
-    The setup will:
-    - Check that all requirements are installed
-    - Download necessary components
-    - Register your machine as a server host
-  </Step>
-  <Step title="Done">
-    Once complete, the dashboard automatically detects your server host and takes you to the main dashboard.
-  </Step>
-</Steps>
-
-## Inviting Team Members
-
-To add others to your network:
-
-1. Go to **Settings** → **Members**
-2. Click **Invite Member**
-3. Enter their email and choose their role
+This does not connect the machine as a serverhost. Use a dashboard-generated setup command when you want it to run Minecraft servers.
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="curl: command not found">
-    **Symptom:** Install script fails because curl is not installed.
+  <Accordion title="The shell cannot find sc">
+    Open a new terminal and try `sc --version` again.
+  </Accordion>
 
-    **Solution:** Install curl for your system:
+  <Accordion title="The setup command has expired">
+    Return to the dashboard and generate a new command.
+  </Accordion>
+
+  <Accordion title="Setup cannot install a requirement">
+    Make sure the machine has internet access. On Linux, use an account that can run `sudo`. Then run the setup command again.
+  </Accordion>
+
+  <Accordion title="The serverhost does not appear in the dashboard">
+    First check whether the terminal reached **Setup complete**. If it did, check the serverhost status and recent logs:
+
     ```bash
-    # Debian/Ubuntu
-    sudo apt install curl
-
-    # CentOS/RHEL
-    sudo yum install curl
-
-    # macOS
-    brew install curl
+    sc status serverhost
+    sc logs serverhost
     ```
 
-  </Accordion>
-
-  <Accordion title="Permission denied during install">
-    **Symptom:** Install script fails with permission errors.
-
-    **Cause:** Script needs write access to `/usr/local/bin`.
-
-    **Solution:**
-    - Run with sudo: `sudo /bin/bash -c "$(curl -fsSL ...)"`
-    - Or install to a user directory and add to PATH
-
-  </Accordion>
-
-  <Accordion title="Network timeout or connection refused">
-    **Symptom:** Install script hangs or fails to download.
-
-    **Cause:** Firewall blocking outbound connections.
-
-    **Solution:** Allow HTTPS (port 443) to:
-    - `raw.githubusercontent.com`
-    - `github.com`
-
-  </Accordion>
-
-  <Accordion title="Setup code not working">
-    **Symptom:** `simplecloud setup --code=...` fails with invalid code error.
-
-    **Cause:** Code expired or copied incorrectly.
-
-    **Solution:**
-    1. Generate a fresh code from the dashboard
-    2. Copy the entire code without extra spaces
-    3. Run the command immediately (codes expire quickly)
-
-  </Accordion>
-
-  <Accordion title="Server host not appearing in dashboard">
-    **Symptom:** Setup completes but host doesn't show in dashboard.
-
-    **Solution:**
-    1. Check terminal for setup errors
-    2. Verify serverhost is running: `sc status serverhost`
-    3. Check network connectivity to SimpleCloud
-    4. Review logs: `sc logs serverhost`
-
-  </Accordion>
-
-  <Accordion title="Requirements check failed">
-    **Symptom:** Setup fails because required software is missing.
-
-    **Solution:** Install missing requirements:
-
-    | Requirement | Install Command |
-    |-------------|-----------------|
-    | Java 21+ | `sudo apt install openjdk-21-jdk` |
-    | screen/tmux | `sudo apt install screen` |
-    | Docker | [docs.docker.com/engine/install](https://docs.docker.com/engine/install/) |
-
+    If setup did not finish, fix the error shown in the terminal, generate a new command in the dashboard, and try again from the same parent directory.
   </Accordion>
 </AccordionGroup>
+
+## Next step
+
+Create a [server group](/en/manual/setup/server-groups) for servers that scale with demand, or a [persistent server](/en/manual/setup/persistent-servers) for one long-lived Minecraft server.

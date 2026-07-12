@@ -1,314 +1,230 @@
 ---
 title: 'Workflows'
-description: 'Definiere Server-Vorbereitungs- und Cleanup-Prozesse mit Workflow-Schritten'
+description: 'Definiere Server-Vorbereitung und Cleanup mit Serverhost-Workflows'
 ---
 
-## Was sind Workflows?
+## Was Workflows sind
 
-Workflows definieren die Abfolge von Aktionen, die während Server-Lifecycle-Events ausgeführt werden. Sie handhaben alles vom Kopieren von Template-Dateien über die Installation von Plugins bis zur Anwendung von Konfigurationen.
+Workflows sind YAML-Dateien, die der Serverhost während der Vorbereitung oder beim Cleanup eines Servers ausführt. Sie kopieren Template-Dateien, laden konfigurierte Plugins herunter, wenden Configurators an, verwalten Cache-Dateien und entfernen temporäre Laufzeitverzeichnisse.
 
-## Wie Workflows funktionieren
+Workflow-Dateien liegen in `workflows/`. Die Workflow-ID besteht aus Namespace und Dateiname ohne `.yml`, zum Beispiel `internal/setup` für `workflows/internal/setup.yml`.
 
-Während der Server-Vorbereitung:
+## Standard-Workflows
 
-1. Serverhost empfängt eine Start-Anfrage vom Controller
-2. Lädt den Setup-Workflow aus `workflows/internal/setup.yml`
-3. Führt jeden Schritt der Reihe nach mit dem Server-Context aus
-4. Meldet Status zurück an den Controller
+Jeder Serverhost erstellt beim ersten Start die Standard-Workflow-Dateien:
 
-Während des Cleanups:
+| Workflow | Zweck |
+| -------- | ----- |
+| `internal/setup` | Bereitet ein Serververzeichnis vor, bevor der Prozess startet |
+| `internal/cleanup` | Kopiert Cache- und Log-Daten und entfernt temporäre Verzeichnisse dynamischer Server |
 
-1. Server-Stop-Signal empfangen
-2. Lädt den Cleanup-Workflow aus `workflows/internal/cleanup.yml`
-3. Führt Cleanup-Schritte aus (Cache-Push, Verzeichnis-Löschung)
+Servergruppen und persistente Server speichern ihre Workflows in der Basiskonfiguration:
+
+```yaml
+workflows:
+  when:
+    start:
+      - internal/setup
+    stop:
+      - internal/cleanup
+```
+
+Das Dashboard verwaltet die üblichen Standardwerte für dich. Bearbeite Workflow-Dateien direkt nur, wenn du eigene Vorbereitung, Backups, Uploads oder Cleanup-Schritte brauchst.
 
 ## Workflow-Struktur
 
-Workflows sind YAML-Dateien im `workflows/` Verzeichnis:
+Ein Workflow hat einen lesbaren `name`, optionale `variables` und eine `steps`-Liste. Jeder Step hat einen `name`, einen `uses`-Action-Identifier, optionale `if`- und `async`-Einstellungen und Action-Parameter unter `with`.
 
 ```yaml
-# workflows/internal/setup.yml
+# workflows/default/backup.yml
+name: Backup Workflow
+
 steps:
-  - action: copy
-    from: "{{templates}}/cache/{{group}}"
-    to: "{{server-dir}}"
-
-  - action: copy
-    from: "{{templates}}/every"
-    to: "{{server-dir}}"
-
-  - action: plugins-load
-    dir: "{{server-dir}}/plugins"
-
-  - action: configurator
-    configurator: "{{configurator}}"
-    dir: "{{server-dir}}"
+  - name: copy-running-to-backup
+    uses: simplecloud/copy
+    with:
+      from: "{{ runtime.server-dir }}"
+      to: "{{ runtime.templates }}/.backup/{{ runtime.name }}/{{ time.now.date }}/{{ time.now.dateTime }}-{{ runtime.nice-id }}"
+      init-dir-if-missing: true
 ```
 
-## Eingebaute Workflows
-
-### Setup Workflow
-
-Der Standard-Setup-Workflow (`workflows/internal/setup.yml`) führt aus:
-
-1. **Cache Pull** - Gecachte Dateien von vorherigen Starts kopieren
-2. **Template Copy** - Template-Hierarchie anwenden (every, type, software, tagged)
-3. **Plugin Installation** - Plugins herunterladen und installieren
-4. **Konfiguration** - Configurators für Server-Software anwenden
-
-### Cleanup Workflow
-
-Der Cleanup-Workflow (`workflows/internal/cleanup.yml`) führt aus:
-
-1. **Cache Push** - Wiederverwendbare Dateien für schnellere zukünftige Starts speichern
-2. **Verzeichnis-Löschung** - Server-Verzeichnis entfernen
-
-## Workflow-Aktionen
-
-### `copy`
-
-Kopiert Dateien oder Verzeichnisse von Quelle zu Ziel.
-
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| `from` | Pfad | Quell-Datei oder -Verzeichnis |
-| `to` | Pfad | Ziel-Datei oder -Verzeichnis |
-| `replace` | boolean | Existierende Dateien überschreiben (Standard: `true`) |
-| `create-dirs` | boolean | Elternverzeichnisse erstellen falls fehlend (Standard: `true`) |
+Variablen sind hilfreich, wenn mehrere Steps denselben Pfad oder Wert verwenden:
 
 ```yaml
-- action: copy
-  from: "{{templates}}/every"
-  to: "{{server-dir}}"
-  replace: true
+name: Archive World
+
+variables:
+  backup-dir: "{{ runtime.templates }}/.backup/{{ runtime.name }}/{{ time.now.date }}"
+
+steps:
+  - name: compress-world
+    uses: simplecloud/compress
+    with:
+      from: "{{ runtime.server-dir }}/world"
+      to: "{{ vars.backup-dir }}/world.zip"
 ```
 
-### `delete`
+## Runtime-Werte
+
+Workflow-Ausdrücke verwenden `{{ ... }}`-Syntax. Die wichtigsten Werte sind:
+
+| Wert | Beschreibung |
+| ---- | ------------ |
+| `{{ runtime.name }}` | Gruppenname oder Name des persistenten Servers |
+| `{{ runtime.nice-id }}` | Laufzeitname, zum Beispiel `lobby-1` |
+| `{{ runtime.type }}` | Gemappter Servertyp, zum Beispiel `server` oder `proxy` |
+| `{{ runtime.persistent }}` | Ob es ein persistenter Server ist |
+| `{{ runtime.numerical-id }}` | Numerische ID bei Gruppenservern |
+| `{{ runtime.server-dir }}` | Verzeichnis des Servers, der vorbereitet wird |
+| `{{ runtime.templates }}` | Template-Wurzelverzeichnis |
+| `{{ runtime.port }}` | Zugewiesener Server-Port |
+| `{{ runtime.software }}` | Server-Software aus dem Blueprint |
+| `{{ runtime.mapped-software }}` | Plattformgemappter Software-Name |
+| `{{ runtime.minecraft-version }}` | Minecraft-Version aus dem Blueprint |
+| `{{ runtime.configurator }}` | Configurator aus dem Blueprint |
+| `{{ runtime.tags }}` | Tags der Gruppe oder des persistenten Servers |
+| `{{ runtime.properties.<key> }}` | Eigene Property aus der Basiskonfiguration |
+| `{{ vars.<key> }}` | Variable aus dem Workflow oder einem `foreach`-Step |
+| `{{ time.now.date }}` | Aktuelles lokales Datum, hilfreich für Backup-Ordner |
+
+## Häufige Actions
+
+### `simplecloud/copy`
+
+Kopiert eine Datei oder ein Verzeichnis.
+
+```yaml
+- name: copy-template
+  uses: simplecloud/copy
+  with:
+    from: "{{ runtime.templates }}/{{ runtime.name }}"
+    to: "{{ runtime.server-dir }}"
+    init-dir-if-missing: true
+    replace: false
+```
+
+| Feld | Beschreibung |
+| ---- | ------------ |
+| `from` | Quelldatei oder Quellverzeichnis |
+| `to` | Zieldatei oder Zielverzeichnis |
+| `replace` | Ob vorhandene Dateien überschrieben werden. Standard ist `true` |
+| `init-dir-if-missing` | Erstellt ein fehlendes Quellverzeichnis und fährt fort. Standard ist `false` |
+| `exclude` | Optionaler Pfad oder Liste von Pfaden/Globs, die übersprungen werden |
+
+### `simplecloud/delete`
 
 Löscht eine Datei oder ein Verzeichnis.
 
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| `path` | Pfad | Zu löschende Datei oder Verzeichnis |
-| `force` | boolean | Löschen erzwingen (Standard: `true`) |
-
 ```yaml
-- action: delete
-  path: "{{server-dir}}"
-  force: true
+- name: delete-running-dir
+  uses: simplecloud/delete
+  if: "{{ runtime.persistent }} == false"
+  with:
+    path: "{{ runtime.server-dir }}"
 ```
 
-### `for-each`
+Optionale Felder sind `force` und `min-age`, zum Beispiel `10m`, `2h` oder `7d`.
 
-Iteriert über eine Liste und führt verschachtelte Schritte für jedes Element aus.
+### `simplecloud/foreach`
 
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| `items` | Liste | Elemente zum Iterieren |
-| `as` | string | Variablenname für aktuelles Element |
-| `steps` | Liste | Schritte für jedes Element |
+Führt verschachtelte Steps für jedes Element einer Liste aus.
 
 ```yaml
-- action: for-each
-  items: "{{tags}}"
-  as: "tag"
-  steps:
-    - action: copy
-      from: "{{templates}}/_tagged/{{tag}}"
-      to: "{{server-dir}}"
-```
-
-### `plugins-load`
-
-Installiert Plugins aus konfigurierten Quellen (Modrinth, Hangar, Spigot, URL).
-
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| `dir` | Pfad | Verzeichnis für Plugin-Installation |
-
-```yaml
-- action: plugins-load
-  dir: "{{server-dir}}/plugins"
-```
-
-Plugins werden auf Gruppenebene definiert und automatisch heruntergeladen basierend auf:
-- Server-Software (Paper, Velocity, etc.)
-- Minecraft-Version
-- Plattform-Kompatibilität
-
-### `configurator`
-
-Wendet einen Configurator an um Server-Dateien zu konfigurieren.
-
-| Feld | Typ | Beschreibung |
-|------|-----|--------------|
-| `configurator` | string | Configurator-Name (aus `options/configurators/`) |
-| `dir` | Pfad | Zu konfigurierendes Server-Verzeichnis |
-
-```yaml
-- action: configurator
-  configurator: "paper_velocity"
-  dir: "{{server-dir}}"
-```
-
-Siehe [Configurators](/de/manual/configuration/configurators) für mehr Details.
-
-## Platzhalter
-
-Workflows unterstützen dynamische Platzhalter, die zur Laufzeit ersetzt werden:
-
-### Server-Context
-
-| Platzhalter | Beschreibung |
-|-------------|--------------|
-| `{{server-dir}}` | Arbeitsverzeichnis des Servers |
-| `{{server-name}}` | Server-Name (z.B. `lobby-1`) |
-| `{{group}}` | Gruppenname |
-| `{{port}}` | Zugewiesener Port |
-| `{{max-players}}` | Maximale Spieleranzahl |
-| `{{memory}}` | Zugewiesener Speicher (MB) |
-
-### Pfad-Context
-
-| Platzhalter | Beschreibung |
-|-------------|--------------|
-| `{{templates}}` | Templates-Basisverzeichnis |
-| `{{running}}` | Verzeichnis laufender Server |
-| `{{cache}}` | Cache-Verzeichnis |
-
-### Blueprint-Context
-
-| Platzhalter | Beschreibung |
-|-------------|--------------|
-| `{{configurator}}` | Configurator-Name aus Blueprint |
-| `{{software}}` | Server-Software (paper, velocity, etc.) |
-| `{{minecraft-version}}` | Minecraft-Version |
-| `{{type}}` | Server-Typ (proxy, server, lobby) |
-
-### Benutzerdefinierte Properties
-
-Zugriff auf benutzerdefinierte Properties vom Server:
-
-```yaml
-- action: copy
-  from: "{{templates}}/{{$.custom-template}}"
-  to: "{{server-dir}}"
-```
-
-Das `$.` Präfix greift auf die Properties-Map des Servers zu.
-
-## Standard Setup-Ablauf
-
-Der eingebaute Setup-Workflow folgt dieser Reihenfolge:
-
-```yaml
-steps:
-  # 1. Aus Cache laden (schnellere Neustarts)
-  - action: copy
-    from: "{{templates}}/cache/{{group}}"
-    to: "{{server-dir}}"
-
-  # 2. Basis-Templates anwenden
-  - action: copy
-    from: "{{templates}}/every"
-    to: "{{server-dir}}"
-
-  # 3. Typspezifische Templates anwenden
-  - action: copy
-    from: "{{templates}}/every_{{type}}"
-    to: "{{server-dir}}"
-
-  # 4. Softwarespezifische Templates anwenden
-  - action: copy
-    from: "{{templates}}/every_{{software}}"
-    to: "{{server-dir}}"
-
-  # 5. Tagged Templates anwenden
-  - action: for-each
-    items: "{{tags}}"
-    as: "tag"
+- name: copy-tagged
+  uses: simplecloud/foreach
+  with:
+    items: "{{ runtime.tags }}"
+    as: tag
     steps:
-      - action: copy
-        from: "{{templates}}/_tagged/{{tag}}"
-        to: "{{server-dir}}"
-
-  # 6. Serverspezifisches Template anwenden
-  - action: copy
-    from: "{{templates}}/{{server-name}}"
-    to: "{{server-dir}}"
-
-  # 7. Plugins installieren
-  - action: plugins-load
-    dir: "{{server-dir}}/plugins"
-
-  # 8. Configurator anwenden
-  - action: configurator
-    configurator: "{{configurator}}"
-    dir: "{{server-dir}}"
+      - name: copy-tag-{{ vars.tag }}
+        uses: simplecloud/copy
+        with:
+          from: "{{ runtime.templates }}/_tagged/{{ vars.tag }}"
+          to: "{{ runtime.server-dir }}"
+          replace: false
 ```
 
-## Workflows anpassen
+### `simplecloud/load-plugins`
 
-### Standard-Workflow überschreiben
-
-Erstelle deinen eigenen Setup-Workflow:
+Lädt konfigurierte Plugins von Modrinth, Hangar, Spigot oder direkten URLs herunter und kopiert sie in das Plugin-Verzeichnis des Servers.
 
 ```yaml
-# workflows/internal/setup.yml
-steps:
-  - action: copy
-    from: "{{templates}}/my-base"
-    to: "{{server-dir}}"
-
-  - action: plugins-load
-    dir: "{{server-dir}}/plugins"
-
-  - action: configurator
-    configurator: "{{configurator}}"
-    dir: "{{server-dir}}"
+- name: load-plugins
+  uses: simplecloud/load-plugins
+  with:
+    minecraft-version: "{{ runtime.minecraft-version }}"
+    platform: "{{ runtime.software }}"
+    plugins-dir: "{{ runtime.server-dir }}/plugins"
+    cache-dir: "{{ runtime.cache-dir }}"
+    type: "{{ runtime.type }}"
 ```
 
-### Benutzerdefinierte Schritte hinzufügen
+### `simplecloud/configurate`
 
-Erweitere den Workflow mit zusätzlichen Aktionen:
+Wendet einen Configurator aus `options/configurators/` an.
 
 ```yaml
-steps:
-  # ... Standard-Setup-Schritte ...
-
-  # Benutzerdefiniert: Welt von Shared Storage kopieren
-  - action: copy
-    from: "/shared/worlds/{{group}}"
-    to: "{{server-dir}}/world"
-
-  # Benutzerdefiniert: Zusätzliche Ressourcen laden
-  - action: copy
-    from: "{{templates}}/shared-configs"
-    to: "{{server-dir}}/plugins"
+- name: configurate-server
+  uses: simplecloud/configurate
+  with:
+    configurator: "{{ runtime.configurator }}"
+    dir: "{{ runtime.server-dir }}"
 ```
+
+Siehe [Configurators](/de/manual/configuration/configurators) für das Configurator-Dateiformat.
+
+### Archive und Uploads
+
+Nutze `simplecloud/compress`, `simplecloud/decompress` und `simplecloud/upload` für Backups oder externe Speicher-Workflows.
+
+```yaml
+- name: compress-world
+  uses: simplecloud/compress
+  with:
+    from: "{{ runtime.server-dir }}/world"
+    to: "{{ runtime.templates }}/.backup/{{ runtime.name }}/world.zip"
+```
+
+```yaml
+- name: upload-backup
+  uses: simplecloud/upload
+  with:
+    from: "{{ runtime.templates }}/.backup/{{ runtime.name }}/world.zip"
+    to: "https://example.com/backups/world.zip"
+    method: PUT
+```
+
+## Bedingungen und Async-Steps
+
+Nutze `if`, um einen Step nur auszuführen, wenn eine Bedingung passt. Bedingungen unterstützen Vergleiche, `&&`, `||`, `exists(...)`, `!exists(...)` und `value(path, default)`.
+
+```yaml
+- name: copy-logs-to-archive
+  uses: simplecloud/copy
+  if: "{{ runtime.persistent }} == false"
+  with:
+    from: "{{ runtime.server-dir }}/logs/"
+    to: "{{ runtime.templates }}/cache/logs/{{ runtime.name }}/{{ runtime.nice-id }}"
+```
+
+Setze `async: true` nur für unabhängige Steps. Der Workflow wartet auf asynchrone Arbeit, bevor er Erfolg oder Fehler meldet.
 
 ## Fehlerbehebung
 
-### Workflow wird nicht ausgeführt
+<AccordionGroup>
+  <Accordion title="Ein Workflow läuft nicht">
+    Prüfe die Workflow-Liste der Servergruppe oder des persistenten Servers. Die Workflow-ID muss zum Pfad unter `workflows/` passen, zum Beispiel `internal/setup`.
+  </Accordion>
 
-1. Prüfe ob Workflow-Datei unter `workflows/internal/setup.yml` existiert
-2. Verifiziere YAML-Syntax
-3. Prüfe Serverhost-Logs auf Fehler
+  <Accordion title="Ein Workflow kann nicht geladen werden">
+    Stelle sicher, dass die YAML-Datei `name` und `steps` enthält und dass jeder Step einen `uses`-Action-Identifier hat.
+  </Accordion>
 
-### Platzhalter wird nicht ersetzt
+  <Accordion title="Ein Wert wird nicht ersetzt">
+    Verwende Syntax wie `{{ runtime.name }}` oder `{{ vars.name }}`. Prozent-Platzhalter wie `%server-dir%` gehören zu Configurators, nicht zu Workflows.
+  </Accordion>
 
-1. Stelle sicher, dass Platzhalter-Syntax korrekt ist: `{{name}}`
-2. Verifiziere, dass Property im Server-Context existiert
-3. Für benutzerdefinierte Properties, nutze `{{$.property-name}}`
-
-### Copy-Aktion schlägt fehl
-
-1. Verifiziere, dass Quellpfad existiert
-2. Prüfe Dateiberechtigungen
-3. Stelle sicher, dass `create-dirs` aktiviert ist wenn Elternverzeichnisse fehlen
-
-### Plugin-Installation schlägt fehl
-
-1. Prüfe Netzwerkverbindung zu Plugin-Quellen
-2. Verifiziere, dass Plugin für angegebene Minecraft-Version existiert
-3. Prüfe `options/modrinth-platform-mappings.yml` für Software-Mappings
+  <Accordion title="Plugin- oder Template-Dateien fehlen">
+    Prüfe den Quellpfad der betroffenen `simplecloud/copy`-Action und ob `init-dir-if-missing` für diesen Ordner aktiviert werden sollte.
+  </Accordion>
+</AccordionGroup>

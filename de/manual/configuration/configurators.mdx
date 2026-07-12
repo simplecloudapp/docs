@@ -3,238 +3,119 @@ title: 'Configurators'
 description: 'Automatische Serverkonfiguration basierend auf Server-Software'
 ---
 
-## Was sind Configurators?
+## Was Configurators tun
 
-Configurators passen Server-Konfigurationsdateien automatisch basierend auf der verwendeten Server-Software an. Sie handhaben Einstellungen wie Port-Bindung, Player-Forwarding und andere softwarespezifische Konfigurationen mittels Platzhalter-Ersetzung.
+Configurators bearbeiten Server-Software-Dateien während der Vorbereitung. Sie setzen Werte wie Ports, Forwarding-Secrets, Online-Mode und Spielerlimits, bevor der Serverprozess startet.
 
-## Wie Configurators funktionieren
+Der Serverhost lädt Configurators aus `options/configurators/{name}.yml`. Eine Gruppe oder ein persistenter Server wählt den Configurator über die Blueprint-Einstellungen.
 
-Während der Server-Vorbereitung:
+## Configurator-Struktur
 
-1. Lädt der Serverhost das Configurator-Template aus `options/configurators/`
-2. Identifiziert die Ziel-Konfigurationsdateien
-3. Ersetzt Platzhalter mit tatsächlichen Server-Werten
-4. Schreibt die konfigurierten Dateien ins Server-Verzeichnis
-
-## Configurator Templates
-
-Configurators werden in YAML-Dateien unter `options/configurators/{name}.yml` definiert. Jeder Configurator gibt an, welche Dateien modifiziert werden und welche Platzhalter ersetzt werden.
-
-### Beispiel: Paper + Velocity
+Jeder Configurator hat eine `paths`-Liste. Jeder Eintrag nennt eine Datei, den Dateityp und die Daten, die geschrieben oder gemergt werden sollen.
 
 ```yaml
 # options/configurators/paper_velocity.yml
-files:
-  - path: server.properties
-    format: properties
-    values:
-      server-port: "{{port}}"
-      max-players: "{{max-players}}"
-      online-mode: "false"
+paths:
+  - path: "server.properties"
+    type: "PROPERTIES"
+    data:
+      server-ip: "0.0.0.0"
+      server-port: %port%
+      max-players: %max-players%
+      online-mode: false
 
-  - path: config/paper-global.yml
-    format: yaml
-    values:
-      proxies.velocity.enabled: true
-      proxies.velocity.secret: "{{forwarding-secret}}"
-      proxies.velocity.online-mode: true
-
-  - path: spigot.yml
-    format: yaml
-    values:
-      settings.bungeecord: false
+  - path: "config/paper-global.yml"
+    type: "YML"
+    data:
+      proxies:
+        velocity:
+          enabled: "true"
+          online-mode: "true"
+          secret: "%forwarding-secret%"
 ```
 
-### Beispiel: Velocity
+## Unterstützte Dateitypen
 
-```yaml
-# options/configurators/velocity.yml
-files:
-  - path: velocity.toml
-    format: toml
-    values:
-      bind: "0.0.0.0:{{port}}"
-      show-max-players: "{{max-players}}"
-      player-info-forwarding-mode: "modern"
-      forwarding-secret-file: "forwarding.secret"
-
-  - path: forwarding.secret
-    format: text
-    content: "{{forwarding-secret}}"
-```
-
-## Unterstützte Formate
-
-| Format | Erweiterung | Beschreibung |
-|--------|-------------|--------------|
-| `yaml` | .yml, .yaml | YAML-Konfigurationsdateien |
-| `json` | .json | JSON-Konfigurationsdateien |
-| `properties` | .properties | Java-Properties-Dateien |
-| `toml` | .toml | TOML-Konfigurationsdateien |
-| `text` | beliebig | Plaintext-Datei-Ersetzung |
+| Typ | Verwendung |
+| --- | ---------- |
+| `YML` | YAML-Dateien wie `config.yml`, `spigot.yml` oder `paper-global.yml` |
+| `PROPERTIES` | Java-`.properties`-Dateien wie `server.properties` |
+| `TOML` | TOML-Dateien wie `velocity.toml` |
+| `JSON` | JSON-Konfigurationsdateien |
+| `TXT` | Textdateien wie `forwarding.secret` |
 
 ## Platzhalter
 
-Configurators unterstützen dynamische Platzhalter, die durch serverspezifische Werte ersetzt werden:
-
-### Server-Eigenschaften
+Configurators verwenden Prozent-Platzhalter. Der Serverhost ersetzt sie, bevor er die YAML-Datei liest.
 
 | Platzhalter | Beschreibung |
-|-------------|--------------|
-| `{{port}}` | Zugewiesener Server-Port |
-| `{{server-name}}` | Server-Name (z.B. `lobby-1`) |
-| `{{group}}` | Gruppenname |
-| `{{max-players}}` | Maximale Spieleranzahl |
-| `{{memory}}` | Zugewiesener Speicher (MB) |
+| ----------- | ------------ |
+| `%port%` | Zugewiesener Server-Port |
+| `%group%` | Gruppenname |
+| `%numerical-id%` | Numerische Server-ID innerhalb der Gruppe |
+| `%type%` | Servertyp |
+| `%min-memory%` | Minimaler Speicher in MB |
+| `%max-memory%` | Maximaler Speicher in MB |
+| `%max-players%` | Maximale Spielerzahl |
+| `%forwarding-secret%` | Proxy-Forwarding-Secret |
+| `%velocity-config-version%` | Velocity-Config-Version, wenn verfügbar |
 
-### Netzwerk-Eigenschaften
+Server- und Blueprint-Properties können ebenfalls als Platzhalter bereitgestellt werden. Halte eigene Property-Namen stabil, damit Templates und Configurators nicht auseinanderlaufen.
 
-| Platzhalter | Beschreibung |
-|-------------|--------------|
-| `{{forwarding-secret}}` | Velocity Forwarding Secret |
-| `{{server-ip}}` | Server-IP-Adresse |
-| `{{network-id}}` | Netzwerk-Identifier |
-
-### Typ-Eigenschaften
-
-| Platzhalter | Beschreibung |
-|-------------|--------------|
-| `{{type}}` | Server-Typ (`proxy`, `server`, `lobby`) |
-| `{{software}}` | Server-Software (`paper`, `velocity`, etc.) |
-
-### Benutzerdefinierte Eigenschaften
-
-Zugriff auf benutzerdefinierte Eigenschaften aus der Gruppe:
+## Velocity-Beispiel
 
 ```yaml
-values:
-  custom-setting: "{{$.my-custom-property}}"
-```
+# options/configurators/velocity.yml
+paths:
+  - path: "velocity.toml"
+    type: "TOML"
+    data:
+      bind: "0.0.0.0:%port%"
+      show-max-players: %max-players%
+      forwarding-secret-file: "forwarding.secret"
+      player-info-forwarding-mode: "MODERN"
 
-Das `$.` Präfix greift auf die Properties-Map des Servers zu.
-
-## Benutzerdefinierte Configurators erstellen
-
-### 1. Template erstellen
-
-Erstelle eine YAML-Datei in `options/configurators/`:
-
-```yaml
-# options/configurators/my-configurator.yml
-files:
-  - path: config.yml
-    format: yaml
-    values:
-      server.port: "{{port}}"
-      server.name: "{{server-name}}"
-
-  - path: settings.properties
-    format: properties
-    values:
-      max.players: "{{max-players}}"
-```
-
-### 2. Im Blueprint referenzieren
-
-Gib den Configurator in deinem Blueprint an:
-
-```yaml
-# blueprints/my-blueprint.yml
-name: My Blueprint
-configurator: my-configurator
-minecraft_version: "1.21"
-server_software: paper
-```
-
-### 3. Der Serverhost wendet ihn an
-
-Während des Server-Starts ruft der Workflow die `ConfiguratorAction` auf:
-
-```yaml
-# workflows/internal/setup.yml
-steps:
-  - action: configurator
-    configurator: "{{configurator}}"
-    dir: "{{server-dir}}"
+  - path: "forwarding.secret"
+    type: "TXT"
+    data: "%forwarding-secret%"
 ```
 
 ## Eingebaute Configurators
 
-### paper_velocity
+| Configurator | Zweck |
+| ------------ | ----- |
+| `spigot` | Spigot oder Paper hinter einem BungeeCord-ähnlichen Proxy |
+| `spigot_standalone` | Eigenständiger Spigot- oder Paper-Server |
+| `paper_velocity` | Paper hinter Velocity Modern Forwarding |
+| `velocity` | Velocity-Proxy |
+| `bungeecord` | BungeeCord-Proxy |
+| `waterfall` | Waterfall-Proxy |
+| `luckperms` | LuckPerms-Storage-Konfiguration |
 
-Für Paper-Server hinter Velocity-Proxy:
+## Configurator anwenden
 
-- Setzt Server-Port in `server.properties`
-- Aktiviert Velocity Modern Forwarding in `paper-global.yml`
-- Konfiguriert Forwarding Secret
-- Deaktiviert BungeeCord-Modus in `spigot.yml`
-
-### paper_bungeecord
-
-Für Paper-Server hinter BungeeCord:
-
-- Setzt Server-Port in `server.properties`
-- Aktiviert BungeeCord-Modus in `spigot.yml`
-- Deaktiviert Online-Mode
-
-### velocity
-
-Für Velocity-Proxy-Server:
-
-- Konfiguriert Bind-Port in `velocity.toml`
-- Richtet Modern Forwarding ein
-- Erstellt Forwarding-Secret-Datei
-
-### bungeecord
-
-Für BungeeCord-Proxy-Server:
-
-- Konfiguriert Listener-Port in `config.yml`
-- Aktiviert IP-Forwarding
-- Setzt Max-Players
-
-## Verschachtelte Wertpfade
-
-Für verschachtelte Konfigurationsstrukturen nutze Punkt-Notation:
+Die Standard-Setup-Action ruft `configurate` mit dem konfigurierten Blueprint-Wert auf:
 
 ```yaml
-files:
-  - path: config.yml
-    format: yaml
-    values:
-      server.network.port: "{{port}}"
-      server.network.host: "0.0.0.0"
-      features.enabled.chat: true
-```
-
-Dies erstellt:
-
-```yaml
-server:
-  network:
-    port: 25565
-    host: "0.0.0.0"
-features:
-  enabled:
-    chat: true
+- name: configurate-server
+  uses: simplecloud/configurate
+  with:
+    configurator: "{{ runtime.configurator }}"
+    dir: "{{ runtime.server-dir }}"
 ```
 
 ## Fehlerbehebung
 
-### Konfiguration wird nicht angewendet
+<AccordionGroup>
+  <Accordion title="Konfiguration wird nicht angewendet">
+    Prüfe, ob der Blueprint den erwarteten Configurator-Namen auswählt und ob `options/configurators/{name}.yml` auf dem Serverhost existiert.
+  </Accordion>
 
-1. Prüfe ob Configurator-Name mit Blueprint übereinstimmt
-2. Verifiziere den Dateipfad
-3. Prüfe Serverhost-Logs auf Fehler
+  <Accordion title="Ein Platzhalter bleibt in der generierten Datei">
+    Verwende Prozent-Syntax wie `%port%`, nicht `{{port}}`. Prüfe außerdem, ob die Runtime den verwendeten Platzhalter wirklich bereitstellt.
+  </Accordion>
 
-### Platzhalter wird nicht ersetzt
-
-1. Stelle sicher, dass Platzhalter-Syntax korrekt ist: `{{name}}`
-2. Prüfe ob die Property auf dem Server existiert
-3. Für benutzerdefinierte Properties, nutze `{{$.property-name}}`
-
-### Falsches Dateiformat
-
-1. Verifiziere das `format` Feld entspricht dem tatsächlichen Dateityp
-2. Prüfe auf Syntaxfehler im Template
-3. Stelle sicher, dass die Datei im Server-Verzeichnis existiert
+  <Accordion title="Der Configurator kann nicht gelesen werden">
+    Prüfe, ob jeder Eintrag `path`, großgeschriebenes `type` und `data` enthält. `type` muss einer von `YML`, `PROPERTIES`, `TOML`, `JSON` oder `TXT` sein.
+  </Accordion>
+</AccordionGroup>

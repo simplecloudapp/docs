@@ -1,69 +1,68 @@
 ---
 title: 'Servers'
-description: 'Understanding server instances in your SimpleCloud network'
+description: 'Understand and manage the Minecraft server instances running in your network.'
 ---
 
-A server is a running Minecraft instance - the actual Java process that players connect to. Servers are ephemeral by default: they exist only while running and can be created or destroyed as needed.
+A server instance is one running Minecraft server or proxy. Every instance is created from either a [server group](/en/manual/setup/server-groups) or a [persistent server](/en/manual/setup/persistent-servers):
 
-Every server belongs to either a [Group](/en/manual/setup/groups) or a [Persistent Server](/en/manual/setup/persistent-servers).
+- A server group can run several replaceable instances, such as `lobby-1` and `lobby-2`.
+- A persistent server runs as a single instance and keeps its files between starts.
 
-## How Servers are Created
+Open **Servers** in the dashboard to see the instances currently in your network.
 
-### From Groups
+## Find a server
 
-Groups create servers automatically based on player demand:
+The **Servers** page shows each instance's name, status, players, memory usage, and serverhost. Select an instance to inspect it, open its console, view its files, or check its performance.
 
-- Auto-scaling spins up new servers when players join and removes idle ones when demand drops
-- Minimum count ensures servers are always available, even with no players
-- Multiple instances run simultaneously (Lobby-1, Lobby-2, Lobby-3, etc.)
-- You can also manually start additional servers when needed
+The status shows where the instance is in its lifecycle:
 
-### From Persistent Servers
+- **Queued**, **Preparing**, or **Starting** means it is not ready for players yet.
+- **Available** means it is ready, while **Ingame** means players are connected.
+- **Stopping** or **Cleanup** means it is shutting down.
 
-Persistent servers are single instances that don't scale:
+You can find the same information with the CLI:
 
-- Always the same server - just on or off
-- Maintains its world and data between restarts
-- Ideal for gamemodes like Skyblock, SMP, or Citybuild
-
-## Server Lifecycle
-
-Every server progresses through these states:
-
-```mermaid
-stateDiagram-v2
-    [*] --> QUEUED
-    QUEUED --> PREPARING
-    PREPARING --> STARTING
-    STARTING --> AVAILABLE
-    AVAILABLE --> INGAME : Players join
-    INGAME --> AVAILABLE : Players leave
-    AVAILABLE --> STOPPING
-    INGAME --> STOPPING
-    STOPPING --> STOPPED
-    STOPPED --> [*]
+```bash
+sc server list
+sc server info lobby 1
 ```
 
-| State | Description |
-|-------|-------------|
-| **Queued** | Waiting for a server host to be assigned |
-| **Preparing** | Template files being copied to the runtime directory |
-| **Starting** | JVM process launching, plugins loading |
-| **Available** | Ready for players, registered with proxy |
-| **Ingame** | Has active players connected |
-| **Stopping** | Graceful shutdown in progress |
-| **Stopped** | Process terminated, runtime cleaned up |
+In these commands, `lobby 1` identifies the `lobby-1` instance. You can copy an instance's server ID from its actions menu and use that instead.
 
-## Server Properties
+## Stop a server
 
-- Each server inherits properties from its group or persistent server configuration
-- Instance-specific property overrides are possible at runtime
-- Properties are available to plugins via the Cloud API and as environment variables
+Open the server's actions menu in the dashboard and hold **Stop**, or run:
 
-## Server Host Allocation
+```bash
+sc server stop lobby 1
+```
 
-Servers don't run in a vacuum - they're assigned to server hosts:
+<Warning>
+  Stopping an instance does not change its group or persistent server configuration. An active group may create a replacement to meet its scaling settings, and an enabled persistent server starts again. Deactivate the group or disable the persistent server when you want it to stay offline.
+</Warning>
 
-- The controller assigns servers to hosts based on deployment settings
-- Priority order determines which host is preferred when multiple are available
-- Each server runs in its own isolated directory on the host
+To restart a group, use its rolling restart action. SimpleCloud replaces its instances one at a time so the group can remain available. To restart a persistent server, open the persistent server and choose **Restart** from its actions menu.
+
+## View logs and performance
+
+Select an instance in the dashboard, then open **Console** to read its logs or send Minecraft console commands. Open **Monitoring** to check its CPU and memory usage.
+
+From the CLI, run:
+
+```bash
+sc server logs lobby 1
+sc server logs lobby 1 --follow
+```
+
+If an instance does not finish starting, check its console first. Then confirm that its serverhost is online and has enough free memory.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Configure a server group" icon="layer-group" href="/en/manual/setup/server-groups">
+    Configure replaceable instances and how they scale.
+  </Card>
+  <Card title="Configure a persistent server" icon="hard-drive" href="/en/manual/setup/persistent-servers">
+    Configure one server that keeps its files between starts.
+  </Card>
+</CardGroup>

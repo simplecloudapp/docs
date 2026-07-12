@@ -1,88 +1,208 @@
 ---
 title: 'Server Connection'
-description: "Learn how SimpleCloud's server connection plugin handles fallback and connection logic"
+description: "Learn how SimpleCloud's server connection plugin handles server registration, fallback, join routing and navigation commands"
 tag: 'Proxy'
 ---
 
 ## Overview
 
-The server connection plugin handles the connection logic for players in your network. This plugin is essential for any Minecraft network that uses SimpleCloud. It acts as the central connection manager for your servers.
+The Server Connection Plugin is the central proxy plugin for SimpleCloud v3 networks. It keeps your proxy's registered child servers in sync with SimpleCloud's server registry and handles all player routing logic.
 
-<Note>
-  This plugin internally uses the server API to track online cloud servers and
-  provides interfaces for custom implementations.
-</Note>
-
-## Features
-
-The server connection plugin provides:
-
-- **Automatic Fallback**: When a server crashes or shuts down, players are automatically moved to a fallback server
-- **Connection Queue**: Manages player connections to prevent overwhelming servers during mass reconnects
-- **Server State Awareness**: Only connects players to servers in an appropriate state
-- **Customizable Behavior**: Configure fallback priorities and connection rules
+The plugin:
+- Automatically registers and unregisters SimpleCloud servers on your proxy
+- Routes players to the correct server on network join
+- Redirects players to fallback servers when their server becomes unavailable
+- Provides configurable navigation commands for players to switch servers
+- Supports flexible server name matching via configurable operations
 
 ## Supported Software
 
-| Software   | Plugin Support | Server API Support |
-| ---------- | -------------- | ------------------ |
-| Velocity   | ✅ Full        | ✅ Yes             |
-| Bungeecord | ✅ Full        | ✅ Yes             |
-| Gate       | 🔄 Planned     | ✅ Yes             |
+| Software    | Support        |
+| ----------- | -------------- |
+| Velocity    | ✅ Full        |
+| BungeeCord  | ✅ Full        |
+| Waterdog PE | ✅ Full        |
+| Gate        | 🔄 Planned     |
+
+<Note>
+  Want to add support for another proxy software? Submit an pull request on
+  [GitHub](https://github.com/simplecloudapp/server-connection-plugin/pulls)!
+</Note>
 
 ## Quick Setup
 
 1. Download the plugin from [GitHub](https://github.com/simplecloudapp/server-connection-plugin/releases)
 2. Place it in your proxy template's plugins folder
 3. Start your proxy server
-4. Configure using `config.yml`
+4. Edit `config.yml`, `commands.yml` and `messages.yml` to your needs
+
+---
 
 ## Configuration
 
-The plugin's configuration file (`config.yml`) supports the following options:
+### config.yml
+
+The main configuration file. Controls server registration, connections, network join routing and fallback behavior.
 
 ```yaml
-version: "1"
+version: '1'
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Server Registration
+# Keeps your proxy's registered child servers in sync with SimpleCloud.
+# ─────────────────────────────────────────────────────────────────────────────
+registration:
+    # If false, no SimpleCloud servers will be registered on the proxy.
+    enabled: true
+
+    # Pattern used to name dynamically started servers on the proxy.
+    # Available placeholders: <group>, <numerical_id>, <id>, <name>
+    server-name-pattern: '<group>-<numerical_id>'
+
+    # Pattern used for persistent servers.
+    persistent-server-name-pattern: '<name>'
+
+    # Server groups and persistent servers that should not be registered on the proxy.
+    ignore-server-groups-and-persistent-servers: []
+
+    # Non SimpleCloud servers to register manually.
+    additional-servers: []
+    #   - name: 'build'
+    #     address: '127.0.0.1'
+    #     port: 25565
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Subdomain Routing
+# Routes players to a connection based on the hostname they connected with.
+# ─────────────────────────────────────────────────────────────────────────────
+address:
+  routes:
+    - subdomain: 'build.example.com'
+      target-connection: build
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Connections
+# Named groups that reference a set of servers by a name matcher.
+# These are referenced by network-join-targets, fallback and commands.yml.
+# ─────────────────────────────────────────────────────────────────────────────
 connections:
-  - name: "lobby"
+  - name: lobby
     server-name-matcher:
-      operation: "STARTS_WITH"
-      value: "lobby"
+        # Operation to match server names.
+        # Available: STARTS_WITH, ENDS_WITH, CONTAINS, EQUALS, REGEX, PATTERN, GREATER_THAN
+        operation: STARTS_WITH
+        value: lobby
+        # If true, inverts the match result.
+        negate: false
+    # Rules that must pass before a player can use this connection.
+    # See "Connection Rules" section below for details.
+    rules: []
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Network Join Targets
+# Defines where players are sent when they first join the network.
+# ─────────────────────────────────────────────────────────────────────────────
 network-join-targets:
-  enabled: true
-  no-target-connection-found-message: "<color:#dc2626>No lobby server is currently available."
-  target-connections:
-    - name: "lobby"
-      priority: 0
-
-fallback-connections-config:
-  enabled: true
-  no-target-connection-found-message: "<color:#dc2626>You were disconnected because no fallback lobby is available."
-  target-connections:
-    - name: "lobby"
-      priority: 0
-
-commands:
-  - name: "lobby"
-    aliases:
-      - "l"
-      - "hub"
-      - "leave"
-      - "quit"
-    already-connected-message: "<color:#fbbf24>You are already connected to the lobby."
-    no-target-connection-found: "<color:#dc2626>No lobby server is available."
+    enabled: true
     target-connections:
-      - name: "lobby"
-        priority: 0
+      - name: lobby      # Must match a connection name defined above
+        priority: 0      # Higher number = tried first.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Fallback
+# Defines where players are sent when their current server becomes unavailable.
+# ─────────────────────────────────────────────────────────────────────────────
+fallback:
+  enabled: true
+  target-connections:
+    - name: lobby
+      priority: 0
+      # Optional: only use this fallback if the player is coming from one of these servers.
+      from: []
 ```
 
-## How It Works
+#### Matcher Operations
 
-When a player needs to be moved (server shutdown, kick, etc.):
+The `server-name-matcher` supports the following operations:
 
-1. The plugin checks for available fallback servers
-2. Servers are prioritized by the configured group order
-3. The player is connected to the first available server
-4. If no server is available, the configured kick message is shown
+| Operation    | Description                                      | Example value |
+| ------------ | ------------------------------------------------ | ------------- |
+| `STARTS_WITH` | Server name starts with the value               | `lobby`       |
+| `ENDS_WITH`  | Server name ends with the value                  | `-1`          |
+| `CONTAINS`   | Server name contains the value                   | `hub`         |
+| `EQUALS`     | Exact match                                      | `lobby-1`     |
+| `REGEX`      | Full Java regex match                            | `lobby-\d+`   |
+| `PATTERN`    | Glob style pattern match                         | `lobby-*`     |
+| `GREATER_THAN` | Numeric comparison                             | `5`           |
+
+Set `negate: true` to invert any operation e.g. match all servers that do **not** start with `lobby`.
+
+#### Connection Rules
+
+Connections can have rules that must pass before a player is allowed to use them. If a rule fails, the connection is skipped and the next priority is tried. There are two rule types:
+
+**Permission Rule**
+
+Checks whether a player has a specific permission.
+
+```yaml
+rules:
+  - type: PERMISSION
+    name: server.join.vip        # Permission to check
+    value: 'true'                # Expected result (true or false)
+    bypass-permission: rank.admin # Optional: skip this rule if the player has this permission
+```
+
+**Environment Variable Rule**
+
+Checks a system environment variable against a value using a matcher operation.
+
+```yaml
+rules:
+  - type: ENV
+    name: SERVER_STATE           # Environment variable name
+    value: maintenance           # Value to compare against
+    operation: EQUALS            # Any matcher operation (EQUALS, STARTS_WITH, CONTAINS, etc.)
+    negate: true                 # If true, inverts the match result
+    bypass-permission: rank.admin # Optional: skip this rule if the player has this permission
+```
+
+Rules are evaluated in order. If any rule fails and no `bypass-permission` applies, the entire connection is skipped.
+
+#### Priority & Fallback Resolution
+
+Both `network-join-targets` and `fallback` support multiple target connections with priorities:
+
+- Target connections are tried **highest priority first**
+- If multiple targets share the same priority, one is picked **randomly** among them
+- If a target connection has no available server, the next lower priority is tried automatically
+- The optional `from` list on fallback targets restricts them to players coming from specific servers
+
+---
+
+### commands.yml
+
+Configures player navigation commands.
+
+```yaml
+version: '1'
+
+commands:
+  - name: lobby
+    aliases:
+      - hub
+      - l
+    permission: ''   # Leave empty to allow everyone
+    messages:
+        already-connected: '<color:#dc2626>You are already connected to this lobby!'
+        no-target-connection-found: '<color:#dc2626>Couldn''t find a target server!'
+    target-connections:
+      - name: lobby
+        priority: 0
+        # Optional: only allow this target if the player is currently on one of these servers
+        from: []
+```
+
+Commands follow the same logic as `network-join-targets` and `fallback`.
+
+---

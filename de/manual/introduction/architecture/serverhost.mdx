@@ -1,60 +1,53 @@
 ---
 title: 'Serverhost'
-description: 'Der Ausführungsagent, der für das Starten von Minecraft-Servern verantwortlich ist'
+description: 'Der Ausführungsagent, der Minecraft-Server startet und verwaltet'
 ---
 
-## Was ist der Serverhost?
+## Was der Serverhost macht
 
-Der Serverhost ist ein verteilter Ausführungsagent, der auf jeder Maschine in deiner SimpleCloud-Infrastruktur läuft. Er empfängt Befehle vom Controller und verwaltet den tatsächlichen Lebenszyklus von Minecraft-Servern - von der Vorbereitung über die Ausführung bis zum Cleanup.
+Der Serverhost läuft auf jeder Maschine, die Minecraft-Server für dein SimpleCloud-Netzwerk starten soll. Er verbindet sich mit dem Controller, empfängt Start-Anfragen, bereitet Serverdateien vor, startet den Serverprozess, meldet Zustände und räumt nach gestoppten dynamischen Servern auf.
 
-## Hauptaufgaben
+## Aufgaben
 
 ### Server-Lebenszyklus
 
-Der Serverhost verwaltet den kompletten Server-Lebenszyklus:
+Der Serverhost verwaltet den lokalen Lebenszyklus jedes Servers:
 
-1. **Vorbereitung** - Workflows ausführen, Templates kopieren, Plugins installieren
-2. **Konfiguration** - Configurators anwenden für Ports, Secrets, etc.
-3. **Ausführung** - Server-Prozess starten (Screen/Tmux oder Docker)
-4. **Monitoring** - Server-Health verfolgen und Logs streamen
-5. **Cleanup** - Prozess stoppen und temporäre Dateien entfernen
+1. **Vorbereitung** - Start-Workflows ausführen, Templates kopieren und konfigurierte Plugins laden
+2. **Konfiguration** - Configurators für Ports, Forwarding-Secrets, Spielerlimits und weitere Dateien anwenden
+3. **Ausführung** - Den Server mit dem konfigurierten Runner starten
+4. **Monitoring** - Den lokalen Prozess überwachen, Logs weiterleiten und Zustände melden
+5. **Cleanup** - Stop-Workflows ausführen und temporäre Verzeichnisse dynamischer Server entfernen
 
 ### Workflow-Ausführung
 
-Workflows definieren den Server-Vorbereitungsprozess:
+Workflows definieren Vorbereitung und Cleanup. Der Standard-Setup-Workflow kopiert Cache-Daten, gemeinsame Templates, Tag-Templates und das benannte Template, bevor er Plugins lädt und den ausgewählten Configurator anwendet.
 
-- Template-Dateien ins Server-Verzeichnis kopieren
-- Plugins von Registries herunterladen und installieren
-- Konfiguration basierend auf Server-Software anwenden
-- Benutzerdefinierte Setup-Schritte ausführen
+### Plugin-Loading
 
-### Plugin-Verwaltung
-
-Automatische Plugin-Installation aus mehreren Quellen:
+Der Serverhost kann konfigurierte Plugins aus mehreren Quellen laden:
 
 | Quelle | Beschreibung |
-|--------|--------------|
-| Modrinth | Moderne Plugin/Mod-Registry |
-| Hangar | PaperMCs Plugin-Repository |
-| Spigot | SpigotMC-Ressourcenseiten |
-| URL | Direkter Download von beliebiger HTTP(S)-URL |
+| ------ | ------------ |
+| Modrinth | Plugin- oder Mod-Versionen von Modrinth |
+| Hangar | PaperMC-Hangar-Projekte |
+| Spigot | SpigotMC-Ressourcen |
+| URL | Direkter HTTP(S)-Download |
 
 ## Architektur
 
 ```mermaid
 flowchart TB
     subgraph Serverhost["Serverhost"]
-        subgraph NATS["NATS Receiver"]
-            Start["Start-Anfragen"]
-            Status["Status-Reports"]
-        end
+        NATS["NATS-Verbindung"]
+        KeepAlive["Keep-alive"]
+        FileBrowser["File-Browser-API"]
 
         subgraph Workflow["Workflow Engine"]
-            Copy["Copy"]
-            Delete["Delete"]
-            ForEach["ForEach"]
-            Plugins["Plugin-Loading"]
-            Config["Configurator-Actions"]
+            Copy["copy/delete"]
+            Plugins["load-plugins"]
+            Config["configurate"]
+            Archives["compress/upload"]
         end
 
         subgraph Deploy["Deployment Manager"]
@@ -63,46 +56,36 @@ flowchart TB
         end
 
         subgraph Configs["Configurators"]
-            YAML["YAML"]
+            YAML["YML"]
             JSON["JSON"]
-            Props["Properties"]
+            Props["PROPERTIES"]
             TOML["TOML"]
-            Text["Text"]
+            Text["TXT"]
         end
     end
 ```
 
-## Ausführungsmodi
+## Runner-Modi
 
-### Screen/Tmux (Lokal)
+### Screen oder Tmux
 
-Der Standard-Ausführungsmodus mit Terminal-Multiplexern:
-
-- **Screen** - Bevorzugt, weit verbreitet auf Linux
-- **Tmux** - Alternative wenn Screen nicht verfügbar
-
-SimpleCloud-Komponenten laufen als detached Prozesse mit Komponenten-Konsolenzugriff via:
+Der lokale Runner startet Server als detached Prozesse über einen Terminal-Multiplexer.
 
 ```bash
-# An die Serverhost-Komponenten-Konsole anhängen
-sc attach serverhost
+sc start --runner screen
 ```
+
+Mit `sc attach serverhost` kannst du dich an die Serverhost-Komponenten-Konsole anhängen.
 
 ### Docker
 
-Container-basierte Ausführung für Isolation:
-
-- Jeder Server läuft in eigenem Container
-- Ressourcenlimits durch Docker erzwungen
-- Bessere Isolation zwischen Servern
-- Docker muss installiert sein
-
-Runner-Modus beim Starten konfigurieren:
+Der Docker-Runner startet jeden Server in einem eigenen Container. Nutze ihn, wenn du stärkere Prozessisolation und Docker-gesteuerte Ressourcenlimits möchtest.
 
 ```bash
 sc start --runner docker
-sc start --runner screen
 ```
+
+Docker muss auf der Serverhost-Maschine installiert sein.
 
 ## Verzeichnisstruktur
 
@@ -112,113 +95,94 @@ sc start --runner screen
     <Tree.File name="network-secret.key" />
     <Tree.File name="serverhost-id.key" />
   </Tree.Folder>
-  <Tree.Folder name="workflows" defaultOpen>
-    <Tree.Folder name="internal" defaultOpen>
-      <Tree.File name="setup.yml" />
-      <Tree.File name="cleanup.yml" />
-    </Tree.Folder>
-  </Tree.Folder>
   <Tree.Folder name="options" defaultOpen>
     <Tree.Folder name="configurators">
       <Tree.File name="paper_velocity.yml" />
       <Tree.File name="velocity.yml" />
     </Tree.Folder>
-    <Tree.File name="modrinth-platform-mappings.yml" />
+    <Tree.File name="platform-mappings.yml" />
+  </Tree.Folder>
+  <Tree.Folder name="workflows" defaultOpen>
+    <Tree.Folder name="internal">
+      <Tree.File name="setup.yml" />
+      <Tree.File name="cleanup.yml" />
+    </Tree.Folder>
   </Tree.Folder>
   <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="every" />
-    <Tree.Folder name="every_proxy" />
-    <Tree.Folder name="every_server" />
-    <Tree.Folder name="every_paper" />
-    <Tree.Folder name="every_velocity" />
+    <Tree.Folder name="_every">
+      <Tree.Folder name="every" />
+      <Tree.Folder name="every_proxy" />
+      <Tree.Folder name="every_server" />
+      <Tree.Folder name="every_paper" />
+      <Tree.Folder name="every_velocity" />
+    </Tree.Folder>
     <Tree.Folder name="_tagged">
       <Tree.Folder name="minigames" />
     </Tree.Folder>
+    <Tree.Folder name="lobby" />
     <Tree.Folder name="cache" />
   </Tree.Folder>
   <Tree.Folder name="running" />
   <Tree.Folder name="logs" />
 </Tree>
 
-## Template-Hierarchie
-
-Templates werden der Reihe nach angewendet, wobei spätere Templates frühere überschreiben:
-
-| Reihenfolge | Verzeichnis | Beschreibung |
-|-------------|-------------|--------------|
-| 1 | `every/` | Basisdateien für alle Server |
-| 2 | `every_{type}/` | Typspezifisch (z.B. `every_proxy/`) |
-| 3 | `every_{software}/` | Softwarespezifisch (z.B. `every_paper/`) |
-| 4 | `_tagged/{tag}/` | Für jeden Tag der Gruppe |
-| 5 | `{server-name}/` | Serverspezifische Templates |
-| 6 | `cache/{group}/` | Gecachte Dateien von vorherigen Starts |
-
-## Kommunikation
-
-### NATS Messaging
-
-Der Serverhost kommuniziert mit dem Controller via NATS:
-
-**Eingehend (vom Controller):**
-- `{networkId}.serverhost.{id}.start` - Server-Start-Anfrage
-
-**Ausgehend (zum Controller):**
-- `{networkId}.server.{id}.status` - Server-Status-Updates
-- `{networkId}.server.{id}.logs` - Log-Streaming
-- `{networkId}.internal.serverhost.{id}.keep-alive` - Health Checks
-
-### Zustandssynchronisation
-
-Jede Minute führt der Serverhost durch:
-
-1. Aktive Server vom Controller abrufen
-2. Mit lokal laufenden Servern vergleichen
-3. Verwaiste Server stoppen, die nicht im Controller-Zustand sind
-
-## Server-Vorbereitungsablauf
+## Server-Vorbereitung
 
 Wenn eine Start-Anfrage eintrifft:
 
 ```mermaid
 flowchart TD
-    A[StartServerRequest empfangen] --> B[Prüfen ob Server existiert]
-    B --> C[Verfügbaren Port finden]
-    C --> D[Setup-Workflow ausführen]
+    A[Start-Anfrage empfangen] --> B[Lokales Deployment prüfen]
+    B --> C[Freien Port finden]
+    C --> D[Runtime-Kontext erstellen]
+    D --> E[Start-Workflows ausführen]
 
-    subgraph Workflow["Setup Workflow"]
-        D --> E[Aus Cache kopieren]
-        E --> F['every' Templates kopieren]
-        F --> G[Typspezifische Templates kopieren]
-        G --> H[Softwarespezifische Templates kopieren]
-        H --> I[Tagged Templates kopieren]
-        I --> J[Serverspezifisches Template kopieren]
-        J --> K[Plugins laden]
-        K --> L[Configurator anwenden]
+    subgraph Setup["Standard-Setup-Workflow"]
+        E --> F[Cache wiederherstellen]
+        F --> G[_every Templates kopieren]
+        G --> H[Tagged Templates kopieren]
+        H --> I[Benanntes Template kopieren]
+        I --> J[Konfigurierte Plugins laden]
+        J --> K[Configurator anwenden]
     end
 
-    L --> M[JVM-Befehl erstellen]
-    M --> N[Via Screen/Docker starten]
-    N --> O[Status an Controller melden]
+    K --> L[Startbefehl bauen]
+    L --> M[Mit Screen/Tmux oder Docker starten]
+    M --> N[Zustand an Controller melden]
 ```
 
-## Konfiguration
+Dynamische Gruppenserver nutzen temporäre Verzeichnisse unter `running/`. Persistente Server behalten ihr Laufzeitverzeichnis zwischen Neustarts.
+
+## Kommunikation
+
+Der Serverhost kommuniziert mit dem Controller über NATS und Controller-HTTP-APIs:
+
+| Kanal | Zweck |
+| ----- | ----- |
+| Start-Anfragen | Der Controller beauftragt einen bestimmten Serverhost mit einem Serverstart |
+| Keep-alive | Der Serverhost meldet Version, Laufzeit und installierte Java-Versionen |
+| Server-Events | Der Serverhost meldet Starting-, Stopped- und Cleanup-complete-Events |
+| Log-Weiterleitung | Der Serverhost leitet Serverlogs für Dashboard und CLI weiter |
+| File-Browser-API | Das Dashboard kann erlaubte Serverhost-Dateien anzeigen und bearbeiten |
+
+Jeder Serverhost synchronisiert außerdem den Controller-Zustand und stoppt lokale verwaiste Server, die nicht mehr zum Controller-Zustand gehören.
+
+## Setup-Optionen
 
 Serverhost-Setup verwendet die aktuellen CLI-Setup-Optionen:
 
-| Parameter | Beschreibung | Standard |
-|-----------|--------------|----------|
-| `--network` | Network-ID oder Slug | Interaktive Auswahl |
-| `--install-dir` | Serverhost-Installationsverzeichnis | Interaktive Abfrage |
-| `--host-name` | Anzeigename des Serverhosts | Interaktive Abfrage |
-| `--max-memory` | Maximaler Serverhost-Speicher, z. B. `80%` oder `32gb` | Aus Systemspeicher erkannt |
-| `--start` / `--no-start` | SimpleCloud nach dem Setup starten oder Start überspringen | Interaktive Abfrage |
-| `--auto-install-deps` / `--no-auto-install-deps` | Erforderliche Abhängigkeiten automatisch installieren oder Installation überspringen | Interaktive Abfrage |
-| `--install` | Setup-Installables installieren, z. B. `--install java:21` | Keine |
-| `-y, --yes` | Wo möglich nicht-interaktive Defaults verwenden | `false` |
+| Option | Beschreibung |
+| ------ | ------------ |
+| `--network` | Network-ID oder Slug |
+| `--install-dir` | Serverhost-Installationsverzeichnis |
+| `--host-name` | Anzeigename des Serverhosts |
+| `--max-memory` | Maximaler Speicher für Serverprozesse, zum Beispiel `80%` oder `32gb` |
+| `--start` / `--no-start` | SimpleCloud nach dem Setup starten oder Start überspringen |
+| `--auto-install-deps` / `--no-auto-install-deps` | Erforderliche Abhängigkeiten automatisch installieren oder Installation überspringen |
+| `--install` | Setup-Installables installieren, zum Beispiel `--install java:21` |
+| `-y, --yes` | Wo möglich nicht-interaktive Defaults verwenden |
 
 ## Monitoring
-
-### Via CLI
 
 ```bash
 # Serverhost-Status prüfen
@@ -227,25 +191,16 @@ sc status serverhost
 # Serverhost-Logs anzeigen
 sc logs serverhost
 
-# Spezifische Server-Logs anzeigen
+# Serverlog anzeigen
 sc server logs <group> <id>
 ```
 
-### Keep-Alive
-
-Der Serverhost sendet periodische Keep-Alive-Nachrichten:
-
-- Meldet aktuelle Version
-- Meldet installierte Java-Runtime-Versionen (als `installed_java_versions` in den Serverhost-API-Antworten verfügbar)
-- Empfängt Update-Benachrichtigungen
-- Hält Verbindung zum Controller aufrecht
-
 <Note>
-  Serverhosts starten Server automatisch neu, wenn der Serverhost selbst neu startet,
-  basierend auf der Synchronisation mit dem Controller-Zustand.
+  Wenn ein Serverhost neu startet, vergleicht er lokale Deployments mit dem Controller-Zustand und hängt sich, wo möglich, wieder an Server an, die weiterhin ihm gehören.
 </Note>
 
 ## Verwandte Themen
 
+- [Templates](/de/manual/setup/templates) - Template-Hierarchie und Dateilayout
 - [Configurators](/de/manual/configuration/configurators) - Server-Konfigurationssystem
-- [Workflows](/de/manual/configuration/workflows) - Server-Vorbereitungs-Workflows
+- [Workflows](/de/manual/configuration/workflows) - Server-Vorbereitungs- und Cleanup-Workflows

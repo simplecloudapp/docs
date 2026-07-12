@@ -1,6 +1,81 @@
 ---
 title: 'Placeholders'
-description: 'Description for Placeholders'
+description: 'Stelle SimpleCloud Server- und Gruppen-Daten über PlaceholderAPI bereit'
+tag: 'Server'
 ---
 
-## Placeholders
+## Überblick
+
+Das Placeholders Plugin integriert sich in [PlaceholderAPI](https://github.com/PlaceholderAPI/PlaceholderAPI) und registriert die `simplecloud` Expansion. Du kannst SimpleCloud-Werte in Scoreboards, Chatformaten, Hologrammen, Tablists und allen anderen Plugins verwenden, die PlaceholderAPI unterstützen.
+
+## Unterstützte Software
+
+| Servertyp      | PlaceholderAPI | Dieses Plugin |
+| -------------- | -------------- | ------------- |
+| Paper & Forks  | Ja             | Ja            |
+| Purpur         | Ja             | Ja            |
+| Spigot         | Ja             | Nein          |
+| Andere         | Nein           | Nein          |
+
+## Schnellstart
+
+1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/placeholder-plugin/releases) herunter.
+2. Installiere [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/).
+3. Stelle sicher, dass das `simplecloud-api` Plugin auf dem Server installiert ist.
+4. Lege alle drei Plugins im `plugins/`-Ordner deines Server-Templates ab.
+5. Starte den Server.
+
+<Note>
+  Die Expansion-ID ist `simplecloud`; alle Platzhalter beginnen deshalb mit
+  `%simplecloud_...%`.
+</Note>
+
+## Server-Platzhalter
+
+Diese Platzhalter werden über `SIMPLECLOUD_UNIQUE_ID` für den aktuellen SimpleCloud-Server aufgelöst.
+
+| Platzhalter | Beschreibung |
+| ----------- | ------------ |
+| `%simplecloud_server_id%` | Server-UUID |
+| `%simplecloud_server_type%` | Servergruppentyp |
+| `%simplecloud_server_host%` | Serverhost-ID |
+| `%simplecloud_server_numerical_id%` | Numerische ID innerhalb der Gruppe |
+| `%simplecloud_server_ip%` | Server-IP-Adresse |
+| `%simplecloud_server_port%` | Server-Port |
+| `%simplecloud_server_max_players%` | Maximale Spieler |
+| `%simplecloud_server_min_memory%` | Minimaler Speicher in MB |
+| `%simplecloud_server_max_memory%` | Maximaler Speicher in MB |
+| `%simplecloud_server_player_count%` | Aktuelle Spieleranzahl |
+| `%simplecloud_server_state%` | Aktueller Serverstatus |
+
+## Gruppen-Platzhalter
+
+Diese Platzhalter werden über `SIMPLECLOUD_GROUP` für die aktuelle SimpleCloud-Gruppe aufgelöst.
+
+| Platzhalter | Beschreibung |
+| ----------- | ------------ |
+| `%simplecloud_group_name%` | Gruppenname |
+| `%simplecloud_group_type%` | Servergruppentyp |
+| `%simplecloud_group_min_memory%` | Minimaler Speicher in MB |
+| `%simplecloud_group_max_memory%` | Maximaler Speicher in MB |
+| `%simplecloud_group_max_players%` | Maximale Spieler pro Server |
+| `%simplecloud_group_player_count%` | Summierte Spieleranzahl aller Gruppenserver |
+
+## Beispiel
+
+```yaml
+scoreboard:
+  title: "&bServer Status"
+  lines:
+    - "&7Server: &f%simplecloud_server_id%"
+    - "&7Players: &f%simplecloud_server_player_count%/%simplecloud_server_max_players%"
+    - "&7State: &f%simplecloud_server_state%"
+    - ""
+    - "&7Group: &f%simplecloud_group_name%"
+    - "&7Total Players: &f%simplecloud_group_player_count%"
+```
+
+<Tip>
+  Wenn ein Platzhalter keinen Wert liefert, prüfe, ob der Server innerhalb von
+  SimpleCloud läuft und die passende Umgebungsvariable verfügbar ist.
+</Tip>

@@ -1,122 +1,124 @@
 ---
 title: 'Notify'
-description: "Learn about SimpleCloud's notify plugin for real-time server state notifications"
+description: "Learn about SimpleCloud's notify plugin for real-time server and group notifications"
 tag: 'Proxy'
 ---
 
 ## Overview
 
-Keep your staff informed about server state changes with real-time notifications using MiniMessage formatting.
+Notify sends MiniMessage-formatted chat notifications to permitted staff when server and group state changes happen in your SimpleCloud network.
 
 <Note>
-  This plugin uses MiniMessage for text formatting. Check out the [MiniMessage
-  Documentation](https://docs.papermc.io/adventure/minimessage/) for message
-  customization.
+  This plugin depends on the `simplecloud-api` platform plugin and uses MiniMessage
+  for text formatting. See the [MiniMessage
+  documentation](https://docs.papermc.io/adventure/minimessage/) for formatting
+  syntax.
 </Note>
 
 ## Supported Software
 
-| Software   | Plugin Support | Dependencies |
-| ---------- | -------------- | ------------ |
-| Velocity   | ✅ Yes         | ✅ Yes       |
-| Bungeecord | ✅ Yes         | ✅ Yes       |
-
-<Note>
-  Want to add support for another server software? Submit a pull request on
-  [GitHub](https://github.com/simplecloudapp/notify-plugin)!
-</Note>
+| Software   | Plugin Support |
+| ---------- | -------------- |
+| Velocity   | Yes            |
+| BungeeCord | Yes            |
 
 ## Quick Setup
 
-1. Download the plugin from [GitHub](https://github.com/simplecloudapp/notify-plugin/releases)
-2. Place it in your proxy template's plugins folder
-3. Start your server once to generate the configuration
-4. Configure using `plugins/notify-[velocity/bungeecord]/config.yml`
+1. Download the plugin from [GitHub](https://github.com/simplecloudapp/notify-plugin/releases).
+2. Place it in your proxy template's `plugins/` folder.
+3. Make sure the `simplecloud-api` plugin is installed on the proxy.
+4. Start the proxy once to generate `messages.yml`.
+5. Edit `plugins/notify-velocity/messages.yml` or `plugins/notify-bungeecord/messages.yml`.
 
-## Server State Management
+## Notifications
 
-Monitor and notify about server state changes with customizable notifications:
+Notify subscribes to the Cloud API event stream and can send messages for:
+
+- Server state changes to `STARTING`, `AVAILABLE`, and `STOPPING`
+- Server stopped events
+- Group created events
+- Group deleted events
+
+Set a notification message to `null` to disable that specific notification. Set the whole `notifications.server` or `notifications.group` section to `null` to disable that category.
+
+## Configuration
+
+The generated `messages.yml` contains message text, reusable variables, and formatting options:
+
 ```yaml
-server-state-filter:
-  - server-state: STARTING
-    permission: "notify.receive.state-changed.starting"
-    message: |-
-      <color:#38bdf8><bold>⚡</bold></color> <hover:show_text:'Server Information:
-         Group: <server_group>
-         State: <server_state>
-         Players: <online_players>/<max_players>'>Server <server_group><server_id></hover> is starting up.
+version: "1"
 
-  - server-state: AVAILABLE
-    permission: "notify.receive.state-changed.available"
-    message: |-
-      <color:#38bdf8><bold>⚡</bold></color> Server <server_group><server_id> is now available.
+format:
+  date: "dd.MM.yyyy HH:mm:ss"
 
-  - server-state: STOPPING
-    permission: "" # Empty for no permission requirement
-    message: |-
-      <color:#38bdf8><bold>⚡</bold></color> Server <server_group><server_id> is shutting down.
-```
+variables:
+  prefix: "<color:#0EA5E9><bold>⚡</bold></color>"
 
-## Notification Customization
+notifications:
+  hover:
+    server: |-
+      <#E2E8F0>Server information
+      <br><#94A3B8>Time<#475569>: <#E2E8F0><time>
+      <br><#94A3B8>State<#475569>: <#E2E8F0><state>
+      <br><#94A3B8>Address<#475569>: <#E2E8F0><ip>:<port>
+      <br><#94A3B8>Players<#475569>: <#E2E8F0><players>/<max>
+    group: |-
+      <#E2E8F0>Group information
+      <br><#94A3B8>Time<#475569>: <#E2E8F0><time>
 
-### Time Format
+  server:
+    starting: "<prefix> <#0EA5E9>Server <hover:show_text:'<notifications.hover.server>'><#F8FAFC><server></hover> is now starting."
+    available: "<prefix> <#A3E635>Server <hover:show_text:'<notifications.hover.server>'><#F8FAFC><server></hover> is now available."
+    stopping: "<prefix> <#F59E0B>Server <hover:show_text:'<notifications.hover.server>'><#F8FAFC><server></hover> is now stopping."
+    stopped: "<prefix> <#DC2626>Server <hover:show_text:'<notifications.hover.server>'><#F8FAFC><server></hover> is now stopped."
 
-Customize timestamp displays using [SimpleDateFormat](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/text/SimpleDateFormat.html) patterns:
-```yaml
-date-format: dd.MM.yyyy HH:mm:ss
-```
-
-### Interactive Messages
-
-Create engaging notifications with MiniMessage features:
-
-- Hover tooltips with server details
-- Click-to-connect actions
-- Custom color gradients
-- Dynamic server information
-
-## Configuration Examples
-
-### Basic Network Setup
-```yaml
-date-format: dd.MM.yyyy HH:mm:ss
-
-server-state-filter:
-  - server-state: STARTING
-    permission: "staff.server-state.starting"
-    message: "<color:#38bdf8>Server <server_group><server_id> is starting up."
-
-  - server-state: STOPPING
-    permission: "staff.server-state.stopping"
-    message: "<color:#38bdf8>Server <server_group><server_id> is shutting down."
+  group:
+    created: "<prefix> <#0EA5E9>Group <hover:show_text:'<notifications.hover.group>'><#F8FAFC><group></hover> was created."
+    deleted: "<prefix> <#DC2626>Group <hover:show_text:'<notifications.hover.group>'><#F8FAFC><group></hover> was deleted."
 ```
 
 ## Placeholders
 
-| Placeholder            | Description                                                |
-| ---------------------- | ---------------------------------------------------------- |
-| `<server_group>`       | Group name                                                 |
-| `<server_name>`        | Server name                                                |
-| `<server_id>`          | Numerical ID                                               |
-| `<server_uuid>`        | Server UUID                                                |
-| `<server_state>`       | Current server state                                       |
-| `<server_ip>`          | Server IP address                                          |
-| `<server_port>`        | Server port                                                |
-| `<online_players>`     | Current player count                                       |
-| `<max_players>`        | Maximum players                                            |
-| `<server_update_date>` | Last update date                                           |
-| `<server_create_date>` | Creation date                                              |
+### Server Notifications
+
+| Placeholder     | Description                                      |
+| --------------- | ------------------------------------------------ |
+| `<server>`      | Group or server base name                        |
+| `<group>`       | Group name                                       |
+| `<id>`          | Numerical ID prefixed with a space when present  |
+| `<uuid>`        | Server UUID                                      |
+| `<state>`       | Current server state                             |
+| `<ip>`          | Server IP address                                |
+| `<port>`        | Server port                                      |
+| `<players>`     | Current player count                             |
+| `<max>`         | Maximum players                                  |
+| `<time>`        | Current timestamp using `format.date`            |
+| `<updated>`     | Last update timestamp using `format.date`        |
+| `<create_date>` | Creation timestamp using `format.date`           |
+
+### Group Notifications
+
+| Placeholder | Description                           |
+| ----------- | ------------------------------------- |
+| `<group>`   | Group name                            |
+| `<time>`    | Current timestamp using `format.date` |
 
 ## Permissions
 
-| Permission                               | Description             |
-| ---------------------------------------- | ----------------------- |
-| `notify.receive.state-changed.starting`  | Starting notifications  |
-| `notify.receive.state-changed.available` | Available notifications |
-| `notify.receive.state-changed.stopping`  | Stopping notifications  |
+| Permission                      | Description                           |
+| ------------------------------- | ------------------------------------- |
+| `notify.state.server.starting`  | Receive server starting messages      |
+| `notify.state.server.available` | Receive server available messages     |
+| `notify.state.server.stopping`  | Receive server stopping messages      |
+| `notify.state.server.stopped`   | Receive server stopped messages       |
+| `notify.state.group.created`    | Receive group created messages        |
+| `notify.state.group.deleted`    | Receive group deleted messages        |
 
 <Note>
-  These permissions are examples. You can customize them in your configuration.
-  Leave the permission field empty to allow all players to receive specific
-  notifications.
+  The permission check happens per notification. Give staff only the event
+  categories they should receive.
+</Note>
+
+<Note>
+  `notify.state.server.deleted` is still accepted as a legacy alias for stopped-server notifications.
 </Note>

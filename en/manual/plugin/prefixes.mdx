@@ -1,167 +1,165 @@
 ---
 title: 'Prefixes'
-description: "Learn about SimpleCloud's prefixes plugin for managing player ranks in chat and tab list"
+description: "Configure SimpleCloud's prefix plugin for player ranks, chat formatting, and tab list names"
 tag: 'Server'
 ---
 
 ## Overview
 
-The Prefixes Plugin manages player ranks in chat and tab list displays. It integrates with LuckPerms by default but can be extended with custom implementations. The plugin uses Adventure Components and MiniMessage for text formatting.
+The Prefixes plugin shows player rank information in chat and tab lists. It reads LuckPerms groups, converts group prefix, suffix, color, and weight data into Prefixes groups, and formats text with Adventure Components and MiniMessage.
+
+Use this plugin when a server should display the same rank identity in chat and in the tab list.
 
 ## Supported Software
 
-| Server Type    | API Support | LuckPerms | Plugin Support |
-| -------------- | ----------- | --------- | -------------- |
-| Paper & Forks  | ✅ Yes      | ✅ Yes    | ✅ Yes         |
-| Minestom       | ✅ Yes      | ❌ No     | ❌ No          |
+| Runtime | Package | Requirements | Status |
+| ------- | ------- | ------------ | ------ |
+| Paper and forks | Paper plugin | LuckPerms and CustomNames | Supported |
+| Minestom | Minestom extension | LuckPerms Minestom API | Experimental |
 
-<Note>
-  Minestom support requires custom implementation using the provided API.
-</Note>
+<Warning>
+  The Paper plugin requires both LuckPerms and CustomNames. The Minestom extension exists in the source tree, but its LuckPerms integration is marked experimental.
+</Warning>
 
 ## Quick Setup
 
-1. Download custom names from [GitHub](https://github.com/spacechunks/custom-names)
-2. Download the plugin from [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases)
-3. Place it in your server's plugins folder
-4. Start your server
-5. Configure using LuckPerms and `config.json`
+<Steps>
+  <Step title="Install dependencies">
+    Install LuckPerms and CustomNames on the server template that should display prefixes.
+  </Step>
+
+  <Step title="Install Prefixes">
+    Download the plugin from [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases) and place it in the server template's `plugins/` folder.
+  </Step>
+
+  <Step title="Generate the config">
+    Start the server once so the plugin creates `config.json`.
+  </Step>
+
+  <Step title="Configure LuckPerms groups">
+    Set each group's prefix, suffix, color, and weight in LuckPerms. Prefixes uses the LuckPerms group weight as the tab list priority.
+
+    ```bash
+    /lp group admin meta addprefix 100 "<red>[Admin] "
+    /lp group admin meta addsuffix 100 " <gray>*"
+    /lp group admin meta set color "#FF0000"
+    /lp group admin setweight 100
+    ```
+  </Step>
+
+  <Step title="Adjust chat formatting">
+    Edit `config.json` if you want to change how chat messages are rendered.
+
+    <Check>
+      When a player joins, their chat name and tab list name should use the prefix, suffix, color, and weight from their primary LuckPerms group.
+    </Check>
+  </Step>
+</Steps>
 
 ## Configuration
 
-### LuckPerms Integration
+`config.json` controls the chat format. The default format is:
 
-The plugin automatically syncs with LuckPerms groups, converting them to prefix groups with their respective prefixes, suffixes, and team colors.
-
-```bash
-# Set group prefix
-/lp group admin meta addprefix 100 "<red>[Admin] "
-
-# Set group suffix
-/lp group admin meta addsuffix 100 " <gray>✦"
-
-# Set team color
-/lp group admin meta set color #FF0000
-```
-
-### Chat Configuration
-
-Configure chat format in `config.json`:
-
-```json
+```json config.json
 {
   "chatFormat": "<prefix><name_colored><suffix><gray>:</gray> <white><message></white>"
 }
 ```
 
-Available placeholders:
+## Chat Placeholders
 
-| Placeholder    | Description          |
-| -------------- | -------------------- |
-| `name`         | Player's name        |
-| `name_colored` | Name with team color |
-| `prefix`       | Player's prefix      |
-| `suffix`       | Player's suffix      |
-| `message`      | Chat message         |
+| Placeholder | Description |
+| ----------- | ----------- |
+| `<prefix>` | Prefix from the player's resolved Prefixes group |
+| `<suffix>` | Suffix from the player's resolved Prefixes group |
+| `<name>` | Player name without team color |
+| `<name_colored>` | Player name with the resolved team color |
+| `<message>` | Chat message content |
+
+## LuckPerms Mapping
+
+| LuckPerms value | Prefixes value |
+| --------------- | -------------- |
+| Group name | Prefixes group name |
+| Group prefix | Display prefix |
+| Group suffix | Display suffix |
+| `color` meta value | Team color |
+| Group weight | Tab list priority |
+| User primary group | Player's active Prefixes group |
 
 ## API Usage
 
-### Accessing the API
+### Access the API
 
 <Tabs>
-<Tab title="Bukkit/Paper">
+<Tab title="Paper">
 
 ```kotlin
-val prefixesApiProvider = Bukkit.getServicesManager()
-    .getRegistration(PrefixesApi::class.java)
-val api: PrefixesApi = prefixesApiProvider.provider
+import app.simplecloud.plugin.prefixes.api.PrefixesApi
+import org.bukkit.Bukkit
 
-// Use API
-api.setPrefix(player.uniqueId, Component.text("[VIP] "))
+val registration = Bukkit.getServicesManager()
+    .getRegistration(PrefixesApi::class.java)
+val prefixesApi = registration?.provider
+    ?: error("PrefixesApi is not registered")
 ```
 
 </Tab>
 <Tab title="Minestom">
 
 ```kotlin
-val api: PrefixesApi = PrefixesExtension.getApi()
+import app.simplecloud.plugin.prefixes.api.PrefixesApi
+import app.simplecloud.plugin.prefixes.minestom.PrefixesExtension
 
-// Use API
-api.setPrefix(player.uniqueId, Component.text("[VIP] "))
+val prefixesApi: PrefixesApi = PrefixesExtension.getApi()
 ```
 
 </Tab>
 </Tabs>
 
-### Core API Methods
+### Update a Player
 
 ```kotlin
-// Player Management
-fun setWholeName(uniqueId: UUID, group: PrefixesGroup)
-fun setPrefix(uniqueId: UUID, prefix: Component)
-fun setSuffix(uniqueId: UUID, suffix: Component)
-fun setColor(uniqueId: UUID, color: String)
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
 
-// Group Management
-fun getGroups(): List<PrefixesGroup>
-fun getHighestGroup(uniqueId: UUID): PrefixesGroup
-fun addGroup(group: PrefixesGroup)
+prefixesApi.setPrefix(player.uniqueId, Component.text("[VIP] "))
+prefixesApi.setSuffix(player.uniqueId, Component.text(" *"))
+prefixesApi.setColor(player.uniqueId, NamedTextColor.GOLD)
 ```
 
-## Custom Implementation
-
-### Creating a Custom Group
+### Register a Custom Group
 
 ```kotlin
-class CustomGroup : PrefixesGroup {
+import app.simplecloud.plugin.prefixes.api.PrefixesGroup
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+
+class VipGroup : PrefixesGroup {
     override fun getName(): String = "vip"
     override fun getPrefix(): Component = Component.text("[VIP] ")
-    override fun getSuffix(): Component = Component.text(" ⭐")
-    override fun getColor(): String = "#FFD700"
-    override fun getPriority(): Int = 100
+    override fun getSuffix(): Component = Component.text(" *")
+    override fun getColor(): TextColor = NamedTextColor.GOLD
+    override fun getPriority(): Int = 50
 
     override fun containsPlayer(uniqueId: UUID): Boolean {
-        // Custom logic
-        return true
+        return containsPlayerFuture(uniqueId).join()
+    }
+
+    override fun containsPlayerFuture(uniqueId: UUID): CompletableFuture<Boolean> {
+        return CompletableFuture.completedFuture(false)
     }
 }
+
+prefixesApi.addGroup(VipGroup())
 ```
-
-### Custom Actor Implementation
-
-```kotlin
-class CustomActor : PrefixesActor {
-    override fun applyGroup(target: UUID, group: PrefixesGroup) {
-        // Apply group formatting
-    }
-
-    override fun setPrefix(target: UUID, prefix: Component) {
-        // Set player prefix
-    }
-
-    override fun formatMessage(target: UUID, format: String, message: Component): Component {
-        // Format chat message
-        return Component.text()
-            .append(prefix)
-            .append(message)
-            .build()
-    }
-}
-```
-
-<Note>
-  For complete implementation examples, check our [GitHub
-  repository](https://github.com/simplecloudapp/prefixes-plugin).
-</Note>
 
 ## Best Practices
 
-1. **Group Management**
-   - Use consistent prefix/suffix styles
-   - Set appropriate group priorities
-   - Document group hierarchies
-
-2. **Performance**
-   - Cache group data when possible
-   - Use async operations for database queries
-   - Minimize chat format complexity
+- Keep LuckPerms group weights unique so tab list ordering is predictable.
+- Store prefixes and suffixes as MiniMessage strings in LuckPerms.
+- Use the `color` meta value for team color instead of embedding the player name color in every prefix.
+- Keep `chatFormat` simple enough that chat remains readable on small screens.

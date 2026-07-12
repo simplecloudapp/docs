@@ -1,6 +1,59 @@
 ---
 title: 'Dashboard'
-description: 'Description for Dashboard'
+description: 'Greife über das SimpleCloud Dashboard auf dein Minecraft-Netzwerk zu und verwalte es'
 ---
 
-## Dashboard
+## Überblick
+
+Das SimpleCloud Dashboard ist eine Weboberfläche, mit der du dein Minecraft-Servernetzwerk im Browser verwaltest.
+
+<Frame>
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/dashboard/serveroverview.png?raw=true" alt="SimpleCloud Dashboard mit Serverübersicht" />
+</Frame>
+
+Mit dem Dashboard kannst du:
+
+- Servergruppen erstellen und verwalten
+- Server starten, stoppen und überwachen
+- Logs und Spieleraktivität ansehen
+- Ressourcen deines Netzwerks verwalten
+
+## Dashboard öffnen
+
+Öffne das Dashboard im Browser:
+
+[dash.simplecloud.app](https://dash.simplecloud.app)
+
+Melde dich mit deinem SimpleCloud-Konto an. Wenn du auf derselben Maschine auch die CLI authentifizieren möchtest, führe aus:
+
+```bash
+simplecloud login
+```
+
+## Servergruppe erstellen
+
+Nutze Gruppen für skalierbare Sets austauschbarer Server, zum Beispiel Proxys, Lobbys oder Minigames.
+
+<Steps>
+  <Step title="Groups öffnen">
+    Öffne **Groups** im Dashboard und klicke auf **Add Group**.
+  </Step>
+
+  <Step title="Grunddaten festlegen">
+    Wähle Name, Typ und ob die Gruppe sofort aktiviert werden soll.
+  </Step>
+
+  <Step title="Software und Ressourcen wählen">
+    Wähle Server-Software, Speicher, Spielerlimit, Skalierungsmodus und Deployment-Einstellungen.
+  </Step>
+
+  <Step title="Plugins hinzufügen">
+    Füge Plugins aus den unterstützten Plugin-Quellen hinzu oder überspringe diesen Schritt und ergänze sie später in den Gruppeneinstellungen.
+  </Step>
+
+  <Step title="Gruppe erstellen">
+    Prüfe die Zusammenfassung und klicke auf **Create Group**.
+  </Step>
+</Steps>
+
+Den vollständigen Ablauf findest du unter [Server-Gruppen](/de/manual/setup/server-groups).

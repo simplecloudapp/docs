@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "simplecloud",
   "colors": {
-    "primary": "#00BCFF",
+    "primary": "#007CAD",
     "light": "#00BCFF",
-    "dark": "#00BCFF"
+    "dark": "#007CAD"
   },
   "background": {
     "color": {
@@ -32,7 +32,6 @@
                     "expanded": false,
                     "root": "en/manual/introduction/architecture/overview",
                     "pages": [
-                      "en/manual/introduction/architecture/controller",
                       "en/manual/introduction/architecture/serverhost",
                       "en/manual/introduction/architecture/cli"
                     ]
@@ -46,6 +45,7 @@
                 "group": "Setup",
                 "pages": [
                   "en/manual/setup/installation",
+                  "en/manual/setup/dashboard",
                   "en/manual/setup/server-groups",
                   "en/manual/setup/persistent-servers",
                   "en/manual/setup/servers",
@@ -65,7 +65,6 @@
                 "group": "Plugins",
                 "pages": [
                   "en/manual/plugin/overview",
-                  "en/manual/plugin/server-registration",
                   "en/manual/plugin/server-connection",
                   "en/manual/plugin/cloud-command",
                   "en/manual/plugin/proxy-essentials",
@@ -90,6 +89,7 @@
                 "pages": [
                   "en/developer/api/groups",
                   "en/developer/api/servers",
+                  "en/developer/api/persistent-servers",
                   "en/developer/api/players",
                   "en/developer/api/events"
                 ]
@@ -108,36 +108,6 @@
                   "source": "https://controller.simplecloud.app/swagger/doc.json",
                   "directory": "en/developer/api-reference"
                 }
-              }
-            ]
-          },
-          {
-            "tab": "Course",
-            "groups": [
-              {
-                "group": "Foundations",
-                "pages": [
-                  "en/course/foundations/introduction",
-                  "en/course/foundations/installation",
-                  "en/course/foundations/server-groups-and-templates",
-                  "en/course/foundations/droplets",
-                  "en/course/foundations/plugins"
-                ]
-              },
-              {
-                "group": "In-Depth Videos",
-                "pages": [
-                  "en/course/in-depth/self-hosted",
-                  "en/course/in-depth/multi-root",
-                  "en/course/in-depth/remote-access"
-                ]
-              },
-              {
-                "group": "More Guides",
-                "pages": [
-                  "en/course/guides/linux-essentials",
-                  "en/course/guides/permissions"
-                ]
               }
             ]
           }
@@ -191,7 +161,6 @@
                 "group": "Plugins",
                 "pages": [
                   "de/manual/plugin/overview",
-                  "de/manual/plugin/server-registration",
                   "de/manual/plugin/server-connection",
                   "de/manual/plugin/cloud-command",
                   "de/manual/plugin/proxy-essentials",
@@ -216,6 +185,7 @@
                 "pages": [
                   "de/developer/api/groups",
                   "de/developer/api/servers",
+                  "de/developer/api/persistent-servers",
                   "de/developer/api/players",
                   "de/developer/api/events"
                 ]
@@ -274,6 +244,14 @@
     {
       "source": "/",
       "destination": "/en/manual/introduction/overview"
+    },
+    {
+      "source": "/en/manual/plugin/server-registration",
+      "destination": "/en/manual/plugin/server-connection"
+    },
+    {
+      "source": "/de/manual/plugin/server-registration",
+      "destination": "/de/manual/plugin/server-connection"
     }
   ]
 }

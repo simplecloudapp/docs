@@ -12,9 +12,18 @@ Die Groups API ermöglicht das Erstellen, Abfragen, Aktualisieren und Löschen v
 api.group().getAllGroups()
     .thenAccept(groups -> groups.forEach(g -> System.out.println(g.getName())));
 
+// Gruppen mit Filtern abrufen
+GroupQuery query = GroupQuery.create()
+    .filterByName("lobby")
+    .filterByType(GroupServerType.SERVER);
+
+api.group().getAllGroups(query)
+    .thenAccept(groups -> groups.forEach(group ->
+        System.out.println(group.getServerGroupId())));
+
 // Gruppe nach Namen
 api.group().getGroupByName("lobby")
-    .thenAccept(group -> System.out.println(group.getId()));
+    .thenAccept(group -> System.out.println(group.getServerGroupId()));
 
 // Gruppe nach ID
 api.group().getGroupById("group-uuid")
@@ -35,7 +44,7 @@ CreateGroupRequest request = CreateGroupRequest.builder()
     .build();
 
 api.group().createGroup(request)
-    .thenAccept(group -> System.out.println("Erstellt: " + group.getId()));
+    .thenAccept(group -> System.out.println("Erstellt: " + group.getServerGroupId()));
 ```
 
 ## Gruppe aktualisieren
@@ -54,7 +63,7 @@ api.group().updateGroup("group-uuid", update)
 
 ```java
 api.group().deleteGroup("group-uuid")
-    .thenAccept(success -> System.out.println("Gelöscht: " + success));
+    .thenRun(() -> System.out.println("Gelöscht: group-uuid"));
 ```
 
 <Warning>
@@ -67,7 +76,7 @@ Gruppen unterstützen eigene Key-Value-Properties für Metadaten:
 
 ```java
 // Properties hinzufügen oder aktualisieren (merged mit bestehenden)
-Map<String, String> props = Map.of(
+Map<String, Object> props = Map.of(
     "gameMode", "ADVENTURE",
     "region", "eu-west"
 );
@@ -81,17 +90,79 @@ Properties sind in Servern als Umgebungsvariablen mit `SIMPLECLOUD_` Präfix ver
 
 ## Group Model
 
-| Property | Typ | Beschreibung |
-|----------|-----|--------------|
-| `id` | `String` | Eindeutige Kennung |
-| `name` | `String` | Gruppenname |
-| `type` | `GroupServerType` | `SERVER` oder `PROXY` |
-| `minMemory` | `int` | Minimaler Speicher (MB) |
-| `maxMemory` | `int` | Maximaler Speicher (MB) |
-| `maxPlayers` | `int` | Spielerlimit pro Server |
-| `minOnlineCount` | `int` | Minimale laufende Server |
-| `maxOnlineCount` | `int` | Maximale erlaubte Server |
-| `properties` | `Map<String, String>` | Eigene Metadaten |
+<ResponseField name="serverGroupId" type="string" required>
+  Eindeutige Server-Gruppen-ID.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Gruppenname.
+</ResponseField>
+
+<ResponseField name="type" type="GroupServerType" required>
+  Gruppentyp. Nutze `SERVER` für Spielserver oder `PROXY` für Proxy-Server.
+</ResponseField>
+
+<ResponseField name="minMemory" type="integer" required>
+  Minimaler Speicher in MB.
+</ResponseField>
+
+<ResponseField name="maxMemory" type="integer" required>
+  Maximaler Speicher in MB.
+</ResponseField>
+
+<ResponseField name="maxPlayers" type="integer" required>
+  Spielerlimit pro Server.
+</ResponseField>
+
+<ResponseField name="minOnlineCount" type="integer" required>
+  Minimale Anzahl laufender Server.
+</ResponseField>
+
+<ResponseField name="maxOnlineCount" type="integer" required>
+  Maximale Anzahl erlaubter Server.
+</ResponseField>
+
+<ResponseField name="properties" type="object" required>
+  Eigene Metadaten, die Server der Gruppe übernehmen.
+</ResponseField>
+
+<ResponseField name="scalingConfig" type="ScalingConfig" required>
+  Auto-Scaling-Einstellungen.
+</ResponseField>
+
+<ResponseField name="deploymentConfig" type="DeploymentConfig" required>
+  Host-Deployment-Einstellungen.
+</ResponseField>
+
+<ResponseField name="sourceConfig" type="SourceConfig" required>
+  Blueprint- oder Image-Quelle, aus der Server erstellt werden.
+</ResponseField>
+
+## ScalingConfig
+
+<ResponseField name="min_servers" type="integer" required>
+  Minimale Anzahl laufender Server.
+</ResponseField>
+
+<ResponseField name="max_servers" type="integer" required>
+  Maximale Anzahl erlaubter Server.
+</ResponseField>
+
+<ResponseField name="scaling_mode" type="ScalingMode" required>
+  Scaling-Strategie. Nutze `SLOTS` für freie Spielerplätze oder `SERVERS` für serverbasierte Skalierung.
+</ResponseField>
+
+<ResponseField name="available_slots" type="integer">
+  Freie Slots, die bei `SLOTS`-Scaling verfügbar bleiben sollen.
+</ResponseField>
+
+<ResponseField name="player_threshold" type="number">
+  Scale-up-Schwelle zwischen `0` und `1`.
+</ResponseField>
+
+<ResponseField name="scale_down" type="ScaleDownConfig" required>
+  Einstellungen für das Herunterskalieren.
+</ResponseField>
 
 ## Server-Start-Warteschlange
 
@@ -103,32 +174,40 @@ Gruppen mit dem Skalierungsmodus `SERVERS` unterstützen eine manuelle Start-War
 
 ### Server-Start einreihen
 
-Du kannst einen Start über die Gruppen-ID oder den Gruppennamen (oder beides) einreihen:
+Du kannst einen Start über die Gruppen-ID einreihen oder zuerst die Gruppe per Name auflösen:
 
 ```java
-// Start nach Gruppenname einreihen
-api.group().queueServerStart("lobby")
-    .thenAccept(response -> System.out.println(
-        "Eingereiht: " + response.getQueuedStarts()));
-
 // Start nach Gruppen-ID einreihen
-api.group().queueServerStart("group-uuid")
-    .thenAccept(response -> System.out.println(
-        "Eingereiht: " + response.getQueuedStarts()));
+api.group().requestServerStart("group-uuid")
+    .thenRun(() -> System.out.println("Start-Anfrage angenommen"));
+
+// Start nach Gruppenname einreihen
+api.group().getGroupByName("lobby")
+    .thenCompose(group -> {
+        if (group == null) {
+            return CompletableFuture.failedFuture(
+                new IllegalArgumentException("Gruppe nicht gefunden: lobby"));
+        }
+        return api.group().requestServerStart(group);
+    })
+    .thenRun(() -> System.out.println("Start-Anfrage für lobby angenommen"));
 ```
 
-Der Reconciler verarbeitet eingereihte Starts beim nächsten Reconciliation-Tick und versucht, einen Server zuzuweisen. Wenn die Gruppe ihr `max_servers`-Limit erreicht hat, wird der eingereihte Start als `failed` mit einem Grund markiert.
+Der Reconciler verarbeitet eingereihte Starts beim nächsten Reconciliation-Tick und versucht, einen Server zuzuweisen. Wenn die Gruppe ihr `max_servers`-Limit erreicht hat, wird der eingereihte Start als `FAILED` mit einem Grund markiert.
 
 ### Eingereihte Starts auflisten
 
 ```java
-api.group().listQueuedStarts()
-    .thenAccept(response -> {
-        System.out.println("Wartend: " + response.getQueuedStarts());
-        System.out.println("Fehlgeschlagen: " + response.getFailedStarts());
-        response.getItems().forEach(entry ->
-            System.out.println(entry.getServerGroupName() + ": " +
-                entry.getQueuedStarts() + " wartend"));
+api.group().getServerStartQueue()
+    .thenAccept(queue -> {
+        System.out.println("Gruppen mit Queue-Daten: " + queue.getCount());
+        System.out.println("Wartend: " + queue.getQueuedStarts());
+        System.out.println("Fehlgeschlagen: " + queue.getFailedStarts());
+
+        GroupStartQueueEntry lobby = queue.findByServerGroupName("lobby");
+        if (lobby != null) {
+            System.out.println("Lobby-Starts: " + lobby.getTotalStarts());
+        }
     });
 ```
 
@@ -137,19 +216,77 @@ api.group().listQueuedStarts()
 Alle ausstehenden und fehlgeschlagenen Starts einer bestimmten Gruppe entfernen:
 
 ```java
-api.group().clearQueuedStarts("group-uuid")
-    .thenAccept(response -> System.out.println(
-        "Warteschlange geleert für: " + response.getServerGroupName()));
+api.group().clearServerStartQueue("group-uuid")
+    .thenRun(() -> System.out.println("Warteschlange für group-uuid geleert"));
 ```
 
-### Start-Warteschlangen-Eintrag
+### Start-Warteschlangen-Übersicht
 
-| Property | Typ | Beschreibung |
-|----------|-----|--------------|
-| `id` | `String` | Eindeutige Kennung des eingereihten Starts |
-| `created_at` | `String` | Zeitstempel der Einreihung (ISO 8601) |
-| `status` | `String` | `pending` oder `failed` |
-| `failure_reason` | `String?` | Grund des Fehlschlags, falls zutreffend |
+`getServerStartQueue()` gibt eine `GroupStartQueue` zurück.
+
+<ResponseField name="count" type="integer" required>
+  Anzahl der Gruppen mit Queue-Daten.
+</ResponseField>
+
+<ResponseField name="queuedStarts" type="integer" required>
+  Anzahl wartender Starts über alle Gruppen.
+</ResponseField>
+
+<ResponseField name="failedStarts" type="integer" required>
+  Anzahl fehlgeschlagener Starts über alle Gruppen.
+</ResponseField>
+
+<ResponseField name="totalStarts" type="integer" required>
+  Gesamtzahl aller Queue-Einträge.
+</ResponseField>
+
+<ResponseField name="items" type="List<GroupStartQueueEntry>" required>
+  Queue-Daten nach Server-Gruppe gruppiert.
+</ResponseField>
+
+### Queue-Eintrag pro Gruppe
+
+<ResponseField name="serverGroupId" type="string | null">
+  Server-Gruppen-ID.
+</ResponseField>
+
+<ResponseField name="serverGroupName" type="string | null">
+  Server-Gruppenname.
+</ResponseField>
+
+<ResponseField name="queuedStarts" type="integer" required>
+  Anzahl wartender Starts für die Gruppe.
+</ResponseField>
+
+<ResponseField name="failedStarts" type="integer" required>
+  Anzahl fehlgeschlagener Starts für die Gruppe.
+</ResponseField>
+
+<ResponseField name="totalStarts" type="integer" required>
+  Gesamtzahl der Queue-Einträge für die Gruppe.
+</ResponseField>
+
+<ResponseField name="starts" type="List<GroupStartQueueItem>" required>
+  Persistierte Start-Anfragen für die Gruppe.
+</ResponseField>
+
+### Queue-Item
+
+<ResponseField name="id" type="string" required>
+  Eindeutige Kennung des eingereihten Starts.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string | null">
+  Zeitstempel der Einreihung im ISO-8601-Format.
+</ResponseField>
+
+<ResponseField name="status" type="GroupStartQueueItemStatus" required>
+  Status des Queue-Items. Mögliche Werte sind `PENDING`, `FAILED` und `UNKNOWN`.
+</ResponseField>
+
+<ResponseField name="failureReason" type="string | null">
+  Grund des Fehlschlags, falls zutreffend.
+</ResponseField>
 
 <Warning>
   Fehlgeschlagene Starts werden nach 1 Stunde automatisch bereinigt. Verwende den List-Endpunkt, um auf Fehler zu prüfen und bei Bedarf neu einzureihen.

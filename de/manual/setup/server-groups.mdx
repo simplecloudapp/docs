@@ -1,6 +1,238 @@
 ---
-title: 'Groups'
-description: 'Description for Groups'
+title: 'Server-Gruppen'
+description: 'Erstelle skalierbare Minecraft-Server-Gruppen, die eine gemeinsame Konfiguration nutzen und Server je nach Bedarf starten oder stoppen.'
 ---
 
-## Groups
+<Info>
+  Brauchst du einen einzelnen langlebigen Server mit persistenten Weltdaten? Nutze stattdessen [Persistente Server](/de/manual/setup/persistent-servers).
+</Info>
+
+## Wann du eine Gruppe verwendest
+
+| Nutze eine Gruppe, wenn ... | Nutze einen persistenten Server, wenn ... |
+| --------------------------- | ---------------------------------------- |
+| Du mehrere Server mit derselben Einrichtung brauchst | Du genau einen Server mit langlebigen Daten brauchst |
+| Server ohne lokale Daten ersetzt werden können | Der Server eine Welt, Datenbank oder lokalen Zustand besitzt |
+| Spielerbedarf die Serveranzahl steuern soll | Du den Serverhost manuell festlegen möchtest |
+| Beispiele: Lobbys, Minigames, Proxys | Beispiele: SMP, Citybuild, Skyblock, Build-Server |
+
+## Wie Gruppen funktionieren
+
+1. Du definierst die Gruppenkonfiguration: Software, Speicher, Plugins, Skalierung, Deployment und Workflows.
+2. Der Controller vergleicht den gewünschten Zustand der Gruppe mit den laufenden Servern.
+3. Serverhosts starten oder stoppen Server-Instanzen, bis der gewünschte Zustand erreicht ist.
+4. Plugins und Properties der Gruppe werden auf jede Server-Instanz angewendet.
+
+Gruppen haben einen von zwei Typen:
+
+| Typ | Zweck |
+| --- | ----- |
+| `SERVER` | Minecraft-Game-Server wie Paper, Purpur, Fabric oder Spigot |
+| `PROXY` | Proxy-Server wie Velocity oder BungeeCord, die Spieler weiterleiten |
+
+## Gruppe erstellen
+
+<Steps>
+  <Step title="Gruppen-Wizard öffnen">
+    Öffne im Dashboard **Groups** und klicke auf **Add Group**.
+  </Step>
+
+  <Step title="Grunddaten festlegen">
+    Lege fest, wie die Gruppe heißt und wofür sie verwendet wird:
+
+    - **Name**: Verwende einen kurzen, eindeutigen Namen wie `lobby`, `skywars` oder `proxy`.
+    - **Type**: Wähle **Server** für Game-Server oder **Proxy** für Load Balancer.
+    - **Activate on creation**: Aktiviere dies, wenn die Gruppe sofort Server starten soll.
+  </Step>
+
+  <Step title="Software auswählen">
+    Wähle Server-Software und Version. Für eigene Server-JARs kannst du eine direkte Download-URL angeben.
+
+    Für Game-Server wählst du zusätzlich einen Configurator. Der Configurator bereitet Dateien für die gewählte Server-Software vor.
+  </Step>
+
+  <Step title="Ressourcen festlegen">
+    Konfiguriere die Ressourcen pro Server-Instanz:
+
+    - **Memory**: Minimaler und maximaler Speicher in MB.
+    - **Max players**: Spielerlimit pro Server-Instanz.
+  </Step>
+
+  <Step title="Skalierung konfigurieren">
+    Wähle, wie SimpleCloud entscheidet, wann Server gestartet oder gestoppt werden.
+
+    | Skalierungsmodus | Verwende ihn, wenn |
+    | ---------------- | ------------------ |
+    | `Slots` | Immer eine Zielanzahl freier Spielerplätze verfügbar sein soll |
+    | `Servers` | Immer eine Zielanzahl von Server-Instanzen verfügbar sein soll |
+
+    Setze **Min servers** auf die Basisanzahl, die immer laufen soll, und **Max servers** auf die obere Grenze.
+  </Step>
+
+  <Step title="Proxy-Netzwerk konfigurieren">
+    Für Proxy-Gruppen legst du den **Starting port** für eingehende Spieler-Verbindungen fest.
+  </Step>
+
+  <Step title="Plugins hinzufügen">
+    Füge Plugins von Modrinth, Hangar, Spigot, direkten URLs oder deinen konfigurierten Plugin-Quellen hinzu. Du kannst Plugins auch später in den Gruppeneinstellungen ergänzen.
+  </Step>
+
+  <Step title="Prüfen und erstellen">
+    Prüfe die Zusammenfassung und klicke auf **Create Group**.
+
+    <Check>
+      Nach der Erstellung sollte eine aktive Gruppe mit **Minimum Servers** größer als `0` automatisch Server starten.
+    </Check>
+  </Step>
+</Steps>
+
+## Gruppenstatus verstehen
+
+| Status | Bedeutung | Prüfen |
+| ------ | --------- | ------ |
+| <Badge color="green">Healthy</Badge> | Die Gruppe erfüllt ihre konfigurierte Serveranzahl | Keine Aktion nötig |
+| <Badge color="blue">Scaling</Badge> | SimpleCloud startet oder stoppt Server | Auf den nächsten Reconciliation-Zyklus warten |
+| <Badge color="red">Down</Badge> | Keine Server laufen | Aktivierung, Mindestserver, Deployment-Hosts und Host-Ressourcen |
+| <Badge color="orange">Inactive</Badge> | Die Gruppe ist deaktiviert | Gruppe in den allgemeinen Einstellungen aktivieren |
+| <Badge color="gray">Disabled</Badge> | Mindestserver steht auf `0` | Mindestserver erhöhen, wenn die Gruppe laufen soll |
+
+## Bestehende Gruppe konfigurieren
+
+Die meisten Änderungen nimmst du in der Einstellungsseite der Gruppe vor. Öffne nur den Bereich, den du brauchst.
+
+<AccordionGroup>
+  <Accordion title="Allgemeine Einstellungen">
+    Aktiviere oder deaktiviere Skalierung, passe Speicher an, ändere Spielerlimits und füge Tags zum Filtern hinzu.
+
+    <Tip>
+      Tags helfen bei Dashboards, Automatisierung, Filtern und Plugin-Verhalten. Nutze stabile Labels wie `region:eu`, `mode:lobby` oder `environment:prod`.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Skalierung">
+    Steuere, wie viele Server SimpleCloud online hält.
+
+    | Einstellung | Zweck |
+    | ----------- | ----- |
+    | **Scaling mode** | Legt fest, ob nach freien Slots oder Serveranzahl skaliert wird |
+    | **Min servers** | Hält diese Anzahl online, wenn die Gruppe aktiv ist |
+    | **Max servers** | Begrenzt die maximale Serveranzahl |
+    | **Player threshold** | Startet zusätzliche Server, wenn diese Auslastung erreicht wird |
+    | **Available slots** | Hält diese Anzahl freier Spielerplätze verfügbar |
+    | **Idle time** | Stoppt leere Server nach dieser Dauer |
+  </Accordion>
+
+  <Accordion title="Deployment">
+    Wähle, welche Serverhosts die Gruppe ausführen dürfen.
+
+    - Aktiviere Hosts, die Server für diese Gruppe ausführen dürfen.
+    - Deaktiviere Hosts, die keine Deployments erhalten sollen.
+    - Sortiere Hosts um, wenn du eine bevorzugte Reihenfolge brauchst.
+
+    <Tip>
+      Wenn alle Hosts aktiviert sind, verteilt SimpleCloud Server automatisch. Deaktiviere Hosts nur, wenn du Platzierung bewusst steuern möchtest.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Blueprint">
+    Ändere die Server-Vorlage hinter der Gruppe, zum Beispiel Software-Version, Configurator-Einstellungen, JVM-Optionen und Runtime-Argumente.
+
+    Änderungen betreffen neue Server-Instanzen. Laufende Server müssen eventuell neu gestartet werden, bevor sie Template-Änderungen übernehmen.
+  </Accordion>
+
+  <Accordion title="Properties">
+    Füge eigene Key-Value-Daten hinzu, die Plugins und Integrationen lesen können.
+
+    Properties werden laufenden Servern als `SIMPLECLOUD_`-Umgebungsvariablen bereitgestellt.
+  </Accordion>
+
+  <Accordion title="Workflows">
+    Konfiguriere Automatisierung für Server-Lifecycle-Events:
+
+    - **Manual workflows**: Manuell ausführen.
+    - **On start workflows**: Beim Start eines Servers ausführen.
+    - **On stop workflows**: Beim Stoppen eines Servers ausführen.
+  </Accordion>
+
+  <Accordion title="Plugins">
+    Füge Plugins hinzu, prüfe installierte Plugins oder entferne sie für alle Server der Gruppe.
+
+    Plugin-Änderungen gelten für neu vorbereitete Server. Starte laufende Server neu oder erstelle sie neu, wenn sie die geänderte Plugin-Liste brauchen.
+  </Accordion>
+
+  <Accordion title="Danger zone">
+    Lösche die Gruppe nur, wenn du die Auswirkungen verstehst.
+
+    <Warning>
+      Das Dashboard deaktiviert die Gruppe, wartet bis laufende Server gestoppt sind, und löscht danach die Gruppe und den zugehörigen Blueprint.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+## Fehlerbehebung
+
+<AccordionGroup>
+  <Accordion title="Server bleiben in QUEUED">
+    **Wahrscheinliche Ursache:** Kein Serverhost ist verfügbar oder die erlaubten Hosts haben keine Kapazität.
+
+    **Das solltest du prüfen:**
+
+    1. Führe `sc status serverhost` aus.
+    2. Prüfe, ob die Deployment-Einstellungen mindestens einen Host erlauben.
+    3. Prüfe freien Speicher auf dem Host.
+    4. Prüfe Controller-Logs mit `sc logs controller`.
+  </Accordion>
+
+  <Accordion title="Gruppe zeigt Down">
+    **Wahrscheinliche Ursache:** Die Gruppe ist nicht so konfiguriert, dass sie Server online hält.
+
+    **Das solltest du prüfen:**
+
+    1. Aktiviere die Gruppe.
+    2. Setze **Min servers** auf mindestens `1`.
+    3. Aktiviere mindestens einen Serverhost in den Deployment-Einstellungen.
+    4. Prüfe, ob der Host genug freien Speicher hat.
+  </Accordion>
+
+  <Accordion title="Server skalieren nicht hoch">
+    **Wahrscheinliche Ursache:** Der Skalierungswert ist nicht erreicht oder die Gruppe ist bereits am Serverlimit.
+
+    **Das solltest du prüfen:**
+
+    1. Prüfe, ob der Skalierungsmodus zu deinem Ziel passt.
+    2. Senke den Player Threshold, wenn Skalierung zu spät startet.
+    3. Erhöhe **Max servers**, wenn die Gruppe begrenzt ist.
+    4. Prüfe, ob Server Spielerzahlen melden.
+  </Accordion>
+
+  <Accordion title="Server skalieren zu schnell herunter">
+    **Wahrscheinliche Ursache:** Idle Time ist zu kurz oder das Skalierungsziel zu aggressiv.
+
+    **Das solltest du prüfen:**
+
+    1. Erhöhe die Idle Time, zum Beispiel von `1m` auf `5m`.
+    2. Erhöhe den Player Threshold.
+    3. Erhöhe **Min servers**, wenn immer eine Basis online bleiben soll.
+  </Accordion>
+
+  <Accordion title="Server bleiben in PREPARING">
+    **Wahrscheinliche Ursache:** Workflow, Blueprint, Plugin-Download oder Dateisystemoperation schlägt während der Vorbereitung fehl.
+
+    **Das solltest du prüfen:**
+
+    1. Prüfe Serverhost-Logs mit `sc logs serverhost`.
+    2. Prüfe freien Speicherplatz.
+    3. Prüfe Plugin-Download-URLs.
+    4. Prüfe, ob Template- und Workflow-Pfade existieren.
+  </Accordion>
+
+  <Accordion title="Verwaiste Servereinträge bleiben bestehen">
+    **Wahrscheinliche Ursache:** Ein Serverprozess wurde gestoppt, ohne dass der Controller das Lifecycle-Event gespeichert hat, zum Beispiel nach einem Host-Crash.
+
+    Öffne **Servers**, wähle den veralteten Server aus und nutze **Hold to force delete**, nachdem du geprüft hast, dass der Prozess nicht mehr läuft.
+
+    <Warning>
+      Force Delete entfernt nur den Servereintrag. Es stoppt keinen laufenden Prozess und löst keine Cleanup-Workflows aus.
+    </Warning>
+  </Accordion>
+</AccordionGroup>

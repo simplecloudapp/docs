@@ -1,53 +1,92 @@
 ---
 title: 'Cloud Command'
-description: "Learn about SimpleCloud's in-game command plugin for managing your server network"
+description: "Use SimpleCloud's in-game proxy commands for groups, servers, and players"
 tag: 'Proxy'
 ---
 
 ## Overview
 
-The Cloud Command Plugin empowers your network with in-game proxy commands, enabling efficient cloud management directly from within the game.  
-You can start, stop, inspect, edit, and delete servers, groups, and persistent servers directly via proxy commands.
+The Cloud Command plugin adds proxy commands for day-to-day network operations. You can inspect groups and servers, start and stop group servers, move players, and send player messages.
+
+The root command is available as `/cloud`, `/sc`, and `/simplecloud`.
 
 ## Supported Software
 
 | Software   | Plugin Support |
 | ---------- | -------------- |
-| Velocity   | ✅ Yes         |
-| Bungeecord | ✅ Yes         |
-
-<Note>
-  Want to add support for another server software? Submit a pull request on
-  [GitHub](https://github.com/simplecloudapp/command-plugin)!
-</Note>
+| Velocity   | Yes            |
+| BungeeCord | Yes            |
+| Gate       | Planned        |
 
 ## Quick Setup
 
-1. Download the plugin from [GitHub](https://github.com/simplecloudapp/command-plugin/releases)
-2. Place it in your proxy template's plugin folder
-3. Start your proxy server
+1. Download the plugin from [GitHub](https://github.com/simplecloudapp/command-plugin/releases).
+2. Place it in your proxy template's `plugins/` folder.
+3. Make sure the `simplecloud-api` plugin is installed on the proxy.
+4. Start the proxy once to generate the message configuration.
 
 ## Commands
 
-| Command                                   | Description |
-| ----------------------------------------- | ----------- |
-| `/cloud start group <group>`              | Starts a new server from a specified group |
-| `/cloud start persistent <server>`        | Starts a persistent server |
-| `/cloud stop group <group> [id]`          | Stops a specific server or all servers of a group |
-| `/cloud stop persistent <server>`         | Stops a persistent server |
-| `/cloud info servers [group] [id]`              | Displays information about servers |
-| `/cloud info groups [group]`                    | Displays information about one or all groups |
-| `/cloud info persistent [server]`               | Displays information about persistent servers |
-| `/cloud delete group <group>`             | Deletes a server group |
-| `/cloud delete persistent <server>`       | Deletes a persistent server |
-| `/cloud edit group <group> <key> <value>`           | Edits a value of a group |
-| `/cloud edit server <group> <id> <key> <value>`     | Edits a value of a server |
-| `/cloud edit persistent <server> <key> <value>`    | Edits a value of a persistent server |
+### Groups
+
+| Command | Description |
+| ------- | ----------- |
+| `/cloud group list` | List all groups |
+| `/cloud group info <group>` | Show group type, memory, player limit, and running server count |
+| `/cloud group start <group> [count]` | Request one or more new servers for a group |
+| `/cloud group stop <group> [id]` | Stop all running servers in a group, or one numerical ID |
+
+### Servers
+
+| Command | Description |
+| ------- | ----------- |
+| `/cloud server list [group]` | List running servers, optionally filtered by group |
+| `/cloud server info <group> <id>` | Show state, memory, and players for one server |
+| `/cloud server start <group>` | Request one new server for a group |
+| `/cloud server stop <group> <id>` | Stop one running server |
+
+### Players
+
+Use `group` for a server group target and `ps` for a persistent server target.
+
+| Command | Description |
+| ------- | ----------- |
+| `/cloud player list <group\|ps> <target>` | List players on a group or persistent server |
+| `/cloud player info <player>` | Show player connection details |
+| `/cloud player send <player> <group\|ps> <target>` | Send one player to a target |
+| `/cloud player sendall <group\|ps> <target>` | Send every online player to a target |
+| `/cloud player sendfrom <source> <group\|ps> <target>` | Send players from one source server to a target |
+| `/cloud player message <player> <message>` | Send a plain text message to a player |
+
+### Reload
+
+| Command | Description |
+| ------- | ----------- |
+| `/cloud reload` | Run the command plugin's reload command |
+
+## Permissions
+
+| Permission | Description |
+| ---------- | ----------- |
+| `simplecloud.command.use` | Use the root command and view available subcommands |
+| `simplecloud.command.group.list` | Use `/cloud group list` |
+| `simplecloud.command.group.info` | Use `/cloud group info` |
+| `simplecloud.command.group.start` | Use `/cloud group start` |
+| `simplecloud.command.group.stop` | Use `/cloud group stop` |
+| `simplecloud.command.server.list` | Use `/cloud server list` |
+| `simplecloud.command.server.info` | Use `/cloud server info` |
+| `simplecloud.command.server.start` | Use `/cloud server start` |
+| `simplecloud.command.server.stop` | Use `/cloud server stop` |
+| `simplecloud.command.player.list` | Use `/cloud player list` |
+| `simplecloud.command.player.info` | Use `/cloud player info` |
+| `simplecloud.command.player.send` | Use player transfer commands |
+| `simplecloud.command.player.message` | Use `/cloud player message` |
+| `simplecloud.command.reload` | Use `/cloud reload` |
 
 <Note>
-  You can customize all plugin messages in the <code>messages.yml</code> file.
+  The help menu only shows commands for permissions the sender has.
 </Note>
 
 <Frame>
-  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/cloud-command/help.png?raw=true" alt="Cloud Command Help Menu" />
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/cloud-command/help.png?raw=true" alt="Cloud Command help menu" />
 </Frame>

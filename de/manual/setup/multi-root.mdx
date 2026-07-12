@@ -1,9 +1,11 @@
 ---
-title: "Multi Root Setup"
+title: "Multi-Root Setup"
 description: "SimpleCloud über mehrere Maschinen mit verteilten Serverhosts betreiben"
 ---
 
-Eine Multi-Root-Einrichtung ermöglicht es dir, Minecraft-Server über mehrere physische oder virtuelle Maschinen zu betreiben, die alle von einem einzigen SimpleCloud-Controller verwaltet werden. Diese Anleitung behandelt das Hinzufügen von Serverhosts und die Synchronisierung von Dateien zwischen ihnen.
+## Wann du Multi-Root verwendest
+
+Nutze ein Multi-Root-Setup, wenn ein SimpleCloud-Netzwerk Minecraft-Server auf mehr als einer physischen oder virtuellen Maschine ausführen soll.
 
 ## Voraussetzungen
 
@@ -13,54 +15,49 @@ Eine Multi-Root-Einrichtung ermöglicht es dir, Minecraft-Server über mehrere p
 
 ## Teil 1: Serverhosts hinzufügen
 
-### SimpleCloud auf jeder Maschine installieren
+Füge jede Maschine mit einem frischen Befehl aus dem Dashboard hinzu. Der Befehl installiert die CLI, authentifiziert den Host, registriert ihn im aktuellen Netzwerk und startet den lokalen Serverhost-Prozess.
 
-Installiere auf jeder Maschine, die einen Serverhost ausführen soll, die SimpleCloud CLI:
+<Steps>
+  <Step title="Server-Hosts-Einstellungen öffnen">
+    Gehe zum [SimpleCloud Dashboard](https://dash.simplecloud.app), melde dich an, öffne **Settings** und wähle **Server Hosts**.
+  </Step>
 
-```bash
-/bin/bash -c "$(curl -fsSL https://get.simplecloud.app)"
-```
+  <Step title="Add-Host-Befehl erzeugen">
+    Klicke auf **Add Host**. Das Dashboard erzeugt einen Befehl mit einem kurzlebigen Login-Code für das aktuelle Netzwerk.
+  </Step>
 
-### Serverhost zum Netzwerk hinzufügen
+  <Step title="Befehl auf dem neuen Serverhost ausführen">
+    Kopiere den Befehl und führe ihn auf der neuen Maschine aus.
 
-Verwende die CLI, um einen neuen Serverhost zu deinem bestehenden Netzwerk hinzuzufügen:
+    SimpleCloud installiert die CLI, registriert die Maschine und startet den Serverhost. Das kann ein paar Minuten dauern.
+  </Step>
 
-```bash
-sc serverhost add
-```
+  <Step title="Verbindung prüfen">
+    Prüfe nach Abschluss, ob die lokale Serverhost-Komponente läuft:
 
-Die CLI wird dich auffordern:
+    ```bash
+    sc status serverhost
+    ```
 
-1. **Wähle dein Netzwerk** - Wähle das Netzwerk, das dein Controller verwaltet
-2. **Authentifizierung** - Melde dich mit deinem SimpleCloud-Konto an
-3. **Konfiguriere den Serverhost** - Lege Portbereiche und andere Optionen fest
+    Der neue Serverhost sollte außerdem im Dashboard erscheinen, sobald er mit dem Controller verbunden ist.
+  </Step>
+</Steps>
 
 <Tip>
-  Jeder Serverhost benötigt eine eindeutige Identität. Die CLI generiert automatisch
-  Anmeldedaten und speichert sie im Verzeichnis `secrets/`.
+  Erzeuge für jede Maschine einen eigenen **Add Host**-Befehl. Jeder Serverhost braucht seine eigene Identität und darf das Verzeichnis `secrets/` nicht mit einem anderen Host teilen.
 </Tip>
-
-### Verbindung überprüfen
-
-Überprüfe nach dem Hinzufügen, ob die lokale Serverhost-Komponente läuft:
-
-```bash
-sc status serverhost
-```
-
-Der neue Serverhost sollte außerdem im Dashboard erscheinen, sobald er mit dem Controller verbunden ist.
 
 ## Teil 2: Dateien synchronisieren
 
-Bei mehreren Serverhosts musst du Templates und Workflows synchron halten. Wir empfehlen die Verwendung von Syncthing für die automatische Dateisynchronisierung.
+Bei mehreren Serverhosts musst du Templates, Workflows und Optionen synchron halten. Wir empfehlen die Verwendung von Syncthing für die automatische Dateisynchronisierung.
 
 ### Was synchronisiert werden soll
 
 | Verzeichnis  | Zweck                                | Sync?                        |
 | ------------ | ------------------------------------ | ---------------------------- |
-| `templates/` | Server-Templates, Plugins, Configs   | Ja                           |
-| `workflows/` | Workflow-Definitionen                | Ja                           |
-| `options/`   | Konfigurator-Einstellungen           | Ja                           |
+| `templates/` | Server-Templates, Plugins, Tags, benannte Templates und Cache-Regeln | Ja |
+| `workflows/` | Server-Vorbereitungs- und Cleanup-Workflows | Ja |
+| `options/`   | Configurator-Einstellungen und Platform-Mappings | Ja |
 | `secrets/`   | Netzwerk-Anmeldedaten                | Nein - eindeutig pro Host    |
 | `running/`   | Aktive Server-Instanzen              | Nein - nur lokal             |
 | `logs/`      | Serverhost-Logs                      | Nein - nur lokal             |
@@ -79,7 +76,7 @@ Der Installationspfad ist benutzerkonfigurierbar. Dein Serverhost-Verzeichnis en
     <Tree.Folder name="templates" defaultOpen>
       <Tree.File name="Dies synchronisieren" />
     </Tree.Folder>
-    <Tree.Folder name="workflows" defaultOpen>
+    <Tree.Folder name="workflows">
       <Tree.File name="Dies synchronisieren" />
     </Tree.Folder>
     <Tree.Folder name="options">
@@ -148,14 +145,16 @@ sc sync status
 Teste, ob die Synchronisierung funktioniert:
 
 ```bash
+CLOUD_DIR=/pfad/zu/simplecloud
+
 # Auf Serverhost 1
-echo "sync test" > $CLOUD_DIR/templates/sync-test.txt
+echo "sync test" > "$CLOUD_DIR/templates/sync-test.txt"
 
 # Warte ein paar Sekunden, dann prüfe auf Serverhost 2
-cat $CLOUD_DIR/templates/sync-test.txt
+cat "$CLOUD_DIR/templates/sync-test.txt"
 
 # Aufräumen
-rm $CLOUD_DIR/templates/sync-test.txt
+rm "$CLOUD_DIR/templates/sync-test.txt"
 ```
 
 ## Best Practices
@@ -186,7 +185,7 @@ Der Ordner `templates/cache/` enthält lokal generierte Dateien. Erwäge, ihn vo
 
 <AccordionGroup>
   <Accordion title="Serverhost erscheint nicht in der Liste">
-    **Symptom:** Nach `sc serverhost add` wird der Host nicht angezeigt.
+    **Symptom:** Nach dem **Add Host**-Befehl wird der Host nicht angezeigt.
 
     **Lösungen:**
     1. Überprüfe, ob der Serverhost läuft: `sc status serverhost`

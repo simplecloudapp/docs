@@ -103,9 +103,9 @@ public void evacuateServer(String serverId, String targetServer) {
 }
 ```
 
-## Start Server if None Available
+## Request Server if None Available
 
-Start a new server and transfer the player:
+Queue a new server start and transfer the player when a matching server becomes available:
 
 ```java
 public void transferOrStartServer(UUID playerUuid, String groupName) {
@@ -122,29 +122,29 @@ public void transferOrStartServer(UUID playerUuid, String groupName) {
                 if (player != null) player.connect(available.getServerId());
             });
         } else {
-            // Start new server, then transfer
-            api.group().getGroupByName(groupName).thenAccept(group -> {
-                if (group == null) return;
-
-                api.server().startServer(new StartServerRequest(group.getId(), groupName))
-                    .thenAccept(newServer -> {
-                        // Wait for server to be ready
-                        waitForServerReady(newServer.getServerId(), () -> {
-                            api.player().get(playerUuid).thenAccept(player -> {
-                                if (player != null) player.connect(newServer.getServerId());
-                            });
-                        });
-                    });
-            });
+            // Queue a start, then wait for the next available server in the group
+            api.group().getGroupByName(groupName).thenCompose(group -> {
+                if (group == null) {
+                    return CompletableFuture.failedFuture(
+                        new IllegalArgumentException("Group not found: " + groupName));
+                }
+                return api.group().requestServerStart(group);
+            }).thenRun(() -> waitForGroupServerReady(groupName, newServer -> {
+                api.player().get(playerUuid).thenAccept(player -> {
+                    if (player != null) player.connect(newServer.getServerId());
+                });
+            }));
         }
     });
 }
 
-private void waitForServerReady(String serverId, Runnable callback) {
+private void waitForGroupServerReady(String groupName, Consumer<Server> callback) {
     api.event().server().onStateChanged(event -> {
-        if (event.getServerId().equals(serverId) &&
-            event.getNewState() == ServerState.AVAILABLE) {
-            callback.run();
+        Server server = event.getServer();
+        if (event.getNewState() == ServerState.AVAILABLE &&
+            server.isFromGroup() &&
+            groupName.equals(server.getGroup().getName())) {
+            callback.accept(server);
         }
     });
 }

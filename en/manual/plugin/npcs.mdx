@@ -1,79 +1,135 @@
 ---
 title: 'NPCs'
-description: "Learn about SimpleCloud's NPCs plugin for interactive server navigation and management"
+description: "Use SimpleCloud's NPC plugin for interactive server navigation and holograms"
 tag: 'Server'
 ---
 
 ## Overview
 
-The SimpleCloud NPCs plugin allows you to create interactive NPCs on your server that enable players to access other subservers and perform various actions.
+The SimpleCloud NPC plugin adds SimpleCloud actions, holograms, and feedback options to NPCs created by supported NPC plugins. You create the NPC in your NPC system, then use `/scnpc apply <id>` to let SimpleCloud manage interactions for that NPC.
 
 <Warning>
-  This plugin requires a supported third-party NPC plugin such as Citizens or
-  FancyNpcs to function. The SimpleCloud NPCs plugin adds SimpleCloud
-  functionality to NPCs created by these third-party plugins.
+  This plugin requires one supported NPC plugin on the server. The standalone
+  namespace module exists in the repository, but the current Paper plugin loads
+  third-party namespaces only.
 </Warning>
 
 ## Supported Software
 
-| Server Type    | Plugin Support |
-| -------------- | -------------- |
-| Paper & Forks  | ✅ Yes         |
-| Spigot & Forks | ❌ No          |
-| Other          | ❌ No          |
+| Server Type   | Plugin Support |
+| ------------- | -------------- |
+| Paper & Forks | Yes            |
+| Spigot        | No             |
+
+## Supported NPC Plugins
+
+| Plugin | Status | Notes |
+| ------ | ------ | ----- |
+| [Citizens](https://citizensnpcs.co) | Supported | Left and right click interactions |
+| [FancyNpcs](https://fancyplugins.de/FancyNpcs) | Supported | Uses FancyNpcs NPC names as IDs |
+| [MythicMobs](https://www.spigotmc.org/resources/5702) | Supported | Right click interactions |
+| PlayerNPC | Supported | Uses PlayerNPC IDs |
 
 ## Quick Setup
 
-1. Download the SimpleCloud NPCs plugin from [GitHub](https://github.com/simplecloudapp/npc-plugin/releases)
-2. Download and install one of the supported NPC plugins (e.g., Citizens)
-3. Place both plugins in your server's plugins folder
-4. Start your server
-5. Create an NPC using the third-party plugin's commands
-6. Use the SimpleCloud NPCs commands to add SimpleCloud functionality to the created NPC
+1. Download the SimpleCloud NPC plugin from [GitHub](https://github.com/simplecloudapp/npc-plugin/releases).
+2. Install one supported NPC plugin.
+3. Make sure the `simplecloud-api` plugin is installed on the server.
+4. Place the plugins in your server template's `plugins/` folder.
+5. Start the server.
+6. Create an NPC with your NPC plugin.
+7. Run `/scnpc apply <id>` to create a SimpleCloud NPC config for it.
 
-## Required NPC Plugins
+## Commands
 
-You must install one of the following NPC plugins for the SimpleCloud NPCs plugin to work:
+The command is available as `/simplecloudnpc`, `/scnpc`, and `/cloudnpc`.
 
-| Plugin                                                | Supported Versions | Status |
-| ----------------------------------------------------- | ------------------ | ------ |
-| [Citizens](https://citizensnpcs.co)                   | 1.19+              | ✅ Yes |
-| [FancyNpcs](https://fancyplugins.de/FancyNpcs)        | 1.19.4+            | ✅ Yes |
-| [MythicMobs](https://www.spigotmc.org/resources/5702) | 1.19+              | ✅ Yes |
-| [PlayerNPC](https://www.spigotmc.org/resources/93625) | 1.17.1 - 1.20.1    | ❌ No  |
+| Command | Description |
+| ------- | ----------- |
+| `/scnpc` | Show help |
+| `/scnpc apply <id>` | Create a SimpleCloud config for an existing NPC |
+| `/scnpc <id>` | Show help for one NPC |
+| `/scnpc <id> setHologramGroup <name>` | Set the group used for hologram placeholders |
+| `/scnpc <id> setOption <key> <value>` | Set a global player feedback option |
+| `/scnpc <id> getOption <key>` | Show a global option value |
+| `/scnpc <id> removeOption <key>` | Remove a global option |
+| `/scnpc openInventory <name>` | Open a configured SimpleCloud NPC inventory |
+| `/scnpc createInventory <name> <groupName>` | Create an inventory for a group |
+| `/scnpc <id> interact <interaction>` | Show interaction details |
+| `/scnpc <id> interact <interaction> setAction <action>` | Set the action for an interaction |
+| `/scnpc <id> interact <interaction> setOption <key> <value>` | Set an interaction option |
+| `/scnpc <id> interact <interaction> getOption <key>` | Show an interaction option |
+| `/scnpc <id> interact <interaction> removeOption <key>` | Remove an interaction option |
+
+## Permissions
+
+| Permission | Description |
+| ---------- | ----------- |
+| `simplecloud.command.npc` | Use all NPC commands |
+
+## Interactions
+
+The default interaction names are:
+
+- `RIGHT_CLICK`
+- `LEFT_CLICK`
 
 <Note>
-  Want to add support for another NPC plugin? Submit an issue on
-  [GitHub](https://github.com/simplecloudapp/npc-plugin/pulls)!
+  A namespace can expose fewer interactions. MythicMobs currently supports
+  `RIGHT_CLICK` only.
 </Note>
 
 ## Actions
 
-Available NPC actions and their options:
+| Action | Required Options | Description |
+| ------ | ---------------- | ----------- |
+| `RUN_COMMAND` | `command.name` | Runs a command as the player |
+| `RUN_CONSOLE_COMMAND` | `command.name` | Runs a command as console |
+| `CONNECT_TO_SERVER` | `server.name` | Sends the player to a proxy-registered server |
+| `TRANSFER_TO_SERVER` | `server.ip`, `server.port` | Transfers the player to an external server |
+| `QUICK_JOIN` | `group.name` | Finds a server in a group and sends the player there |
+| `OPEN_INVENTORY` | `inventory.name` | Opens a configured inventory |
 
-| Action                | Option                                                                    | Description                     |
-| --------------------- | ------------------------------------------------------------------------- | ------------------------------- |
-| `open_inventory`      | inventory.name                                                            | Open server selection inventory |
-| `run_command`         | command.name                                                              | Execute player command          |
-| `run_console_command` | command.name                                                              | Execute console command         |
-| `connect_to_server`   | server.name                                                               | Send player to server           |
-| `transfer_to_server`  | server.ip, server.port                                                    | Send to external server         |
-| `quick_join`          | group.name, server.name.pattern, filter.player.count, filter.server.state | Random server join              |
+`RUN_COMMAND` and `RUN_CONSOLE_COMMAND` support `<playername>` and `<playeruuid>` replacements in `command.name`.
+
+### Quick Join Options
+
+| Option | Default | Description |
+| ------ | ------- | ----------- |
+| `group.name` | Required | Group to search |
+| `server.name.pattern` | `<group_name>-<numerical_id>` | Server name passed to the proxy |
+| `filter.player.count` | `LEAST` | `LEAST` or `MOST` player count selection |
+| `filter.server.state` | `AVAILABLE` | Required server state |
+| `message.failed.server.finder` | Empty | Optional message when no server matches |
+
+## Feedback Options
+
+Feedback options can be set globally on the NPC or on a specific interaction. They run in addition to the interaction action.
+
+| Option | Description |
+| ------ | ----------- |
+| `send.message` | Send a chat message |
+| `send.actionbar` | Send an action bar message |
+| `send.title` | Show a title |
+| `send.subtitle` | Show a subtitle |
+| `play.sound` | Play an Adventure sound key |
+| `sound.volume` | Sound volume, default `3F` |
+| `sound.pitch` | Sound pitch, default `2F` |
+| `sound.source` | Sound source, default `master` |
 
 ## NPC Configuration
 
-Example configuration:
+The generated NPC config stores holograms, interactions, and global options.
 
 ```yaml
 version: "3"
 id: "0"
-npc-type: GROUP
 
-hologram-configuration:
-  placeholder-name: lobby
+hologramConfiguration:
+  placeholderGroupName: "lobby"
   holograms:
-    - start-height: 2.073
-      join-state: ""
+    - startHeight: 2.073
+      joinState: ""
       lores:
         - text: "<#38bdf8><bold><group_name>"
           billboard: CENTER
@@ -83,171 +139,37 @@ hologram-configuration:
           alignment: CENTER
 
 actions:
-  - player-interaction: LEFT_CLICK
-    action: OPEN_INVENTORY
+  - playerInteraction: LEFT_CLICK
+    action: QUICK_JOIN
     options:
-      inventory.name: lobby
-      play.sound: block.chest.open
-      sound.pitch: 3
-      sound.volume: 2
+      group.name: lobby
+      filter.player.count: LEAST
+      filter.server.state: AVAILABLE
+      server.name.pattern: "<group_name>-<numerical_id>"
 
-  - player-interaction: RIGHT_CLICK
+  - playerInteraction: RIGHT_CLICK
     action: TRANSFER_TO_SERVER
     options:
       server.ip: demo-server.com
-      server.port: 25565
+      server.port: "25565"
 
 options:
-  send.message: "<rainbow>Some cool text here"
-  send.title: "title"
-  send.subtitle: "some cool subtitle"
+  send.message: "<#38bdf8>Choose a server"
+  play.sound: block.chest.open
+  sound.pitch: "2F"
+  sound.volume: "3F"
+  sound.source: master
 ```
 
-### Feedback Options
+## Hologram Placeholders
 
-| Option           | Description        |
-| ---------------- | ------------------ |
-| `send.message`   | Chat message       |
-| `send.actionbar` | Action bar message |
-| `send.title`     | Title message      |
-| `send.subtitle`  | Subtitle message   |
-| `play.sound`     | Sound effect       |
+`placeholderGroupName` references the group used for hologram placeholders.
 
-<Frame>
-  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/npcs/npc.png?raw=true" alt="NPC Example" />
-</Frame>
+Examples:
 
-## Inventory Configuration
-
-Example inventory for server selection:
-
-```yaml
-version: "3"
-id: lobby
-npc-type: GROUP
-title: "<#ffffff>Lobbys"
-rows: 6
-
-pagination:
-  listed-group-name: lobby
-  listed-persistent-servers: []
-  server-name-pattern: "<group_name>-<numerical_id>"
-
-  state-items:
-    PREPARING: starting_pagination_item
-    STARTING: starting_pagination_item
-    AVAILABLE: available_pagination_item
-    INGAME: ingame_pagination_item
-
-  from-slot:
-    row: 1
-    column: 1
-
-  to-slot:
-    row: 3
-    column: 7
-
-  excluded-slots:
-    - row: 1
-      column: 8
-    - row: 2
-      column: 0
-    - row: 2
-      column: 8
-    - row: 3
-      column: 0
-
-  next-page-item:
-    item: next_pagination_item
-    slot:
-      row: 4
-      column: 0
-    increments:
-      LEFT: 1
-
-  previous-page-item:
-    item: previous_pagination_item
-    slot:
-      row: 4
-      column: 0
-    increments:
-      LEFT: -1
-
-static-slots:
-  - item: red_previous_pagination_item
-    slots:
-      - row: 5
-        column: 0
-
-  - item: red_next_pagination_item
-    slots:
-      - row: 5
-        column: 8
-
-items:
-  - id: next_pagination_item
-    material: LIME_STAINED_GLASS_PANE
-    display-name: "<green>Next Page"
-    lores: []
-
-  - id: previous_pagination_item
-    material: LIME_STAINED_GLASS_PANE
-    display-name: "<green>Previous Page"
-    lores: []
-
-  - id: red_next_pagination_item
-    material: RED_STAINED_GLASS_PANE
-    display-name: "<red>Next Page"
-    lores: []
-
-  - id: red_previous_pagination_item
-    material: RED_STAINED_GLASS_PANE
-    display-name: "<red>Previous Page"
-    lores: []
-
-  - id: starting_pagination_item
-    material: ORANGE_BANNER
-    display-name: "<group_name> <numerical_id>"
-    lores: []
-
-  - id: available_pagination_item
-    material: LIME_BANNER
-    display-name: "<group_name> <numerical_id>"
-    lores:
-      - "<gray>Players: <#38bdf8><online_players><dark_gray>/<#38bdf8><max_players>"
-
-  - id: ingame_pagination_item
-    material: BROWN_BANNER
-    display-name: "<group_name> <numerical_id>"
-    lores: []
-```
+- Group placeholder: `<group_name>`
+- Group player count placeholder: `<group_player_count:available>`
 
 <Frame>
-  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/npcs/inventory.png?raw=true" alt="Inventory Example" />
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/npcs/npc.png?raw=true" alt="SimpleCloud NPC example with hologram" />
 </Frame>
-
-## Commands
-
-| Command                                                                 | Description |
-|-------------------------------------------------------------------------|-------------|
-| `/scnpc apply <id>`                                                     | Apply NPC functions to an existing NPC |
-| `/scnpc <id> setType <type>`                                            | Set the NPC type |
-| `/scnpc <id> setHologram <name>`                                        | Set the NPC hologram |
-| `/scnpc <id> setOption <key> <value>`                                   | Set a global NPC option |
-| `/scnpc <id> getOption <key>`                                           | Get a global NPC option |
-| `/scnpc <id> removeOption <key>`                                        | Remove a global NPC option |
-| `/scnpc <id> interact <playerInteraction>`                              | Show interaction configuration |
-| `/scnpc <id> interact <playerInteraction> setAction <action>`           | Set an interaction action |
-| `/scnpc <id> interact <playerInteraction> setOption <key> <value>`      | Set an interaction option |
-| `/scnpc <id> interact <playerInteraction> getOption <key>`              | Get an interaction option |
-| `/scnpc <id> interact <playerInteraction> removeOption <key>`           | Remove an interaction option |
-| `/scnpc openInventory <name>`                                           | Open an NPC inventory |
-| `/scnpc createInventory <name> group <group>`                           | Create an inventory for a group |
-| `/scnpc createInventory <name> persistent <server>`                     | Create an inventory for persistent servers |
-| `/scnpc addInventoryPersistentServer <name> <server>`                   | Add a persistent server to an persistent inventory |
-
-## Permissions
-
-| Permission                | Description        |
-| ------------------------- | ------------------ |
-| `simplecloud.command.npc` | Access to `/scnpc` |

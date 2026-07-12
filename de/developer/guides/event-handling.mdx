@@ -1,6 +1,6 @@
 ---
 title: 'Events in Echtzeit behandeln'
-description: 'Auf Server-, Gruppen- und Spieler-Änderungen mit der Events API reagieren'
+description: 'Auf Server-, Gruppen- und Persistent-Server-Änderungen mit der Events API reagieren'
 ---
 
 Diese Anleitung zeigt Muster für die Echtzeit-Event-Behandlung in deinen Plugins.
@@ -10,7 +10,6 @@ Diese Anleitung zeigt Muster für die Echtzeit-Event-Behandlung in deinen Plugin
 ### Events abonnieren
 
 ```java
-// Subscribe gibt ein Subscription-Objekt zurück
 Subscription sub = api.event().server().onStarted(event -> {
     System.out.println("Server gestartet: " + event.getServerId());
 });
@@ -60,23 +59,29 @@ public class MeinPlugin extends JavaPlugin {
 
 ## Gängige Event-Muster
 
-### Auto-Start wenn Gruppe leer
+### Server anfordern, wenn eine Gruppe leer wird
 
 ```java
 public void setupAutoStart(String groupName, int minimum) {
     api.event().server().onStopped(event -> {
-        if (!event.getGroupName().equals(groupName)) return;
+        Server stopped = event.getServer();
+        if (!stopped.isFromGroup() || !groupName.equals(stopped.getGroup().getName())) {
+            return;
+        }
 
         api.server().getServersByGroup(groupName).thenAccept(servers -> {
             long running = servers.stream()
-                .filter(s -> s.getState() != ServerState.STOPPING)
+                .filter(server -> server.getState() != ServerState.STOPPING)
+                .filter(server -> server.getState() != ServerState.CLEANUP)
                 .count();
 
             if (running < minimum) {
-                api.group().getGroupByName(groupName).thenAccept(group -> {
-                    if (group != null) {
-                        api.server().startServer(new StartServerRequest(group.getId(), groupName));
+                api.group().getGroupByName(groupName).thenCompose(group -> {
+                    if (group == null) {
+                        return CompletableFuture.failedFuture(
+                            new IllegalArgumentException("Gruppe nicht gefunden: " + groupName));
                     }
+                    return api.group().requestServerStart(group);
                 });
             }
         });
@@ -89,7 +94,7 @@ public void setupAutoStart(String groupName, int minimum) {
 ```java
 public void setupStateLogging() {
     api.event().server().onStateChanged(event -> {
-        String message = String.format("[%s] %s → %s",
+        String message = String.format("[%s] %s -> %s",
             event.getServerId(),
             event.getOldState(),
             event.getNewState());
@@ -104,16 +109,10 @@ public void setupStateLogging() {
 ```java
 public void setupCrashNotifications() {
     api.event().server().onStopped(event -> {
-        notifyStaff(Component.text("[Alert] Server gestoppt: " + event.getServerId())
-            .color(NamedTextColor.RED));
-    });
-}
+        if (!event.getCrashed()) return;
 
-private void notifyStaff(Component message) {
-    api.player().getOnlinePlayers().thenAccept(players -> {
-        players.stream()
-            .filter(p -> hasStaffPermission(p))
-            .forEach(p -> p.sendMessage(message));
+        notifyStaff(Component.text("[Alert] Server abgestürzt: " + event.getServerId())
+            .color(NamedTextColor.RED));
     });
 }
 ```
@@ -122,12 +121,13 @@ private void notifyStaff(Component message) {
 
 ### Nach Gruppe filtern
 
-Server Events werden sowohl für Gruppen-Server als auch für persistente Server ausgelöst. Beim Filtern nach Gruppenname haben persistente Server Events einen leeren `groupName` und werden automatisch übersprungen.
+Server Events werden sowohl für Gruppen-Server als auch für persistente Server ausgelöst. Nutze das enthaltene `Server`-Model, um persistente Server-Instanzen zu überspringen.
 
 ```java
 public void watchGroup(String groupName) {
     api.event().server().onStarted(event -> {
-        if (event.getGroupName().equals(groupName)) {
+        Server server = event.getServer();
+        if (server.isFromGroup() && groupName.equals(server.getGroup().getName())) {
             handleGroupServerStart(event);
         }
     });
@@ -153,9 +153,4 @@ public CompletableFuture<Void> waitForServer(String serverId) {
 
     return future;
 }
-
-// Verwendung
-waitForServer("lobby-1").thenRun(() -> {
-    System.out.println("Server ist bereit!");
-});
 ```

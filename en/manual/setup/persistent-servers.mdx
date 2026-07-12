@@ -1,102 +1,108 @@
 ---
 title: 'Persistent Servers'
-description: 'Create always-on server instances that maintain state between restarts'
+description: 'Create and manage a server that keeps its worlds, configuration, and plugins.'
 ---
 
-Persistent servers are single, always-on server instances. Use them for servers that need to keep their world and data between restarts - like Citybuild, Skyblock, SMP, or Build servers.
+A persistent server is a Minecraft server or proxy that runs on one serverhost and keeps its files when it restarts or is disabled. Use one for a survival world, build server, or anything else that must keep its local data.
 
-For servers that should scale based on player demand, use [Groups](/en/manual/setup/groups) instead.
+<Info>
+  If you want multiple interchangeable servers or automatic scaling, use [Server Groups](/en/manual/setup/server-groups) instead.
+</Info>
 
-## Creating a Persistent Server
+## Before you start
+
+Connect at least one serverhost and make sure it has enough memory for your server.
+
+<Warning>
+  SimpleCloud does not move or back up a persistent server's files. Back up worlds and other important files yourself.
+</Warning>
+
+## Create a persistent server
 
 <Steps>
-  <Step title="Navigate to Servers">
-    Click **Servers** in the navigation to view your existing persistent servers. Click the **New Server** button in the top right.
+  <Step title="Open Persistent Servers">
+    In the dashboard, open **Persistent Servers** and click **Add Server**.
   </Step>
-  <Step title="Configure Basics">
-    - **Name**: Enter a unique name for your server (e.g., "Hub", "Proxy", "Lobby")
-    - **Type**: Choose **Server** for game servers or **Proxy** for load balancers
-    - **Server Host**: Select which host should run this server
-    - **Activate on creation**: Toggle on to start the server immediately after creation
+
+  <Step title="Choose the server">
+    Enter a name, choose **Server** or **Proxy**, and select the serverhost that will run it.
   </Step>
-  <Step title="Select Software">
-    - **Software**: Choose your server software (Paper, Spigot, Purpur, Fabric, Velocity, etc.)
-    - **Version**: Select the Minecraft/software version
-    - **Custom URL**: Alternatively, provide a direct download URL for custom server JARs
-    - **Configurator**: Select how your server should be configured (appears for Server type)
+
+  <Step title="Choose the software">
+    Select the server software, Minecraft version, and Java version.
+
+    If the software is not listed, choose **Custom** and fill in the required fields.
   </Step>
-  <Step title="Set Resources">
-    - **Memory**: Use a preset or set custom min/max memory allocation (in MB)
-    - **Max Players**: Maximum players allowed on this server
+
+  <Step title="Set resources">
+    Choose the memory and maximum player count. Proxies also require a starting port.
   </Step>
-  <Step title="Network (Proxy only)">
-    For proxy servers, configure the **Port** for incoming player connections.
-  </Step>
-  <Step title="Add Plugins (Optional)">
-    Search and select plugins from Modrinth to automatically install. You can also add plugins later in server settings.
-  </Step>
-  <Step title="Review and Create">
-    Review your configuration summary and click **Create Server** to finish.
+
+  <Step title="Create the server">
+    Review the configuration and click **Create Server**. SimpleCloud starts it automatically unless you disabled **Activate on creation**.
+
+    <Check>
+      Open the server and follow its first startup in the console.
+    </Check>
   </Step>
 </Steps>
 
-## Server Status
+## Start and manage the server
 
-| Status | Meaning |
-|--------|---------|
-| **Active** | Server is enabled and running (or ready to run) |
-| **Inactive** | Server is disabled - enable it in general settings to start |
+Open the server in the dashboard to view its status, console, and files. Use its actions menu to enable, disable, or restart it.
 
-## Server Settings
+- **Enable** tells SimpleCloud to keep the server running. If it stops, SimpleCloud starts it again.
+- **Disable** stops the server and leaves it stopped until you enable it again.
+- **Restart** stops and starts the server without deleting its files.
 
-### General Settings
+You can also enable or disable the server with the **Active** switch in **Settings**. Save any other settings you change. If a change affects how the server starts, restart it to apply the new configuration.
 
-- **Active Toggle**: Enable or disable the server
-- **Memory**: Adjust min/max memory allocation
-- **Max Players**: Change player limit
-- **Tags**: Add organizational tags for filtering
+Use the main **Settings** page for resources and the **Blueprint** page for software and startup configuration. The **Deployment** page changes the assigned serverhost; follow the migration steps below before using it.
 
-### Deployment Settings
+Use the **Files** tab to manage its world, configuration, and plugins. These files stay in place when you restart or disable the server.
 
-Shows the assigned server host. Unlike groups, persistent servers run on a single host which is set during creation.
+## Move the server to another serverhost
 
-### Blueprint Settings
+Changing the assigned serverhost does not move the server's files. Back up and copy them before starting the server on the new host.
 
-Modify the underlying server template:
+<Steps>
+  <Step title="Disable the server">
+    Disable the persistent server and wait for it to stop.
+  </Step>
 
-- View current software and version
-- Change configurator settings
-- Edit JVM options and runtime arguments
+  <Step title="Copy its files">
+    Copy the complete `running/persistent/<server-name>` directory from the old serverhost to the same location on the new serverhost.
+  </Step>
 
-### Properties Settings
+  <Step title="Change the serverhost">
+    Open **Settings** > **Deployment**, select the new serverhost, and confirm the change.
+  </Step>
 
-Add custom key-value properties to your server:
+  <Step title="Enable and verify">
+    Enable the server, join it, and confirm that its worlds and configuration are present before removing the old copy.
+  </Step>
+</Steps>
 
-- Properties are metadata you define for your own use
-- Access them in your plugins via the [Cloud API](/en/developer/controller/servers)
-- Available as environment variables (prefixed with `SIMPLECLOUD_`)
-- Use cases: server type identifiers, custom settings for your plugins
+<Warning>
+  Starting the server on the new serverhost before copying its files can create a new, empty server directory.
+</Warning>
 
-### Workflows Settings
+## Delete a persistent server
 
-Automate tasks with workflows:
+Open **Settings** > **Danger Zone** and follow the deletion prompts. SimpleCloud stops the server if necessary and removes its configuration and any associated blueprint. The server files remain on the serverhost.
 
-- **Manual Workflows**: Trigger on demand
-- **On Start Workflows**: Run when the server starts
-- **On Stop Workflows**: Run when the server stops
+## Troubleshooting
 
-### Plugins Settings
+<AccordionGroup>
+  <Accordion title="The server does not start">
+    Confirm that the server is enabled, its serverhost is connected, and the host has enough free memory. Then check the server's console for the error.
+  </Accordion>
 
-Manage plugins for the server:
+  <Accordion title="The world is empty after changing serverhosts">
+    Disable the server. Copy its `running/persistent/<server-name>` directory from the old serverhost to the new one, then enable it and check the world again.
+  </Accordion>
 
-- Add plugins from Modrinth, GitHub, or direct URLs
-- View installed plugins with source information
-- Remove plugins from the server
-
-### Danger Zone
-
-Permanently delete the server:
-
-- Removes the server and its configuration
-- Stop the server first before deleting
-- Requires confirmation by typing the server name
+  <Accordion title="A setting did not take effect">
+    Save the change and restart the server. Check its console if the problem continues.
+  </Accordion>
+</AccordionGroup>

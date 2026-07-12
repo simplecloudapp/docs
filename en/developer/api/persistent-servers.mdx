@@ -1,0 +1,166 @@
+---
+title: 'Persistent Servers API'
+description: 'Create and manage long-lived server configurations'
+---
+
+The Persistent Servers API manages long-lived server configurations through `api.persistentServer()`. Persistent servers keep their identity across restarts and can be assigned to a specific serverhost.
+
+## Get Persistent Servers
+
+```java
+// Get all persistent servers
+api.persistentServer().getAllPersistentServers()
+    .thenAccept(servers -> servers.forEach(server ->
+        System.out.println(server.getName())));
+
+// Get persistent servers with filters
+PersistentServerQuery query = PersistentServerQuery.create()
+    .filterByActive(true)
+    .filterByTags("survival")
+    .limit(20);
+
+api.persistentServer().getAllPersistentServers(query)
+    .thenAccept(servers -> System.out.println("Matches: " + servers.size()));
+
+// Get by ID or name
+api.persistentServer().getPersistentServerById("persistent-server-uuid")
+    .thenAccept(server -> System.out.println(server.getName()));
+
+api.persistentServer().getPersistentServerByName("survival")
+    .thenAccept(server -> System.out.println(server.getPersistentServerId()));
+```
+
+## Create Persistent Server
+
+```java
+CreatePersistentServerRequest request = CreatePersistentServerRequest.builder()
+    .name("survival")
+    .type(GroupServerType.SERVER)
+    .minMemory(1024)
+    .maxMemory(4096)
+    .maxPlayers(80)
+    .active(true)
+    .priority(100)
+    .serverhostId("serverhost-1")
+    .tags(List.of("survival", "public"))
+    .properties(Map.of("world", "main"))
+    .build();
+
+api.persistentServer().createPersistentServer(request)
+    .thenAccept(server -> System.out.println("Created: " + server.getPersistentServerId()));
+```
+
+## Update Persistent Server
+
+```java
+UpdatePersistentServerRequest update = UpdatePersistentServerRequest.builder()
+    .maxPlayers(100)
+    .active(true)
+    .priority(200)
+    .build();
+
+api.persistentServer().updatePersistentServer("persistent-server-uuid", update)
+    .thenAccept(server -> System.out.println("Updated: " + server.getName()));
+```
+
+## Delete Persistent Server
+
+```java
+api.persistentServer().deletePersistentServer("persistent-server-uuid")
+    .thenRun(() -> System.out.println("Deleted persistent server"));
+```
+
+## Persistent Server Properties
+
+```java
+api.persistentServer()
+    .updatePersistentServerProperties("persistent-server-uuid", Map.of(
+        "world", "main",
+        "difficulty", "hard"
+    ))
+    .thenAccept(properties -> System.out.println("Properties: " + properties));
+
+api.persistentServer()
+    .deletePersistentServerProperties("persistent-server-uuid", List.of("difficulty"));
+```
+
+## PersistentServerQuery
+
+| Filter | Method | Description |
+|--------|--------|-------------|
+| Tags | `filterByTags(String... tags)` | Match persistent servers with any of the given tags |
+| Active status | `filterByActive(boolean active)` | Match active or inactive persistent servers |
+| Serverhost | `filterByServerhostId(String serverhostId)` | Match persistent servers assigned to one serverhost |
+| Limit | `limit(int limit)` | Limit the number of returned results |
+
+## PersistentServer Model
+
+`PersistentServer` extends `ServerBase`, so it includes the shared configuration fields used by groups and persistent servers.
+
+<ResponseField name="persistentServerId" type="string" required>
+  Unique persistent server ID.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Human-readable server name.
+</ResponseField>
+
+<ResponseField name="type" type="GroupServerType" required>
+  Persistent server type. Use `SERVER` for game servers or `PROXY` for proxy servers.
+</ResponseField>
+
+<ResponseField name="minMemory" type="integer | null">
+  Minimum memory in MB.
+</ResponseField>
+
+<ResponseField name="maxMemory" type="integer | null">
+  Maximum memory in MB.
+</ResponseField>
+
+<ResponseField name="maxPlayers" type="integer | null">
+  Player limit.
+</ResponseField>
+
+<ResponseField name="active" type="boolean | null">
+  Whether SimpleCloud should keep the persistent server running.
+</ResponseField>
+
+<ResponseField name="priority" type="integer | null">
+  Priority used by scheduling and ordering logic.
+</ResponseField>
+
+<ResponseField name="serverhostId" type="string | null">
+  Assigned serverhost ID.
+</ResponseField>
+
+<ResponseField name="playerCount" type="integer" required>
+  Player count of the running instance, or `0` if no instance exists.
+</ResponseField>
+
+<ResponseField name="source" type="SourceConfig | null">
+  Blueprint or image source configuration.
+</ResponseField>
+
+<ResponseField name="workflows" type="WorkflowsConfig | null">
+  Lifecycle workflows.
+</ResponseField>
+
+<ResponseField name="properties" type="object | null">
+  Custom metadata.
+</ResponseField>
+
+<ResponseField name="tags" type="List<String> | null">
+  Tags used for filtering and organization.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string" required>
+  Creation timestamp in ISO 8601 format.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string" required>
+  Last update timestamp in ISO 8601 format.
+</ResponseField>
+
+<Note>
+  Running instances created from persistent servers still appear in `api.server()` and expose `server.getPersistentServerId()` plus `server.getPersistentServer()`.
+</Note>

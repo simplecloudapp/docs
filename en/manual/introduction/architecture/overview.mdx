@@ -1,140 +1,44 @@
 ---
-title: 'Architecture'
-description: 'Learn about the core concepts and distributed architecture of SimpleCloud v3'
+title: "Architecture"
+description: "Understand how the dashboard, CLI, and serverhost work together."
 ---
 
-## Understanding SimpleCloud v3
+SimpleCloud separates managing your network from running your Minecraft servers. You manage the same network through the dashboard or CLI, while serverhosts provide the machines that run it.
 
-SimpleCloud v3 is built on a distributed microservices architecture designed for scalability and reliability. The system separates orchestration (Controller) from execution (Serverhost), enabling you to scale your Minecraft infrastructure across multiple machines.
+## The three parts
 
-## Core Components
+<CardGroup cols={3}>
+  <Card title="Dashboard" icon="browser" href="/en/manual/setup/dashboard">
+    The web interface for configuring your network and viewing servers, logs, and status.
+  </Card>
+  <Card title="CLI" icon="terminal" href="/en/manual/introduction/architecture/cli">
+    The terminal interface for setting up serverhosts and managing the same network without the dashboard.
+  </Card>
+  <Card title="Serverhost" icon="server" href="/en/manual/introduction/architecture/serverhost">
+    The background service that prepares and runs Minecraft servers on its machine.
+  </Card>
+</CardGroup>
 
-### Controller
+## How they work together
 
-The [Controller](/en/manual/architecture/controller) is the central orchestration service that:
+1. Install a serverhost on every machine whose resources you want SimpleCloud to use.
+2. Configure groups and persistent servers in the dashboard or CLI.
+3. SimpleCloud starts the requested Minecraft servers on a suitable serverhost and reports their status and logs.
 
-- Manages the desired state of your infrastructure
-- Handles groups, blueprints, servers, and persistent servers
-- Provides REST APIs for management and integration
-- Coordinates serverhosts via NATS messaging
-- Supports horizontal scaling with leader election
+The dashboard and CLI change the same network; choose whichever interface fits the task. The serverhost does not replace either interface—it runs the Minecraft servers you configure through them.
 
-### Serverhost
+When you add another machine, install another serverhost. SimpleCloud can then use both machines to run your network.
 
-The [Serverhost](/en/manual/architecture/serverhost) is the execution agent that:
+## Next steps
 
-- Runs on each machine hosting Minecraft servers
-- Manages server lifecycle (preparation, start, stop, cleanup)
-- Executes workflows for server setup
-- Supports multiple runners (Screen/Tmux, Docker)
-- Handles plugin installation and configuration
-
-### CLI
-
-The [CLI](/en/manual/architecture/cli) provides:
-
-- Interactive setup and configuration
-- Component lifecycle management
-- Group and server management
-- Context switching for multiple environments
-
-## Architecture Diagram
-
-```mermaid
-flowchart TB
-    subgraph Controller["Controller"]
-        API["REST API\n(port 1337)"]
-        Reconciler["Reconciler\nLoop"]
-        DB["Database\n(PostgreSQL)"]
-    end
-
-    Controller -->|NATS Messaging| SH1
-    Controller -->|NATS Messaging| SH2
-    Controller -->|NATS Messaging| SH3
-
-    subgraph SH1["Serverhost (Host 1)"]
-        S1["Minecraft Servers"]
-    end
-
-    subgraph SH2["Serverhost (Host 2)"]
-        S2["Minecraft Servers"]
-    end
-
-    subgraph SH3["Serverhost (Host 3)"]
-        S3["Minecraft Servers"]
-    end
-```
-
-## Key Concepts
-
-### Blueprints
-
-Blueprints are server templates that define:
-
-- Minecraft version and server software (Paper, Velocity, etc.)
-- Runtime configuration (Java version, JVM arguments)
-- Workflow steps for server preparation
-- Configurator settings
-
-Blueprints are reusable - multiple groups can reference the same blueprint.
-
-### Groups
-
-Groups define scalable collections of servers with:
-
-- Resource allocation (memory, max players)
-- Auto-scaling rules (min/max servers, player threshold)
-- Deployment strategy (which serverhosts to use)
-- Reference to a blueprint or container image
-
-### Servers
-
-Servers are individual running instances:
-
-- Created dynamically from groups based on scaling rules
-- Have unique identifiers and assigned ports
-- Report metrics (player count, memory usage)
-- Follow a lifecycle: Queued → Preparing → Starting → Available → Stopping
-
-### Persistent Servers
-
-Persistent servers are long-running instances that:
-
-- Maintain state across restarts
-- Are pinned to specific serverhosts
-- Don't scale automatically
-- Ideal for survival worlds, build servers, or lobbies with persistent data
-
-### Plugins
-
-Plugins can be assigned to groups or persistent servers:
-
-- Automatic download from Modrinth, Hangar, or Spigot
-- Version and platform-aware installation
-- Cached for faster server startup
-
-## Data Flow
-
-1. **Configuration**: You define blueprints, groups, and plugins via CLI or API
-2. **Reconciliation**: Controller compares desired state with actual state every 5 seconds
-3. **Scheduling**: Controller determines which servers to start/stop and on which serverhost
-4. **Communication**: Controller sends requests to serverhosts via NATS
-5. **Execution**: Serverhost prepares and launches the server
-6. **Reporting**: Serverhost reports server status back to controller
-
-## Infrastructure
-
-SimpleCloud uses these infrastructure components:
-
-| Component | Purpose |
-|-----------|---------|
-| PostgreSQL | Persistent state storage |
-| NATS | Message broker for serverhost communication |
-| Valkey/Redis | Metrics caching (optional) |
-| ClickHouse | Log and metrics storage (optional) |
-
-## Next Steps
-
-- [Controller](/en/manual/architecture/controller) - Deep dive into the orchestration service
-- [Serverhost](/en/manual/architecture/serverhost) - Learn about server execution
-- [CLI](/en/manual/architecture/cli) - Explore command-line management
+<CardGroup cols={2}>
+  <Card title="Install SimpleCloud" icon="download" href="/en/manual/setup/installation">
+    Connect your first machine and start using the dashboard.
+  </Card>
+  <Card title="Create a server group" icon="layer-group" href="/en/manual/setup/server-groups">
+    Run replaceable server instances from shared settings and files.
+  </Card>
+  <Card title="Create a persistent server" icon="hard-drive" href="/en/manual/setup/persistent-servers">
+    Run one named server that keeps its files across restarts.
+  </Card>
+</CardGroup>

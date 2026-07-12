@@ -1,111 +1,112 @@
 ---
 title: 'Signs'
-description: "Learn about SimpleCloud's signs plugin for server navigation and status display"
+description: "Use SimpleCloud's signs plugin for server navigation and live status displays"
 tag: 'Server'
 ---
 
 ## Overview
 
-The Signs Plugin lets players click signs to connect to different servers in your network.
+The Signs plugin lets players click signs to connect to SimpleCloud group servers. Signs update automatically with server state, player counts, MiniMessage text, and optional animations.
 
 ## Supported Software
 
-| Server Type    | Plugin Support |
-| -------------- | -------------- |
-| Paper & Forks  | ✅ Yes         |
-| Spigot & Forks | 🔄 Planned     |
+| Server Type   | Plugin Support |
+| ------------- | -------------- |
+| Paper & Forks | Yes            |
+| Spigot        | No             |
 
 ## Quick Setup
 
-1. Download the plugin from [GitHub](https://github.com/simplecloudapp/sign-plugin/releases)
-2. Place it in your server template's plugins folder
-
-## Configuration
-
-The Signs Plugin offers extensive configuration options for dynamic and engaging server signs. Each configuration entry defines sign behavior based on server state.
-
-Example configuration:
-
-```yaml
-name: "starting" # Unique identifier
-rule: "STARTING" # Server state this applies to
-server-name: "%group%-%numerical-id%" # Dynamic name template
-priority: 0 # Rule precedence (higher overrides lower)
-frame-update-interval: 500 # Update interval in milliseconds
-frames:
-  - lines:
-      - "starting."
-      - "<group>-<numerical-id>"
-  - lines:
-      - "starting.."
-      - "<group>-<numerical-id>"
-  - lines:
-      - "starting..."
-      - "<group>-<numerical-id>"
-```
-
-## Sign Rules
-
-| Rule          | Description      | State Condition                                        |
-| ------------- | ---------------- | ------------------------------------------------------ |
-| `STARTING`    | Starting servers | Server state is `STARTING`                             |
-| `OFFLINE`     | Inactive servers | Server is `null`                                       |
-| `MAINTENANCE` | Maintenance mode | Server is `AVAILABLE` with `maintenance=true`          |
-| `FULL`        | Maximum capacity | Server is `AVAILABLE` with `playerCount == maxPlayers` |
-| `EMPTY`       | No players       | Server is `AVAILABLE` with `playerCount == 0`          |
-| `ONLINE`      | Active servers   | Server is `AVAILABLE`                                  |
-
-## Placeholders
-
-Available placeholders for sign configuration (all follow the MiniMessage `<placeholder>` syntax):
-
-| Placeholder                   | Description                                   | Default   |
-| ----------------------------- | --------------------------------------------- | --------- |
-| `<group>`                     | Server group                                  | "unknown" |
-| `<numerical-id>`              | Server ID                                     | "0"       |
-| `<type>`                      | Server type                                   | "unknown" |
-| `<host>`                      | Server host                                   | "unknown" |
-| `<ip>`                        | Server IP                                     | "unknown" |
-| `<port>`                      | Server port                                   | "0"       |
-| `<min-memory>`                | Min memory                                    | "0"       |
-| `<max-memory>`                | Max memory                                    | "0"       |
-| `<max-players>`               | Max players                                   | "0"       |
-| `<player-count>`              | Current players                               | "0"       |
-| `<state>`                     | Server state                                  | "unknown" |
-| `<player_name>`               | Player name (rules run for a player only)     | n/a       |
-| `<player_sender>`             | Player's proxy/server name                    | n/a       |
-| `<property:[name]:[default]>` | Custom property lookup with optional fallback | ""        |
-
-For dynamic sign properties you can use the tag `<property:joinstate:'Maintenance'>`. The resolver looks up `joinstate` in the server's properties map and, if it isn't present, falls back to the optional `default` argument (empty string when omitted).
-
-### Example Usage
-
-```yaml
-name: "online"
-rule: "ONLINE"
-display-name: "<group>-<numerical-id>"
-priority: 50
-frame-update-interval: 500
-frames:
-  - lines:
-      - "Server: <group>"
-      - "ID: <numerical-id>"
-      - "Players: <player-count>/<max-players>"
-      - "State: <state>"
-```
+1. Download the plugin from [GitHub](https://github.com/simplecloudapp/sign-plugin/releases).
+2. Place it in your server template's `plugins/` folder.
+3. Make sure the `simplecloud-api` plugin is installed on the server.
+4. Start the server once to generate the default layouts.
+5. Look at a sign in-game and register it with `/sign add <group>`.
 
 ## Commands
 
-| Command                | Description       |
-| ---------------------- | ----------------- |
-| `/sign add <group>`    | Register new sign |
-| `/sign remove [group]` | Unregister sign   |
+The command is available as `/simplecloudsign`, `/simplecloudsigns`, `/scsigns`, `/scsign`, `/cloudsigns`, `/cloudsign`, `/signs`, and `/sign`.
+
+| Command | Description |
+| ------- | ----------- |
+| `/sign help` | Show command help |
+| `/sign list [page] [group]` | List registered signs, optionally filtered by target |
+| `/sign add <group>` | Register the sign you are looking at for a server group |
+| `/sign remove` | Unregister the sign you are looking at |
+| `/sign remove <group>` | Remove all signs for a registered target key |
+
+<Note>
+  You must look at the sign block you want to add or remove. The command checks
+  up to 8 blocks away.
+</Note>
 
 ## Permissions
 
-| Permission                   | Description          |
-| ---------------------------- | -------------------- |
-| `signs.command.*`            | All sign commands    |
-| `signs.command.add`          | Register new signs   |
-| `signs.command.remove`       | Unregister signs     |
-| `signs.command.remove.group` | Remove by group name |
+| Permission | Description |
+| ---------- | ----------- |
+| `simplecloud.command.signs` | Use the base signs command |
+| `simplecloud.command.signs.list` | List registered signs |
+| `simplecloud.command.signs.add` | Register signs |
+| `simplecloud.command.signs.remove` | Remove the targeted sign |
+| `simplecloud.command.signs.remove.group` | Remove all signs for a target |
+
+## Layouts
+
+Layouts define what a sign displays for a matching server state. The plugin ships default layouts for `STARTING`, `OFFLINE`, `MAINTENANCE`, `FULL`, `EMPTY`, and `ONLINE`.
+
+```yaml
+name: "online_default"
+rule: "ONLINE"
+priority: 9
+serverName: "%group%-%numerical-id%"
+frame-update-interval: 1250
+
+frames:
+  - lines:
+      - "<color:#22c55e>⚡</color>"
+      - "<group>-<numerical-id>"
+      - "<player-count>/<max-players>"
+      - "<color:#22c55e><b>ONLINE</b></color>"
+```
+
+| Field | Description |
+| ----- | ----------- |
+| `name` | Unique layout name |
+| `rule` | Built-in rule name used to decide when the layout applies |
+| `priority` | Higher priority layouts win when multiple layouts match |
+| `serverName` | Name pattern used to resolve target servers |
+| `frame-update-interval` | Animation interval in milliseconds |
+| `frames` | One or more four-line sign frames |
+
+## Placeholders
+
+Use MiniMessage placeholder syntax inside layout lines.
+
+| Placeholder | Description |
+| ----------- | ----------- |
+| `<group>` | Group name for group servers |
+| `<numerical-id>` | Numerical ID for group servers |
+| `<type>` | Server type |
+| `<host>` | Serverhost ID |
+| `<ip>` | Server IP address |
+| `<port>` | Server port |
+| `<min-memory>` | Minimum memory in MB |
+| `<max-memory>` | Maximum memory in MB |
+| `<max-players>` | Maximum players |
+| `<player-count>` | Current player count |
+| `<state>` | Server state |
+| `<player_name>` | Player name when a player-specific update runs |
+| `<player_sender>` | Player's current server when available |
+
+## Server Name Patterns
+
+The `serverName` field supports these replacement tokens:
+
+| Token | Description |
+| ----- | ----------- |
+| `%group%` | Group name |
+| `%numerical-id%` | Numerical ID |
+
+<Frame>
+  <img src="https://raw.githubusercontent.com/simplecloudapp/branding/refs/heads/main/media/plugin/signs/preview.png" alt="SimpleCloud signs in-game preview" />
+</Frame>

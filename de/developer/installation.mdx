@@ -7,22 +7,30 @@ import { DependencySnippet } from "/snippets/DependencySnippet.jsx";
 
 ## Dependencies hinzufügen
 
-Füge die Cloud API zu deiner Build-Konfiguration hinzu. Die Version wird automatisch aus unserem Maven-Repository abgerufen.
+Füge die Cloud API zu deiner Build-Konfiguration hinzu. Die Beispiele unten laden die neueste verfügbare API-Version aus dem SimpleCloud Maven-Repository.
 
 <DependencySnippet
+  language="de"
   dependencies={[
     {
       groupId: "app.simplecloud.api",
       artifactId: "api",
-      type: "implementation",
+      type: "compileOnly",
     },
   ]}
-  repositories={[
-    { id: "simplecloud", url: "https://repo.simplecloud.app/snapshots" },
-    { id: "buf", url: "https://buf.build/gen/maven" },
-  ]}
-  type="snapshot"
 />
+
+<Note>
+  Verwende `compileOnly` oder Maven `provided` für Minecraft-Plugins, weil das
+  `simplecloud-api` Plugin die API zur Laufzeit bereitstellt. Nutze
+  `implementation` nur für Standalone-Anwendungen, die die API selbst mitliefern.
+</Note>
+
+<Tip>
+  Für reproduzierbare Produktionsbuilds solltest du die angezeigte Version nach
+  dem Testen fest pinnen. Aktualisiere diese Seite vor dem Kopieren, wenn du die
+  neueste API verwenden möchtest.
+</Tip>
 
 ## Plugin-Setup
 
@@ -121,7 +129,8 @@ CloudApi api = CloudApi.create(CloudApiOptions.builder()
     .networkId("deine-netzwerk-id")
     .networkSecret("dein-secret")
     .controllerUrl("https://controller.simplecloud.app")
-    .natsUrl("nats://platform.simplecloud.app:4222")
+    .natsUrl("wss://nats.simplecloud.app:443")
+    .component("mein-plugin")
     .build());
 ```
 
@@ -133,7 +142,8 @@ val api = CloudApi.create(CloudApiOptions.builder()
     .networkId("deine-netzwerk-id")
     .networkSecret("dein-secret")
     .controllerUrl("https://controller.simplecloud.app")
-    .natsUrl("nats://platform.simplecloud.app:4222")
+    .natsUrl("wss://nats.simplecloud.app:443")
+    .component("mein-plugin")
     .build())
 ```
 
@@ -144,18 +154,43 @@ val api = CloudApi.create(CloudApiOptions.builder()
 
 Die API liest standardmäßig diese Umgebungsvariablen:
 
-| Variable                     | Standard                                 | Beschreibung              |
-| ---------------------------- | ---------------------------------------- | ------------------------- |
-| `SIMPLECLOUD_NETWORK_ID`     | `"default"`                              | Deine Netzwerk-Kennung    |
-| `SIMPLECLOUD_NETWORK_SECRET` | `""`                                     | Authentifizierungs-Secret |
-| `SIMPLECLOUD_CONTROLLER_URL` | `"https://controller.simplecloud.app"`   | Controller API-Endpunkt   |
-| `SIMPLECLOUD_NATS_URL`       | `"nats://platform.simplecloud.app:4222"` | NATS-Server für Events    |
+| Variable | Standard | Beschreibung |
+| -------- | -------- | ------------ |
+| `SIMPLECLOUD_NETWORK_ID` | `"default"` | Deine Netzwerk-Kennung |
+| `SIMPLECLOUD_NETWORK_SECRET` | `""` | Authentifizierungs-Secret |
+| `SIMPLECLOUD_CONTROLLER_URL` | `"https://controller.simplecloud.app"` | Controller API-Endpunkt |
+| `SIMPLECLOUD_NATS_URL` | `"wss://nats.simplecloud.app:443"` | NATS-Endpunkt für Events |
+| `SIMPLECLOUD_NATS_FAILOVER_RECONNECT_AFTER` | `"30s"` | Wartezeit, bevor die API nach einem Failover wieder zu NATS verbindet |
+| `SIMPLECLOUD_SERVER_VERSION_MANIFEST_URL` | SimpleCloud-Server-Manifest auf GitHub | Manifest für Inline-Blueprints ohne `serverUrl` |
 
 <Note>
   Innerhalb von SimpleCloud-Servern werden diese Variablen automatisch gesetzt.
   Du musst sie nur für Standalone-Anwendungen oder externe Services
   konfigurieren.
 </Note>
+
+## Cache und Timeouts
+
+Die API nutzt standardmäßig einen lokalen Query-Cache. Sie liefert frische Cache-Daten sofort, kann veraltete Daten während einer Hintergrund-Aktualisierung zurückgeben und invalidiert betroffene Einträge automatisch, wenn Cloud-API-Events eintreffen.
+
+```java
+CloudApi api = CloudApi.create(CloudApiOptions.builder()
+    .cache(CacheConfig.builder()
+        .defaultStaleTime(Duration.ofSeconds(5))
+        .defaultCacheTime(Duration.ofMinutes(2))
+        .build())
+    .httpConnectTimeout(Duration.ofSeconds(5))
+    .httpReadTimeout(Duration.ofSeconds(10))
+    .httpWriteTimeout(Duration.ofSeconds(10))
+    .build());
+
+// Cache vollständig deaktivieren
+CloudApi uncached = CloudApi.create(CloudApiOptions.builder()
+    .disableCache()
+    .build());
+```
+
+Verwende `api.cache()`, um Cache-Statistiken zu prüfen oder Einträge manuell zu invalidieren.
 
 ## Best Practices
 
@@ -194,7 +229,9 @@ Die API liest standardmäßig diese Umgebungsvariablen:
     Subscriptions implementieren `AutoCloseable`. Schließe sie wenn du fertig bist.
 
     ```java
-    Subscription sub = api.event().server().onStarted(event -> { ... });
+    Subscription sub = api.event().server().onStarted(event -> {
+        System.out.println("Gestartet: " + event.getServer().getServerId());
+    });
 
     // Beim Herunterfahren
     sub.close();

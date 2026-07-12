@@ -46,24 +46,22 @@ Diese Schleife stellt sicher, dass deine Infrastruktur deiner Konfiguration ents
 
 Skalierung basierend auf verfügbaren Spieler-Slots:
 
-```yaml
-scaling:
-  mode: SLOTS
-  min_servers: 1
-  max_servers: 5
-  player_threshold: 0.8  # Skaliert hoch bei 80% Auslastung
-```
+| Einstellung | Beispiel | Bedeutung |
+| ----------- | -------- | --------- |
+| Scaling mode | Slots | Skaliert anhand freier Spielerplätze |
+| Minimum Servers | `1` | Hält mindestens einen Server online |
+| Maximum Servers | `5` | Startet nie mehr als fünf Server |
+| Player threshold | `80%` | Startet einen weiteren Server, wenn diese Auslastung erreicht wird |
 
 ### Server-basierte Skalierung
 
 Feste Anzahl von Servern beibehalten:
 
-```yaml
-scaling:
-  mode: SERVER
-  min_servers: 2
-  max_servers: 2
-```
+| Einstellung | Beispiel | Bedeutung |
+| ----------- | -------- | --------- |
+| Scaling mode | Servers | Skaliert anhand der Serveranzahl |
+| Minimum Servers | `2` | Hält zwei Server online |
+| Maximum Servers | `2` | Skaliert nicht über zwei Server hinaus |
 
 ## Hochverfügbarkeit
 
@@ -160,6 +158,6 @@ sc attach controller
 
 ## Verwandte Themen
 
-- [Developer API](/de/developer/overview) - Vollständige API-Dokumentation
+- [Self-hosting](/de/manual/setup/self-hosting) - Eigenen Controller und Infrastruktur-Dienste betreiben
 - [Server](/de/manual/setup/servers) - Server-Lebenszyklus und Zustände
-- [Architektur-Übersicht](/de/manual/architecture/overview) - System-Architekturdiagramm
+- [Architektur-Übersicht](/de/manual/introduction/architecture/overview) - System-Architekturdiagramm
