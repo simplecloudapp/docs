@@ -42,7 +42,8 @@ this host.
 ## Synchronize shared files
 
 Serverhosts need the same files when they can run the same servers. SimpleCloud
-keeps these directories synchronized:
+does not synchronize these directories by default. After you configure and
+enable synchronization, it keeps these directories synchronized:
 
 - `templates/` contains the files used to prepare servers
 - `workflows/` contains preparation and cleanup workflows
