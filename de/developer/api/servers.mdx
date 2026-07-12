@@ -72,16 +72,23 @@ curl "https://your-controller/v0/servers?state=AVAILABLE&type=lobby" \
 | `X-Network-ID` | Header | Ja | Deine Netzwerk-ID |
 | `X-Network-Secret` | Header | Ja | Dein Netzwerk-Secret **oder** ein App-JWT für das Zielnetzwerk. Wenn der Controller mit JWT-Authentifizierung konfiguriert ist, werden beide Credential-Typen akzeptiert. JWTs müssen für das in `X-Network-ID` angegebene Netzwerk gültig sein und werden mit subject-basierten Berechtigungen gescoped; Netzwerk-Secrets gewähren vollen Netzwerkzugriff. |
 | `X-SC-Component` | Header | Nein | Optionaler Name der aufrufenden Komponente (zum Beispiel `serverhost`). Wenn gesetzt, wird der Wert dem Request-Wide-Event des Controllers als Feld `component` angehängt, sodass Request-Logs nach der ursprünglichen SimpleCloud-Komponente gefiltert werden können. Führende und nachgestellte Leerzeichen werden entfernt. |
+| `server_id` | Query | Nein | Nach Server-ID(s) filtern, kommagetrennt |
 | `server_group_id` | Query | Nein | Nach Server-Gruppen-ID(s) filtern, kommagetrennt |
 | `state` | Query | Nein | Nach Status filtern, kommagetrennt (z.B. `AVAILABLE,STARTING`) |
-| `serverhost_id` | Query | Nein | Nach Serverhost-ID filtern |
-| `persistent_server_id` | Query | Nein | Nach Persistent-Server-ID filtern |
+| `serverhost_id` | Query | Nein | Nach Serverhost-ID(s) filtern, kommagetrennt |
+| `persistent_server_id` | Query | Nein | Nach Persistent-Server-ID(s) filtern, kommagetrennt |
 | `type` | Query | Nein | Nach Typ(en) filtern, kommagetrennt (Server-Gruppen- ODER Persistent-Server-Typ) |
 | `name` | Query | Nein | Nach Name(n) filtern, kommagetrennt (Server-Gruppen- ODER Persistent-Server-Name) |
 | `tags` | Query | Nein | Nach Tag(s) filtern, kommagetrennt (matcht wenn irgendein Tag passt) |
 | `numerical_id` | Query | Nein | Nach numerischer ID filtern, kommagetrennt (z.B. `1,5,10`) |
 | `sort_by` | Query | Nein | Sortierfeld: `created_at`, `updated_at`, `numerical_id`, `state` |
 | `sort_order` | Query | Nein | Sortierreihenfolge: `asc` (Standard) oder `desc` |
+| `limit` | Query | Nein | Maximale Anzahl zurückgegebener Ergebnisse (1–500). Wenn nicht gesetzt, werden alle zugänglichen Server zurückgegeben. |
+| `offset` | Query | Nein | Anzahl zu überspringender Ergebnisse. Erfordert `limit`; `offset` ohne `limit` liefert `400`. Standard ist `0`. |
+
+<Note>
+Ungültige Filterwerte führen zu `400 Bad Request`. Das umfasst fehlerhafte UUIDs, unbekannte Enum-Werte (für `type`, `source_type`, `state`), Nicht-Boolean-Werte für Boolean-Filter und Paginierungswerte außerhalb des zulässigen Bereichs.
+</Note>
 
 ### Response-Cache
 

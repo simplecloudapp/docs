@@ -76,16 +76,23 @@ curl "https://your-controller/v0/servers?state=AVAILABLE&type=lobby" \
 | `X-Network-ID` | Header | Yes | Your network identifier |
 | `X-Network-Secret` | Header | Yes | Your network secret **or** an app JWT for the target network. When the controller has JWT authentication configured, either credential type is accepted. JWTs must be valid for the network in `X-Network-ID` and are subject-permission scoped; network secrets grant full network access. |
 | `X-SC-Component` | Header | No | Optional caller component name (for example, `serverhost`). When set, the value is attached to the controller's request wide event as the `component` field so request logs can be filtered by the originating SimpleCloud component. Leading and trailing whitespace is trimmed. |
+| `server_id` | Query | No | Filter by server ID(s), comma-separated |
 | `server_group_id` | Query | No | Filter by server group ID(s), comma-separated |
 | `state` | Query | No | Filter by state(s), comma-separated (e.g., `AVAILABLE,STARTING`) |
-| `serverhost_id` | Query | No | Filter by serverhost ID |
-| `persistent_server_id` | Query | No | Filter by persistent server ID |
+| `serverhost_id` | Query | No | Filter by serverhost ID(s), comma-separated |
+| `persistent_server_id` | Query | No | Filter by persistent server ID(s), comma-separated |
 | `type` | Query | No | Filter by type(s), comma-separated (matches server group OR persistent server type) |
 | `name` | Query | No | Filter by name(s), comma-separated (matches server group OR persistent server name) |
 | `tags` | Query | No | Filter by tag(s), comma-separated (matches if any tag matches in server group OR persistent server) |
 | `numerical_id` | Query | No | Filter by numerical ID(s), comma-separated (e.g., `1,5,10`) |
 | `sort_by` | Query | No | Sort field: `created_at`, `updated_at`, `numerical_id`, `state` |
 | `sort_order` | Query | No | Sort order: `asc` (default) or `desc` |
+| `limit` | Query | No | Maximum number of results to return (1–500). When omitted, all accessible servers are returned. |
+| `offset` | Query | No | Number of results to skip. Requires `limit`; providing `offset` without `limit` returns `400`. Defaults to `0`. |
+
+<Note>
+Invalid filter values return `400 Bad Request`. This includes malformed UUIDs, unknown enum values (for `type`, `source_type`, `state`), non-boolean values for boolean filters, and pagination values outside the allowed range.
+</Note>
 
 ### Response cache
 
