@@ -1,261 +1,177 @@
 ---
 title: 'Servers API'
-description: 'Query and manage running server instances'
+description: 'Find, inspect, update, and stop running server instances'
 ---
 
-The Servers API manages running server instances. Use it to query, stop, and update servers via `api.server()`.
+A server is one running instance created from a group or persistent server. Use `api.server()` to inspect and manage that instance. To change how servers are created, update the owning [group](/en/developer/api/groups) or [persistent server](/en/developer/api/persistent-servers) instead.
 
-<Info>
-  Starting a new group server is handled by the Groups API with `api.group().requestServerStart(...)`. The Servers API only works with server instances that already exist.
-</Info>
+## Find available capacity
 
-## Get Servers
+Use `ServerQuery` to find instances by source, state, host, or numerical ID. This example calculates the reported free slots across playable lobby servers:
 
 ```java
-// Get all servers
-api.server().getAllServers()
-    .thenAccept(servers -> System.out.println("Total: " + servers.size()));
-
-// Get servers with query filters
 ServerQuery query = ServerQuery.create()
     .filterByServerGroupName("lobby")
-    .filterByState(ServerState.AVAILABLE, ServerState.INGAME)
-    .sortBy("numerical_id")
-    .sortOrder("asc");
+    .filterByState(ServerState.AVAILABLE, ServerState.INGAME);
 
 api.server().getAllServers(query)
-    .thenAccept(servers -> servers.forEach(server ->
-        System.out.println(server.getServerId() + ": " + server.getState())));
+    .thenApply(servers -> servers.stream()
+        .filter(server -> server.getPlayerCount() != null)
+        .mapToInt(server -> Math.max(
+            0,
+            server.getMaxPlayers() - server.getPlayerCount()
+        ))
+        .sum())
+    .thenAccept(capacity ->
+        System.out.println("Lobby capacity: " + capacity));
+```
 
-// Get server by ID
+The result is a snapshot, not a reservation. If you use it to choose where a player should connect, keep the routing policy in your application and handle the connection result. See [Route players with autoscaling](/en/developer/guides/server-management) for a complete routing workflow.
+
+Call `getAllServers()` without a query to return every instance, or use `getServersByGroup("lobby")` as a group-name shortcut. List methods return an empty list when nothing matches.
+
+<Accordion title="ServerQuery filters">
+  Repeated calls to a multi-value filter add values to the query.
+
+  <ParamField body="filterByServerGroupId(String... ids)" type="ServerQuery">
+    Match one or more group IDs.
+  </ParamField>
+
+  <ParamField body="filterByState(ServerState... states)" type="ServerQuery">
+    Match one or more lifecycle states.
+  </ParamField>
+
+  <ParamField body="filterByServerhostId(String id)" type="ServerQuery">
+    Match instances running on one serverhost.
+  </ParamField>
+
+  <ParamField body="filterByPersistentServerId(String id)" type="ServerQuery">
+    Match the instance of one persistent server.
+  </ParamField>
+
+  <ParamField body="filterByServerGroupType(GroupServerType... types)" type="ServerQuery">
+    Match `SERVER` or `PROXY` sources.
+  </ParamField>
+
+  <ParamField body="filterByServerGroupName(String... names)" type="ServerQuery">
+    Match one or more group or persistent server names.
+  </ParamField>
+
+  <ParamField body="filterByServerGroupTags(String... tags)" type="ServerQuery">
+    Match sources with any supplied tag.
+  </ParamField>
+
+  <ParamField body="filterByNumericalId(Integer... ids)" type="ServerQuery">
+    Match one or more numerical IDs.
+  </ParamField>
+
+  <ParamField body="sortBy(String field)" type="ServerQuery">
+    Sort by `created_at`, `updated_at`, `numerical_id`, or `state`.
+  </ParamField>
+
+  <ParamField body="sortOrder(String order)" type="ServerQuery">
+    Use `asc` or `desc`.
+  </ParamField>
+</Accordion>
+
+## Find one server
+
+Look up an instance by its unique ID, or by its group name and numerical ID:
+
+```java
 api.server().getServerById("server-uuid")
     .thenAccept(server -> System.out.println(server.getState()));
 
-// Get servers in a group
-api.server().getServersByGroup("lobby")
-    .thenAccept(servers -> servers.forEach(server ->
-        System.out.println(server.getServerId() + ": " + server.getState())));
-
-// Get server by group and numerical ID, for example Lobby-1
 api.server().getServerByNumericalId("lobby", 1)
     .thenAccept(server -> System.out.println(server.getServerId()));
+```
 
-// Get current server from inside a running server
+These lookups complete exceptionally when no matching server exists.
+
+### Get the current server
+
+Code running inside a SimpleCloud-managed server can resolve its own instance:
+
+```java
 api.server().getCurrentServer()
-    .thenAccept(server -> System.out.println("Running on: " + server.getServerId()));
+    .thenAccept(server -> System.out.println(server.getServerId()));
 ```
 
-## Request a Group Server
+`getCurrentServer()` uses the `SIMPLECLOUD_UNIQUE_ID` environment variable and completes exceptionally when the current process is not associated with an instance.
 
-Queue one new server start for a group with `api.group()`. The reconciler processes the request on its next tick and creates the server when group limits allow it.
+## Access the owning configuration
+
+Every instance belongs to either a group or a persistent server. `getServerBase()` provides their shared configuration, while `getGroup()` and `getPersistentServer()` expose source-specific fields.
 
 ```java
-api.group().getGroupByName("lobby")
-    .thenCompose(group -> {
-        if (group == null) {
-            return CompletableFuture.failedFuture(
-                new IllegalArgumentException("Group not found: lobby"));
+api.server().getServerById("server-uuid")
+    .thenAccept(server -> {
+        if (server.isFromGroup()) {
+            System.out.println("Group: " + server.getGroup().getName());
+        } else {
+            System.out.println(
+                "Persistent server: " +
+                server.getPersistentServer().getName()
+            );
         }
-        return api.group().requestServerStart(group);
-    })
-    .thenRun(() -> System.out.println("Start request accepted for lobby"));
+
+        System.out.println(
+            "Configured slots: " + server.getServerBase().getMaxPlayers()
+        );
+    });
 ```
 
-<Note>
-  `requestServerStart` completes when the request is accepted, not when the server is ready. Subscribe to `api.event().server().onStateChanged(...)` or query the group to find the new server once it reaches `AVAILABLE`.
-</Note>
+Only one of `getGroup()` and `getPersistentServer()` is available for an instance. Avoid the deprecated `getServerGroup()`, which throws for persistent server instances.
 
-## Stop Server
+## Update an instance
 
-```java
-api.server().stopServer("server-uuid")
-    .thenRun(() -> System.out.println("Stop requested"));
-```
-
-### Stop Server (REST)
-
-Use `DELETE /v0/servers` when you want the controller to stop the server normally and run the server lifecycle.
-
-<RequestExample>
-  ```bash cURL
-  curl -X DELETE "https://your-controller/v0/servers?server_id=123e4567-e89b-12d3-a456-426614174000" \
-    -H "X-Network-ID: your-network-id" \
-    -H "X-Network-Secret: your-network-secret"
-  ```
-</RequestExample>
-
-<ResponseExample>
-  ```json 200 OK
-  {
-    "message": "Server stop request sent successfully",
-    "server_id": "123e4567-e89b-12d3-a456-426614174000",
-    "state": "STOPPING"
-  }
-  ```
-</ResponseExample>
-
-<ParamField query="server_id" type="string" required>
-  ID of the server instance to stop.
-</ParamField>
-
-## Update Server
+`UpdateServerRequest` changes only the fields you set:
 
 ```java
 UpdateServerRequest update = UpdateServerRequest.builder()
     .maxPlayers(64)
+    .maxMemory(2048)
     .build();
 
 api.server().updateServer("server-uuid", update)
-    .thenAccept(server -> System.out.println("Updated: " + server.getMaxPlayers()));
+    .thenAccept(server ->
+        System.out.println("Updated slots: " + server.getMaxPlayers()));
 ```
 
-## Server Properties
+The builder supports `playerCount`, `state`, `properties`, `minMemory`, `maxMemory`, and `maxPlayers`. Changes apply to this instance, not its owning configuration. The platform normally reports `state` and `playerCount`; only set them when your integration owns that reporting.
 
-Servers inherit properties from their group or persistent server, but you can override them per instance:
+## Manage instance properties
+
+Properties attach application data to one instance. Updates merge with the existing map.
 
 ```java
-// Add or update properties (merges with existing)
-Map<String, Object> props = Map.of("map", "castle", "mode", "competitive");
-api.server().updateServerProperties("server-uuid", props)
-    .thenAccept(updated -> System.out.println("Properties: " + updated));
+api.server().updateServerProperties(
+    "server-uuid",
+    Map.of("gameMode", "competitive", "map", "castle")
+);
 
-// Remove specific properties
-api.server().deleteServerProperties("server-uuid", List.of("mode"));
+api.server().deleteServerProperty("server-uuid", "map");
 ```
 
-## List Servers (REST)
+Use `updateServerProperty` to set one key and `deleteServerProperties` to remove several keys. Each method returns the resulting property map.
 
-To list servers in a network with optional filters, use the REST API endpoint `GET /v0/servers`. The response includes server details, group or persistent server metadata, blueprint information, and workflow configurations.
+## Stop an instance
 
-<RequestExample>
-  ```bash cURL
-  curl "https://your-controller/v0/servers?state=AVAILABLE&type=lobby" \
-    -H "X-Network-ID: your-network-id" \
-    -H "X-Network-Secret: your-network-secret"
-  ```
-</RequestExample>
+```java
+api.server().stopServer("server-uuid")
+    .thenRun(() -> System.out.println("Shutdown initiated"));
+```
 
-<ResponseExample>
-  ```json 200 OK
-  {
-    "count": 1,
-    "servers": [
-      {
-        "server_id": "123e4567-e89b-12d3-a456-426614174000",
-        "network_id": "production",
-        "server_group_id": "lobby",
-        "persistent_server_id": null,
-        "serverhost_id": "host-eu-1",
-        "numerical_id": 1,
-        "ip": "127.0.0.1",
-        "port": 25565,
-        "state": "AVAILABLE",
-        "player_count": 12,
-        "max_players": 100,
-        "min_memory": 512,
-        "max_memory": 1024,
-        "properties": {
-          "map": "castle"
-        }
-      }
-    ]
-  }
-  ```
-</ResponseExample>
-
-<ParamField header="X-Network-ID" type="string" required>
-  Your network identifier.
-</ParamField>
-
-<ParamField header="X-Network-Secret" type="string" required>
-  Your network secret.
-</ParamField>
-
-<ParamField header="X-SC-Component" type="string">
-  Optional caller component name attached to the controller request event.
-</ParamField>
-
-<ParamField query="server_group_id" type="string">
-  Filter by one or more server group IDs. Use commas to pass multiple IDs.
-</ParamField>
-
-<ParamField query="state" type="string">
-  Filter by one or more server states, for example `AVAILABLE,STARTING`.
-</ParamField>
-
-<ParamField query="serverhost_id" type="string">
-  Filter by serverhost ID.
-</ParamField>
-
-<ParamField query="persistent_server_id" type="string">
-  Filter by persistent server ID.
-</ParamField>
-
-<ParamField query="type" type="string">
-  Filter by server group or persistent server type.
-</ParamField>
-
-<ParamField query="name" type="string">
-  Filter by server group or persistent server name.
-</ParamField>
-
-<ParamField query="tags" type="string">
-  Filter by group or persistent server tags.
-</ParamField>
-
-<ParamField query="numerical_id" type="string">
-  Filter by one or more numerical IDs. Use commas to pass multiple IDs.
-</ParamField>
-
-<ParamField query="sort_by" type="string">
-  Sort field. Supported values are `created_at`, `updated_at`, `numerical_id`, and `state`.
-</ParamField>
-
-<ParamField query="sort_order" type="string">
-  Sort order. Use `asc` or `desc`.
-</ParamField>
-
-### Response Cache
-
-The controller can cache database rows for `GET /v0/servers` for 2 seconds to reduce load from dashboards and polling clients. When active, responses include `X-DB-Cache: HIT` or `X-DB-Cache: MISS`. Permission-filtered requests always bypass this cache.
-
-## Delete Server Record
-
-To remove a stale server record directly from the database without stopping a process or publishing lifecycle events, use `DELETE /v0/servers/database`.
+The future completes when SimpleCloud initiates the stop, not when cleanup finishes. Use [server state events](/en/developer/api/events) if your plugin must observe the later lifecycle transitions.
 
 <Warning>
-  This operation only removes the database row. It does not stop the server process, trigger cleanup workflows, or emit lifecycle events. Use `stopServer` for normal shutdown.
+  Stopping an instance does not disable its group or persistent server. SimpleCloud may create a replacement to maintain the source configuration. Change that configuration first when the server must stay offline.
 </Warning>
 
-<RequestExample>
-  ```bash cURL
-  curl -X DELETE "https://your-controller/v0/servers/database?server_id=123e4567-e89b-12d3-a456-426614174000" \
-    -H "X-Network-ID: your-network-id" \
-    -H "X-Network-Secret: your-network-secret"
-  ```
-</RequestExample>
-
-<ResponseExample>
-  ```json 200 OK
-  {
-    "message": "Server row deleted successfully",
-    "server_id": "123e4567-e89b-12d3-a456-426614174000"
-  }
-  ```
-</ResponseExample>
-
-<ParamField query="server_id" type="string" required>
-  ID of the server row to remove from the database.
-</ParamField>
-
-## Server Model
+## Server model
 
 <ResponseField name="serverId" type="string" required>
-  Unique server instance ID.
-</ResponseField>
-
-<ResponseField name="persistentServerId" type="string | null">
-  Persistent server ID, if the instance was spawned from a persistent server.
+  Unique instance ID.
 </ResponseField>
 
 <ResponseField name="numericalId" type="integer" required>
@@ -263,23 +179,27 @@ To remove a stale server record directly from the database without stopping a pr
 </ResponseField>
 
 <ResponseField name="serverGroupId" type="string | null">
-  Server group ID, if the instance was spawned from a group.
+  Source group ID, or `null` for a persistent server instance.
+</ResponseField>
+
+<ResponseField name="persistentServerId" type="string | null">
+  Source persistent server ID, or `null` for a group instance.
 </ResponseField>
 
 <ResponseField name="serverhostId" type="string" required>
-  Host running the server.
+  Serverhost running the instance.
 </ResponseField>
 
 <ResponseField name="networkId" type="string" required>
-  Network identifier.
+  Network that owns the instance.
 </ResponseField>
 
 <ResponseField name="ip" type="string | null">
-  Assigned IP address.
+  Assigned IP address, or `null` before one is available.
 </ResponseField>
 
 <ResponseField name="port" type="integer | null">
-  Assigned port.
+  Assigned port, or `null` before one is available.
 </ResponseField>
 
 <ResponseField name="minMemory" type="integer" required>
@@ -291,19 +211,19 @@ To remove a stale server record directly from the database without stopping a pr
 </ResponseField>
 
 <ResponseField name="cpuUsage" type="number | null">
-  Current CPU usage percentage.
+  Current CPU usage percentage, or `null` when unavailable.
 </ResponseField>
 
 <ResponseField name="memoryUsage" type="number | null">
-  Current memory usage in MB.
+  Current memory usage in MB, or `null` when unavailable.
 </ResponseField>
 
 <ResponseField name="playerCount" type="integer | null">
-  Current online player count.
+  Current connected player count, or `null` when unavailable.
 </ResponseField>
 
 <ResponseField name="maxPlayers" type="integer" required>
-  Player limit.
+  Player limit for the instance.
 </ResponseField>
 
 <ResponseField name="state" type="ServerState" required>
@@ -319,54 +239,37 @@ To remove a stale server record directly from the database without stopping a pr
 </ResponseField>
 
 <ResponseField name="lastActivity" type="string | null">
-  Last activity timestamp.
+  Last activity timestamp in ISO 8601 format, or `null` when unavailable.
 </ResponseField>
 
-<ResponseField name="properties" type="object | null">
-  Instance-specific metadata.
+<ResponseField name="properties" type="Map<String, Object> | null">
+  Instance properties, or `null` when none are available.
 </ResponseField>
 
 <ResponseField name="blueprint" type="Blueprint | null">
-  Blueprint used to create the server.
+  Reserved accessor. The current implementation returns `null`; use the source configuration instead.
 </ResponseField>
 
 <ResponseField name="serverBase" type="ServerBase" required>
-  Common group or persistent server configuration.
+  Shared configuration from the source group or persistent server.
 </ResponseField>
 
 <ResponseField name="group" type="Group | null">
-  Source group, if this is a group server.
+  Source group, or `null` for a persistent server instance.
 </ResponseField>
 
 <ResponseField name="persistentServer" type="PersistentServer | null">
-  Source persistent server, if this is a persistent server.
+  Source persistent server, or `null` for a group instance.
 </ResponseField>
 
-## ServerState
+## Server states
 
-| State | Description |
-|-------|-------------|
-| `UNKNOWN_STATE` | Unknown or unspecified state |
-| `PREPARING` | Preparing files and runtime data |
-| `STARTING` | Server process is starting |
-| `AVAILABLE` | Ready for players |
-| `INGAME` | In game with active players |
-| `STOPPING` | Shutdown is in progress |
-| `CLEANUP` | Server stopped and cleanup is running |
-
-## Environment Variables
-
-Inside a running server, access server info without the API:
-
-```java
-String group = System.getenv("SIMPLECLOUD_GROUP");
-String uniqueId = System.getenv("SIMPLECLOUD_UNIQUE_ID");
-String numericalId = System.getenv("SIMPLECLOUD_NUMERICAL_ID");
-String host = System.getenv("SIMPLECLOUD_HOST");
-String ip = System.getenv("SIMPLECLOUD_IP");
-String port = System.getenv("SIMPLECLOUD_PORT");
-String maxPlayers = System.getenv("SIMPLECLOUD_MAX_PLAYERS");
-String maxMemory = System.getenv("SIMPLECLOUD_MAX_MEMORY");
-```
-
-Custom group properties are also available with the `SIMPLECLOUD_` prefix. Property names are uppercased and dashes become underscores.
+| State | Meaning |
+| --- | --- |
+| `UNKNOWN_STATE` | Unknown or unspecified. |
+| `PREPARING` | SimpleCloud is preparing the instance. |
+| `STARTING` | The server process is starting. |
+| `AVAILABLE` | Ready to accept connections. |
+| `INGAME` | Running with active players. |
+| `STOPPING` | Shutdown is in progress. |
+| `CLEANUP` | The process has stopped and cleanup is in progress. |

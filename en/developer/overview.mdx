@@ -1,126 +1,51 @@
 ---
-title: 'Cloud API'
-description: 'Build integrations with SimpleCloud using our Java/Kotlin API'
+title: "Cloud API"
+description: "Build Minecraft plugins that work with your SimpleCloud network"
 ---
 
-The Cloud API is a Java library for interacting with your SimpleCloud network programmatically. Use it to manage groups, running servers, persistent servers, players, cache state, and real-time events.
+The Cloud API connects your Java or Kotlin Minecraft plugin to SimpleCloud. Use it to query, manage, and react to the current state of your network.
 
-## API Architecture
+With the Cloud API, you can:
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `api.group()` | `GroupApi` | Create, read, update, delete groups |
-| `api.server()` | `ServerApi` | Query, stop, and update running servers |
-| `api.persistentServer()` | `PersistentServerApi` | Create, read, update, delete persistent servers |
-| `api.player()` | `PlayerApi` | Player data, connections, messaging |
-| `api.event()` | `EventApi` | Subscribe to real-time events |
-| `api.cache()` | `QueryCache` | Inspect, invalidate, and clear local query cache entries |
+- Create and configure server groups
+- Manage long-running persistent servers
+- Find and update running server instances
+- Look up players, send messages, and transfer them between servers
+- React when resources in your network change
 
-### Event API Subcategories
-
-| Method | Description |
-|--------|-------------|
-| `api.event().group()` | Group lifecycle events |
-| `api.event().server()` | Server lifecycle events |
-| `api.event().persistentServer()` | Persistent server events |
-| `api.event().blueprint()` | Blueprint lifecycle events |
-
-## Key Features
-
-- **Async-first design** - All operations return `CompletableFuture` (Java) or suspend functions (Kotlin)
-- **Type-safe models** - Strongly typed domain objects for Groups, Servers, Players
-- **Real-time events** - Subscribe to changes via NATS messaging
-- **Adventure integration** - Players implement Adventure's `Audience` for rich text messaging
-- **Persistent server support** - Manage long-lived servers through `api.persistentServer()`
-- **Query cache** - Stale-while-revalidate cache with automatic event invalidation
-- **Environment-aware** - Auto-configuration from `SIMPLECLOUD_*` environment variables
-
-## Quick Example
-
-<Tabs>
-<Tab title="Java">
-
-```java
-// Initialize the API
-CloudApi api = CloudApi.create();
-
-// Get all servers in a group
-api.server().getServersByGroup("lobby").thenAccept(servers -> {
-    System.out.println("Lobby servers: " + servers.size());
-});
-
-// Request a new server start for a group
-api.group().getGroupByName("lobby")
-    .thenCompose(group -> {
-        if (group == null) {
-            return CompletableFuture.failedFuture(
-                new IllegalArgumentException("Group not found: lobby"));
-        }
-        return api.group().requestServerStart(group);
-    })
-    .thenRun(() -> System.out.println("Start request accepted for lobby"));
-
-// Send a message to a player (Adventure integration)
-api.player().get(playerUUID).thenAccept(player -> {
-    if (player != null) {
-        player.sendMessage(Component.text("Welcome!").color(NamedTextColor.GREEN));
-    }
-});
-
-// Subscribe to server events
-Subscription sub = api.event().server().onStarted(event -> {
-    System.out.println("Server started: " + event.getServerId());
-});
-```
-
-</Tab>
-<Tab title="Kotlin">
-
-```kotlin
-// Initialize the API
-val api = CloudApi.create()
-
-// Get all servers in a group
-val servers = api.server().getServersByGroup("lobby").await()
-println("Lobby servers: ${servers.size}")
-
-// Request a new server start for a group
-val group = api.group().getGroupByName("lobby").await()
-requireNotNull(group) { "Group not found: lobby" }
-
-api.group().requestServerStart(group).await()
-println("Start request accepted for lobby")
-
-// Send a message to a player (Adventure integration)
-api.player().get(playerUUID).await()?.let { player ->
-    player.sendMessage(Component.text("Welcome!").color(NamedTextColor.GREEN))
-}
-
-// Subscribe to server events
-val sub = api.event().server().onStarted { event ->
-    println("Server started: ${event.serverId}")
-}
-```
-
-</Tab>
-</Tabs>
-
-## Next Steps
+## Choose where to begin
 
 <CardGroup cols={2}>
-  <Card title="Installation" icon="download" href="/en/developer/installation">
-    Add the Cloud API to your project
+  <Card title="Install the Cloud API" icon="download" href="/en/developer/installation">
+    Add the dependency and create a client for your plugin.
   </Card>
-  <Card title="Servers API" icon="server" href="/en/developer/api/servers">
-    Manage server instances
+  <Card title="Groups" icon="layer-group" href="/en/developer/api/groups">
+    Create groups, change their configuration, and request new servers.
   </Card>
-  <Card title="Persistent Servers API" icon="hard-drive" href="/en/developer/api/persistent-servers">
-    Manage long-lived servers
+  <Card title="Running servers" icon="server" href="/en/developer/api/servers">
+    Find, inspect, update, and stop server instances.
   </Card>
-  <Card title="Players API" icon="users" href="/en/developer/api/players">
-    Player data and messaging
+  <Card title="Persistent servers" icon="hard-drive" href="/en/developer/api/persistent-servers">
+    Manage servers that keep their identity across restarts.
   </Card>
-  <Card title="Events API" icon="bell" href="/en/developer/api/events">
-    React to real-time changes
+  <Card title="Players" icon="users" href="/en/developer/api/players">
+    Look up players, send messages, and connect them to servers.
+  </Card>
+  <Card title="Events" icon="bell" href="/en/developer/api/events">
+    Run code when groups, servers, persistent servers, or blueprints change.
+  </Card>
+</CardGroup>
+
+## Build a common workflow
+
+<CardGroup cols={2}>
+  <Card title="Transfer a player" icon="arrow-right-arrow-left" href="/en/developer/guides/player-transfer">
+    Move an online player to another server and handle the result.
+  </Card>
+  <Card title="Manage scaler-provided servers" icon="scale-balanced" href="/en/developer/guides/server-management">
+    Select available capacity without competing with SimpleCloud autoscaling.
+  </Card>
+  <Card title="Handle events safely" icon="bolt" href="/en/developer/guides/event-handling">
+    Subscribe to network changes for the lifetime of your plugin.
   </Card>
 </CardGroup>

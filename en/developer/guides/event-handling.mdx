@@ -1,207 +1,69 @@
 ---
-title: 'Handle Events in Real-Time'
-description: 'React to server, group, and persistent server changes with the Events API'
+title: 'React to server availability'
+description: 'Run your plugin logic when a server becomes available'
 ---
 
-This guide shows patterns for handling real-time events in your plugins.
+Use a server event when your plugin needs to continue work as soon as a server becomes available. For example, a matchmaking or routing system can resume requests that were waiting for a server to start.
 
-## Basic Event Handling
+## Listen for available servers
 
-### Subscribe to Events
+The listener uses the `CloudApi` client your plugin already owns and notifies your application code when a server becomes available:
 
-```java
-Subscription sub = api.event().server().onStarted(event -> {
-    System.out.println("Server started: " + event.getServerId());
-});
+```java ServerAvailabilityListener.java
+package com.example;
 
-// Close when done
-sub.close();
-```
+import app.simplecloud.api.CloudApi;
+import app.simplecloud.api.event.Subscription;
+import app.simplecloud.api.server.ServerState;
 
-### Plugin Lifecycle Management
+public final class ServerAvailabilityListener implements AutoCloseable {
+    private final Subscription subscription;
 
-```java
-public class MyPlugin extends JavaPlugin {
-    private CloudApi api;
-    private final List<Subscription> subscriptions = new ArrayList<>();
-
-    @Override
-    public void onEnable() {
-        api = CloudApi.create();
-        registerEvents();
-    }
-
-    @Override
-    public void onDisable() {
-        subscriptions.forEach(Subscription::close);
-        subscriptions.clear();
-    }
-
-    private void registerEvents() {
-        subscriptions.add(api.event().server().onStarted(this::onServerStarted));
-        subscriptions.add(api.event().server().onStopped(this::onServerStopped));
-        subscriptions.add(api.event().group().onUpdated(this::onGroupUpdated));
-    }
-
-    private void onServerStarted(ServerStartedEvent event) {
-        getLogger().info("Server started: " + event.getServerId());
-    }
-
-    private void onServerStopped(ServerStoppedEvent event) {
-        getLogger().info("Server stopped: " + event.getServerId());
-    }
-
-    private void onGroupUpdated(GroupUpdatedEvent event) {
-        getLogger().info("Group updated: " + event.getServerGroupId());
-    }
-}
-```
-
-## Common Event Patterns
-
-### Auto-Request Servers When a Group Is Empty
-
-```java
-public void setupAutoStart(String groupName, int minimum) {
-    api.event().server().onStopped(event -> {
-        Server stopped = event.getServer();
-        if (!stopped.isFromGroup() || !groupName.equals(stopped.getGroup().getName())) {
-            return;
-        }
-
-        api.server().getServersByGroup(groupName).thenAccept(servers -> {
-            long running = servers.stream()
-                .filter(server -> server.getState() != ServerState.STOPPING)
-                .filter(server -> server.getState() != ServerState.CLEANUP)
-                .count();
-
-            if (running < minimum) {
-                api.group().getGroupByName(groupName).thenCompose(group -> {
-                    if (group == null) {
-                        return CompletableFuture.failedFuture(
-                            new IllegalArgumentException("Group not found: " + groupName));
-                    }
-                    return api.group().requestServerStart(group);
-                });
+    public ServerAvailabilityListener(
+        CloudApi cloudApi,
+        Runnable onServerAvailable
+    ) {
+        subscription = cloudApi.event().server().onStateChanged(event -> {
+            if (event.getNewState() == ServerState.AVAILABLE) {
+                onServerAvailable.run();
             }
         });
-    });
+    }
+
+    @Override
+    public void close() {
+        subscription.close();
+    }
 }
 ```
 
-### Log All State Changes
+Create the listener when your plugin starts and connect it to the work that is waiting for an available server:
 
 ```java
-public void setupStateLogging() {
-    api.event().server().onStateChanged(event -> {
-        String message = String.format("[%s] %s -> %s",
-            event.getServerId(),
-            event.getOldState(),
-            event.getNewState());
-
-        logger.info(message);
-    });
-}
+serverAvailability = new ServerAvailabilityListener(
+    cloudApi,
+    () -> matchmaking.refreshAvailableServers()
+);
 ```
 
-### Notify Staff on Server Crash
+Treat the callback as a signal to retry waiting work or refresh the destinations known to your routing system.
+
+<Note>
+Events only report changes that happen after you subscribe. If your plugin also needs the current state when it starts, load it separately through the [Servers API](/en/developer/api/servers).
+</Note>
+
+If the callback changes Bukkit, Folia, Velocity, or BungeeCord state, schedule that platform-specific work through the platform's scheduler.
+
+## Close the listener
+
+Close the listener when your plugin stops, before closing the shared `CloudApi` client:
 
 ```java
-public void setupCrashNotifications() {
-    api.event().server().onStopped(event -> {
-        if (!event.getCrashed()) return;
-
-        notifyStaff(Component.text("[Alert] Server crashed: " + event.getServerId())
-            .color(NamedTextColor.RED));
-    });
-}
-
-private void notifyStaff(Component message) {
-    api.player().getOnlinePlayers().thenAccept(players -> {
-        players.stream()
-            .filter(player -> hasStaffPermission(player))
-            .forEach(player -> player.sendMessage(message));
-    });
+if (serverAvailability != null) {
+    serverAvailability.close();
 }
 ```
 
-### Sync Data When Server Starts
+This stops future callbacks. The listener does not close the shared `CloudApi` client.
 
-```java
-public void setupDataSync() {
-    api.event().server().onStateChanged(event -> {
-        if (event.getNewState() == ServerState.AVAILABLE) {
-            syncDataToServer(event.getServerId());
-        }
-    });
-}
-
-private void syncDataToServer(String serverId) {
-    System.out.println("Syncing data to: " + serverId);
-}
-```
-
-## Filtering Events
-
-### Filter by Group
-
-Server events fire for both group servers and persistent servers. Use the included `Server` model to skip persistent server instances.
-
-```java
-public void watchGroup(String groupName) {
-    api.event().server().onStarted(event -> {
-        Server server = event.getServer();
-        if (server.isFromGroup() && groupName.equals(server.getGroup().getName())) {
-            handleGroupServerStart(event);
-        }
-    });
-}
-```
-
-### Filter by Server Type
-
-```java
-public void watchProxies() {
-    api.event().server().onStarted(event -> {
-        Server server = event.getServer();
-        if (server.isFromGroup() && server.getGroup().getType() == GroupServerType.PROXY) {
-            handleProxyStart(event);
-        }
-    });
-}
-```
-
-## One-Time Events
-
-### Wait for Specific Server
-
-```java
-public CompletableFuture<Void> waitForServer(String serverId) {
-    CompletableFuture<Void> future = new CompletableFuture<>();
-
-    Subscription sub = api.event().server().onStateChanged(event -> {
-        if (event.getServerId().equals(serverId) &&
-            event.getNewState() == ServerState.AVAILABLE) {
-            future.complete(null);
-        }
-    });
-
-    future.whenComplete((result, error) -> sub.close());
-
-    return future;
-}
-```
-
-### Timeout Handling
-
-```java
-public CompletableFuture<Void> waitForServerWithTimeout(String serverId, Duration timeout) {
-    CompletableFuture<Void> future = waitForServer(serverId);
-
-    CompletableFuture.delayedExecutor(timeout.toMillis(), TimeUnit.MILLISECONDS)
-        .execute(() -> future.completeExceptionally(
-            new TimeoutException("Server did not start in time")));
-
-    return future;
-}
-```
+See the [Events API reference](/en/developer/api/events) for the other event categories and callback types.

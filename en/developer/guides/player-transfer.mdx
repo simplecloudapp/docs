@@ -1,151 +1,77 @@
 ---
-title: 'Transfer Players Between Servers'
-description: 'Move players across your network programmatically'
+title: "Transfer a player to another server"
+description: "Connect an online player to a known server and handle the result"
 ---
 
-This guide shows how to transfer players between servers, with proper error handling and user feedback.
+Use `CloudPlayer.connect(...)` when you already know which server the player should join. The method expects the name registered on the player's proxy, such as `lobby-1`—not the server UUID returned by `Server.getServerId()`.
 
-## Basic Transfer
+## Transfer the player
 
-```java
-public void transferPlayer(UUID playerUuid, String targetServer) {
-    api.player().get(playerUuid).thenAccept(player -> {
-        if (player == null) {
-            System.out.println("Player not found or offline");
-            return;
-        }
+Look up the player by UUID, confirm they are online, and connect them to the registered server name:
 
-        player.connect(targetServer).thenAccept(result -> {
-            switch (result) {
-                case SUCCESS -> System.out.println("Transfer successful");
-                case SERVER_NOT_FOUND -> System.out.println("Server doesn't exist");
-                case ALREADY_CONNECTED -> System.out.println("Already on that server");
-                case CONNECTION_FAILED -> System.out.println("Transfer failed");
+```java PlayerTransferService.java
+import app.simplecloud.api.CloudApi;
+import app.simplecloud.api.player.CloudPlayer;
+
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+public final class PlayerTransferService {
+    private final CloudApi api;
+
+    public PlayerTransferService(CloudApi api) {
+        this.api = api;
+    }
+
+    public CompletableFuture<CloudPlayer.ConnectResult> transfer(
+        UUID playerId,
+        String registeredServerName
+    ) {
+        return api.player().get(playerId).thenCompose(player -> {
+            if (player == null || !player.isOnline()) {
+                return CompletableFuture.completedFuture(
+                    CloudPlayer.ConnectResult.PLAYER_NOT_FOUND
+                );
             }
+
+            return player.connect(registeredServerName);
         });
-    });
+    }
 }
 ```
 
-## Transfer to Best Server in Group
-
-Find the server with the most available slots:
+Call `transfer(...)` from your command or matchmaking flow and handle the result:
 
 ```java
-public void transferToGroup(UUID playerUuid, String groupName) {
-    api.server().getServersByGroup(groupName).thenAccept(servers -> {
-        // Find server with most available space
-        Server bestServer = servers.stream()
-            .filter(s -> s.getState() == ServerState.AVAILABLE || s.getState() == ServerState.INGAME)
-            .filter(s -> s.getPlayerCount() < s.getMaxPlayers())
-            .max(Comparator.comparingInt(s -> s.getMaxPlayers() - s.getPlayerCount()))
-            .orElse(null);
-
-        if (bestServer == null) {
-            System.out.println("No available servers in group");
-            return;
+transferService.transfer(playerId, "lobby-1")
+    .thenAccept(result -> {
+        switch (result) {
+            case SUCCESS, ALREADY_CONNECTED ->
+                logger.info("Player is connected to lobby-1");
+            case SERVER_NOT_FOUND ->
+                logger.warning("lobby-1 is not registered on the proxy");
+            case PLAYER_NOT_FOUND ->
+                logger.info("Player is no longer online");
+            case CONNECTION_FAILED ->
+                logger.warning("Could not connect player to lobby-1");
         }
-
-        api.player().get(playerUuid).thenAccept(player -> {
-            if (player != null) {
-                player.connect(bestServer.getServerId());
-            }
-        });
+    })
+    .exceptionally(error -> {
+        logger.log(Level.WARNING, "Could not transfer player", error);
+        return null;
     });
-}
 ```
 
-## Transfer with User Feedback
+This guide returns `PLAYER_NOT_FOUND` when its lookup finds no online player. If the player disconnects after that check, `connect(...)` returns `CONNECTION_FAILED`.
 
-Send messages to the player during transfer:
+## Connection results
 
-```java
-public void transferWithFeedback(UUID playerUuid, String targetServer) {
-    api.player().get(playerUuid).thenCompose(player -> {
-        if (player == null) {
-            return CompletableFuture.completedFuture(null);
-        }
+| Result | Meaning |
+| --- | --- |
+| `SUCCESS` | The player connected to the destination. |
+| `ALREADY_CONNECTED` | The player is already connected to the destination. |
+| `SERVER_NOT_FOUND` | The supplied name is not registered on the player's proxy. |
+| `PLAYER_NOT_FOUND` | This guide's lookup found no online player. |
+| `CONNECTION_FAILED` | The proxy could not complete the connection. |
 
-        // Notify player
-        player.sendMessage(Component.text("Connecting to " + targetServer + "...")
-            .color(NamedTextColor.YELLOW));
-
-        return player.connect(targetServer).thenApply(result -> {
-            if (result != CloudPlayer.ConnectResult.SUCCESS) {
-                player.sendMessage(Component.text("Failed to connect: " + result)
-                    .color(NamedTextColor.RED));
-            }
-            return result;
-        });
-    });
-}
-```
-
-## Transfer All Players from Server
-
-Evacuate all players before server shutdown:
-
-```java
-public void evacuateServer(String serverId, String targetServer) {
-    api.server().getServerById(serverId).thenAccept(server -> {
-        if (server == null) return;
-
-        api.player().getOnlinePlayers().thenAccept(players -> {
-            players.stream()
-                .filter(p -> p.getConnectedServerName().equals(server.getServerId()))
-                .forEach(player -> {
-                    player.sendMessage(Component.text("Server shutting down, transferring...")
-                        .color(NamedTextColor.GOLD));
-                    player.connect(targetServer);
-                });
-        });
-    });
-}
-```
-
-## Request Server if None Available
-
-Queue a new server start and transfer the player when a matching server becomes available:
-
-```java
-public void transferOrStartServer(UUID playerUuid, String groupName) {
-    api.server().getServersByGroup(groupName).thenAccept(servers -> {
-        Server available = servers.stream()
-            .filter(s -> s.getState() == ServerState.AVAILABLE)
-            .filter(s -> s.getPlayerCount() < s.getMaxPlayers())
-            .findFirst()
-            .orElse(null);
-
-        if (available != null) {
-            // Transfer to existing server
-            api.player().get(playerUuid).thenAccept(player -> {
-                if (player != null) player.connect(available.getServerId());
-            });
-        } else {
-            // Queue a start, then wait for the next available server in the group
-            api.group().getGroupByName(groupName).thenCompose(group -> {
-                if (group == null) {
-                    return CompletableFuture.failedFuture(
-                        new IllegalArgumentException("Group not found: " + groupName));
-                }
-                return api.group().requestServerStart(group);
-            }).thenRun(() -> waitForGroupServerReady(groupName, newServer -> {
-                api.player().get(playerUuid).thenAccept(player -> {
-                    if (player != null) player.connect(newServer.getServerId());
-                });
-            }));
-        }
-    });
-}
-
-private void waitForGroupServerReady(String groupName, Consumer<Server> callback) {
-    api.event().server().onStateChanged(event -> {
-        Server server = event.getServer();
-        if (event.getNewState() == ServerState.AVAILABLE &&
-            server.isFromGroup() &&
-            groupName.equals(server.getGroup().getName())) {
-            callback.accept(server);
-        }
-    });
-}
-```
+If your plugin needs to find an available destination first, see [Route players with autoscaling](/en/developer/guides/server-management).

@@ -1,410 +1,84 @@
 ---
 title: 'Events API'
-description: 'Subscribe to real-time events from your cloud network'
+description: 'Subscribe to group, server, persistent server, and blueprint events'
 ---
 
-The Events API lets you react to changes in your network in real time. Access it via `api.event()`.
-
-## Event Categories
-
-| Method | Events |
-|--------|--------|
-| `api.event().group()` | Group created, updated, deleted |
-| `api.event().server()` | Server started, stopped, state changed, updated, deleted |
-| `api.event().persistentServer()` | Persistent server created, started, stopped, updated, deleted |
-| `api.event().blueprint()` | Blueprint created, updated, deleted |
-
-All event objects expose `getNetworkId()` and `getTimestamp()`.
-
-## Server Events
-
-Server events fire for running instances. A server can originate from a group or from a persistent server. Use the included `Server` model to inspect the source.
-
-### Server Started
+Use events to react when resources in your SimpleCloud network change. Subscribe through `cloudApi.event()` and use the event's stable resource ID in your callback:
 
 ```java
-Subscription sub = api.event().server().onStarted(event -> {
-    Server server = event.getServer();
-
-    System.out.println("Server started: " + event.getServerId());
-
-    if (server.isFromPersistentServer()) {
-        System.out.println("Persistent server: " + server.getPersistentServerId());
-    } else {
-        System.out.println("Group: " + server.getGroup().getName());
-    }
+Subscription subscription = cloudApi.event().server().onStateChanged(event -> {
+    String serverId = event.getServerId();
+    // React to the state change.
 });
 ```
 
-### Server Stopped
+Keep the returned `Subscription` and close it when your plugin stops. The [event handling guide](/en/developer/guides/event-handling) shows the complete plugin lifecycle and how to safely interact with your server platform from a callback.
 
-```java
-api.event().server().onStopped(event -> {
-    System.out.println("Server stopped: " + event.getServerId());
+## Choose an event category
 
-    if (event.getCrashed()) {
-        System.out.println("Exit code: " + event.getExitCode());
-        System.out.println("Reason: " + event.getReason());
-    }
-});
-```
+| Category | Subscription methods | Callback types |
+| --- | --- | --- |
+| `group()` | `onCreated`, `onUpdated`, `onDeleted` | `GroupCreatedEvent`, `GroupUpdatedEvent`, `GroupDeletedEvent` |
+| `server()` | `onStarted`, `onStopped`, `onStateChanged`, `onUpdated`, `onDeleted` | `ServerStartedEvent`, `ServerStoppedEvent`, `ServerStateChangedEvent`, `ServerUpdatedEvent`, `ServerDeletedEvent` |
+| `persistentServer()` | `onCreated`, `onStarted`, `onStopped`, `onUpdated`, `onDeleted` | `PersistentServerCreatedEvent`, `PersistentServerStartedEvent`, `PersistentServerStoppedEvent`, `PersistentServerUpdatedEvent`, `PersistentServerDeletedEvent` |
+| `blueprint()` | `onCreated`, `onUpdated`, `onDeleted` | `BlueprintCreatedEvent`, `BlueprintUpdatedEvent`, `BlueprintDeletedEvent` |
 
-### Server State Changed
+Server events describe individual server instances. Persistent server events describe changes to the persistent server itself, such as it being updated or starting a server instance.
 
-```java
-api.event().server().onStateChanged(event -> {
-    System.out.println(event.getServerId() + ": " +
-        event.getOldState() + " -> " + event.getNewState());
-});
-```
+## Keep state accurate
 
-### Server Updated and Deleted
+Events notify you that something changed; query APIs provide the current state. Subscriptions only receive live events, so query the resource when your plugin starts or when missing an event would make its state incorrect.
 
-```java
-api.event().server().onUpdated(event -> {
-    System.out.println("Server updated: " + event.getServerId());
-});
+Close each subscription when you no longer need it. Both `close()` and `unsubscribe()` stop future delivery and can be called more than once.
 
-api.event().server().onDeleted(event -> {
-    System.out.println("Server deleted: " + event.getServerId());
-});
-```
+## Read callback data
 
-## Group Events
+Every callback provides `getNetworkId()` and an ISO 8601 timestamp through `getTimestamp()`. The remaining getters depend on the event type.
 
-```java
-api.event().group().onCreated(event -> {
-    System.out.println("Group created: " + event.getGroup().getName());
-});
-
-api.event().group().onUpdated(event -> {
-    System.out.println("Group updated: " + event.getGroup().getName());
-});
-
-api.event().group().onDeleted(event -> {
-    System.out.println("Group deleted: " + event.getName());
-});
-```
-
-## Persistent Server Events
-
-```java
-api.event().persistentServer().onCreated(event -> {
-    System.out.println("Persistent server created: " + event.getPersistentServerId());
-});
-
-api.event().persistentServer().onStarted(event -> {
-    System.out.println("Persistent server started: " + event.getPersistentServerId());
-    System.out.println("Running server: " + event.getServerId());
-});
-
-api.event().persistentServer().onStopped(event -> {
-    System.out.println("Persistent server stopped: " + event.getPersistentServerId());
-});
-
-api.event().persistentServer().onUpdated(event -> {
-    System.out.println("Persistent server updated: " + event.getName());
-});
-
-api.event().persistentServer().onDeleted(event -> {
-    System.out.println("Persistent server deleted: " + event.getName());
-});
-```
-
-## Blueprint Events
-
-```java
-api.event().blueprint().onCreated(event -> {
-    System.out.println("Blueprint created: " + event.getBlueprint().getName());
-});
-
-api.event().blueprint().onUpdated(event -> {
-    System.out.println("Blueprint updated: " + event.getBlueprint().getName());
-});
-
-api.event().blueprint().onDeleted(event -> {
-    System.out.println("Blueprint deleted: " + event.getName());
-});
-```
-
-## Managing Subscriptions
-
-Subscriptions implement `AutoCloseable`. Always clean them up when done.
-
-### Manual Cleanup
-
-```java
-Subscription sub = api.event().server().onStarted(event -> {
-    System.out.println("Started: " + event.getServer().getServerId());
-});
-
-// Later, when shutting down
-sub.close();
-```
-
-### Try-with-Resources
-
-```java
-try (Subscription sub = api.event().server().onStarted(event -> {
-    System.out.println("Started: " + event.getServer().getServerId());
-})) {
-    // Subscription active within this block
-    Thread.sleep(60000);
-}
-```
-
-### Plugin Lifecycle
-
-```java
-public class MyPlugin extends JavaPlugin {
-    private final List<Subscription> subscriptions = new ArrayList<>();
-    private CloudApi api;
-
-    @Override
-    public void onEnable() {
-        api = CloudApi.create();
-
-        subscriptions.add(api.event().server().onStarted(this::handleServerStart));
-        subscriptions.add(api.event().server().onStopped(this::handleServerStop));
-    }
-
-    @Override
-    public void onDisable() {
-        subscriptions.forEach(Subscription::close);
-    }
-
-    private void handleServerStart(ServerStartedEvent event) {
-        getLogger().info("Server started: " + event.getServerId());
-    }
-
-    private void handleServerStop(ServerStoppedEvent event) {
-        getLogger().info("Server stopped: " + event.getServerId());
-    }
-}
-```
-
-## Event Reference
-
-Fields map to Java getters. For example, `serverId` is exposed as `getServerId()`.
-
-Every event includes these common fields:
-
-<ResponseField name="networkId" type="string">
-  Network ID that emitted the event.
-</ResponseField>
-
-<ResponseField name="timestamp" type="string">
-  ISO 8601 timestamp for when the event occurred.
-</ResponseField>
-
-### Server Events
+Prefer the stable ID getter when identifying a resource. Query the matching resource API when you need its current data; model getters such as `getServer()`, `getGroup()`, and `getBlueprint()` can be unavailable for an event.
 
 <AccordionGroup>
-  <Accordion title="ServerStartedEvent">
-    <ResponseField name="serverId" type="string">
-      ID of the started server instance.
-    </ResponseField>
+  <Accordion title="Server callback getters">
 
-    <ResponseField name="serverGroupId" type="string">
-      ID of the server group this server belongs to.
-    </ResponseField>
+    | Callback type | Additional getters |
+    | --- | --- |
+    | `ServerStartedEvent` | `getServerId()`, `getServerGroupId()`, `getServer()` |
+    | `ServerStoppedEvent` | `getServerId()`, `getServerGroupId()`, `getServer()`, `getCrashed()`, `getExitCode()` (`Integer` or `null`), `getReason()` (`String` or `null`) |
+    | `ServerStateChangedEvent` | `getServerId()`, `getOldState()`, `getNewState()`, `getServer()` |
+    | `ServerUpdatedEvent` | `getServerId()`, `getServerGroupId()`, `getServer()` |
+    | `ServerDeletedEvent` | `getServerId()`, `getServerGroupId()`, `getServer()` |
 
-    <ResponseField name="server" type="Server">
-      Started server instance with complete configuration and runtime information.
-    </ResponseField>
   </Accordion>
 
-  <Accordion title="ServerStoppedEvent">
-    <ResponseField name="serverId" type="string">
-      ID of the stopped server instance.
-    </ResponseField>
+  <Accordion title="Group callback getters">
 
-    <ResponseField name="serverGroupId" type="string">
-      ID of the server group this server belongs to.
-    </ResponseField>
+    | Callback type | Additional getters |
+    | --- | --- |
+    | `GroupCreatedEvent` | `getServerGroupId()`, `getGroup()` |
+    | `GroupUpdatedEvent` | `getServerGroupId()`, `getGroup()` |
+    | `GroupDeletedEvent` | `getServerGroupId()`, `getName()` (`String` or `null`) |
 
-    <ResponseField name="server" type="Server">
-      Stopped server instance with complete configuration and runtime information.
-    </ResponseField>
-
-    <ResponseField name="crashed" type="boolean">
-      Whether the server stopped unexpectedly.
-    </ResponseField>
-
-    <ResponseField name="exitCode" type="integer | null">
-      Process exit code, or `null` when no exit code is available.
-    </ResponseField>
-
-    <ResponseField name="reason" type="string | null">
-      Stop reason, or `null` when no reason is available.
-    </ResponseField>
   </Accordion>
 
-  <Accordion title="ServerStateChangedEvent">
-    <ResponseField name="serverId" type="string">
-      ID of the server whose state changed.
-    </ResponseField>
+  <Accordion title="Persistent server callback getters">
 
-    <ResponseField name="oldState" type="ServerState">
-      Previous server state.
-    </ResponseField>
+    | Callback type | Additional getters |
+    | --- | --- |
+    | `PersistentServerCreatedEvent` | `getPersistentServerId()`, `getName()` (`String` or `null`) |
+    | `PersistentServerStartedEvent` | `getPersistentServerId()`, `getServerId()` (`String` or `null`) |
+    | `PersistentServerStoppedEvent` | `getPersistentServerId()`, `getServerId()` (`String` or `null`) |
+    | `PersistentServerUpdatedEvent` | `getPersistentServerId()`, `getName()` (`String` or `null`) |
+    | `PersistentServerDeletedEvent` | `getPersistentServerId()`, `getName()` (`String` or `null`) |
 
-    <ResponseField name="newState" type="ServerState">
-      New server state.
-    </ResponseField>
-
-    <ResponseField name="server" type="Server">
-      Current server instance with complete configuration and runtime information.
-    </ResponseField>
   </Accordion>
 
-  <Accordion title="ServerUpdatedEvent">
-    <ResponseField name="serverId" type="string">
-      ID of the updated server instance.
-    </ResponseField>
+  <Accordion title="Blueprint callback getters">
 
-    <ResponseField name="serverGroupId" type="string">
-      ID of the server group this server belongs to.
-    </ResponseField>
+    | Callback type | Additional getters |
+    | --- | --- |
+    | `BlueprintCreatedEvent` | `getBlueprintId()`, `getBlueprint()` |
+    | `BlueprintUpdatedEvent` | `getBlueprintId()`, `getBlueprint()` |
+    | `BlueprintDeletedEvent` | `getBlueprintId()`, `getName()` (`String` or `null`) |
 
-    <ResponseField name="server" type="Server">
-      Updated server instance with complete configuration and runtime information.
-    </ResponseField>
-  </Accordion>
-
-  <Accordion title="ServerDeletedEvent">
-    <ResponseField name="serverId" type="string">
-      ID of the deleted server instance.
-    </ResponseField>
-
-    <ResponseField name="serverGroupId" type="string">
-      ID of the server group this server belonged to.
-    </ResponseField>
-
-    <ResponseField name="server" type="Server">
-      Deleted server instance with the last available configuration and runtime information.
-    </ResponseField>
-  </Accordion>
-</AccordionGroup>
-
-### Group Events
-
-<AccordionGroup>
-  <Accordion title="GroupCreatedEvent">
-    <ResponseField name="serverGroupId" type="string">
-      ID of the created server group.
-    </ResponseField>
-
-    <ResponseField name="group" type="Group">
-      Created group model.
-    </ResponseField>
-  </Accordion>
-
-  <Accordion title="GroupUpdatedEvent">
-    <ResponseField name="serverGroupId" type="string">
-      ID of the updated server group.
-    </ResponseField>
-
-    <ResponseField name="group" type="Group">
-      Updated group model.
-    </ResponseField>
-  </Accordion>
-
-  <Accordion title="GroupDeletedEvent">
-    <ResponseField name="serverGroupId" type="string">
-      ID of the deleted server group.
-    </ResponseField>
-
-    <ResponseField name="name" type="string | null">
-      Deleted group name, or `null` when the name is no longer available.
-    </ResponseField>
-  </Accordion>
-</AccordionGroup>
-
-### Persistent Server Events
-
-<AccordionGroup>
-  <Accordion title="PersistentServerCreatedEvent">
-    <ResponseField name="persistentServerId" type="string">
-      ID of the created persistent server.
-    </ResponseField>
-
-    <ResponseField name="name" type="string | null">
-      Created persistent server name, or `null` when no name is available.
-    </ResponseField>
-  </Accordion>
-
-  <Accordion title="PersistentServerStartedEvent">
-    <ResponseField name="persistentServerId" type="string">
-      ID of the started persistent server.
-    </ResponseField>
-
-    <ResponseField name="serverId" type="string | null">
-      ID of the associated running server instance, or `null` when it is not available.
-    </ResponseField>
-  </Accordion>
-
-  <Accordion title="PersistentServerStoppedEvent">
-    <ResponseField name="persistentServerId" type="string">
-      ID of the stopped persistent server.
-    </ResponseField>
-
-    <ResponseField name="serverId" type="string | null">
-      ID of the associated server instance, or `null` when it is not available.
-    </ResponseField>
-  </Accordion>
-
-  <Accordion title="PersistentServerUpdatedEvent">
-    <ResponseField name="persistentServerId" type="string">
-      ID of the updated persistent server.
-    </ResponseField>
-
-    <ResponseField name="name" type="string | null">
-      Updated persistent server name, or `null` when no name is available.
-    </ResponseField>
-  </Accordion>
-
-  <Accordion title="PersistentServerDeletedEvent">
-    <ResponseField name="persistentServerId" type="string">
-      ID of the deleted persistent server.
-    </ResponseField>
-
-    <ResponseField name="name" type="string | null">
-      Deleted persistent server name, or `null` when the name is no longer available.
-    </ResponseField>
-  </Accordion>
-</AccordionGroup>
-
-### Blueprint Events
-
-<AccordionGroup>
-  <Accordion title="BlueprintCreatedEvent">
-    <ResponseField name="blueprintId" type="string">
-      ID of the created blueprint.
-    </ResponseField>
-
-    <ResponseField name="blueprint" type="Blueprint">
-      Created blueprint model.
-    </ResponseField>
-  </Accordion>
-
-  <Accordion title="BlueprintUpdatedEvent">
-    <ResponseField name="blueprintId" type="string">
-      ID of the updated blueprint.
-    </ResponseField>
-
-    <ResponseField name="blueprint" type="Blueprint">
-      Updated blueprint model.
-    </ResponseField>
-  </Accordion>
-
-  <Accordion title="BlueprintDeletedEvent">
-    <ResponseField name="blueprintId" type="string">
-      ID of the deleted blueprint.
-    </ResponseField>
-
-    <ResponseField name="name" type="string | null">
-      Deleted blueprint name, or `null` when the name is no longer available.
-    </ResponseField>
   </Accordion>
 </AccordionGroup>

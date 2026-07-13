@@ -1,217 +1,117 @@
 ---
-title: 'Players API'
-description: 'Manage players and send cross-server messages'
+title: "Players API"
+description: "Look up players, inspect presence, transfer or kick them, and manage player data"
 ---
 
-The Players API lets you query players, transfer them between servers, and send rich-text messages using Adventure. Access it via `api.player()`.
+Use `api.player()` to find players and inspect their network presence. Prefer UUID lookup when you already know the player's UUID because usernames can change.
 
-## Get Players
+## Look up a player
 
-```java
-// Get player by UUID
-api.player().get(uuid)
-    .thenAccept(player -> {
-        if (player != null) {
-            System.out.println(player.getName() + " on " + player.getConnectedServerName());
-        }
-    });
-
-// Get player by username
-api.player().get("Steve")
-    .thenAccept(player -> {
-        if (player != null) {
-            System.out.println("Found: " + player.getUniqueId());
-        }
-    });
-
-// Get all online players
-api.player().getOnlinePlayers()
-    .thenAccept(players -> players.forEach(p ->
-        System.out.println(p.getName())));
-
-// Get online player count
-api.player().getOnlinePlayerCount()
-    .thenAccept(count -> System.out.println("Online: " + count));
-```
-
-## Player Actions
-
-### Transfer Player
+Look up a player by UUID and check whether they are online before using their current server:
 
 ```java
-api.player().get(uuid).thenAccept(player -> {
-    if (player != null) {
-        player.connect("lobby-1").thenAccept(result -> {
-            switch (result) {
-                case SUCCESS -> System.out.println("Transferred!");
-                case SERVER_NOT_FOUND -> System.out.println("Server doesn't exist");
-                case ALREADY_CONNECTED -> System.out.println("Already on that server");
-                case CONNECTION_FAILED -> System.out.println("Connection failed");
-            }
-        });
+api.player().get(playerId).thenAccept(player -> {
+    if (player == null || !player.isOnline()) {
+        logger.info("Player is offline");
+        return;
     }
+
+    String serverName = player.getConnectedServerName();
+    logger.info(serverName == null
+        ? "Player is connected through a proxy"
+        : "Player is on " + serverName);
 });
 ```
 
-### Kick Player
+`get(UUID)` returns `null` when SimpleCloud has no stored player with that UUID. You can also look up a player by their case-insensitive username:
 
 ```java
-player.kick(Component.text("Server restarting")
-    .color(NamedTextColor.RED));
+api.player().get("Steve");
 ```
 
-## Adventure Integration
+A `CloudPlayer` contains the state recorded when you queried it. Fetch the player again when a later action depends on their current presence.
 
-`CloudPlayer` implements Adventure's `Audience` interface, giving you access to all Adventure messaging features:
+## List online players
 
-### Send Messages
+Use the online player list when you need the players themselves, or request only the count:
 
 ```java
-// Plain text
-player.sendMessage(Component.text("Hello!"));
-
-// Colored text
-player.sendMessage(Component.text("Success!")
-    .color(NamedTextColor.GREEN));
-
-// Styled text
-player.sendMessage(Component.text("Important")
-    .color(NamedTextColor.GOLD)
-    .decorate(TextDecoration.BOLD));
-
-// Clickable text
-player.sendMessage(Component.text("Run /help")
-    .clickEvent(ClickEvent.runCommand("/help"))
-    .hoverEvent(HoverEvent.showText(Component.text("Run /help"))));
+api.player().getOnlinePlayers();
+api.player().getOnlinePlayerCount();
 ```
 
-### Send Titles
+The list is empty and the count is `0` when no players are online.
+
+## Inspect player data
+
+| Method | Value |
+| --- | --- |
+| `getUniqueId()` | Player UUID |
+| `getName()` | Username |
+| `getDisplayName()` | Stored display name |
+| `isOnline()` | Whether the player was online when queried |
+| `getConnectedProxyName()` | Connected proxy name, or `null` |
+| `getConnectedServerName()` | Registered backend server name, or `null` |
+| `getSessionId()` | Active session ID, or `null` |
+| `getFirstSeen()` | First-seen ISO-8601 timestamp, or `null` |
+| `getLastSeen()` | Last-seen ISO-8601 timestamp, or `null` |
+| `getOnlineTimeSeconds()` | Accumulated online time |
+| `getProperties()` | Immutable custom properties, or an empty map |
+
+## Connect a player
+
+Call `connect(...)` with the server name registered on the player's proxy, such as `lobby-1`. Do not pass the server UUID.
+
+Connecting players requires the `simplecloud-api` provider on the Velocity or BungeeCord proxy.
+
+| Result | Meaning |
+| --- | --- |
+| `SUCCESS` | The player connected to the target server. |
+| `SERVER_NOT_FOUND` | The proxy does not know the target server name. |
+| `ALREADY_CONNECTED` | The player is already connected to the target server. |
+| `PLAYER_NOT_FOUND` | Not currently returned by `connect(...)`; the transfer guide uses it when its player lookup finds no online player. |
+| `CONNECTION_FAILED` | The connection could not be completed, including when the player is no longer available. |
+
+See [Transfer a player to another server](/en/developer/guides/player-transfer) for a complete transfer workflow.
+
+## Kick a player
+
+Pass an Adventure component as the reason shown to the player:
 
 ```java
+player.kick(Component.text("Server restarting"));
+```
+
+Kicking players requires the `simplecloud-api` provider on the Velocity or BungeeCord proxy.
+
+## Send Adventure content
+
+`CloudPlayer` implements Adventure's `Audience`, so you can send messages, action bars, titles, sounds, boss bars, books, and player-list headers and footers.
+
+```java
+player.sendMessage(Component.text("Welcome!"));
+player.sendActionBar(Component.text("Combat mode enabled"));
 player.showTitle(Title.title(
-    Component.text("Welcome!").color(NamedTextColor.GOLD),
-    Component.text("to the server").color(NamedTextColor.GRAY),
-    Title.Times.times(
-        Duration.ofMillis(500),   // fade in
-        Duration.ofSeconds(3),    // stay
-        Duration.ofMillis(500)    // fade out
-    )
+    Component.text("Welcome"),
+    Component.text("to the server")
 ));
 ```
 
-### Send Action Bar
+Remote Adventure content requires the `simplecloud-api` provider on the player's Paper or Folia server.
 
-```java
-player.sendActionBar(Component.text("⚔ Combat Mode Enabled")
-    .color(NamedTextColor.RED));
-```
+## Manage online time and properties
 
-### Play Sounds
+Player properties store custom string values for your plugins.
 
-```java
-player.playSound(Sound.sound(
-    Key.key("entity.experience_orb.pickup"),
-    Sound.Source.PLAYER,
-    1.0f,  // volume
-    1.0f   // pitch
-));
-```
+| Task | Method |
+| --- | --- |
+| Read online time | `getOnlineTimeSeconds(playerId)` |
+| Set online time | `setOnlineTimeSeconds(playerId, seconds)` |
+| Reset online time | `resetOnlineTime(playerId)` |
+| Add or remove time | `addOnlineTimeSeconds(playerId, seconds)` or `removeOnlineTimeSeconds(playerId, seconds)` |
+| Set one property | `updatePlayerProperty(playerId, key, value)` |
+| Set several properties | `updatePlayerProperties(playerId, properties)` |
+| Delete one property | `deletePlayerProperty(playerId, key)` |
+| Delete several properties | `deletePlayerProperties(playerId, keys)` |
 
-### Boss Bars
-
-```java
-BossBar bar = BossBar.bossBar(
-    Component.text("Event Progress"),
-    0.5f,  // progress (0.0 to 1.0)
-    BossBar.Color.PURPLE,
-    BossBar.Overlay.PROGRESS
-);
-
-player.showBossBar(bar);
-
-// Update progress
-bar.progress(0.75f);
-
-// Remove when done
-player.hideBossBar(bar);
-```
-
-### Player List Header & Footer
-
-```java
-player.sendPlayerListHeaderAndFooter(
-    Component.text("My Server").color(NamedTextColor.GOLD),
-    Component.text("play.example.com").color(NamedTextColor.GRAY)
-);
-```
-
-For full transfer workflows, see [Player transfer](/en/developer/guides/player-transfer).
-
-## CloudPlayer Model
-
-<ResponseField name="uniqueId" type="UUID" required>
-  Player's UUID.
-</ResponseField>
-
-<ResponseField name="name" type="string" required>
-  Player's username.
-</ResponseField>
-
-<ResponseField name="displayName" type="string">
-  Player's display name.
-</ResponseField>
-
-<ResponseField name="connectedServerName" type="string">
-  Current server name.
-</ResponseField>
-
-<ResponseField name="connectedProxyName" type="string">
-  Connected proxy name.
-</ResponseField>
-
-<ResponseField name="online" type="boolean" required>
-  Whether the player is currently online.
-</ResponseField>
-
-<ResponseField name="onlineTimeSeconds" type="long" required>
-  Accumulated online time in seconds.
-</ResponseField>
-
-<ResponseField name="sessionId" type="string | null">
-  Active session ID, or `null` if unavailable.
-</ResponseField>
-
-<ResponseField name="firstSeen" type="string">
-  First login timestamp in ISO 8601 format.
-</ResponseField>
-
-<ResponseField name="lastSeen" type="string">
-  Last login timestamp in ISO 8601 format.
-</ResponseField>
-
-<ResponseField name="properties" type="object">
-  Player-specific properties.
-</ResponseField>
-
-## ConnectResult
-
-| Value | Description |
-|-------|-------------|
-| `SUCCESS` | Transfer successful |
-| `SERVER_NOT_FOUND` | Target server doesn't exist |
-| `ALREADY_CONNECTED` | Player already on that server |
-| `PLAYER_NOT_FOUND` | Player went offline |
-| `CONNECTION_FAILED` | Transfer failed |
-
-## Broadcast to All Players
-
-```java
-api.player().getOnlinePlayers().thenAccept(players -> {
-    Component message = Component.text("[Announcement] ")
-        .color(NamedTextColor.GOLD)
-        .append(Component.text("Server restarting in 5 minutes")
-            .color(NamedTextColor.WHITE));
-
-    players.forEach(player -> player.sendMessage(message));
-});
-```
+Online time must be between `0` and `Integer.MAX_VALUE` seconds. Property updates merge the supplied values with the existing map; delete methods remove only the specified keys.

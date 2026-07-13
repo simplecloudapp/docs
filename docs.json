@@ -252,6 +252,50 @@
     {
       "source": "/de/manual/plugin/server-registration",
       "destination": "/de/manual/plugin/server-connection"
+    },
+    {
+      "source": "/en/developer/controller/events",
+      "destination": "/en/developer/api/events"
+    },
+    {
+      "source": "/en/developer/controller/groups",
+      "destination": "/en/developer/api/groups"
+    },
+    {
+      "source": "/en/developer/controller/initialization",
+      "destination": "/en/developer/installation"
+    },
+    {
+      "source": "/en/developer/controller/servers",
+      "destination": "/en/developer/api/servers"
+    },
+    {
+      "source": "/en/developer/droplets/player/adventure-integration",
+      "destination": "/en/developer/api/players"
+    },
+    {
+      "source": "/en/developer/droplets/player/initialization",
+      "destination": "/en/developer/installation"
+    },
+    {
+      "source": "/en/developer/droplets/player/player-management",
+      "destination": "/en/developer/api/players"
+    },
+    {
+      "source": "/en/developer/getting-started/bungeecord",
+      "destination": "/en/developer/installation"
+    },
+    {
+      "source": "/en/developer/getting-started/other",
+      "destination": "/en/developer/installation"
+    },
+    {
+      "source": "/en/developer/getting-started/paper",
+      "destination": "/en/developer/installation"
+    },
+    {
+      "source": "/en/developer/getting-started/velocity",
+      "destination": "/en/developer/installation"
     }
   ]
 }

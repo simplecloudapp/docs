@@ -1,190 +1,79 @@
 ---
-title: 'Manage Servers Programmatically'
-description: 'Request, stop, and monitor servers with the Cloud API'
+title: 'Route players with autoscaling'
+description: 'Send a player to an available server without managing group capacity yourself'
 ---
 
-This guide shows common patterns for managing servers programmatically.
+When a player needs a server, query the group for available capacity and connect them to the least-loaded instance.
 
-## Request Servers on Demand
+<Note>
+  Let SimpleCloud manage the number of servers in a group. This workflow only chooses from instances that are ready now.
+</Note>
 
-Server starts are queued through the Groups API. The returned future completes when the request is accepted, not when the new server is ready.
+## Route a player to a group
 
-### Request One Server
+The following router finds playable servers in a group, ignores full instances, and attempts one connection. It returns `NoCapacity` when no suitable server is available and `ConnectionAttempted` with the result from `CloudPlayer.connect` otherwise.
 
-```java
-public CompletableFuture<Void> requestServerStart(String groupName) {
-    return api.group().getGroupByName(groupName)
-        .thenCompose(group -> {
-            if (group == null) {
-                return CompletableFuture.failedFuture(
-                    new IllegalArgumentException("Group not found: " + groupName));
-            }
-            return api.group().requestServerStart(group);
-        });
-}
-```
+```java GroupRouter.java
+package com.example;
 
-### Request Multiple Servers
+import app.simplecloud.api.CloudApi;
+import app.simplecloud.api.player.CloudPlayer;
+import app.simplecloud.api.server.Server;
+import app.simplecloud.api.server.ServerQuery;
+import app.simplecloud.api.server.ServerState;
 
-```java
-public void ensureMinimumServers(String groupName, int minimum) {
-    api.server().getServersByGroup(groupName).thenAccept(servers -> {
-        long running = servers.stream()
-            .filter(server -> server.getState() != ServerState.STOPPING)
-            .filter(server -> server.getState() != ServerState.CLEANUP)
-            .count();
+import java.util.Comparator;
+import java.util.concurrent.CompletableFuture;
 
-        int toStart = Math.max(0, minimum - (int) running);
-        for (int i = 0; i < toStart; i++) {
-            requestServerStart(groupName)
-                .thenRun(() -> System.out.println("Start request accepted for " + groupName));
-        }
-    });
-}
-```
+public final class GroupRouter {
+    private final CloudApi api;
 
-## Stop Servers
+    public GroupRouter(CloudApi api) {
+        this.api = api;
+    }
 
-### Stop Single Server
+    public CompletableFuture<RouteResult> routeToGroup(
+        CloudPlayer player,
+        String groupName
+    ) {
+        ServerQuery query = ServerQuery.create()
+            .filterByServerGroupName(groupName)
+            .filterByState(ServerState.AVAILABLE, ServerState.INGAME);
 
-```java
-public void stopServer(String serverId) {
-    api.server().stopServer(serverId)
-        .thenRun(() -> System.out.println("Stop requested: " + serverId));
-}
-```
-
-### Stop Empty Servers
-
-```java
-public void stopEmptyServers(String groupName, int keepMinimum) {
-    api.server().getServersByGroup(groupName).thenAccept(servers -> {
-        List<Server> emptyServers = servers.stream()
-            .filter(server -> server.getState() == ServerState.AVAILABLE)
-            .filter(server -> server.getPlayerCount() != null && server.getPlayerCount() == 0)
-            .sorted(Comparator.comparingInt(Server::getNumericalId).reversed())
-            .toList();
-
-        int toStop = Math.max(0, emptyServers.size() - keepMinimum);
-
-        emptyServers.stream()
-            .limit(toStop)
-            .forEach(server -> api.server().stopServer(server.getServerId()));
-    });
-}
-```
-
-### Graceful Shutdown with Player Evacuation
-
-```java
-public void gracefulStop(String serverId, String fallbackServer) {
-    api.server().getServerById(serverId).thenAccept(server -> {
-        if (server == null) return;
-
-        api.player().getOnlinePlayers().thenAccept(players -> {
-            List<CompletableFuture<CloudPlayer.ConnectResult>> transfers = players.stream()
-                .filter(player -> serverId.equals(player.getConnectedServerName()))
-                .map(player -> {
-                    player.sendMessage(Component.text("Server shutting down...")
-                        .color(NamedTextColor.YELLOW));
-                    return player.connect(fallbackServer);
-                })
-                .toList();
-
-            CompletableFuture.allOf(transfers.toArray(new CompletableFuture[0]))
-                .thenRun(() -> api.server().stopServer(serverId));
-        });
-    });
-}
-```
-
-## Monitor Servers
-
-### Watch Server Count
-
-```java
-public void monitorServerCount(String groupName) {
-    api.event().server().onStarted(event -> {
-        Server server = event.getServer();
-        if (server.isFromGroup() && groupName.equals(server.getGroup().getName())) {
-            updateServerCount(groupName);
-        }
-    });
-
-    api.event().server().onStopped(event -> {
-        Server server = event.getServer();
-        if (server.isFromGroup() && groupName.equals(server.getGroup().getName())) {
-            updateServerCount(groupName);
-        }
-    });
-}
-
-private void updateServerCount(String groupName) {
-    api.server().getServersByGroup(groupName).thenAccept(servers -> {
-        System.out.println(groupName + " servers: " + servers.size());
-    });
-}
-```
-
-### Track Server States
-
-```java
-public void trackServerStates() {
-    api.event().server().onStateChanged(event -> {
-        System.out.println(event.getServerId() + ": " +
-            event.getOldState() + " -> " + event.getNewState());
-
-        if (event.getNewState() == ServerState.AVAILABLE) {
-            System.out.println("Server ready for players: " + event.getServerId());
-        }
-    });
-}
-```
-
-## Update Server Properties
-
-### Set Game Mode
-
-```java
-public void setServerGameMode(String serverId, String mode) {
-    api.server().updateServerProperties(serverId, Map.of("gameMode", mode))
-        .thenAccept(properties -> System.out.println("Updated properties: " + properties));
-}
-```
-
-### Mark Server as Joinable
-
-```java
-public void setJoinable(String serverId, boolean joinable) {
-    api.server().updateServerProperties(serverId, Map.of("joinable", joinable));
-}
-```
-
-## Find Servers
-
-### Find Server with Lowest Player Count
-
-```java
-public CompletableFuture<Server> findBestServer(String groupName) {
-    return api.server().getServersByGroup(groupName)
-        .thenApply(servers -> servers.stream()
-            .filter(server -> server.getState() == ServerState.AVAILABLE ||
-                server.getState() == ServerState.INGAME)
+        return api.server().getAllServers(query).thenCompose(servers -> servers.stream()
             .filter(server -> server.getPlayerCount() != null)
             .filter(server -> server.getPlayerCount() < server.getMaxPlayers())
-            .min(Comparator.comparingInt(Server::getPlayerCount))
-            .orElse(null));
+            .min(Comparator
+                .comparingInt((Server server) -> server.getPlayerCount())
+                .thenComparingInt(Server::getNumericalId))
+            .<CompletableFuture<RouteResult>>map(server -> {
+                String serverName = groupName + "-" + server.getNumericalId();
+                return player.connect(serverName)
+                    .thenApply(RouteResult.ConnectionAttempted::new);
+            })
+            .orElseGet(() -> CompletableFuture.completedFuture(
+                new RouteResult.NoCapacity()
+            )));
+    }
+
+    public sealed interface RouteResult {
+        record NoCapacity() implements RouteResult {}
+
+        record ConnectionAttempted(
+            CloudPlayer.ConnectResult result
+        ) implements RouteResult {}
+    }
 }
 ```
 
-### Find Servers by Property
+`AVAILABLE` and `INGAME` servers can accept players. Sorting by player count spreads new connections across the group, while the numerical ID gives the selection a stable tie-breaker.
 
-```java
-public CompletableFuture<List<Server>> findByProperty(String groupName, String key, Object value) {
-    return api.server().getServersByGroup(groupName)
-        .thenApply(servers -> servers.stream()
-            .filter(server -> server.getProperties() != null)
-            .filter(server -> value.equals(server.getProperties().get(key)))
-            .toList());
-}
-```
+The server name uses SimpleCloud's default `<groupName>-<numericalId>` registration pattern, such as `lobby-3`. If you changed the registration pattern, build the name with that same pattern here.
+
+Handle `NoCapacity` by keeping the player in your queue or fallback lobby. For `ConnectionAttempted`, use the returned `ConnectResult` to confirm the connection or show an appropriate fallback.
+
+## Next steps
+
+- Use the [Groups API](/en/developer/api/groups) to create and configure groups.
+- Use the [event handling guide](/en/developer/guides/event-handling) when your plugin should react as servers become available.
+- See the [Servers API](/en/developer/api/servers) for server queries, models, and lifecycle actions.
