@@ -1,6 +1,6 @@
 ---
 title: 'Placeholders'
-description: 'Stelle SimpleCloud Server- und Gruppen-Daten über PlaceholderAPI bereit'
+description: 'Stelle SimpleCloud Server-, Persistent-Server- und Gruppen-Daten über PlaceholderAPI bereit'
 tag: 'Server'
 ---
 
@@ -61,6 +61,56 @@ Diese Platzhalter werden über `SIMPLECLOUD_GROUP` für die aktuelle SimpleCloud
 | `%simplecloud_group_max_players%` | Maximale Spieler pro Server |
 | `%simplecloud_group_player_count%` | Summierte Spieleranzahl aller Gruppenserver |
 
+## Persistent-Server-Platzhalter
+
+Diese Platzhalter werden über `SIMPLECLOUD_UNIQUE_ID` für den aktuellen Persistent Server aufgelöst.
+
+| Platzhalter | Beschreibung |
+| ----------- | ------------ |
+| `%simplecloud_persistent_server_id%` | Persistent-Server-UUID |
+| `%simplecloud_persistent_server_name%` | Name des Persistent Servers |
+| `%simplecloud_persistent_server_type%` | Servertyp |
+| `%simplecloud_persistent_server_host%` | Zugewiesene Serverhost-ID |
+| `%simplecloud_persistent_server_max_players%` | Maximale Spieler |
+| `%simplecloud_persistent_server_min_memory%` | Minimaler Speicher in MB |
+| `%simplecloud_persistent_server_max_memory%` | Maximaler Speicher in MB |
+| `%simplecloud_persistent_server_player_count%` | Aktuelle Spieleranzahl oder `0`, wenn keine Instanz läuft |
+| `%simplecloud_persistent_server_is_active%` | Ob der Persistent Server aktiv ist |
+
+## Andere Ressource auswählen
+
+Standardmäßig liefern die oben aufgeführten Platzhalter Informationen über den Server, auf dem das Plugin ausgeführt wird. Um Informationen über eine andere Ressource anzuzeigen, fügst du deren Selektor vor der Eigenschaft ein.
+
+| Ressource | Format |
+| --------- | ------ |
+| Gruppe | `%simplecloud_group_<gruppenname>_<eigenschaft>%` |
+| Persistent Server | `%simplecloud_persistent_server_<persistent-server-name>_<eigenschaft>%` |
+| Laufender Server über Gruppe und numerische ID | `%simplecloud_server_<gruppenname>:<numerische-id>_<eigenschaft>%` |
+| Laufender Server über UUID | `%simplecloud_server_id:<server-id>_<eigenschaft>%` |
+
+Zum Beispiel:
+
+```text
+%simplecloud_group_Lobby_player_count%
+%simplecloud_persistent_server_MainLobby_is_active%
+%simplecloud_server_Lobby:1_state%
+%simplecloud_server_id:550e8400-e29b-41d4-a716-446655440000_player_count%
+```
+
+Verwende dieselben Eigenschaften, die in den Tabellen oben nach dem Ressourcenpräfix stehen. Aus `server_player_count` wird beispielsweise `server_Lobby:1_player_count` und aus `group_max_players` wird `group_Lobby_max_players`.
+
+<Note>
+  Gruppen- und Persistent-Server-Namen dürfen Unterstriche enthalten. Der
+  Doppelpunkt in einem Selektor für laufende Server trennt den Gruppennamen von
+  der numerischen Server-ID.
+</Note>
+
+<Warning>
+  Ein zielgerichteter Platzhalter kann nicht aufgelöst werden, wenn die
+  ausgewählte Ressource nicht existiert, der laufende Server offline oder der
+  Selektor ungültig ist.
+</Warning>
+
 ## Beispiel
 
 ```yaml
@@ -73,9 +123,13 @@ scoreboard:
     - ""
     - "&7Group: &f%simplecloud_group_name%"
     - "&7Total Players: &f%simplecloud_group_player_count%"
+    - ""
+    - "&7Lobby-1: &f%simplecloud_server_Lobby:1_player_count% Spieler"
 ```
 
 <Tip>
-  Wenn ein Platzhalter keinen Wert liefert, prüfe, ob der Server innerhalb von
-  SimpleCloud läuft und die passende Umgebungsvariable verfügbar ist.
+  Wenn ein Platzhalter für die aktuelle Ressource keinen Wert liefert, prüfe,
+  ob der Server innerhalb von SimpleCloud läuft und die passende
+  Umgebungsvariable verfügbar ist. Prüfe bei einem zielgerichteten Platzhalter
+  zusätzlich den Ressourcennamen, die UUID oder die numerische ID.
 </Tip>

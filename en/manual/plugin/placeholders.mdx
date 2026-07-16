@@ -1,6 +1,6 @@
 ---
 title: 'Placeholders'
-description: 'Expose SimpleCloud server and group data through PlaceholderAPI'
+description: 'Expose SimpleCloud server, persistent-server, and group data through PlaceholderAPI'
 tag: 'Server'
 ---
 
@@ -61,6 +61,55 @@ These placeholders resolve from the current SimpleCloud group using `SIMPLECLOUD
 | `%simplecloud_group_max_players%` | Maximum players per server |
 | `%simplecloud_group_player_count%` | Summed player count across group servers |
 
+## Persistent-Server Placeholders
+
+These placeholders resolve from the current persistent server using `SIMPLECLOUD_UNIQUE_ID`.
+
+| Placeholder | Description |
+| ----------- | ----------- |
+| `%simplecloud_persistent_server_id%` | Persistent-server UUID |
+| `%simplecloud_persistent_server_name%` | Persistent-server name |
+| `%simplecloud_persistent_server_type%` | Server type |
+| `%simplecloud_persistent_server_host%` | Assigned serverhost ID |
+| `%simplecloud_persistent_server_max_players%` | Maximum players |
+| `%simplecloud_persistent_server_min_memory%` | Minimum memory in MB |
+| `%simplecloud_persistent_server_max_memory%` | Maximum memory in MB |
+| `%simplecloud_persistent_server_player_count%` | Current player count, or `0` when no instance is running |
+| `%simplecloud_persistent_server_is_active%` | Whether the persistent server is active |
+
+## Target Another Resource
+
+By default, the placeholders above return information about the server on which the plugin is running. To display information about another resource, add its selector before the property.
+
+| Resource | Format |
+| -------- | ------ |
+| Group | `%simplecloud_group_<group-name>_<property>%` |
+| Persistent server | `%simplecloud_persistent_server_<persistent-server-name>_<property>%` |
+| Running server by group and numerical ID | `%simplecloud_server_<group-name>:<numerical-id>_<property>%` |
+| Running server by UUID | `%simplecloud_server_id:<server-id>_<property>%` |
+
+For example:
+
+```text
+%simplecloud_group_Lobby_player_count%
+%simplecloud_persistent_server_MainLobby_is_active%
+%simplecloud_server_Lobby:1_state%
+%simplecloud_server_id:550e8400-e29b-41d4-a716-446655440000_player_count%
+```
+
+Use the same properties that appear after the resource prefix in the tables above. For example, `server_player_count` becomes `server_Lobby:1_player_count`, and `group_max_players` becomes `group_Lobby_max_players`.
+
+<Note>
+  Group and persistent-server names may contain underscores. The colon in a
+  running-server selector separates the group name from its numerical server
+  ID.
+</Note>
+
+<Warning>
+  A targeted placeholder cannot be resolved if the selected resource does not
+  exist, the running server is offline, or the selector is invalid.
+</Warning>
+
 ## Example Usage
 
 ```yaml
@@ -73,9 +122,13 @@ scoreboard:
     - ""
     - "&7Group: &f%simplecloud_group_name%"
     - "&7Total Players: &f%simplecloud_group_player_count%"
+    - ""
+    - "&7Lobby-1: &f%simplecloud_server_Lobby:1_player_count% players"
 ```
 
 <Tip>
-  If a placeholder returns no value, confirm that the server is running inside
-  SimpleCloud and that the matching environment variable is available.
+  If a current-resource placeholder returns no value, confirm that the server
+  is running inside SimpleCloud and that the matching environment variable is
+  available. For a targeted placeholder, verify the resource name, UUID, or
+  numerical ID.
 </Tip>
