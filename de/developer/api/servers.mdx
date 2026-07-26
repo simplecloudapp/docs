@@ -80,7 +80,7 @@ Nutze `DELETE /v0/servers`, wenn der Controller den Server normal stoppen und de
   ```bash cURL
   curl -X DELETE "https://your-controller/v0/servers?server_id=123e4567-e89b-12d3-a456-426614174000" \
     -H "X-Network-ID: your-network-id" \
-    -H "X-Network-Secret: your-network-secret"
+    -H "X-Network-Credential: your-network-password"
   ```
 </RequestExample>
 
@@ -131,7 +131,7 @@ Um Server in einem Netzwerk mit optionalen Filtern aufzulisten, verwende `GET /v
   ```bash cURL
   curl "https://your-controller/v0/servers?state=AVAILABLE&type=lobby" \
     -H "X-Network-ID: your-network-id" \
-    -H "X-Network-Secret: your-network-secret"
+    -H "X-Network-Credential: your-network-password"
   ```
 </RequestExample>
 
@@ -167,8 +167,8 @@ Um Server in einem Netzwerk mit optionalen Filtern aufzulisten, verwende `GET /v
   Deine Netzwerk-ID.
 </ParamField>
 
-<ParamField header="X-Network-Secret" type="string" required>
-  Dein Netzwerk-Secret.
+<ParamField header="X-Network-Credential" type="string" required>
+  Dein Netzwerk-Passwort oder ein für das Zielnetzwerk gültiges App-JWT. Der ältere Header-Name `X-Network-Secret` wird aus Rückwärtskompatibilität weiterhin akzeptiert, ist aber deprecated.
 </ParamField>
 
 <ParamField header="X-SC-Component" type="string">
@@ -231,7 +231,7 @@ Um einen verwaisten Server-Datensatz direkt aus der Datenbank zu entfernen, ohne
   ```bash cURL
   curl -X DELETE "https://your-controller/v0/servers/database?server_id=123e4567-e89b-12d3-a456-426614174000" \
     -H "X-Network-ID: your-network-id" \
-    -H "X-Network-Secret: your-network-secret"
+    -H "X-Network-Credential: your-network-password"
   ```
 </RequestExample>
 
