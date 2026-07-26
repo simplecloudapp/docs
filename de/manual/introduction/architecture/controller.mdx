@@ -123,7 +123,7 @@ Für Produktionsumgebungen kannst du mehrere Controller-Instanzen betreiben:
 
     **Lösung:**
     1. `X-Network-ID` Header prüfen
-    2. `X-Network-Secret` Header prüfen. Akzeptiert wird entweder dein Netzwerk-Secret oder ein App-JWT, der für das Zielnetzwerk gültig ist (JWT-Unterstützung setzt voraus, dass der Controller mit JWT-Authentifizierung konfiguriert ist).
+    2. `X-Network-Credential` Header prüfen. Akzeptiert wird entweder dein Netzwerk-Passwort oder ein App-JWT, der für das Zielnetzwerk gültig ist (JWT-Unterstützung setzt voraus, dass der Controller mit JWT-Authentifizierung konfiguriert ist). Der ältere Header-Name `X-Network-Secret` wird weiterhin akzeptiert, ist aber deprecated.
     3. Bei Verwendung eines JWT prüfen, dass das Token nicht abgelaufen ist und dass die Claims `iss` und `aud` mit der Controller-Konfiguration `AUTH_JWT_ISSUER` und `AUTH_JWT_AUDIENCE` übereinstimmen.
     4. Credentials im `secrets/` Verzeichnis prüfen
   </Accordion>
