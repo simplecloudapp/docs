@@ -48,7 +48,7 @@ Do not set both `createBlueprint` and an existing blueprint or image source.
 
 <Accordion title="CreateGroupRequest fields">
   <ParamField body="name" type="string" required>
-    Group name.
+    Group name. Up to 100 characters of ASCII letters, digits, underscores, and hyphens (`[A-Za-z0-9_-]`). Must be unique within the network, case-insensitive — `Lobby` and `lobby` are treated as the same name. A group and a persistent server may share a name. Creating or renaming to a name that only differs by case from an existing group returns `409 Conflict`.
   </ParamField>
 
   <ParamField body="type" type="GroupServerType">
@@ -116,7 +116,7 @@ api.group().getGroupById("group-uuid")
     .thenAccept(group -> System.out.println(group.getName()));
 ```
 
-Both methods complete exceptionally when the group does not exist.
+Both methods complete exceptionally when the group does not exist. Name lookups are case-insensitive.
 
 Use `GroupQuery` to filter the group list by type, tag, or result limit:
 

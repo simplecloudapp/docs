@@ -46,7 +46,7 @@ Set either `source` or `createBlueprint`, not both.
 
 <Accordion title="CreatePersistentServerRequest fields">
   <ParamField body="name" type="string" required>
-    Persistent server name.
+    Persistent server name. Up to 100 characters of ASCII letters, digits, underscores, and hyphens (`[A-Za-z0-9_-]`). Must be unique within the network, case-insensitive — `Survival-1` and `survival-1` are treated as the same name. A persistent server and a group may share a name. Creating or renaming to a name that only differs by case from an existing persistent server returns `409 Conflict`.
   </ParamField>
 
   <ParamField body="type" type="GroupServerType | null">
@@ -110,7 +110,7 @@ api.persistentServer().getPersistentServerById("persistent-server-uuid")
     .thenAccept(server -> System.out.println(server.getName()));
 ```
 
-Both methods complete exceptionally when no persistent server matches.
+Both methods complete exceptionally when no persistent server matches. Name lookups are case-insensitive.
 
 Use a query to filter the list:
 
