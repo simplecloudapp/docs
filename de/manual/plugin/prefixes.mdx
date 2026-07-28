@@ -1,165 +1,287 @@
 ---
 title: 'Prefixes'
-description: 'Konfiguriere das SimpleCloud Prefixes Plugin für Spielerränge, Chat-Formatierung und Tablist-Namen'
+description: 'Erfahre, wie das Prefixes Plugin von SimpleCloud Ranggruppen, Chat-Formatierung, Tablist-Einträge, Namensschilder und die Synchronisierung zwischen Servern verwaltet.'
 tag: 'Server'
 ---
 
-## Überblick
+import { DependencySnippet } from "/snippets/DependencySnippet.jsx";
 
-Das Prefixes Plugin zeigt Ranginformationen in Chat und Tablist an. Es liest LuckPerms-Gruppen, übernimmt Prefix, Suffix, Farbe und Weight, und rendert Texte mit Adventure Components und MiniMessage.
+## Übersicht
 
-Nutze das Plugin, wenn ein Server dieselbe Rangidentität im Chat und in der Tablist anzeigen soll.
+Das Prefixes Plugin verwaltet die Rang-Anzeige auf deinen Servern. Jeder Spieler gehört zu einer Gruppe, und diese Gruppe bestimmt, wie der Spieler im Chat, in der Tablist und über seinem Kopf dargestellt wird.
+
+Das Plugin:
+- Wendet Prefixes, Suffixes, Farben und Anzeigenamen auf Chat, Tablist und Name Tags an
+- Liest Gruppen entweder aus der `config.yml` oder aus LuckPerms
+- Synchronisiert Chat Nachrichten und Tablist Einträge zwischen den Servern deines Netzwerks
+- Bietet eine API, um Prefix Daten auszulesen und eigene Gruppen zu registrieren
 
 ## Unterstützte Software
 
-| Runtime | Paket | Voraussetzungen | Status |
-| ------- | ----- | --------------- | ------ |
-| Paper und Forks | Paper-Plugin | LuckPerms und CustomNames | Unterstützt |
-| Minestom | Minestom-Extension | LuckPerms Minestom API | Experimentell |
+| Software      | Support        |
+| ------------- | -------------- |
+| Paper & Forks | ✅ Vollständig |
 
-<Warning>
-  Das Paper-Plugin benötigt LuckPerms und CustomNames. Die Minestom-Extension existiert im Source Tree, aber die LuckPerms-Integration ist als experimentell markiert.
-</Warning>
+<Note>
+  Du möchtest eine andere Server-Software unterstützen? Erstelle einfach einen Pull Request auf
+  [GitHub](https://github.com/simplecloudapp/prefixes-plugin/pulls)!
+</Note>
 
-## Schnellstart
+## Schnelle Einrichtung
 
-<Steps>
-  <Step title="Abhängigkeiten installieren">
-    Installiere LuckPerms und CustomNames auf dem Server-Template, das Prefixes anzeigen soll.
-  </Step>
+1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases) herunter
+2. Packe es in den Plugins-Ordner deines Server Templates
+3. Starte deinen Server
+4. Passe die `config.yml` und `messages.yml` nach deinen Wünschen an
 
-  <Step title="Prefixes installieren">
-    Lade das Plugin von [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases) herunter und lege es im `plugins/`-Ordner des Server-Templates ab.
-  </Step>
-
-  <Step title="Konfiguration erzeugen">
-    Starte den Server einmal, damit das Plugin `config.json` erzeugt.
-  </Step>
-
-  <Step title="LuckPerms-Gruppen konfigurieren">
-    Setze Prefix, Suffix, Farbe und Weight pro Gruppe in LuckPerms. Prefixes nutzt das LuckPerms-Gruppengewicht als Tablist-Priorität.
-
-    ```bash
-    /lp group admin meta addprefix 100 "<red>[Admin] "
-    /lp group admin meta addsuffix 100 " <gray>*"
-    /lp group admin meta set color "#FF0000"
-    /lp group admin setweight 100
-    ```
-  </Step>
-
-  <Step title="Chat-Format anpassen">
-    Bearbeite `config.json`, wenn du ändern möchtest, wie Chat-Nachrichten gerendert werden.
-
-    <Check>
-      Wenn ein Spieler beitritt, sollten Chat-Name und Tablist-Name Prefix, Suffix, Farbe und Weight aus seiner primären LuckPerms-Gruppe verwenden.
-    </Check>
-  </Step>
-</Steps>
+---
 
 ## Konfiguration
 
-`config.json` steuert das Chat-Format. Das Standardformat ist:
+### config.yml
 
-```json config.json
-{
-  "chatFormat": "<prefix><name_colored><suffix><gray>:</gray> <white><message></white>"
-}
+Die Hauptkonfigurationsdatei. Hierüber steuerst du die Gruppenquelle, die Gruppen selbst und die Synchronisierung zwischen den Servern.
+
+```yaml
+version: 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# General
+# Legt fest, woher die Gruppen kommen und wie sie im Netzwerk geteilt werden.
+# ─────────────────────────────────────────────────────────────────────────────
+general:
+  # Quelle, aus der die Gruppen gelesen werden.
+  # Verfügbar: CONFIG, LUCKPERMS
+  source: CONFIG
+
+  # Gruppe für Spieler, die zu keiner anderen Gruppe passen.
+  # Muss dem Namen einer unten definierten Gruppe entsprechen.
+  default-group: default
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Sync
+  # Teilt Chat-Nachrichten und Tablist-Einträge mit anderen Servern des Netzwerks.
+  # ───────────────────────────────────────────────────────────────────────────
+  sync:
+    tablist:
+      # Bei "false" werden keine Tablist-Einträge gesendet oder empfangen.
+      enabled: true
+      # Bei "true" wird mit allen Servern des Netzwerks synchronisiert.
+      all-servers: true
+      # Wird nur genutzt, wenn all-servers auf "false" steht.
+      server-groups: []
+      persistent-servers: []
+    chat:
+      enabled: true
+      all-servers: true
+      server-groups: []
+      persistent-servers: []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Groups
+# Wird nur genutzt, wenn source auf CONFIG steht.
+# ─────────────────────────────────────────────────────────────────────────────
+groups:
+  - name: owner
+    # Höhere Priorität = wird zuerst geprüft und in der Tablist weiter oben einsortiert.
+    priority: 100
+    # Permission, die ein Spieler für diese Gruppe braucht.
+    permission: 'simplecloud.prefix.group.owner'
+    prefix: '<#DC2626><bold>Owner</bold> <#475569>| '
+    suffix: ''
+    # Teamfarbe für das Namensschild und den <color> Platzhalter.
+    color: '<#DC2626>'
+    # Name, der in der Tablist und über dem Spieler angezeigt wird.
+    display-name: '<color><playername>'
+    # Chat-Layout für Nachrichten dieser Gruppe.
+    chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
+
+  - name: admin
+    priority: 90
+    permission: 'simplecloud.prefix.group.admin'
+    prefix: '<#F59E0B><bold>Admin</bold> <#475569>| '
+    suffix: ''
+    color: '<#F59E0B>'
+    display-name: '<color><playername>'
+    chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
+
+  - name: default
+    priority: 0
+    # Eine leere Permission trifft auf jeden Spieler zu.
+    permission: ''
+    prefix: '<#94A3B8>Player <#475569>| '
+    suffix: ''
+    color: '<#94A3B8>'
+    display-name: '<color><playername>'
+    chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
 ```
 
-## Chat-Platzhalter
+**LuckPerms Zuordnung**
 
-| Platzhalter | Beschreibung |
-| ----------- | ------------ |
-| `<prefix>` | Prefix aus der aufgelösten Prefixes-Gruppe des Spielers |
-| `<suffix>` | Suffix aus der aufgelösten Prefixes-Gruppe des Spielers |
-| `<name>` | Spielername ohne Teamfarbe |
-| `<name_colored>` | Spielername mit aufgelöster Teamfarbe |
-| `<message>` | Inhalt der Chat-Nachricht |
+Wenn `source` auf `LUCKPERMS` steht, kommt jeder Wert aus der LuckPerms-Gruppe:
 
-## LuckPerms-Mapping
+| LuckPerms-Wert      | Prefixes-Wert  | Standard, wenn nicht gesetzt                                        |
+| ------------------- | -------------- | ------------------------------------------------------------------- |
+| Gruppenname         | `name`         | entfällt                                                            |
+| Gruppengewicht      | `priority`     | `0`                                                                 |
+| Gruppen-Prefix      | `prefix`       | leer                                                                |
+| Gruppen-Suffix      | `suffix`       | leer                                                                |
+| Meta `color`        | `color`        | `#FFFFFF`                                                           |
+| Meta `display-name` | `display-name` | `<color><playername>`                                               |
+| Meta `chat-format`  | `chat-format`  | `<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>` |
 
-| LuckPerms-Wert | Prefixes-Wert |
-| -------------- | ------------- |
-| Gruppenname | Prefixes-Gruppenname |
-| Gruppen-Prefix | Anzeige-Prefix |
-| Gruppen-Suffix | Anzeige-Suffix |
-| `color` Meta-Wert | Teamfarbe |
-| Gruppengewicht | Tablist-Priorität |
-| Primäre Benutzergruppe | Aktive Prefixes-Gruppe des Spielers |
+```bash
+/lp group admin setweight 90
+/lp group admin meta addprefix 90 "<#F59E0B><bold>Admin</bold> <#475569>| "
+/lp group admin meta set color "<#F59E0B>"
+/lp group admin meta set display-name "<color><playername>"
+/lp group admin meta set chat-format "<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>"
+```
 
-## API-Nutzung
+#### Platzhalter
 
-### API abrufen
+Hier findest du alle verfügbaren Platzhalter.
+
+| Platzhalter     | Verfügbar in                  | Beschreibung                                       |
+| --------------- | ----------------------------- | -------------------------------------------------- |
+| `<prefix>`      | `chat-format`                 | Prefix der Gruppe des Spielers                     |
+| `<suffix>`      | `chat-format`                 | Suffix der Gruppe des Spielers                     |
+| `<color>`       | `chat-format`, `display-name` | Teamfarbe der Gruppe, wird als Formatierung gesetzt |
+| `<playername>`  | `chat-format`, `display-name` | Reiner Spielername                                 |
+| `<name>`        | `chat-format`                 | Alias für `<playername>`                           |
+| `<displayname>` | `chat-format`                 | Fertig gerenderter Anzeigename des Spielers        |
+| `<message>`     | `chat-format`                 | Inhalt der Chat-Nachricht                          |
+
+<Tip>
+  Nutze `<color>`, statt denselben Hex-Code in jeden Wert zu schreiben. Die Farbe wird als Style
+  gesetzt, alles danach übernimmt sie automatisch.
+</Tip>
+
+#### Synchronisierung zwischen Servern
+
+Über das SimpleCloud-Netzwerk werden zwei Dinge geteilt:
+
+- **Chat**: Die Chat-Nachricht wird an die Zielserver gesendet
+- **Tablist**: Die Tablist-Einträge der Spieler auf den Servern
+
+Beides konfigurierst du getrennt. So kannst du einen globalen Chat betreiben und die Tablist trotzdem lokal lassen, oder andersherum.
+
+---
+
+## Befehle
+
+| Befehl             | Permission                            | Beschreibung                |
+| ------------------ | ------------------------------------- | --------------------------- |
+| `/scprefix`        | `simplecloud.prefixes.command`        | Zeigt die Befehlsübersicht. |
+| `/scprefix help`   | `simplecloud.prefixes.command`        | Zeigt die Befehlsübersicht. |
+| `/scprefix reload` | `simplecloud.prefixes.command.reload` | Lädt die Konfiguration neu. |
+
+---
+
+## API
+
+Über die API liest du die Prefix-Daten eines Spielers aus und registrierst eigene Gruppen.
+
+### Dependency
+
+<DependencySnippet
+  language="de"
+  dependencies={[
+    {
+      groupId: "app.simplecloud.plugin",
+      artifactId: "prefixes-api",
+      type: "compileOnly",
+    },
+  ]}
+  repositories={[
+    { id: "simplecloud", url: "https://repo.simplecloud.app/snapshots" },
+  ]}
+/>
+
+### Zugriff auf die API
 
 <Tabs>
 <Tab title="Paper">
 
 ```kotlin
-import app.simplecloud.plugin.prefixes.api.PrefixesApi
+import app.simplecloud.prefixes.api.PrefixesApi
 import org.bukkit.Bukkit
 
-val registration = Bukkit.getServicesManager()
-    .getRegistration(PrefixesApi::class.java)
-val prefixesApi = registration?.provider
-    ?: error("PrefixesApi is not registered")
-```
-
-</Tab>
-<Tab title="Minestom">
-
-```kotlin
-import app.simplecloud.plugin.prefixes.api.PrefixesApi
-import app.simplecloud.plugin.prefixes.minestom.PrefixesExtension
-
-val prefixesApi: PrefixesApi = PrefixesExtension.getApi()
+val api = Bukkit.getServicesManager().getRegistration(PrefixesApi::class.java)?.provider
+    ?: throw IllegalStateException("PrefixesApi is not registered")
 ```
 
 </Tab>
 </Tabs>
 
-### Spieler aktualisieren
+### Spieler verwalten
+
+Die Gruppe eines Spielers holen:
 
 ```kotlin
-import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.format.NamedTextColor
-
-prefixesApi.setPrefix(player.uniqueId, Component.text("[VIP] "))
-prefixesApi.setSuffix(player.uniqueId, Component.text(" *"))
-prefixesApi.setColor(player.uniqueId, NamedTextColor.GOLD)
+api.getPrimaryGroup(player.uniqueId).thenAccept { group ->
+    player.sendMessage(Component.text("Deine Gruppe: ${group?.name ?: "keine"}"))
+}
 ```
 
-### Eigene Gruppe registrieren
+Die Anzeigewerte eines Spielers holen:
 
 ```kotlin
-import app.simplecloud.plugin.prefixes.api.PrefixesGroup
-import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.format.NamedTextColor
-import net.kyori.adventure.text.format.TextColor
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
+api.getPrefixData(player.uniqueId).thenAccept { data ->
+    player.sendMessage(data.prefix.append(data.displayName).append(data.suffix))
+}
+```
 
+Prüfen, ob ein Spieler in einer bestimmten Gruppe ist:
+
+```kotlin
+val vip = api.getGroups().find { it.name == "vip" } ?: return
+
+vip.containsPlayerAsync(player.uniqueId).thenAccept { isVip ->
+    if (isVip) player.sendMessage(Component.text("Willkommen zurück!"))
+}
+```
+
+### Gruppen verwalten
+
+Alle Gruppen auflisten, höchste Priorität zuerst:
+
+```kotlin
+api.getGroups().forEach { group ->
+    println("${group.priority} - ${group.name}")
+}
+```
+
+Eigene Gruppe registrieren:
+
+```kotlin
 class VipGroup : PrefixesGroup {
-    override fun getName(): String = "vip"
-    override fun getPrefix(): Component = Component.text("[VIP] ")
-    override fun getSuffix(): Component = Component.text(" *")
-    override fun getColor(): TextColor = NamedTextColor.GOLD
-    override fun getPriority(): Int = 50
+    override val name = "vip"
+    override val priority = 50
+    override val permission = "simplecloud.prefix.group.vip"
+    override val prefix = miniMessage.deserialize("<#A3E635>VIP <#475569>| ")
+    override val suffix = Component.empty()
+    override val color = TextColor.fromHexString("#A3E635")
+    override val displayName = "<color><playername>"
+    override val chatFormat = "<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>"
 
-    override fun containsPlayer(uniqueId: UUID): Boolean {
-        return containsPlayerFuture(uniqueId).join()
-    }
+    override fun containsPlayer(id: UUID) =
+        containsPlayerAsync(id).join()
 
-    override fun containsPlayerFuture(uniqueId: UUID): CompletableFuture<Boolean> {
-        return CompletableFuture.completedFuture(false)
-    }
+    override fun containsPlayerAsync(id: UUID) =
+        CompletableFuture.completedFuture(false)
 }
 
-prefixesApi.addGroup(VipGroup())
+api.addGroup(VipGroup()).thenAccept { created ->
+    if (!created) println("Es gibt bereits eine Gruppe namens vip")
+}
 ```
+
+---
 
 ## Best Practices
 
-- Nutze eindeutige LuckPerms-Gewichte, damit die Tablist-Reihenfolge vorhersehbar bleibt.
-- Speichere Prefixes und Suffixes als MiniMessage-Strings in LuckPerms.
-- Nutze den `color` Meta-Wert für die Teamfarbe, statt die Namensfarbe in jeden Prefix einzubauen.
-- Halte `chatFormat` einfach genug, damit Chat auch auf kleinen Bildschirmen lesbar bleibt.
+- Vergib eindeutige Prioritäten, damit die Reihenfolge in der Tablist vorhersehbar bleibt
+- Nutze für alle Gruppen dasselbe `chat-format`, außer ein Rang soll im Chat bewusst auffallen
+- Verwende `<color>` in `display-name` und `chat-format`, statt Hex-Codes zu wiederholen
+- Lass `default-group` auf eine Gruppe mit leerer `permission` zeigen, damit jeder Spieler eine Gruppe bekommt
