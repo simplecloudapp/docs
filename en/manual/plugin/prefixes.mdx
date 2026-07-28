@@ -232,8 +232,6 @@ PrefixesApi api = registration.getProvider();
 </Tab>
 </Tabs>
 
-Every method that looks up a player returns a `CompletableFuture`, because the group source can be a database. The Kotlin examples below use `await()` from `kotlinx-coroutines-jdk8` and therefore run inside a coroutine.
-
 ### Player Management
 
 Get the group of a player:

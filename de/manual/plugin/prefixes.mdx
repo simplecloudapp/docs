@@ -1,6 +1,6 @@
 ---
 title: 'Prefixes'
-description: 'Erfahre, wie das Prefixes Plugin von SimpleCloud Ranggruppen, Chat-Formatierung, Tablist-Einträge, Namensschilder und die Synchronisierung zwischen Servern verwaltet.'
+description: 'Erfahre, wie das Prefixes Plugin Ranggruppen, Chat-Formatierung, Tablist-Einträge, Name Tags und die Synchronisierung zwischen Servern verwaltet.'
 tag: 'Server'
 ---
 
@@ -8,7 +8,7 @@ import { DependencySnippet } from "/snippets/DependencySnippet.jsx";
 
 ## Übersicht
 
-Das Prefixes Plugin verwaltet die Rang-Anzeige auf deinen Servern. Jeder Spieler gehört zu einer Gruppe, und diese Gruppe bestimmt, wie der Spieler im Chat, in der Tablist und über seinem Kopf dargestellt wird.
+Das Prefixes Plugin verwaltet die Rang Anzeige auf deinen Servern. Jeder Spieler gehört zu einer Gruppe, und diese Gruppe bestimmt, wie der Spieler im Chat, in der Tablist und über seinem Kopf dargestellt wird.
 
 Das Plugin:
 - Wendet Prefixes, Suffixes, Farben und Anzeigenamen auf Chat, Tablist und Name Tags an
@@ -32,7 +32,7 @@ Das Plugin:
 ## Schnelle Einrichtung
 
 1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases) herunter
-2. Packe es in den Plugins-Ordner deines Server Templates
+2. Packe es in den Plugins Ordner deines Server Templates
 3. Starte deinen Server
 4. Passe die `config.yml` und `messages.yml` nach deinen Wünschen an
 
@@ -62,11 +62,11 @@ general:
 
   # ───────────────────────────────────────────────────────────────────────────
   # Sync
-  # Teilt Chat-Nachrichten und Tablist-Einträge mit anderen Servern des Netzwerks.
+  # Teilt Chat Nachrichten und Tablist Einträge mit anderen Servern des Netzwerks.
   # ───────────────────────────────────────────────────────────────────────────
   sync:
     tablist:
-      # Bei "false" werden keine Tablist-Einträge gesendet oder empfangen.
+      # Bei "false" werden keine Tablist Einträge gesendet oder empfangen.
       enabled: true
       # Bei "true" wird mit allen Servern des Netzwerks synchronisiert.
       all-servers: true
@@ -155,16 +155,16 @@ Hier findest du alle verfügbaren Platzhalter.
 | `<message>`     | `chat-format`                 | Inhalt der Chat-Nachricht                          |
 
 <Tip>
-  Nutze `<color>`, statt denselben Hex-Code in jeden Wert zu schreiben. Die Farbe wird als Style
+  Nutze `<color>`, statt denselben Hex Code in jeden Wert zu schreiben. Die Farbe wird als Style
   gesetzt, alles danach übernimmt sie automatisch.
 </Tip>
 
 #### Synchronisierung zwischen Servern
 
-Über das SimpleCloud-Netzwerk werden zwei Dinge geteilt:
+Über das SimpleCloud Netzwerk werden zwei Dinge geteilt:
 
-- **Chat**: Die Chat-Nachricht wird an die Zielserver gesendet
-- **Tablist**: Die Tablist-Einträge der Spieler auf den Servern
+- **Chat**: Die Chat Nachricht wird an die Zielserver gesendet
+- **Tablist**: Die Tablist Einträge der Spieler auf den Servern
 
 Beides konfigurierst du getrennt. So kannst du einen globalen Chat betreiben und die Tablist trotzdem lokal lassen, oder andersherum.
 
@@ -232,8 +232,6 @@ PrefixesApi api = registration.getProvider();
 
 </Tab>
 </Tabs>
-
-Jede Methode, die einen Spieler nachschlägt, gibt ein `CompletableFuture` zurück, weil die Gruppenquelle auch eine Datenbank sein kann. Die Kotlin-Beispiele unten nutzen `await()` aus `kotlinx-coroutines-jdk8` und laufen deshalb in einer Coroutine.
 
 ### Spieler verwalten
 
@@ -409,5 +407,5 @@ api.addGroup(new VipGroup()).thenAccept(created -> {
 
 - Vergib eindeutige Prioritäten, damit die Reihenfolge in der Tablist vorhersehbar bleibt
 - Nutze für alle Gruppen dasselbe `chat-format`, außer ein Rang soll im Chat bewusst auffallen
-- Verwende `<color>` in `display-name` und `chat-format`, statt Hex-Codes zu wiederholen
+- Verwende `<color>` in `display-name` und `chat-format`, statt Hex Codes zu wiederholen
 - Lass `default-group` auf eine Gruppe mit leerer `permission` zeigen, damit jeder Spieler eine Gruppe bekommt
