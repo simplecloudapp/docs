@@ -18,9 +18,11 @@ The plugin:
 
 ## Supported Software
 
-| Software      | Support |
-| ------------- | ------- |
-| Paper & Forks | ✅ Full |
+| Software      | Support    |
+| ------------- | ---------- |
+| Paper & Forks | ✅ Full    |
+| Minestom      | 🔄 Planned |
+| Fabric        | 🔄 Planned |
 
 <Note>
   Want to add support for another server software? Submit a pull request on
@@ -202,7 +204,8 @@ The API lets you read the prefix data of a player and register your own groups.
 <Tabs>
 <Tab title="Paper">
 
-```kotlin
+<CodeGroup>
+```kotlin Kotlin
 import app.simplecloud.prefixes.api.PrefixesApi
 import org.bukkit.Bukkit
 
@@ -210,50 +213,111 @@ val api = Bukkit.getServicesManager().getRegistration(PrefixesApi::class.java)?.
     ?: throw IllegalStateException("PrefixesApi is not registered")
 ```
 
+```java Java
+import app.simplecloud.prefixes.api.PrefixesApi;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.RegisteredServiceProvider;
+
+RegisteredServiceProvider<PrefixesApi> registration =
+    Bukkit.getServicesManager().getRegistration(PrefixesApi.class);
+
+if (registration == null) {
+    throw new IllegalStateException("PrefixesApi is not registered");
+}
+
+PrefixesApi api = registration.getProvider();
+```
+</CodeGroup>
+
 </Tab>
 </Tabs>
+
+Every method that looks up a player returns a `CompletableFuture`, because the group source can be a database. The Kotlin examples below use `await()` from `kotlinx-coroutines-jdk8` and therefore run inside a coroutine.
 
 ### Player Management
 
 Get the group of a player:
 
-```kotlin
-api.getPrimaryGroup(player.uniqueId).thenAccept { group ->
-    player.sendMessage(Component.text("Your group: ${group?.name ?: "none"}"))
-}
+<CodeGroup>
+```kotlin Kotlin
+val group = api.getPrimaryGroup(player.uniqueId).await()
+
+player.sendMessage(Component.text("Your group: ${group?.name ?: "none"}"))
 ```
+
+```java Java
+api.getPrimaryGroup(player.getUniqueId()).thenAccept(group -> {
+    String name = group != null ? group.getName() : "none";
+
+    player.sendMessage(Component.text("Your group: " + name));
+});
+```
+</CodeGroup>
 
 Get the display values of a player:
 
-```kotlin
-api.getPrefixData(player.uniqueId).thenAccept { data ->
-    player.sendMessage(data.prefix.append(data.displayName).append(data.suffix))
-}
+<CodeGroup>
+```kotlin Kotlin
+val data = api.getPrefixData(player.uniqueId).await()
+
+player.sendMessage(data.prefix.append(data.displayName).append(data.suffix))
 ```
+
+```java Java
+api.getPrefixData(player.getUniqueId()).thenAccept(data -> {
+    player.sendMessage(data.getPrefix().append(data.getDisplayName()).append(data.getSuffix()));
+});
+```
+</CodeGroup>
 
 Check whether a player is in a specific group:
 
-```kotlin
+<CodeGroup>
+```kotlin Kotlin
 val vip = api.getGroups().find { it.name == "vip" } ?: return
 
-vip.containsPlayerAsync(player.uniqueId).thenAccept { isVip ->
-    if (isVip) player.sendMessage(Component.text("Welcome back!"))
+if (vip.containsPlayerAsync(player.uniqueId).await()) {
+    player.sendMessage(Component.text("Welcome back!"))
 }
 ```
+
+```java Java
+PrefixesGroup vip = api.getGroups().stream()
+    .filter(group -> group.getName().equals("vip"))
+    .findFirst()
+    .orElse(null);
+
+if (vip == null) return;
+
+vip.containsPlayerAsync(player.getUniqueId()).thenAccept(isVip -> {
+    if (isVip) {
+        player.sendMessage(Component.text("Welcome back!"));
+    }
+});
+```
+</CodeGroup>
 
 ### Group Management
 
 List all groups, highest priority first:
 
-```kotlin
+<CodeGroup>
+```kotlin Kotlin
 api.getGroups().forEach { group ->
     println("${group.priority} - ${group.name}")
 }
 ```
 
+```java Java
+api.getGroups().forEach(group ->
+    System.out.println(group.getPriority() + " - " + group.getName()));
+```
+</CodeGroup>
+
 Register your own group:
 
-```kotlin
+<CodeGroup>
+```kotlin Kotlin
 class VipGroup : PrefixesGroup {
     override val name = "vip"
     override val priority = 50
@@ -271,10 +335,72 @@ class VipGroup : PrefixesGroup {
         CompletableFuture.completedFuture(false)
 }
 
-api.addGroup(VipGroup()).thenAccept { created ->
-    if (!created) println("A group named vip already exists")
+if (!api.addGroup(VipGroup()).await()) {
+    println("A group named vip already exists")
 }
 ```
+
+```java Java
+public class VipGroup implements PrefixesGroup {
+
+    @Override
+    public String getName() {
+        return "vip";
+    }
+
+    @Override
+    public int getPriority() {
+        return 50;
+    }
+
+    @Override
+    public String getPermission() {
+        return "simplecloud.prefix.group.vip";
+    }
+
+    @Override
+    public Component getPrefix() {
+        return MiniMessage.miniMessage().deserialize("<#A3E635>VIP <#475569>| ");
+    }
+
+    @Override
+    public Component getSuffix() {
+        return Component.empty();
+    }
+
+    @Override
+    public TextColor getColor() {
+        return TextColor.fromHexString("#A3E635");
+    }
+
+    @Override
+    public String getDisplayName() {
+        return "<color><playername>";
+    }
+
+    @Override
+    public String getChatFormat() {
+        return "<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>";
+    }
+
+    @Override
+    public boolean containsPlayer(UUID id) {
+        return containsPlayerAsync(id).join();
+    }
+
+    @Override
+    public CompletableFuture<Boolean> containsPlayerAsync(UUID id) {
+        return CompletableFuture.completedFuture(false);
+    }
+}
+
+api.addGroup(new VipGroup()).thenAccept(created -> {
+    if (!created) {
+        System.out.println("A group named vip already exists");
+    }
+});
+```
+</CodeGroup>
 
 ---
 
