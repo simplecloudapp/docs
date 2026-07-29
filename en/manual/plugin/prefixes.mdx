@@ -42,14 +42,15 @@ The plugin:
 
 ### config.yml
 
-The main configuration file. Controls the group source, the groups themselves and the server sync.
+The main configuration file. It controls the group source, the groups themselves, individual plugin features and cross-server sync.
 
 ```yaml
+# The config format version. Do not change this value.
 version: 1
 
 # ─────────────────────────────────────────────────────────────────────────────
 # General
-# Controls where groups come from and how they are shared across the network.
+# Controls how player groups are resolved.
 # ─────────────────────────────────────────────────────────────────────────────
 general:
   # Where groups are read from.
@@ -57,65 +58,95 @@ general:
   source: CONFIG
 
   # Group used when a player matches no other group.
-  # Must be the name of a group defined below.
+  # Must reference a group defined below when source is CONFIG.
   default-group: default
 
-  # ───────────────────────────────────────────────────────────────────────────
-  # Sync
-  # Shares chat messages and tab list entries with other servers of the network.
-  # ───────────────────────────────────────────────────────────────────────────
-  sync:
-    tablist:
-      # If false, tab list entries are not shared or received.
-      enabled: true
-      # If true, sync with every server of the network.
-      all-servers: true
-      # Only used when all-servers is false.
-      server-groups: []
-      persistent-servers: []
-    chat:
-      enabled: true
-      all-servers: true
-      server-groups: []
-      persistent-servers: []
+# ─────────────────────────────────────────────────────────────────────────────
+# Features
+# Each part of the plugin can be enabled independently.
+# ─────────────────────────────────────────────────────────────────────────────
+features:
+  # Format chat messages using the group's chat-format.
+  chat: true
+
+  # Apply prefixes, suffixes, colors and sorting to the tab list.
+  tablist: true
+
+  # Apply the group's configured display-name.
+  # When disabled, the player's normal Minecraft name is used.
+  display-name: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Sync
+# Shares chat messages and tab list entries across the SimpleCloud network.
+# Disabling sync does not disable local formatting.
+# ─────────────────────────────────────────────────────────────────────────────
+sync:
+  # Master switch for all cross-server communication.
+  enabled: true
+
+  # Select which features are synchronized.
+  # The corresponding feature above must also be enabled.
+  channels:
+    chat: true
+    tablist: true
+
+  # Groups and persistent servers from which updates are received.
+  #
+  # Special values:
+  #   CURRENT - Current server group, or this persistent server.
+  #   ALL     - Every server in the network. Must be used alone.
+  #
+  # Literal SimpleCloud group names and persistent server IDs can also be used.
+  # Multiple sources can be combined, except when using ALL.
+  sources:
+  - CURRENT
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Groups
-# Only used when source is CONFIG.
+# Only used when general.source is CONFIG.
+#
+# Supported placeholders:
+#   <prefix>       Group prefix
+#   <suffix>       Group suffix
+#   <color>        Group color
+#   <playername>   Normal Minecraft player name
+#   <displayname>  Formatted display name
+#   <message>      Chat message
 # ─────────────────────────────────────────────────────────────────────────────
 groups:
-  - name: owner
-    # Higher priority = checked first and sorted higher in the tab list.
-    priority: 100
-    # Permission a player needs to be part of this group.
-    permission: 'simplecloud.prefix.group.owner'
-    prefix: '<#DC2626><bold>Owner</bold> <#475569>| '
-    suffix: ''
-    # Team color used for the name tag and the <color> placeholder.
-    color: '<#DC2626>'
-    # Name shown in the tab list and above the player.
-    display-name: '<color><playername>'
-    # Chat layout used for messages of this group.
-    chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
+- name: owner
+  # Higher priorities are selected first and sorted higher in the tab list.
+  priority: 100
+  # Permission required to use this group.
+  permission: 'simplecloud.prefix.group.owner'
+  prefix: '<#DC2626><bold>Owner</bold> <#475569>| '
+  suffix: ''
+  # Used by the <color> placeholder and player name coloring.
+  color: '<#DC2626>'
+  # Formatted player name.
+  display-name: '<color><playername>'
+  # Format used when features.chat is enabled.
+  chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
 
-  - name: admin
-    priority: 90
-    permission: 'simplecloud.prefix.group.admin'
-    prefix: '<#F59E0B><bold>Admin</bold> <#475569>| '
-    suffix: ''
-    color: '<#F59E0B>'
-    display-name: '<color><playername>'
-    chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
+- name: admin
+  priority: 90
+  permission: 'simplecloud.prefix.group.admin'
+  prefix: '<#F59E0B><bold>Admin</bold> <#475569>| '
+  suffix: ''
+  color: '<#F59E0B>'
+  display-name: '<color><playername>'
+  chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
 
-  - name: default
-    priority: 0
-    # An empty permission matches every player.
-    permission: ''
-    prefix: '<#94A3B8>Player <#475569>| '
-    suffix: ''
-    color: '<#94A3B8>'
-    display-name: '<color><playername>'
-    chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
+- name: default
+  priority: 0
+  # An empty permission matches every player.
+  permission: ''
+  prefix: '<#94A3B8>Player <#475569>| '
+  suffix: ''
+  color: '<#94A3B8>'
+  display-name: '<color><playername>'
+  chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
 ```
 
 **LuckPerms mapping**
@@ -159,14 +190,30 @@ Here is a list of all available placeholders.
   everything after it inherits the group color.
 </Tip>
 
-#### Cross-Server Sync
+#### Feature switches
 
-Sync shares two things over the SimpleCloud network:
+Use `features` to enable or disable each local part of the plugin:
 
-- **Chat**: the chat message is broadcast to the target servers
-- **Tab list**: tab list entries from the players on the servers
+- `chat` formats local chat messages with the group's `chat-format`
+- `tablist` applies the group's prefix, suffix, color and priority to the tab list
+- `display-name` applies the configured `display-name`; when disabled, the normal Minecraft name is used
 
-Both targets are configured separately, so you can run a global chat while keeping the tab list local, or the other way around.
+#### Cross-server sync
+
+Sync can share two things over the SimpleCloud network:
+
+- **Chat**: formatted chat messages from players on other servers
+- **Tab list**: tab list entries for players on other servers
+
+Set `sync.enabled` to `false` to disable all cross-server communication without disabling local formatting. Under `channels`, choose whether chat, tab list entries or both are synchronized. A channel only works when its matching option under `features` is also enabled.
+
+The `sources` list controls which servers this server receives updates from:
+
+- `CURRENT` receives updates from the current server group, or only this persistent server when running as a persistent server
+- `ALL` receives updates from every server in the network and must be the only list entry
+- A server group name or persistent server ID receives updates from that specific source
+
+You can combine multiple group names and persistent server IDs. To exchange updates in both directions, configure each participating server to receive from the other server's group or ID.
 
 ---
 

@@ -42,14 +42,15 @@ Das Plugin:
 
 ### config.yml
 
-Die Hauptkonfigurationsdatei. Hierüber steuerst du die Gruppenquelle, die Gruppen selbst und die Synchronisierung zwischen den Servern.
+Die Hauptkonfigurationsdatei. Hierüber steuerst du die Gruppenquelle, die Gruppen selbst, einzelne Plugin-Funktionen und die Synchronisierung zwischen den Servern.
 
 ```yaml
+# Version des Konfigurationsformats. Ändere diesen Wert nicht.
 version: 1
 
 # ─────────────────────────────────────────────────────────────────────────────
 # General
-# Legt fest, woher die Gruppen kommen und wie sie im Netzwerk geteilt werden.
+# Legt fest, wie Spielergruppen ermittelt werden.
 # ─────────────────────────────────────────────────────────────────────────────
 general:
   # Quelle, aus der die Gruppen gelesen werden.
@@ -57,65 +58,95 @@ general:
   source: CONFIG
 
   # Gruppe für Spieler, die zu keiner anderen Gruppe passen.
-  # Muss dem Namen einer unten definierten Gruppe entsprechen.
+  # Muss bei source: CONFIG auf eine unten definierte Gruppe verweisen.
   default-group: default
 
-  # ───────────────────────────────────────────────────────────────────────────
-  # Sync
-  # Teilt Chat Nachrichten und Tablist Einträge mit anderen Servern des Netzwerks.
-  # ───────────────────────────────────────────────────────────────────────────
-  sync:
-    tablist:
-      # Bei "false" werden keine Tablist Einträge gesendet oder empfangen.
-      enabled: true
-      # Bei "true" wird mit allen Servern des Netzwerks synchronisiert.
-      all-servers: true
-      # Wird nur genutzt, wenn all-servers auf "false" steht.
-      server-groups: []
-      persistent-servers: []
-    chat:
-      enabled: true
-      all-servers: true
-      server-groups: []
-      persistent-servers: []
+# ─────────────────────────────────────────────────────────────────────────────
+# Features
+# Jede Funktion des Plugins kann unabhängig aktiviert werden.
+# ─────────────────────────────────────────────────────────────────────────────
+features:
+  # Formatiert Chat-Nachrichten mit dem chat-format der Gruppe.
+  chat: true
+
+  # Wendet Prefix, Suffix, Farbe und Sortierung auf die Tablist an.
+  tablist: true
+
+  # Wendet den konfigurierten display-name der Gruppe an.
+  # Bei false wird der normale Minecraft-Name des Spielers verwendet.
+  display-name: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Sync
+# Teilt Chat-Nachrichten und Tablist-Einträge im SimpleCloud-Netzwerk.
+# Das Deaktivieren von Sync schaltet die lokale Formatierung nicht aus.
+# ─────────────────────────────────────────────────────────────────────────────
+sync:
+  # Hauptschalter für die gesamte Kommunikation zwischen Servern.
+  enabled: true
+
+  # Legt fest, welche Funktionen synchronisiert werden.
+  # Die zugehörige Funktion unter features muss ebenfalls aktiviert sein.
+  channels:
+    chat: true
+    tablist: true
+
+  # Gruppen und persistente Server, von denen Aktualisierungen empfangen werden.
+  #
+  # Besondere Werte:
+  #   CURRENT - Aktuelle Servergruppe oder dieser persistente Server.
+  #   ALL     - Jeder Server im Netzwerk. Muss allein verwendet werden.
+  #
+  # Du kannst auch SimpleCloud-Gruppennamen und persistente Server-IDs verwenden.
+  # Mehrere Quellen lassen sich kombinieren, außer bei ALL.
+  sources:
+  - CURRENT
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Groups
-# Wird nur genutzt, wenn source auf CONFIG steht.
+# Wird nur genutzt, wenn general.source auf CONFIG steht.
+#
+# Unterstützte Platzhalter:
+#   <prefix>       Gruppen-Prefix
+#   <suffix>       Gruppen-Suffix
+#   <color>        Gruppenfarbe
+#   <playername>   Normaler Minecraft-Spielername
+#   <displayname>  Formatierter Anzeigename
+#   <message>      Chat-Nachricht
 # ─────────────────────────────────────────────────────────────────────────────
 groups:
-  - name: owner
-    # Höhere Priorität = wird zuerst geprüft und in der Tablist weiter oben einsortiert.
-    priority: 100
-    # Permission, die ein Spieler für diese Gruppe braucht.
-    permission: 'simplecloud.prefix.group.owner'
-    prefix: '<#DC2626><bold>Owner</bold> <#475569>| '
-    suffix: ''
-    # Teamfarbe für das Namensschild und den <color> Platzhalter.
-    color: '<#DC2626>'
-    # Name, der in der Tablist und über dem Spieler angezeigt wird.
-    display-name: '<color><playername>'
-    # Chat-Layout für Nachrichten dieser Gruppe.
-    chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
+- name: owner
+  # Höhere Prioritäten werden zuerst gewählt und in der Tablist weiter oben einsortiert.
+  priority: 100
+  # Permission, die ein Spieler für diese Gruppe benötigt.
+  permission: 'simplecloud.prefix.group.owner'
+  prefix: '<#DC2626><bold>Owner</bold> <#475569>| '
+  suffix: ''
+  # Wird vom <color>-Platzhalter und für die Spielerfarbe verwendet.
+  color: '<#DC2626>'
+  # Formatierter Spielername.
+  display-name: '<color><playername>'
+  # Format, das bei aktiviertem features.chat verwendet wird.
+  chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
 
-  - name: admin
-    priority: 90
-    permission: 'simplecloud.prefix.group.admin'
-    prefix: '<#F59E0B><bold>Admin</bold> <#475569>| '
-    suffix: ''
-    color: '<#F59E0B>'
-    display-name: '<color><playername>'
-    chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
+- name: admin
+  priority: 90
+  permission: 'simplecloud.prefix.group.admin'
+  prefix: '<#F59E0B><bold>Admin</bold> <#475569>| '
+  suffix: ''
+  color: '<#F59E0B>'
+  display-name: '<color><playername>'
+  chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
 
-  - name: default
-    priority: 0
-    # Eine leere Permission trifft auf jeden Spieler zu.
-    permission: ''
-    prefix: '<#94A3B8>Player <#475569>| '
-    suffix: ''
-    color: '<#94A3B8>'
-    display-name: '<color><playername>'
-    chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
+- name: default
+  priority: 0
+  # Eine leere Permission trifft auf jeden Spieler zu.
+  permission: ''
+  prefix: '<#94A3B8>Player <#475569>| '
+  suffix: ''
+  color: '<#94A3B8>'
+  display-name: '<color><playername>'
+  chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
 ```
 
 **LuckPerms Zuordnung**
@@ -159,14 +190,30 @@ Hier findest du alle verfügbaren Platzhalter.
   gesetzt, alles danach übernimmt sie automatisch.
 </Tip>
 
+#### Funktionsschalter
+
+Unter `features` aktivierst oder deaktivierst du die lokalen Funktionen des Plugins:
+
+- `chat` formatiert lokale Chat-Nachrichten mit dem `chat-format` der Gruppe
+- `tablist` wendet Prefix, Suffix, Farbe und Priorität der Gruppe auf die Tablist an
+- `display-name` wendet den konfigurierten `display-name` an; bei deaktivierter Funktion wird der normale Minecraft-Name verwendet
+
 #### Synchronisierung zwischen Servern
 
-Über das SimpleCloud Netzwerk werden zwei Dinge geteilt:
+Über das SimpleCloud-Netzwerk können zwei Dinge geteilt werden:
 
-- **Chat**: Die Chat Nachricht wird an die Zielserver gesendet
-- **Tablist**: Die Tablist Einträge der Spieler auf den Servern
+- **Chat**: formatierte Chat-Nachrichten von Spielern auf anderen Servern
+- **Tablist**: Tablist-Einträge von Spielern auf anderen Servern
 
-Beides konfigurierst du getrennt. So kannst du einen globalen Chat betreiben und die Tablist trotzdem lokal lassen, oder andersherum.
+Mit `sync.enabled: false` deaktivierst du die gesamte Kommunikation zwischen Servern, ohne die lokale Formatierung auszuschalten. Unter `channels` wählst du, ob Chat, Tablist-Einträge oder beides synchronisiert werden. Ein Kanal funktioniert nur, wenn die zugehörige Option unter `features` ebenfalls aktiviert ist.
+
+Die Liste `sources` legt fest, von welchen Servern dieser Server Aktualisierungen empfängt:
+
+- `CURRENT` empfängt Aktualisierungen aus der aktuellen Servergruppe oder, bei einem persistenten Server, nur von diesem Server
+- `ALL` empfängt Aktualisierungen von jedem Server im Netzwerk und muss der einzige Listeneintrag sein
+- Ein Servergruppenname oder eine persistente Server-ID empfängt Aktualisierungen aus genau dieser Quelle
+
+Du kannst mehrere Gruppennamen und persistente Server-IDs kombinieren. Damit zwei Server Aktualisierungen in beide Richtungen austauschen, muss jeder beteiligte Server Aktualisierungen aus der Gruppe oder von der ID des jeweils anderen empfangen.
 
 ---
 
