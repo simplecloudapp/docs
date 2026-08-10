@@ -156,17 +156,12 @@ With this configuration, players joining through `play.example.com` are sent to 
 
 Point every routed hostname to the proxy with an `A`, `AAAA`, or `CNAME` DNS record. If the proxy does not use Minecraft's default port, configure an appropriate Minecraft `SRV` record as well.
 
-<Warning>
-  Subdomain routing requires config version 2. Routes added to a version 1 config are not retained during the version 1 to version 2 migration. Let the plugin migrate the file first, then add the routes to the generated version 2 config.
-</Warning>
+##### Routing behavior
 
-<Note>
-  Hostnames are matched exactly; wildcard routes such as `*.example.com` are not supported. If no route matches, its target connection does not exist, or no matching server is available, the plugin continues with `network-join-targets`.
-</Note>
-
-<Warning>
-  Connection rules are currently not evaluated for subdomain routes. A permission rule on the target connection does not restrict players who join through that hostname. Use prioritized `network-join-targets` when routing should depend on a permission.
-</Warning>
+- **Config version:** Subdomain routing requires version 2. Let the plugin migrate an existing version 1 file before you add routes because the migration does not retain them.
+- **Exact matching:** Specify the complete hostname. Wildcard routes such as `*.example.com` are not supported.
+- **Default target:** If no route matches, its target connection does not exist, or no matching server is available, the plugin continues with `network-join-targets`.
+- **Connection rules:** Subdomain routes do not evaluate connection rules. A permission rule on the target connection does not restrict players joining through that hostname. Use prioritized `network-join-targets` when routing should depend on a permission.
 
 #### Matcher Operations
 

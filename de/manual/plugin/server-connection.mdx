@@ -156,17 +156,12 @@ Mit dieser Konfiguration werden Spieler über `play.example.com` auf einen verf�
 
 Lass jeden verwendeten Hostnamen über einen `A`-, `AAAA`- oder `CNAME`-DNS-Eintrag auf den Proxy zeigen. Verwendet der Proxy nicht den Minecraft-Standardport, musst du zusätzlich einen passenden Minecraft-`SRV`-Eintrag konfigurieren.
 
-<Warning>
-  Subdomain-Routing benötigt die Konfigurationsversion 2. Routen in einer Konfiguration mit Version 1 werden bei der Migration auf Version 2 nicht übernommen. Lass das Plugin die Datei zuerst migrieren und füge die Routen danach in die erzeugte Version-2-Konfiguration ein.
-</Warning>
+##### Routing-Verhalten
 
-<Note>
-  Hostnamen werden exakt abgeglichen; Wildcard-Routen wie `*.example.com` werden nicht unterstützt. Wenn keine Route passt, die Zielverbindung nicht existiert oder kein passender Server verfügbar ist, verwendet das Plugin anschließend die `network-join-targets`.
-</Note>
-
-<Warning>
-  Verbindungsregeln werden für Subdomain-Routen derzeit nicht ausgewertet. Eine Permission-Regel auf der Zielverbindung schränkt Spieler, die über diesen Hostnamen beitreten, nicht ein. Verwende priorisierte `network-join-targets`, wenn das Routing von einer Permission abhängen soll.
-</Warning>
+- **Konfigurationsversion:** Subdomain-Routing benötigt Version 2. Lass das Plugin eine bestehende Version-1-Datei migrieren, bevor du Routen hinzufügst, da diese bei der Migration nicht übernommen werden.
+- **Exakter Abgleich:** Gib den vollständigen Hostnamen an. Wildcard-Routen wie `*.example.com` werden nicht unterstützt.
+- **Standardziel:** Wenn keine Route passt, die Zielverbindung nicht existiert oder kein passender Server verfügbar ist, verwendet das Plugin anschließend die `network-join-targets`.
+- **Verbindungsregeln:** Subdomain-Routen werten Verbindungsregeln nicht aus. Eine Permission-Regel auf der Zielverbindung schränkt Spieler, die über diesen Hostnamen beitreten, nicht ein. Verwende priorisierte `network-join-targets`, wenn das Routing von einer Permission abhängen soll.
 
 #### Filter-Operationen (Matcher)
 
