@@ -45,7 +45,7 @@ The plugin:
 The main configuration file. Controls server registration, connections, network join routing and fallback behavior.
 
 ```yaml
-version: '1'
+version: 2
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Server Registration
@@ -76,9 +76,9 @@ registration:
 # Routes players to a connection based on the hostname they connected with.
 # ─────────────────────────────────────────────────────────────────────────────
 address:
-  routes:
-    - subdomain: 'build.example.com'
-      target-connection: build
+    routes:
+      - subdomain: 'play.example.com'
+        target-connection: lobby
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Connections
@@ -120,6 +120,53 @@ fallback:
       # Optional: only use this fallback if the player is coming from one of these servers.
       from: []
 ```
+
+#### Subdomain Routes
+
+The `address.routes` section selects a connection from the hostname a player uses to join the proxy. Each `subdomain` must be the complete, exact hostname. For example, use `new.example.com`, not only `new`.
+
+The `target-connection` value references a name from the `connections` list. It does not reference a server directly. The connection's `server-name-matcher` then selects an available server.
+
+```yaml
+address:
+    routes:
+      - subdomain: 'play.example.com'
+        target-connection: lobby
+      - subdomain: 'new.example.com'
+        target-connection: smp-2026
+
+connections:
+  - name: lobby
+    server-name-matcher:
+        operation: STARTS_WITH
+        value: lobby
+        negate: false
+    rules: []
+
+  # Persistent server registered on the proxy as exactly "smp-2026".
+  - name: smp-2026
+    server-name-matcher:
+        operation: EQUALS
+        value: smp-2026
+        negate: false
+    rules: []
+```
+
+With this configuration, players joining through `play.example.com` are sent to an available lobby server. Players joining through `new.example.com` are sent to the persistent server registered as `smp-2026`.
+
+Point every routed hostname to the proxy with an `A`, `AAAA`, or `CNAME` DNS record. If the proxy does not use Minecraft's default port, configure an appropriate Minecraft `SRV` record as well.
+
+<Warning>
+  Subdomain routing requires config version 2. Routes added to a version 1 config are not retained during the version 1 to version 2 migration. Let the plugin migrate the file first, then add the routes to the generated version 2 config.
+</Warning>
+
+<Note>
+  Hostnames are matched exactly; wildcard routes such as `*.example.com` are not supported. If no route matches, its target connection does not exist, or no matching server is available, the plugin continues with `network-join-targets`.
+</Note>
+
+<Warning>
+  Connection rules are currently not evaluated for subdomain routes. A permission rule on the target connection does not restrict players who join through that hostname. Use prioritized `network-join-targets` when routing should depend on a permission.
+</Warning>
 
 #### Matcher Operations
 
@@ -185,7 +232,7 @@ Both `network-join-targets` and `fallback` support multiple target connections w
 Configures player navigation commands.
 
 ```yaml
-version: '1'
+version: 2
 
 commands:
   - name: lobby

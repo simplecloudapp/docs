@@ -45,7 +45,7 @@ Das Plugin:
 Die Hauptkonfigurationsdatei. Hierüber werden die Server-Registrierung, Verbindungen, das Routing beim Netzwerkbeitritt und das Fallback-Verhalten gesteuert.
 
 ```yaml
-version: '1'
+version: 2
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Server Registration
@@ -76,9 +76,9 @@ registration:
 # Leitet Spieler basierend auf der Domain/Hostname, mit der sie connecten, weiter.
 # ─────────────────────────────────────────────────────────────────────────────
 address:
-  routes:
-    - subdomain: 'build.example.com'
-      target-connection: build
+    routes:
+      - subdomain: 'play.example.com'
+        target-connection: lobby
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Connections
@@ -120,6 +120,53 @@ fallback:
       # Optional: Nutze dieses Fallback nur, wenn der Spieler von einem dieser Server kommt.
       from: []
 ```
+
+#### Subdomain-Routen
+
+Der Abschnitt `address.routes` wählt anhand des Hostnamens, mit dem ein Spieler dem Proxy beitritt, eine Verbindung aus. Jede Angabe unter `subdomain` muss der vollständige, exakte Hostname sein. Verwende zum Beispiel `new.example.com` und nicht nur `new`.
+
+Der Wert `target-connection` verweist auf einen Namen aus der Liste `connections`. Er verweist nicht direkt auf einen Server. Der `server-name-matcher` der Verbindung wählt anschließend einen verfügbaren Server aus.
+
+```yaml
+address:
+    routes:
+      - subdomain: 'play.example.com'
+        target-connection: lobby
+      - subdomain: 'new.example.com'
+        target-connection: smp-2026
+
+connections:
+  - name: lobby
+    server-name-matcher:
+        operation: STARTS_WITH
+        value: lobby
+        negate: false
+    rules: []
+
+  # Persistenter Server, der auf dem Proxy exakt als "smp-2026" registriert ist.
+  - name: smp-2026
+    server-name-matcher:
+        operation: EQUALS
+        value: smp-2026
+        negate: false
+    rules: []
+```
+
+Mit dieser Konfiguration werden Spieler über `play.example.com` auf einen verfügbaren Lobby-Server geleitet. Spieler über `new.example.com` werden auf den persistenten Server geleitet, der als `smp-2026` registriert ist.
+
+Lass jeden verwendeten Hostnamen über einen `A`-, `AAAA`- oder `CNAME`-DNS-Eintrag auf den Proxy zeigen. Verwendet der Proxy nicht den Minecraft-Standardport, musst du zusätzlich einen passenden Minecraft-`SRV`-Eintrag konfigurieren.
+
+<Warning>
+  Subdomain-Routing benötigt die Konfigurationsversion 2. Routen in einer Konfiguration mit Version 1 werden bei der Migration auf Version 2 nicht übernommen. Lass das Plugin die Datei zuerst migrieren und füge die Routen danach in die erzeugte Version-2-Konfiguration ein.
+</Warning>
+
+<Note>
+  Hostnamen werden exakt abgeglichen; Wildcard-Routen wie `*.example.com` werden nicht unterstützt. Wenn keine Route passt, die Zielverbindung nicht existiert oder kein passender Server verfügbar ist, verwendet das Plugin anschließend die `network-join-targets`.
+</Note>
+
+<Warning>
+  Verbindungsregeln werden für Subdomain-Routen derzeit nicht ausgewertet. Eine Permission-Regel auf der Zielverbindung schränkt Spieler, die über diesen Hostnamen beitreten, nicht ein. Verwende priorisierte `network-join-targets`, wenn das Routing von einer Permission abhängen soll.
+</Warning>
 
 #### Filter-Operationen (Matcher)
 
@@ -185,7 +232,7 @@ Sowohl `network-join-targets` als auch `fallback` unterstützen mehrere Zielverb
 Konfiguriert die Navigationsbefehle für Spieler.
 
 ```yaml
-version: '1'
+version: 2
 
 commands:
   - name: lobby
