@@ -138,7 +138,7 @@ api.server().updateServer("server-uuid", update)
         System.out.println("Updated slots: " + server.getMaxPlayers()));
 ```
 
-The builder supports `playerCount`, `state`, `properties`, `minMemory`, `maxMemory`, and `maxPlayers`. Changes apply to this instance, not its owning configuration. The platform normally reports `state` and `playerCount`; only set them when your integration owns that reporting.
+The builder supports `state`, `properties`, `minMemory`, `maxMemory`, and `maxPlayers`. Changes apply to this instance, not its owning configuration. `playerCount` is a runtime observation reported by the serverhost and is read-only over the HTTP API; sending it in an update request is rejected as an unknown field. The platform normally reports `state`; only set it when your integration owns that reporting.
 
 ## Manage instance properties
 

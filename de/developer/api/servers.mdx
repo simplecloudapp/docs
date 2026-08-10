@@ -138,7 +138,7 @@ api.server().updateServer("server-uuid", update)
         System.out.println("Updated slots: " + server.getMaxPlayers()));
 ```
 
-Der Builder unterstützt `playerCount`, `state`, `properties`, `minMemory`, `maxMemory` und `maxPlayers`. Änderungen gelten für diese Instanz, nicht für ihre zugehörige Konfiguration. Die Plattform meldet normalerweise `state` und `playerCount`; lege diese Werte nur fest, wenn deine Integration für diese Meldungen zuständig ist.
+Der Builder unterstützt `state`, `properties`, `minMemory`, `maxMemory` und `maxPlayers`. Änderungen gelten für diese Instanz, nicht für ihre zugehörige Konfiguration. `playerCount` ist eine Laufzeit-Beobachtung, die vom Serverhost gemeldet wird, und ist über die HTTP-API schreibgeschützt; wird das Feld in einer Update-Anfrage gesendet, weist die API es als unbekanntes Feld ab. Die Plattform meldet normalerweise `state`; lege diesen Wert nur fest, wenn deine Integration für diese Meldung zuständig ist.
 
 ## Instanzeigenschaften verwalten
 
