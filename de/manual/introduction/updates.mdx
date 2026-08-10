@@ -1,56 +1,81 @@
 ---
-title: 'Updates'
-description: 'Halte deine SimpleCloud-Installation mit unseren integrierten Update-Mechanismen aktuell'
+title: "Updates"
+description: "Halte die SimpleCloud CLI und den Serverhost auf dem neuesten Stand"
 ---
 
-## Versionsprüfungen
+Der Serverhost aktualisiert sich automatisch und startet neu, wenn ihm eine neue Version zugewiesen wird. Dieser Neustart stoppt die Minecraft-Server auf dem Serverhost nicht. Die CLI aktualisiert sich nicht automatisch, informiert dich aber, wenn eine neue Version verfügbar ist.
 
-SimpleCloud-Komponenten und die CLI können prüfen, ob neuere Releases verfügbar sind. Die CLI fordert dich zum Update auf, wenn sie zu weit hinter der neuesten Version liegt.
-
-- Nutze `simplecloud upgrade cli`, um die CLI selbst zu aktualisieren.
-- Nutze `simplecloud upgrade`, wenn die CLI unterstützte installierte Targets aktualisieren soll.
-- Prüfe Komponenten-Neustarts, bevor du Produktionshosts aktualisierst.
-- Sichere Konfigurationen und Templates, bevor du Runtime-Komponenten änderst.
-
-<Note>
-  Die CLI fordert dich zum Update auf, wenn sie mehr als 5 Versionen hinter der neuesten Version liegt.
-</Note>
-
-## Auswirkungen im Betrieb
-
-Updates können SimpleCloud-Komponenten neu starten. Plane sie wie jede andere Infrastrukturänderung:
-
-- Aktualisiere nach Möglichkeit zuerst einen Serverhost.
-- Prüfe, ob Serverstart und Shutdown weiterhin funktionieren.
-- Rolle dasselbe Update danach auf die übrigen Hosts aus.
-- Beobachte Dashboard-Status und Serverhost-Logs während des Rollouts.
-
-## Manuelle Updates
-
-Wenn du Updates lieber manuell auslösen möchtest, verwende den Upgrade-Befehl:
-
-```bash
-simplecloud upgrade
-```
-
-Ohne Targets aktualisiert dieser Befehl die CLI und alle installierten Komponenten. Du kannst auch bestimmte Targets aktualisieren:
-
-```bash
-simplecloud upgrade [targets..]
-```
-
-Targets können `cli`, Component-IDs oder Versions-Pins wie `serverhost@1.2.3` sein.
-
-<Note>
-  `simplecloud update` funktioniert weiterhin als Alias für `simplecloud upgrade`.
-</Note>
+Diese Updates betreffen nur SimpleCloud. Deine Minecraft-Serversoftware oder Plugins werden dadurch nicht aktualisiert.
 
 ## CLI aktualisieren
 
-Die CLI selbst kann separat aktualisiert werden mit:
+Führe Folgendes aus:
 
 ```bash
-simplecloud upgrade cli
+sc upgrade cli
 ```
 
-Dieser Befehl prüft auf eine neuere CLI-Version, lädt sie herunter und ersetzt deine aktuelle Installation. Verwende `simplecloud upgrade cli --cli-force`, um die aktuelle CLI-Version erneut zu installieren, auch wenn sie bereits aktuell ist.
+Der Befehl ersetzt die CLI durch die neueste Version. Er startet weder den Serverhost noch Minecraft-Server neu.
+
+Führe anschließend `sc --version` aus, um die installierte Version zu bestätigen.
+
+## Serverhost sofort aktualisieren
+
+Normalerweise musst du den Serverhost nicht selbst aktualisieren. Führe den folgenden Befehl in deinem SimpleCloud-Installationsverzeichnis aus, um ein verfügbares Update sofort zu installieren:
+
+```bash
+sc restart --update
+```
+
+<Warning>
+  Dieser Befehl aktualisiert den Serverhost und startet ihn neu. Führe ihn in einem Wartungsfenster aus. Sofern du diese Auswahl nicht bereits gespeichert hast, fragt SimpleCloud, ob auch die Minecraft-Server auf diesem Serverhost gestoppt werden sollen.
+</Warning>
+
+Prüfe nach Abschluss des Befehls, ob der Serverhost läuft:
+
+```bash
+sc status serverhost
+```
+
+Wenn der Serverhost nicht startet, prüfe seine Logs:
+
+```bash
+sc logs serverhost
+```
+
+Behebe das gemeldete Problem und führe anschließend `sc start serverhost` aus, um ihn wieder zu starten.
+
+## Weitere Updateoptionen
+
+<AccordionGroup>
+  <Accordion title="Updates ohne Neustart herunterladen">
+    Verwende `sc upgrade`, um die CLI und alle installierten SimpleCloud-Komponenten zu aktualisieren, oder `sc upgrade serverhost`, um nur das Serverhost-Update herunterzuladen.
+
+    ```bash
+    sc upgrade
+    sc upgrade serverhost
+    ```
+
+    Diese Befehle starten laufende Komponenten nicht neu. Starte den Serverhost neu, sobald du seine neue Version verwenden möchtest.
+  </Accordion>
+
+  <Accordion title="Bestimmte Serverhost-Version installieren">
+    Lade zum Testen oder Zurücksetzen die gewünschte Version herunter:
+
+    ```bash
+    sc upgrade serverhost@<version>
+    ```
+
+    Der Befehl startet den Serverhost nicht neu. Führe `sc restart serverhost` aus, sobald du die ausgewählte Version verwenden möchtest.
+  </Accordion>
+
+  <Accordion title="CLI-Update reparieren">
+    Wenn deine CLI-Installation für deinen Benutzer nicht beschreibbar ist, führe `sudo sc upgrade cli` aus. Wenn die Installation beschädigt, aber bereits aktuell ist, installiere sie mit folgendem Befehl neu:
+
+    ```bash
+    sc upgrade cli --cli-force
+    ```
+
+    Wenn die CLI mehrere Versionen zurückliegt, kann ein Update erforderlich sein, bevor du andere Befehle ausführen kannst.
+  </Accordion>
+</AccordionGroup>

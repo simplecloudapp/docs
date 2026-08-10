@@ -6,12 +6,12 @@ tag: 'Server'
 
 ## Überblick
 
-Das SimpleCloud NPC Plugin fügt NPCs aus unterstützten NPC-Plugins SimpleCloud-Aktionen, Hologramme und Feedback-Optionen hinzu. Du erstellst den NPC in deinem NPC-System und verwendest danach `/scnpc apply <id>`, damit SimpleCloud Interaktionen für diesen NPC verwaltet.
+Das SimpleCloud-NPC-Plugin fügt NPCs aus unterstützten NPC-Plugins SimpleCloud-Aktionen, Hologramme und Feedback-Optionen hinzu. Du erstellst den NPC in deinem NPC-System und verwendest danach `/scnpc apply <id>`, damit SimpleCloud die Interaktionen für diesen NPC verwaltet.
 
 <Warning>
-  Dieses Plugin benötigt ein unterstütztes NPC-Plugin auf dem Server. Ein
-  Standalone-Namespace-Modul existiert im Repository, wird vom aktuellen Paper
-  Plugin aber nicht geladen.
+  Dieses Plugin benötigt ein unterstütztes NPC-Plugin auf dem Server. Das
+  Standalone-Namespace-Modul ist zwar im Repository vorhanden, das aktuelle
+  Paper-Plugin lädt jedoch ausschließlich Namespaces von Drittanbieter-Plugins.
 </Warning>
 
 ## Unterstützte Software
@@ -25,16 +25,16 @@ Das SimpleCloud NPC Plugin fügt NPCs aus unterstützten NPC-Plugins SimpleCloud
 
 | Plugin | Status | Hinweise |
 | ------ | ------ | -------- |
-| [Citizens](https://citizensnpcs.co) | Unterstützt | Links- und Rechtsklick |
+| [Citizens](https://citizensnpcs.co) | Unterstützt | Interaktionen per Links- und Rechtsklick |
 | [FancyNpcs](https://fancyplugins.de/FancyNpcs) | Unterstützt | Nutzt FancyNpcs-Namen als IDs |
-| [MythicMobs](https://www.spigotmc.org/resources/5702) | Unterstützt | Rechtsklick |
+| [MythicMobs](https://www.spigotmc.org/resources/5702) | Unterstützt | Interaktionen per Rechtsklick |
 | PlayerNPC | Unterstützt | Nutzt PlayerNPC-IDs |
 
 ## Schnellstart
 
-1. Lade das SimpleCloud NPC Plugin von [GitHub](https://github.com/simplecloudapp/npc-plugin/releases) herunter.
+1. Lade das SimpleCloud-NPC-Plugin von [GitHub](https://github.com/simplecloudapp/npc-plugin/releases) herunter.
 2. Installiere ein unterstütztes NPC-Plugin.
-3. Stelle sicher, dass das `simplecloud-api` Plugin auf dem Server installiert ist.
+3. Stelle sicher, dass das `simplecloud-api`-Plugin auf dem Server installiert ist.
 4. Lege die Plugins im `plugins/`-Ordner deines Server-Templates ab.
 5. Starte den Server.
 6. Erstelle einen NPC mit deinem NPC-Plugin.
@@ -50,7 +50,7 @@ Der Befehl ist als `/simplecloudnpc`, `/scnpc` und `/cloudnpc` verfügbar.
 | `/scnpc apply <id>` | SimpleCloud-Konfiguration für einen existierenden NPC erstellen |
 | `/scnpc <id>` | Hilfe für einen NPC anzeigen |
 | `/scnpc <id> setHologramGroup <name>` | Gruppe für Hologramm-Platzhalter setzen |
-| `/scnpc <id> setOption <key> <value>` | Globale Player-Feedback-Option setzen |
+| `/scnpc <id> setOption <key> <value>` | Globale Spieler-Feedback-Option setzen |
 | `/scnpc <id> getOption <key>` | Globalen Optionswert anzeigen |
 | `/scnpc <id> removeOption <key>` | Globale Option entfernen |
 | `/scnpc openInventory <name>` | Konfiguriertes SimpleCloud-NPC-Inventar öffnen |
@@ -86,7 +86,7 @@ Die Standard-Interaktionen sind:
 | `RUN_COMMAND` | `command.name` | Führt einen Befehl als Spieler aus |
 | `RUN_CONSOLE_COMMAND` | `command.name` | Führt einen Befehl als Konsole aus |
 | `CONNECT_TO_SERVER` | `server.name` | Sendet den Spieler zu einem Proxy-registrierten Server |
-| `TRANSFER_TO_SERVER` | `server.ip`, `server.port` | Transferiert den Spieler zu einem externen Server |
+| `TRANSFER_TO_SERVER` | `server.ip`, `server.port` | Überträgt den Spieler zu einem externen Server |
 | `QUICK_JOIN` | `group.name` | Findet einen Server in einer Gruppe und sendet den Spieler dorthin |
 | `OPEN_INVENTORY` | `inventory.name` | Öffnet ein konfiguriertes Inventar |
 
@@ -98,13 +98,13 @@ Die Standard-Interaktionen sind:
 | ------ | -------- | ------------ |
 | `group.name` | Erforderlich | Gruppe, die durchsucht wird |
 | `server.name.pattern` | `<group_name>-<numerical_id>` | Servername, der an den Proxy übergeben wird |
-| `filter.player.count` | `LEAST` | `LEAST` oder `MOST` für die Spielerauswahl |
+| `filter.player.count` | `LEAST` | Wählt mit `LEAST` den Server mit der niedrigsten oder mit `MOST` den Server mit der höchsten Spielerzahl aus |
 | `filter.server.state` | `AVAILABLE` | Erforderlicher Serverstatus |
 | `message.failed.server.finder` | Leer | Optionale Nachricht, wenn kein Server passt |
 
 ## Feedback-Optionen
 
-Feedback-Optionen können global auf dem NPC oder auf einer Interaktion gesetzt werden. Sie laufen zusätzlich zur Interaktionsaktion.
+Feedback-Optionen können global für den NPC oder für eine bestimmte Interaktion festgelegt werden. Sie werden zusätzlich zur Interaktionsaktion ausgeführt.
 
 | Option | Beschreibung |
 | ------ | ------------ |

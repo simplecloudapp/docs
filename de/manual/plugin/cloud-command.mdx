@@ -1,12 +1,12 @@
 ---
 title: 'Cloud Command'
-description: 'Nutze SimpleCloud Proxy-Befehle für Gruppen, Server und Spieler'
+description: 'Nutze die Proxy-Befehle von SimpleCloud für Gruppen, Server und Spieler'
 tag: 'Proxy'
 ---
 
 ## Überblick
 
-Das Cloud Command Plugin fügt Proxy-Befehle für den laufenden Netzwerkbetrieb hinzu. Du kannst Gruppen und Server anzeigen, Gruppenserver starten und stoppen, Spieler verschieben und Spielern Nachrichten senden.
+Das Cloud-Command-Plugin fügt Proxy-Befehle für den laufenden Netzwerkbetrieb hinzu. Du kannst Gruppen und Server anzeigen, Gruppenserver starten und stoppen, Spieler verschieben und Spielern Nachrichten senden.
 
 Der Hauptbefehl ist als `/cloud`, `/sc` und `/simplecloud` verfügbar.
 
@@ -22,7 +22,7 @@ Der Hauptbefehl ist als `/cloud`, `/sc` und `/simplecloud` verfügbar.
 
 1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/command-plugin/releases) herunter.
 2. Lege es im `plugins/`-Ordner deines Proxy-Templates ab.
-3. Stelle sicher, dass das `simplecloud-api` Plugin auf dem Proxy installiert ist.
+3. Stelle sicher, dass das `simplecloud-api`-Plugin auf dem Proxy installiert ist.
 4. Starte den Proxy einmal, damit die Nachrichtenkonfiguration erzeugt wird.
 
 ## Befehle
@@ -34,7 +34,7 @@ Der Hauptbefehl ist als `/cloud`, `/sc` und `/simplecloud` verfügbar.
 | `/cloud group list` | Alle Gruppen auflisten |
 | `/cloud group info <group>` | Typ, Speicher, Spielerlimit und laufende Server einer Gruppe anzeigen |
 | `/cloud group start <group> [count]` | Einen oder mehrere neue Server für eine Gruppe anfordern |
-| `/cloud group stop <group> [id]` | Alle laufenden Server einer Gruppe oder eine numerische ID stoppen |
+| `/cloud group stop <group> [id]` | Alle laufenden Server einer Gruppe oder einen Server anhand seiner numerischen ID stoppen |
 
 ### Server
 
@@ -47,22 +47,22 @@ Der Hauptbefehl ist als `/cloud`, `/sc` und `/simplecloud` verfügbar.
 
 ### Spieler
 
-Verwende `group` für eine Servergruppe und `ps` für einen Persistent Server.
+Verwende `group` für eine Servergruppe und `ps` für einen persistenten Server.
 
 | Befehl | Beschreibung |
 | ------ | ------------ |
-| `/cloud player list <group\|ps> <target>` | Spieler auf einer Gruppe oder einem Persistent Server auflisten |
+| `/cloud player list <group\|ps> <target>` | Spieler in einer Gruppe oder auf einem persistenten Server auflisten |
 | `/cloud player info <player>` | Verbindungsdetails eines Spielers anzeigen |
 | `/cloud player send <player> <group\|ps> <target>` | Einen Spieler zu einem Ziel senden |
 | `/cloud player sendall <group\|ps> <target>` | Alle Online-Spieler zu einem Ziel senden |
 | `/cloud player sendfrom <source> <group\|ps> <target>` | Spieler von einem Quellserver zu einem Ziel senden |
 | `/cloud player message <player> <message>` | Einem Spieler eine Textnachricht senden |
 
-### Reload
+### Neu laden
 
 | Befehl | Beschreibung |
 | ------ | ------------ |
-| `/cloud reload` | Den Reload-Befehl des Command Plugins ausführen |
+| `/cloud reload` | Den Befehl zum Neuladen des Command-Plugins ausführen |
 
 ## Berechtigungen
 
@@ -79,14 +79,14 @@ Verwende `group` für eine Servergruppe und `ps` für einen Persistent Server.
 | `simplecloud.command.server.stop` | `/cloud server stop` verwenden |
 | `simplecloud.command.player.list` | `/cloud player list` verwenden |
 | `simplecloud.command.player.info` | `/cloud player info` verwenden |
-| `simplecloud.command.player.send` | Spieler-Transferbefehle verwenden |
+| `simplecloud.command.player.send` | Befehle zum Verschieben von Spielern verwenden |
 | `simplecloud.command.player.message` | `/cloud player message` verwenden |
 | `simplecloud.command.reload` | `/cloud reload` verwenden |
 
 <Note>
-  Das Hilfe-Menü zeigt nur Befehle, für die der Sender die Berechtigung hat.
+  Das Hilfemenü zeigt nur Befehle, für die der ausführende Benutzer die Berechtigung hat.
 </Note>
 
 <Frame>
-  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/cloud-command/help.png?raw=true" alt="Cloud Command Hilfe-Menü" />
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/cloud-command/help.png?raw=true" alt="Hilfemenü von Cloud Command" />
 </Frame>

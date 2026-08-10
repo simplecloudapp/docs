@@ -1,224 +1,142 @@
 ---
-title: 'Templates'
-description: 'Templates definieren Dateien, Plugins und Konfigurationen, die in Serververzeichnisse kopiert werden'
+title: "Templates"
+description: "Füge Plugins, Konfiguration, Welten und weitere Dateien zu den Servern hinzu, die sie benötigen."
 ---
 
-## Wie Templates funktionieren
+Templates legen fest, mit welchen Dateien ein Server startet. Füge eine Datei einmal zu einem Template hinzu. SimpleCloud kopiert sie dann beim Start auf jeden passenden Server.
 
-Templates sind Ordner auf jedem Serverhost, die vor dem Serverstart in das Serververzeichnis kopiert werden. Nutze sie für Plugin-JARs, Standardwelten, Konfigurationsdateien und gemeinsame Ressourcen.
+Templates eignen sich am besten für Gruppenserver, die mit einem neuen Verzeichnis starten. Wenn Dateien, die sich während des Serverbetriebs ändern, nach dem Stoppen erhalten bleiben müssen, verwende einen [persistenten Server](/de/manual/setup/persistent-servers).
 
-Der Standard-Setup-Workflow kopiert Template-Ebenen in einer festen Reihenfolge. Bestehende Dateien bleiben erhalten, solange du den Workflow nicht so anpasst, dass er sie überschreibt.
+## Template-Ordner auswählen
 
-```mermaid
-flowchart LR
-    A[cache/name] --> B[_every/every]
-    B --> C[_every/every_type]
-    C --> D[_every/every_mapped-software]
-    D --> E[_every/every_software]
-    E --> F[_tagged/tag]
-    F --> G[name]
-    G --> H[Laufender Server]
-```
+Öffne **Files** im Dashboard, wähle einen Serverhost aus und öffne `templates`. Wähle den Ordner danach aus, wie weit die Dateien geteilt werden sollen:
 
-| Reihenfolge | Verzeichnis | Beschreibung |
-| ----------- | ----------- | ------------ |
-| 1 | `cache/{name}/` | Gecachte Dateien von vorherigen Starts |
-| 2 | `_every/every/` | Basisdateien für alle Server |
-| 3 | `_every/every_{type}/` | Typspezifische Dateien, zum Beispiel `every_proxy` oder `every_server` |
-| 4 | `_every/every_{mapped-software}/` | Dateien für den plattformgemappten Software-Namen |
-| 5 | `_every/every_{software}/` | Softwarespezifische Dateien, zum Beispiel `every_paper` oder `every_velocity` |
-| 6 | `_tagged/{tag}/` | Dateien für jeden zugewiesenen Tag |
-| 7 | `{name}/` | Dateien für eine Gruppe oder einen persistenten Server |
+- **Eine Gruppe oder ein persistenter Server:** `templates/{name}/`
+- **Server mit einem Tag:** `templates/_tagged/{tag}/`
+- **Eine Serversoftware:** `templates/_every/every_{software}/`
+- **Alle Gameserver:** `templates/_every/every_server/`
+- **Alle Proxys:** `templates/_every/every_proxy/`
+- **Jeder Server:** `templates/_every/every/`
 
-<Note>
-  Brauchst du Welt- oder Spielerdaten, die Neustarts überleben? Verwende einen [Persistenten Server](/de/manual/setup/persistent-servers) anstelle einer Gruppe.
-</Note>
-
-## Template-Verzeichnisstruktur
-
-<Tree>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="_every" defaultOpen>
-      <Tree.Folder name="every">
-        <Tree.File name="Wird auf alle Server angewendet" />
-      </Tree.Folder>
-      <Tree.Folder name="every_proxy">
-        <Tree.File name="Wird auf alle Proxy-Server angewendet" />
-      </Tree.Folder>
-      <Tree.Folder name="every_server">
-        <Tree.File name="Wird auf alle Game-Server angewendet" />
-      </Tree.Folder>
-      <Tree.Folder name="every_paper">
-        <Tree.File name="Wird auf alle Paper-Server angewendet" />
-      </Tree.Folder>
-      <Tree.Folder name="every_velocity">
-        <Tree.File name="Wird auf alle Velocity-Server angewendet" />
-      </Tree.Folder>
-    </Tree.Folder>
-    <Tree.Folder name="_tagged" defaultOpen>
-      <Tree.Folder name="minigames">
-        <Tree.File name="Wird auf Server mit dem Tag minigames angewendet" />
-      </Tree.Folder>
-      <Tree.Folder name="premium">
-        <Tree.File name="Wird auf Server mit dem Tag premium angewendet" />
-      </Tree.Folder>
-    </Tree.Folder>
-    <Tree.Folder name="lobby">
-      <Tree.File name="Wird auf die Gruppe oder den persistenten Server lobby angewendet" />
-    </Tree.Folder>
-    <Tree.Folder name="bedwars">
-      <Tree.File name="Wird auf die Gruppe bedwars angewendet" />
-    </Tree.Folder>
-    <Tree.Folder name="cache">
-      <Tree.File name="Verwaltete Cache-Dateien" />
-    </Tree.Folder>
-  </Tree.Folder>
-</Tree>
-
-## Gemeinsame Templates
-
-### `_every/every`
-
-Nutze `_every/every/` für Dateien, die jeder Server bekommen soll, also Proxies und Game-Server.
-
-<Tree>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="_every" defaultOpen>
-      <Tree.Folder name="every" defaultOpen>
-        <Tree.Folder name="plugins">
-          <Tree.File name="shared-plugin.jar" />
-        </Tree.Folder>
-      </Tree.Folder>
-    </Tree.Folder>
-  </Tree.Folder>
-</Tree>
-
-### `_every/every_{type}`
-
-Nutze Typ-Templates, wenn Dateien für alle Proxies oder alle Game-Server gelten sollen.
-
-| Verzeichnis | Verwendung |
-| ----------- | ---------- |
-| `_every/every_proxy/` | Proxy-Plugins und Proxy-Konfiguration |
-| `_every/every_server/` | Game-Server-Plugins und gemeinsame Serverkonfiguration |
-
-### `_every/every_{software}`
-
-Nutze Software-Templates, wenn Dateien zu einer bestimmten Server-Software gehören.
-
-| Verzeichnis | Verwendung |
-| ----------- | ---------- |
-| `_every/every_paper/` | Paper-spezifische Plugins und Konfiguration |
-| `_every/every_spigot/` | Spigot-spezifische Plugins und Konfiguration |
-| `_every/every_velocity/` | Velocity-spezifische Plugins und Konfiguration |
-
-## Tagged Templates
-
-Tags helfen dir, Dateien über mehrere Gruppen oder persistente Server zu teilen, ohne den benannten Template-Ordner zu duplizieren.
-
-1. Erstelle einen Tag-Ordner in `templates/_tagged/`.
-2. Weise denselben Tag im Dashboard zu, wenn du die Gruppe oder den persistenten Server erstellst oder bearbeitest.
-
-<Tree>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="_tagged" defaultOpen>
-      <Tree.Folder name="minigames" defaultOpen>
-        <Tree.Folder name="plugins">
-          <Tree.File name="minigame-core.jar" />
-        </Tree.Folder>
-      </Tree.Folder>
-    </Tree.Folder>
-  </Tree.Folder>
-</Tree>
-
-## Benannte Templates
-
-Der Ordner mit dem Namen einer Gruppe oder eines persistenten Servers ist die spezifischste Template-Ebene.
-
-<Tree>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="bedwars" defaultOpen>
-      <Tree.Folder name="plugins">
-        <Tree.File name="bedwars-plugin.jar" />
-      </Tree.Folder>
-      <Tree.Folder name="world">
-        <Tree.File name="level.dat" />
-        <Tree.Folder name="region" />
-      </Tree.Folder>
-    </Tree.Folder>
-  </Tree.Folder>
-</Tree>
-
-Bei Gruppenservern werden Dateien, die während der Laufzeit geändert werden, entfernt, wenn der dynamische Server stoppt. Bei persistenten Servern bleibt das Laufzeitverzeichnis zwischen Neustarts erhalten.
-
-## Template-Dateien verwalten
-
-### Plugins hinzufügen
-
-Lege Plugin-JARs in der Ebene ab, in der sie gelten sollen:
-
-```bash
-# Für alle Server
-cp shared-plugin.jar templates/_every/every/plugins/
-
-# Für alle Paper-Server
-cp paper-plugin.jar templates/_every/every_paper/plugins/
-
-# Für eine Gruppe oder einen persistenten Server
-cp bedwars.jar templates/bedwars/plugins/
-```
-
-Neue Serverstarts enthalten das Plugin. Bereits laufende Server brauchen einen Neustart.
-
-### Generierte Konfiguration zurück ins Template kopieren
-
-1. Starte einen Server einmal, damit das Plugin seine Standarddateien erzeugt.
-2. Stoppe den Server.
-3. Kopiere die generierte Konfiguration aus `running/` in den passenden Template-Ordner.
-4. Bearbeite die Template-Kopie.
-5. Starte den Server erneut und prüfe das Ergebnis.
-
-### Weltdateien hinzufügen
-
-Lege einen Weltordner im benannten Template ab, wenn jeder neue dynamische Server mit derselben Map starten soll:
-
-<Tree>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="bedwars" defaultOpen>
-      <Tree.Folder name="world">
-        <Tree.File name="level.dat" />
-        <Tree.Folder name="region" />
-      </Tree.Folder>
-    </Tree.Folder>
-  </Tree.Folder>
-</Tree>
-
-Änderungen während des Spielens gehen verloren, wenn ein dynamischer Gruppenserver stoppt. Nutze einen persistenten Server für Welten, an denen Spieler weiterbauen sollen.
-
-## Cache-Dateien
-
-Der Standard-Cleanup-Workflow speichert ausgewählte generierte Dateien in `templates/cache/{name}/`, damit spätere Starts sie wiederverwenden können. Der Serverhost verwaltet diesen Ordner.
+Dateien, die beispielsweise nur von der Gruppe `lobby` verwendet werden, gehören in `templates/lobby/`. Ein Plugin, das jeder Paper-Server benötigt, gehört in `templates/_every/every_paper/`.
 
 <Tip>
-  Wenn ein dynamischer Server mit veralteten generierten Dateien startet, stoppe die betroffenen Server und lösche den passenden Gruppenordner unter `templates/cache/`.
+  Verwende den spezifischsten Ordner, der alle Server umfasst, welche die Dateien benötigen. Dadurch bleiben nicht betroffene Server und Templates übersichtlicher.
 </Tip>
+
+## Ordnerstruktur des Servers beibehalten
+
+Alles unterhalb des gewählten Template-Ordners wird direkt auf das Serververzeichnis abgebildet. Verwende an beiden Stellen denselben relativen Pfad.
+
+Diese Template-Datei:
+
+```text
+templates/lobby/plugins/Lobby/config.yml
+```
+
+wird beispielsweise zu dieser Datei in einem laufenden `lobby`-Server:
+
+```text
+running/lobby/lobby-1/plugins/Lobby/config.yml
+```
+
+Der generierte Servername, zum Beispiel `lobby-1`, kann sich zwischen Starts unterscheiden. Der Pfad unterhalb dieses Namens bleibt gleich.
+
+<Steps>
+  <Step title="Passenden Template-Ordner öffnen">
+    Öffne den Ordner für die Gruppe, das Tag, die Software oder den Servertyp, den du ändern möchtest. Erstelle den Ordner, falls er noch nicht vorhanden ist.
+  </Step>
+
+  <Step title="Dateien mit ihren serverrelativen Pfaden hinzufügen">
+    Um ein Plugin im Ordner `plugins` des Servers abzulegen, erstelle im Template einen Ordner `plugins` und lade dort die JAR-Datei hoch. Behalte für Konfigurations- und Weltordner dieselbe Struktur bei, die sie innerhalb eines laufenden Servers verwenden.
+  </Step>
+
+  <Step title="Passenden Server starten">
+    Starte einen Server und öffne seine Seite **Files**, um zu bestätigen, dass die Dateien an den erwarteten Speicherorten erscheinen.
+  </Step>
+</Steps>
+
+## Template-Änderungen anwenden
+
+Gruppenserver erhalten bei jedem Start ihre passenden Template-Dateien. Ein bereits laufender Server ändert sich nicht. Stoppe ihn daher und starte nach der Aktualisierung eines Templates einen weiteren Server.
+
+Auch persistente Server lesen ihre Templates beim Start, behalten ihr Serververzeichnis jedoch zwischen den Starts. Ein Template kann eine fehlende Datei hinzufügen, ersetzt aber keine Datei, die auf dem persistenten Server bereits vorhanden ist. Bearbeite eine bestehende Datei des persistenten Servers direkt auf seiner Seite **Files**.
+
+## Generierte Konfiguration wiederverwenden
+
+Einige Plugins erstellen ihre Konfiguration erst beim ersten Start. Gehe bei einem Gruppenserver wie folgt vor:
+
+1. Starte einen Server und lasse das Plugin seine Dateien erstellen.
+2. Öffne noch während der Server läuft seinen Ordner unter `running/{group}/{server}/`.
+3. Kopiere die generierte Datei oder lade sie herunter und lege sie anschließend unter demselben relativen Pfad im Template der Gruppe ab.
+4. Bearbeite die Template-Kopie.
+5. Stoppe den laufenden Server und starte einen weiteren, um das Template zu testen.
+
+Kopiere beispielsweise:
+
+```text
+running/lobby/lobby-1/plugins/Lobby/config.yml
+```
+
+nach:
+
+```text
+templates/lobby/plugins/Lobby/config.yml
+```
+
+<Warning>
+  Kopiere Dateien aus einem Gruppenserver, bevor du ihn stoppst. SimpleCloud entfernt das `running`-Verzeichnis dieses Servers, wenn er stoppt.
+</Warning>
+
+Die Dateien eines persistenten Servers werden unter `running/persistent/{name}/` gespeichert und bleiben nach dem Stoppen erhalten. Bearbeite diese Dateien direkt, sofern ein Template eine Datei nicht nur dann bereitstellen soll, wenn sie fehlt.
+
+## Dateien mit Tags teilen
+
+Mit Tags können nicht miteinander verbundene Gruppen oder persistente Server dieselben Dateien verwenden, ohne sie in jedem benannten Template zu duplizieren.
+
+Erstelle einen Ordner wie `templates/_tagged/minigames/` und füge anschließend jeder Gruppe und jedem persistenten Server, der seine Dateien erhalten soll, das Tag `minigames` hinzu. Der Name des Tags und der Ordnername müssen übereinstimmen.
+
+## Konflikte zwischen Template-Ordnern vermeiden
+
+Ein Server kann zu mehreren Template-Ordnern passen. SimpleCloud kopiert die passenden Template-Ordner in dieser Reihenfolge:
+
+1. `templates/_every/every/`
+2. Der passende Servertyp-Ordner, zum Beispiel `templates/_every/every_server/`
+3. Die zugeordnete Softwarefamilie, zum Beispiel `templates/_every/every_paper/` für Purpur
+4. Der exakte Softwareordner, zum Beispiel `templates/_every/every_purpur/`
+5. Jeder passende Ordner in `templates/_tagged/`
+6. Der benannte Ordner, zum Beispiel `templates/lobby/`
+
+Wenn derselbe relative Pfad mehrfach vorkommt, bleibt die zuerst kopierte Datei erhalten. Spätere Ordner ersetzen sie nicht. `templates/lobby/server.properties` überschreibt beispielsweise `templates/_every/every/server.properties` nicht.
+
+Lege jede Datei nur in einem passenden Template-Ordner ab, damit das Ergebnis vorhersehbar bleibt. Verlasse dich nicht auf die Reihenfolge mehrerer passender Tag-Ordner, die denselben Pfad enthalten.
+
+Der Ordner `templates/cache/` wird von SimpleCloud verwaltet und sollte nicht für eigene Template-Dateien verwendet werden.
+
+## Templates auf mehreren Serverhosts verwenden
+
+Templates gehören zu dem Serverhost, auf dem sie gespeichert sind. Wenn eine Gruppe auf mehreren Serverhosts laufen kann, benötigt jeder davon dieselben Template-Dateien. Verwende die Anleitung [SimpleCloud auf mehreren Maschinen ausführen](/de/manual/setup/multi-root), um den Ordner `templates` zwischen ihnen zu synchronisieren.
 
 ## Fehlerbehebung
 
 <AccordionGroup>
-  <Accordion title="Eine Datei wird nicht kopiert">
-    Prüfe den genauen Ordnernamen. Die gemeinsamen Ordner liegen unter `_every/`, zum Beispiel `templates/_every/every_paper/`, nicht `templates/every_paper/`.
+  <Accordion title="Eine Datei fehlt">
+    Prüfe, ob der Ordner zum Gruppennamen, Tag, zur Software oder zum Servertyp passt. Bestätige anschließend, dass der Pfad unterhalb des Template-Ordners dem erwarteten Pfad innerhalb des Servers entspricht. Starte nach Änderungen einen neuen Gruppenserver.
   </Accordion>
 
-  <Accordion title="Eine Template-Änderung wirkt sich nicht auf einen laufenden Server aus">
-    Templates werden während der Servervorbereitung kopiert. Starte den betroffenen Server neu, damit der Setup-Workflow erneut läuft.
+  <Accordion title="Eine Template-Änderung wird nicht angezeigt">
+    Templates verändern keinen laufenden Server. Stoppe bei einer Gruppe den aktuellen Server und starte einen weiteren. Bearbeite bei einem persistenten Server eine vorhandene Datei direkt, da Templates nur fehlende Dateien hinzufügen.
   </Accordion>
 
-  <Accordion title="Eine Datei wird nicht überschrieben">
-    Der Standard-Setup-Workflow behält vorhandene Dateien in den meisten Template-Ebenen. Das schützt Cache- und Persistent-Server-Daten. Nutze einen Configurator oder einen eigenen Workflow, wenn ein Wert bei jedem Start erzwungen werden muss.
+  <Accordion title="Der Server verwendet eine andere Version einer Datei">
+    Suche in den anderen passenden Template-Ordnern nach demselben relativen Pfad. Die erste passende Kopie bleibt erhalten. Entferne daher das Duplikat oder belasse die Datei im früher angewendeten gemeinsamen Ordner.
   </Accordion>
 
-  <Accordion title="Ein Tag-Template wird nicht angewendet">
-    Prüfe, ob der Tag im Dashboard zugewiesen ist und ob der Ordnername unter `templates/_tagged/` exakt zum Tag passt.
+  <Accordion title="Ein mit Tags verknüpftes Template wird nicht angewendet">
+    Stelle sicher, dass das Tag der Gruppe oder dem persistenten Server zugewiesen ist und seine Schreibweise mit dem Ordner unter `templates/_tagged/` übereinstimmt.
+  </Accordion>
+
+  <Accordion title="Die Änderung erscheint nur auf einem Serverhost">
+    Synchronisiere den Ordner `templates` auf allen Serverhosts, welche die Gruppe ausführen können.
   </Accordion>
 </AccordionGroup>

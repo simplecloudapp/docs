@@ -3,7 +3,7 @@ title: 'Übersicht'
 description: 'Plugins erweitern SimpleCloud-Funktionalität direkt in deinen Minecraft-Servern'
 ---
 
-Plugins sind Server-seitige Erweiterungen, die innerhalb deiner Minecraft-Server laufen. Sie nutzen die Cloud API, um mit deiner Netzwerk-Infrastruktur zu interagieren.
+Plugins sind serverseitige Erweiterungen, die innerhalb deiner Minecraft-Server laufen. Sie nutzen die Cloud API, um mit deiner Netzwerkinfrastruktur zu interagieren.
 
 ## Offizielle Plugins
 
@@ -11,20 +11,20 @@ Plugins sind Server-seitige Erweiterungen, die innerhalb deiner Minecraft-Server
 |--------|-----------|--------------|
 | [Server Connection](/de/manual/plugin/server-connection) | Proxy | Registriert Server und verwaltet Joins, Fallbacks und Hub-Befehle |
 | [Cloud Command](/de/manual/plugin/cloud-command) | Proxy | In-Game Cloud-Management-Befehle |
-| [Proxy Essentials](/de/manual/plugin/proxy-essentials) | Proxy | MOTD, Tablist, Joinstates, Layouts und Player Counts |
+| [Proxy Essentials](/de/manual/plugin/proxy-essentials) | Proxy | MOTD, Tablist, Joinstates, Layouts und Spielerzahlen |
 | [Notify](/de/manual/plugin/notify) | Proxy | Server- und Gruppen-Eventbenachrichtigungen |
-| [Prefixes](/de/manual/plugin/prefixes) | Server | Spieler-Präfix-Verwaltung |
+| [Prefixes](/de/manual/plugin/prefixes) | Server | Verwaltung von Spielerpräfixen |
 | [Signs](/de/manual/plugin/signs) | Server | Dynamische Schilder für Gruppen |
 | [NPCs](/de/manual/plugin/npcs) | Server | NPC-Interaktionen, Hologramme und Servernavigation |
 | [Placeholders](/de/manual/plugin/placeholders) | Server | PlaceholderAPI-Integration für Server und Gruppen |
 
 ## Plugins installieren
 
-### Via Dashboard
+### Über das Dashboard
 
-Beim Erstellen oder Bearbeiten einer Gruppe kannst du Plugins aus den Plugin-Einstellungen hinzufügen. Suche nach Plugins und sie werden automatisch auf allen Servern dieser Gruppe installiert.
+Beim Erstellen oder Bearbeiten einer Gruppe kannst du in den Plugin-Einstellungen Plugins hinzufügen. Suche nach den gewünschten Plugins. Sie werden automatisch auf allen Servern dieser Gruppe installiert.
 
-### Via CLI
+### Über die CLI
 
 ```bash
 # Plugins einer Gruppe auflisten
@@ -40,11 +40,11 @@ sc persistent-server plugin add spawn proxy-essentials
 sc group plugin remove lobby proxy-essentials
 ```
 
-Die optionale Plugin-Query kann ein Suchbegriff, ein Modrinth-Slug wie `mr:luckperms`, eine Spigot-ID wie `sp:28140` oder eine Plugin-URL sein.
+Die optionale Plugin-Suchanfrage kann ein Suchbegriff, ein Modrinth-Slug wie `mr:luckperms`, eine Spigot-ID wie `sp:28140` oder eine Plugin-URL sein.
 
 ### Manuell
 
-Lege Plugin-JARs in den `plugins/` Ordner deines Templates:
+Lege Plugin-JARs in den `plugins/`-Ordner deines Templates:
 
 ```bash
 cp mein-plugin.jar templates/lobby/plugins/
@@ -55,10 +55,10 @@ cp mein-plugin.jar templates/lobby/plugins/
 | | Plugins | Droplets |
 |---|---------|----------|
 | **Läuft auf** | Innerhalb des Minecraft-Servers | Unabhängiger Dienst |
-| **Zweck** | In-Game Features | Infrastruktur-Aufgaben |
-| **Beispiele** | Schilder, NPCs, Befehle | Spielerdaten, Resource Packs |
+| **Zweck** | Funktionen im Spiel | Infrastrukturaufgaben |
+| **Beispiele** | Schilder, NPCs, Befehle | Spielerdaten, Ressourcenpakete |
 
-Für Infrastruktur-Level-Integrationen siehe die [Developer-Dokumentation](/de/developer/overview).
+Informationen zu Integrationen auf Infrastrukturebene findest du in der [Entwicklerdokumentation](/de/developer/overview).
 
 <Note>
   Ideen für neue Plugins? Teile sie auf unserem [Discord](https://discord.simplecloud.app) oder trage auf [GitHub](https://github.com/simplecloudapp) bei.

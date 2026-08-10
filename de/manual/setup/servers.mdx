@@ -1,69 +1,68 @@
 ---
 title: 'Server'
-description: 'Server-Instanzen in deinem SimpleCloud-Netzwerk verstehen'
+description: 'Verstehe und verwalte die Minecraft-Serverinstanzen, die in deinem Netzwerk laufen.'
 ---
 
-## Wie Server erstellt werden
+Eine Serverinstanz ist ein laufender Minecraft-Server oder Proxy. Jede Instanz wird entweder aus einer [Servergruppe](/de/manual/setup/server-groups) oder einem [persistenten Server](/de/manual/setup/persistent-servers) erstellt:
 
-Jeder Server gehört entweder zu einer [Gruppe](/de/manual/setup/server-groups) oder einem [Persistenten Server](/de/manual/setup/persistent-servers).
+- Eine Servergruppe kann mehrere austauschbare Instanzen wie `lobby-1` und `lobby-2` ausführen.
+- Ein persistenter Server läuft als einzelne Instanz und behält seine Dateien zwischen Starts.
 
-### Aus Gruppen
+Öffne **Servers** im Dashboard, um die aktuellen Instanzen in deinem Netzwerk anzuzeigen.
 
-Gruppen erstellen Server automatisch basierend auf Spielerbedarf:
+## Server finden
 
-- Auto-Scaling startet neue Server wenn Spieler beitreten und entfernt inaktive wenn die Nachfrage sinkt
-- Mindestanzahl stellt sicher, dass Server immer verfügbar sind, auch ohne Spieler
-- Mehrere Instanzen laufen gleichzeitig (Lobby-1, Lobby-2, Lobby-3, etc.)
-- Du kannst bei Bedarf auch manuell zusätzliche Server starten
+Auf der Seite **Servers** werden Name, Status, Spieler, Arbeitsspeichernutzung und Serverhost jeder Instanz angezeigt. Wähle eine Instanz aus, um sie zu untersuchen, ihre Konsole zu öffnen, ihre Dateien anzuzeigen oder ihre Leistung zu prüfen.
 
-### Aus Persistenten Servern
+Der Status zeigt, wo sich die Instanz in ihrem Lebenszyklus befindet:
 
-Persistente Server sind Einzel-Instanzen, die nicht skalieren:
+- **Queued**, **Preparing** oder **Starting** bedeutet, dass sie noch nicht für Spieler bereit ist.
+- **Available** bedeutet, dass sie bereit ist. **Ingame** bedeutet, dass Spieler verbunden sind.
+- **Stopping** oder **Cleanup** bedeutet, dass sie heruntergefahren wird.
 
-- Immer der gleiche Server - nur an oder aus
-- Behält seine Welt und Daten zwischen Neustarts
-- Ideal für Spielmodi wie Skyblock, SMP oder Citybuild
+Dieselben Informationen findest du mit der CLI:
 
-## Server-Lebenszyklus
-
-Jeder Server durchläuft diese Zustände:
-
-```mermaid
-stateDiagram-v2
-    [*] --> QUEUED
-    QUEUED --> PREPARING
-    PREPARING --> STARTING
-    STARTING --> AVAILABLE
-    AVAILABLE --> INGAME : Spieler beitreten
-    INGAME --> AVAILABLE : Spieler verlassen
-    AVAILABLE --> STOPPING
-    INGAME --> STOPPING
-    STOPPING --> CLEANUP
-    CLEANUP --> STOPPED
-    STOPPED --> [*]
+```bash
+sc server list
+sc server info lobby 1
 ```
 
-| Zustand | Beschreibung |
-|---------|--------------|
-| **Queued** | Wartet auf Zuweisung eines Server-Hosts |
-| **Preparing** | Template-Dateien werden ins Laufzeitverzeichnis kopiert |
-| **Starting** | JVM-Prozess startet, Plugins laden |
-| **Available** | Bereit für Spieler, beim Proxy registriert |
-| **Ingame** | Hat aktive Spieler verbunden |
-| **Stopping** | Graceful Shutdown läuft |
-| **Cleanup** | Laufzeitdateien und Cleanup-Workflows werden verarbeitet |
-| **Stopped** | Prozess beendet, Laufzeitverzeichnis aufgeräumt |
+In diesen Befehlen bezeichnet `lobby 1` die Instanz `lobby-1`. Du kannst die Server-ID einer Instanz über ihr Aktionsmenü kopieren und stattdessen verwenden.
 
-## Server-Eigenschaften
+## Server stoppen
 
-- Jeder Server erbt Eigenschaften von seiner Gruppen- oder Persistenten-Server-Konfiguration
-- Instanz-spezifische Eigenschafts-Überschreibungen sind zur Laufzeit möglich
-- Eigenschaften sind für Plugins als Umgebungsvariablen auf dem laufenden Server verfügbar
+Öffne das Aktionsmenü des Servers im Dashboard und halte **Stop** gedrückt, oder führe Folgendes aus:
 
-## Server-Host-Zuweisung
+```bash
+sc server stop lobby 1
+```
 
-Server laufen nicht im Vakuum - sie werden Server-Hosts zugewiesen:
+<Warning>
+  Wenn du eine Instanz stoppst, ändert sich dadurch nicht die Konfiguration ihrer Gruppe oder ihres persistenten Servers. Eine aktive Gruppe kann einen Ersatz erstellen, um ihre Skalierungseinstellungen zu erfüllen. Ein aktivierter persistenter Server startet erneut. Deaktiviere die Gruppe oder den persistenten Server, wenn er offline bleiben soll.
+</Warning>
 
-- Der Controller weist Server Hosts basierend auf Deployment-Einstellungen zu
-- Prioritätsreihenfolge bestimmt, welcher Host bevorzugt wird wenn mehrere verfügbar sind
-- Jeder Server läuft in seinem eigenen isolierten Verzeichnis auf dem Host
+Verwende zum Neustarten einer Gruppe ihre Rolling-Restart-Aktion. SimpleCloud ersetzt ihre Instanzen nacheinander, sodass die Gruppe verfügbar bleiben kann. Öffne zum Neustarten eines persistenten Servers den persistenten Server und wähle in seinem Aktionsmenü **Restart**.
+
+## Logs und Leistung anzeigen
+
+Wähle eine Instanz im Dashboard aus und öffne anschließend **Console**, um ihre Logs zu lesen oder Minecraft-Konsolenbefehle zu senden. Öffne **Monitoring**, um ihre CPU- und Arbeitsspeichernutzung zu prüfen.
+
+Führe in der CLI Folgendes aus:
+
+```bash
+sc server logs lobby 1
+sc server logs lobby 1 --follow
+```
+
+Wenn eine Instanz den Start nicht abschließt, prüfe zuerst ihre Konsole. Stelle anschließend sicher, dass ihr Serverhost online ist und genügend freien Arbeitsspeicher hat.
+
+## Nächste Schritte
+
+<CardGroup cols={2}>
+  <Card title="Servergruppe konfigurieren" icon="layer-group" href="/de/manual/setup/server-groups">
+    Konfiguriere austauschbare Instanzen und ihre Skalierung.
+  </Card>
+  <Card title="Persistenten Server konfigurieren" icon="hard-drive" href="/de/manual/setup/persistent-servers">
+    Konfiguriere einen Server, der seine Dateien zwischen Starts behält.
+  </Card>
+</CardGroup>

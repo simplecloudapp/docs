@@ -1,100 +1,77 @@
 ---
-title: 'Spieler zwischen Servern transferieren'
-description: 'Spieler programmatisch über dein Netzwerk bewegen'
+title: "Spieler auf einen anderen Server verschieben"
+description: "Verbinde einen Spieler, der online ist, mit einem bekannten Server und verarbeite das Ergebnis"
 ---
 
-Diese Anleitung zeigt, wie du Spieler zwischen Servern transferierst, mit korrekter Fehlerbehandlung und Benutzer-Feedback.
+Verwende `CloudPlayer.connect(...)`, wenn du bereits weißt, welchem Server der Spieler beitreten soll. Die Methode erwartet den auf dem Proxy des Spielers registrierten Namen, zum Beispiel `lobby-1` – nicht die von `Server.getServerId()` zurückgegebene Server-UUID.
 
-## Einfacher Transfer
+## Spieler verschieben
 
-```java
-public void transferPlayer(UUID playerUuid, String targetServer) {
-    api.player().get(playerUuid).thenAccept(player -> {
-        if (player == null) {
-            System.out.println("Spieler nicht gefunden oder offline");
-            return;
-        }
+Suche den Spieler anhand seiner UUID, prüfe, ob er online ist, und verbinde ihn mit dem registrierten Servernamen:
 
-        player.connect(targetServer).thenAccept(result -> {
-            switch (result) {
-                case SUCCESS -> System.out.println("Transfer erfolgreich");
-                case SERVER_NOT_FOUND -> System.out.println("Server existiert nicht");
-                case ALREADY_CONNECTED -> System.out.println("Bereits auf diesem Server");
-                case CONNECTION_FAILED -> System.out.println("Transfer fehlgeschlagen");
+```java PlayerTransferService.java
+import app.simplecloud.api.CloudApi;
+import app.simplecloud.api.player.CloudPlayer;
+
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+public final class PlayerTransferService {
+    private final CloudApi api;
+
+    public PlayerTransferService(CloudApi api) {
+        this.api = api;
+    }
+
+    public CompletableFuture<CloudPlayer.ConnectResult> transfer(
+        UUID playerId,
+        String registeredServerName
+    ) {
+        return api.player().get(playerId).thenCompose(player -> {
+            if (player == null || !player.isOnline()) {
+                return CompletableFuture.completedFuture(
+                    CloudPlayer.ConnectResult.PLAYER_NOT_FOUND
+                );
             }
+
+            return player.connect(registeredServerName);
         });
-    });
+    }
 }
 ```
 
-## Transfer zum besten Server in Gruppe
-
-Finde den Server mit den meisten freien Slots:
+Rufe `transfer(...)` aus deinem Befehls- oder Matchmaking-Ablauf auf und verarbeite das Ergebnis:
 
 ```java
-public void transferToGroup(UUID playerUuid, String groupName) {
-    api.server().getServersByGroup(groupName).thenAccept(servers -> {
-        Server bestServer = servers.stream()
-            .filter(s -> s.getState() == ServerState.AVAILABLE || s.getState() == ServerState.INGAME)
-            .filter(s -> s.getPlayerCount() < s.getMaxPlayers())
-            .max(Comparator.comparingInt(s -> s.getMaxPlayers() - s.getPlayerCount()))
-            .orElse(null);
-
-        if (bestServer == null) {
-            System.out.println("Keine verfügbaren Server in Gruppe");
-            return;
+transferService.transfer(playerId, "lobby-1")
+    .thenAccept(result -> {
+        switch (result) {
+            case SUCCESS, ALREADY_CONNECTED ->
+                logger.info("Player is connected to lobby-1");
+            case SERVER_NOT_FOUND ->
+                logger.warning("lobby-1 is not registered on the proxy");
+            case PLAYER_NOT_FOUND ->
+                logger.info("Player is no longer online");
+            case CONNECTION_FAILED ->
+                logger.warning("Could not connect player to lobby-1");
         }
-
-        api.player().get(playerUuid).thenAccept(player -> {
-            if (player != null) {
-                player.connect(bestServer.getServerId());
-            }
-        });
+    })
+    .exceptionally(error -> {
+        logger.log(Level.WARNING, "Could not transfer player", error);
+        return null;
     });
-}
 ```
 
-## Transfer mit Benutzer-Feedback
+Dieser Leitfaden gibt `PLAYER_NOT_FOUND` zurück, wenn die Suche keinen Spieler findet, der online ist. Wenn der Spieler die Verbindung nach dieser Prüfung trennt, gibt `connect(...)` den Wert `CONNECTION_FAILED` zurück.
 
-Sende Nachrichten während des Transfers:
+## Verbindungsergebnisse
 
-```java
-public void transferWithFeedback(UUID playerUuid, String targetServer) {
-    api.player().get(playerUuid).thenCompose(player -> {
-        if (player == null) {
-            return CompletableFuture.completedFuture(null);
-        }
+| Ergebnis | Bedeutung |
+| --- | --- |
+| `SUCCESS` | Der Spieler wurde mit dem Ziel verbunden. |
+| `ALREADY_CONNECTED` | Der Spieler ist bereits mit dem Ziel verbunden. |
+| `SERVER_NOT_FOUND` | Der übergebene Name ist auf dem Proxy des Spielers nicht registriert. |
+| `PLAYER_NOT_FOUND` | Die Suche dieses Leitfadens hat keinen Spieler gefunden, der online ist. |
+| `CONNECTION_FAILED` | Der Proxy konnte die Verbindung nicht herstellen. |
 
-        player.sendMessage(Component.text("Verbinde zu " + targetServer + "...")
-            .color(NamedTextColor.YELLOW));
-
-        return player.connect(targetServer).thenApply(result -> {
-            if (result != CloudPlayer.ConnectResult.SUCCESS) {
-                player.sendMessage(Component.text("Verbindung fehlgeschlagen: " + result)
-                    .color(NamedTextColor.RED));
-            }
-            return result;
-        });
-    });
-}
-```
-
-## Alle Spieler von Server evakuieren
-
-```java
-public void evacuateServer(String serverId, String targetServer) {
-    api.server().getServerById(serverId).thenAccept(server -> {
-        if (server == null) return;
-
-        api.player().getOnlinePlayers().thenAccept(players -> {
-            players.stream()
-                .filter(p -> p.getConnectedServerName().equals(server.getServerId()))
-                .forEach(player -> {
-                    player.sendMessage(Component.text("Server fährt herunter, transferiere...")
-                        .color(NamedTextColor.GOLD));
-                    player.connect(targetServer);
-                });
-        });
-    });
-}
-```
+Wenn dein Plugin zuerst ein verfügbares Ziel finden muss, lies [Spieler mit Autoscaling weiterleiten](/de/developer/guides/server-management).

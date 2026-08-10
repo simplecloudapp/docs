@@ -1,19 +1,20 @@
 ---
 title: 'Server-Verbindung'
-description: 'Erfahre, wie das Server-Connection-Plugin von SimpleCloud die Server-Registrierung, Fallbacks, das Join-Routing und Navigationsbefehle verwaltet.'
+description: 'Erfahre, wie das Server-Connection-Plugin von SimpleCloud Server registriert, Fallbacks und Join-Routing steuert und Navigationsbefehle bereitstellt'
 tag: 'Proxy'
 ---
 
 ## Übersicht
 
-Das Server Connection Plugin ist das zentrale Proxy-Plugin für SimpleCloud v3 Netzwerke. Es sorgt dafür, dass die registrierten Unterserver deines Proxys mit der Server-Registry von SimpleCloud synchron bleiben, und kümmert sich um die gesamte Routing-Logik der Spieler.
+Das Server-Connection-Plugin ist das zentrale Proxy-Plugin für SimpleCloud-v3-Netzwerke. Es hält die auf deinem Proxy registrierten Backend-Server mit der Server-Registry von SimpleCloud synchron und übernimmt das gesamte Spieler-Routing.
 
 Das Plugin:
-- Registriert und entfernt SimpleCloud-Server automatisch auf deinem Proxy
+
+- Registriert SimpleCloud-Server automatisch auf deinem Proxy und meldet sie wieder ab
 - Leitet Spieler beim Betreten des Netzwerks auf den richtigen Server weiter
-- Schickt Spieler automatisch auf Fallback-Server, wenn ihr aktueller Server offline geht
-- Bietet anpassbare Navigationsbefehle (Commands), mit denen Spieler den Server wechseln können
-- Unterstützt flexible Namensfilter für Server über konfigurierbare Operationen
+- Leitet Spieler auf Fallback-Server um, wenn ihr aktueller Server nicht mehr verfügbar ist
+- Bietet konfigurierbare Navigationsbefehle, mit denen Spieler den Server wechseln können
+- Unterstützt den flexiblen Abgleich von Servernamen über konfigurierbare Operationen
 
 ## Unterstützte Software
 
@@ -25,16 +26,16 @@ Das Plugin:
 | Gate        | 🔄 Geplant     |
 
 <Note>
-  Du möchtest eine andere Proxy-Software unterstützen? Erstelle einfach einen Pull Request auf
-  [GitHub](https://github.com/simplecloudapp/server-connection-plugin/pulls)!
+  Du möchtest eine andere Proxy-Software unterstützen? Reiche auf
+  [GitHub](https://github.com/simplecloudapp/server-connection-plugin/pulls) einen Pull Request ein!
 </Note>
 
 ## Schnelle Einrichtung
 
-1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/server-connection-plugin/releases) herunter
-2. Packe es in den Plugins-Ordner deiner Proxy-Vorlage (Template)
-3. Starte deinen Proxy-Server
-4. Passe die `config.yml`, `commands.yml` und `messages.yml` nach deinen Wünschen an
+1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/server-connection-plugin/releases) herunter.
+2. Lege es im `plugins/`-Ordner deines Proxy-Templates ab.
+3. Starte deinen Proxy-Server.
+4. Passe `config.yml`, `commands.yml` und `messages.yml` an deine Anforderungen an.
 
 ---
 
@@ -42,7 +43,7 @@ Das Plugin:
 
 ### config.yml
 
-Die Hauptkonfigurationsdatei. Hierüber werden die Server-Registrierung, Verbindungen, das Routing beim Netzwerkbeitritt und das Fallback-Verhalten gesteuert.
+Die Hauptkonfigurationsdatei steuert die Serverregistrierung, Verbindungen, das Routing beim Netzwerkbeitritt und das Fallback-Verhalten.
 
 ```yaml
 version: 2
@@ -59,10 +60,10 @@ registration:
     # Verfügbare Platzhalter: <group>, <numerical_id>, <id>, <name>
     server-name-pattern: '<group>-<numerical_id>'
 
-    # Namensmuster für permanente (statische) Server.
+    # Namensmuster für persistente Server.
     persistent-server-name-pattern: '<name>'
 
-    # Servergruppen und permanente Server, die nicht auf dem Proxy registriert werden sollen.
+    # Servergruppen und persistente Server, die nicht auf dem Proxy registriert werden sollen.
     ignore-server-groups-and-persistent-servers: []
 
     # Externe Server (nicht über SimpleCloud), die manuell registriert werden sollen.
@@ -73,7 +74,7 @@ registration:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Subdomain Routing
-# Leitet Spieler basierend auf der Domain/Hostname, mit der sie connecten, weiter.
+# Leitet Spieler anhand des Hostnamens weiter, über den sie eine Verbindung herstellen.
 # ─────────────────────────────────────────────────────────────────────────────
 address:
     routes:
@@ -82,7 +83,7 @@ address:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Connections
-# Benannte Gruppen, die über einen Namensfilter (Matcher) auf bestimmte Server verweisen.
+# Benannte Gruppen, die über einen Namensabgleich auf bestimmte Server verweisen.
 # Diese werden bei network-join-targets, fallback und in der commands.yml genutzt.
 # ─────────────────────────────────────────────────────────────────────────────
 connections:
@@ -163,7 +164,7 @@ Lass jeden verwendeten Hostnamen über einen `A`-, `AAAA`- oder `CNAME`-DNS-Eint
 - **Standardziel:** Wenn keine Route passt, die Zielverbindung nicht existiert oder kein passender Server verfügbar ist, verwendet das Plugin anschließend die `network-join-targets`.
 - **Verbindungsregeln:** Subdomain-Routen werten Verbindungsregeln nicht aus. Eine Permission-Regel auf der Zielverbindung schränkt Spieler, die über diesen Hostnamen beitreten, nicht ein. Verwende priorisierte `network-join-targets`, wenn das Routing von einer Permission abhängen soll.
 
-#### Filter-Operationen (Matcher)
+#### Abgleichsoperationen
 
 Der `server-name-matcher` unterstützt folgende Operationen:
 
@@ -174,16 +175,16 @@ Der `server-name-matcher` unterstützt folgende Operationen:
 | `CONTAINS` | Servername enthält den Wert | `hub` |
 | `EQUALS` | Exakte Übereinstimmung | `lobby-1` |
 | `REGEX` | Voller Java-Regex-Abgleich | `lobby-\d+` |
-| `PATTERN` | Wildcard-Abgleich (Glob-Style) | `lobby-*` |
+| `PATTERN` | Abgleich mit einem Glob-Muster | `lobby-*` |
 | `GREATER_THAN` | Numerischer Vergleich (Größer als) | `5` |
 
-Setze `negate: true`, um eine Operation umzukehren – so werden z. B. alle Server abgefangen, die **nicht** mit `lobby` beginnen.
+Setze `negate: true`, um eine Operation umzukehren. So stimmen beispielsweise alle Server überein, die **nicht** mit `lobby` beginnen.
 
-#### Verbindungsregeln (Connection Rules)
+#### Verbindungsregeln
 
-Verbindungen können an Regeln geknüpft werden, die ein Spieler erfüllen muss. Schlägt eine Regel fehl, wird die Verbindung übersprungen und die nächste Priorität geprüft. Es gibt zwei Regel-Typen:
+Verbindungen können Regeln enthalten, die ein Spieler erfüllen muss. Schlägt eine Regel fehl, wird die Verbindung übersprungen und die nächste Priorität geprüft. Es gibt zwei Regeltypen:
 
-**Berechtigungs-Regel (Permission Rule)**
+**Berechtigungsregel**
 
 Prüft, ob ein Spieler eine bestimmte Permission besitzt.
 
@@ -195,7 +196,7 @@ rules:
     bypass-permission: rank.admin # Optional: Überspringt diese Regel, wenn der Spieler diese Admin-Permission hat
 ```
 
-**Umgebungsvariablen-Regel (Environment Variable Rule)**
+**Umgebungsvariablenregel**
 
 Gleicht eine System-Umgebungsvariable über eine Filter-Operation mit einem Wert ab.
 
@@ -215,7 +216,7 @@ Regeln werden der Reihe nach abgearbeitet. Wenn eine Regel fehlschlägt und kein
 
 Sowohl `network-join-targets` als auch `fallback` unterstützen mehrere Zielverbindungen mit Prioritäten:
 
-- Zielverbindungen werden nach **höchster Priorität zuerst** abgearbeitet.
+- Zielverbindungen werden von der **höchsten zur niedrigsten Priorität** abgearbeitet.
 - Haben mehrere Ziele die gleiche Priorität, wird eines davon **zufällig** ausgewählt.
 - Wenn ein Ziel gerade keinen verfügbaren Server hat, wird automatisch die nächstniedrigere Priorität versucht.
 - Die optionale `from`-Liste bei Fallbacks beschränkt die Weiterleitung auf Spieler, die von ganz bestimmten Servern kommen.

@@ -1,16 +1,15 @@
 ---
 title: "Installation"
-description: "Cloud API zu deinem Minecraft-Plugin oder Standalone-Anwendung hinzufügen"
+description: "Füge die Cloud API zu deinem Minecraft-Plugin hinzu"
 ---
 
 import { DependencySnippet } from "/snippets/DependencySnippet.jsx";
 
-## Dependencies hinzufügen
+## API-Abhängigkeit hinzufügen
 
-Füge die Cloud API zu deiner Build-Konfiguration hinzu. Die Beispiele unten laden die neueste verfügbare API-Version aus dem SimpleCloud Maven-Repository.
+Die Cloud API benötigt Java 21. Füge die SimpleCloud- und Buf-Repositories hinzu und binde die API mit `compileOnly` in Gradle oder `provided` in Maven ein:
 
 <DependencySnippet
-  language="de"
   dependencies={[
     {
       groupId: "app.simplecloud.api",
@@ -20,222 +19,171 @@ Füge die Cloud API zu deiner Build-Konfiguration hinzu. Die Beispiele unten lad
   ]}
 />
 
-<Note>
-  Verwende `compileOnly` oder Maven `provided` für Minecraft-Plugins, weil das
-  `simplecloud-api` Plugin die API zur Laufzeit bereitstellt. Nutze
-  `implementation` nur für Standalone-Anwendungen, die die API selbst mitliefern.
-</Note>
+<Warning>
+Binde die Cloud API nicht per Shading in dein Plugin ein. Das Plattform-Plugin `simplecloud-api` stellt sie zur Laufzeit bereit. Eine zusätzlich gebündelte Kopie kann zu Konflikten beim Laden von Klassen führen.
+</Warning>
 
-<Tip>
-  Für reproduzierbare Produktionsbuilds solltest du die angezeigte Version nach
-  dem Testen fest pinnen. Aktualisiere diese Seite vor dem Kopieren, wenn du die
-  neueste API verwenden möchtest.
-</Tip>
+Lege die Abhängigkeit vor der Veröffentlichung deines Plugins auf die von dir getestete Version fest.
 
-## Plugin-Setup
+## Plattform-Plugin voraussetzen
 
-Füge das SimpleCloud API Plugin als Dependency in deinem Plugin-Deskriptor hinzu:
+Deklariere `simplecloud-api` als erforderliche Abhängigkeit, damit es vor deinem Plugin geladen wird. Die Standard-Templates von SimpleCloud enthalten bereits das passende Plattform-Plugin. Wenn du eigene Templates verwendest, muss es im Verzeichnis `plugins` liegen.
 
 <Tabs>
-<Tab title="Paper/Spigot (plugin.yml)">
+<Tab title="Paper">
 
-```yaml
-name: mein-plugin
-version: 1.0.0
-main: com.example.MeinPlugin
-depend: [simplecloud-api]
+Füge die Abhängigkeit in `src/main/resources/paper-plugin.yml` hinzu:
+
+```yaml paper-plugin.yml
+name: my-plugin
+version: "1.0.0"
+main: com.example.MyPlugin
+api-version: "1.21"
+dependencies:
+  server:
+    simplecloud-api:
+      load: BEFORE
+      required: true
+      join-classpath: true
 ```
 
 </Tab>
-<Tab title="Velocity (velocity-plugin.json)">
+<Tab title="Folia">
 
-```json
-{
-  "id": "mein-plugin",
-  "name": "Mein Plugin",
-  "version": "1.0.0",
-  "main": "com.example.MeinPlugin",
-  "dependencies": [{ "id": "simplecloud-api", "optional": false }]
+Füge die Abhängigkeit in `src/main/resources/plugin.yml` hinzu:
+
+```yaml plugin.yml
+name: my-plugin
+version: "1.0.0"
+main: com.example.MyPlugin
+api-version: "1.21"
+folia-supported: true
+depend:
+  - simplecloud-api
+```
+
+</Tab>
+<Tab title="Spigot">
+
+Füge die Abhängigkeit in `src/main/resources/plugin.yml` hinzu:
+
+```yaml plugin.yml
+name: my-plugin
+version: "1.0.0"
+main: com.example.MyPlugin
+api-version: "1.20"
+depend:
+  - simplecloud-api
+```
+
+</Tab>
+<Tab title="Velocity">
+
+Füge die Abhängigkeit zur Annotation `@Plugin` deiner Hauptklasse hinzu:
+
+```java MyPlugin.java
+import com.velocitypowered.api.plugin.Dependency;
+import com.velocitypowered.api.plugin.Plugin;
+
+@Plugin(
+    id = "my-plugin",
+    name = "My Plugin",
+    version = "1.0.0",
+    dependencies = {@Dependency(id = "simplecloud-api")}
+)
+public final class MyPlugin {
 }
 ```
 
 </Tab>
-<Tab title="BungeeCord (bungee.yml)">
+<Tab title="BungeeCord">
 
-```yaml
-name: mein-plugin
-version: 1.0.0
-main: com.example.MeinPlugin
-depends: [simplecloud-api]
+Füge die Abhängigkeit in `src/main/resources/plugin.yml` hinzu:
+
+```yaml plugin.yml
+name: my-plugin
+version: "1.0.0"
+main: com.example.MyPlugin
+depends:
+  - simplecloud-api
 ```
 
 </Tab>
 </Tabs>
 
-<Warning>
-  Shade die Cloud API nicht in dein Plugin. Hänge stattdessen vom
-  `simplecloud-api` Plugin ab.
-</Warning>
+## Einen Client erstellen
 
-## API initialisieren
+Erstelle beim Start deines Plugins eine `CloudApi`-Instanz, verwende sie für alle Anfragen wieder und schließe sie, wenn dein Plugin beendet wird. SimpleCloud stellt die Verbindungseinstellungen automatisch bereit.
 
-### Standard-Konfiguration
+```java MyPlugin.java
+package com.example;
 
-Wenn du innerhalb eines SimpleCloud-Servers läufst, konfiguriert sich die API automatisch aus Umgebungsvariablen:
-
-<Tabs>
-<Tab title="Java">
-
-```java
 import app.simplecloud.api.CloudApi;
+import org.bukkit.plugin.java.JavaPlugin;
 
-public class MeinPlugin extends JavaPlugin {
-    private CloudApi api;
+public final class MyPlugin extends JavaPlugin {
+    private CloudApi cloudApi;
 
     @Override
     public void onEnable() {
-        api = CloudApi.create();
+        cloudApi = CloudApi.create();
+    }
+
+    @Override
+    public void onDisable() {
+        if (cloudApi != null) {
+            cloudApi.close();
+        }
     }
 }
 ```
 
-</Tab>
-<Tab title="Kotlin">
+Die meisten API-Aufrufe geben ein `CompletableFuture` zurück. Verknüpfe sie, statt zu blockieren, und wechsle über den Scheduler deiner Plattform zurück in deren Ausführungskontext, bevor du aus einem Callback heraus Plattformzustand änderst.
 
-```kotlin
-import app.simplecloud.api.CloudApi
+### Velocity-Lebenszyklus
 
-class MeinPlugin : JavaPlugin() {
-    private lateinit var api: CloudApi
+Erstelle und schließe auf Velocity denselben Client über die Lebenszyklus-Events des Proxys:
 
-    override fun onEnable() {
-        api = CloudApi.create()
+```java MyPlugin.java
+private CloudApi cloudApi;
+
+@Subscribe
+public void onProxyInitialize(ProxyInitializeEvent event) {
+    cloudApi = CloudApi.create();
+}
+
+@Subscribe
+public void onProxyShutdown(ProxyShutdownEvent event) {
+    if (cloudApi != null) {
+        cloudApi.close();
     }
 }
 ```
-
-</Tab>
-</Tabs>
-
-### Eigene Konfiguration
-
-Für Standalone-Anwendungen oder eigene Setups, gib Konfigurationsoptionen an:
-
-<Tabs>
-<Tab title="Java">
-
-```java
-CloudApi api = CloudApi.create(CloudApiOptions.builder()
-    .networkId("deine-netzwerk-id")
-    .networkSecret("dein-secret")
-    .controllerUrl("https://controller.simplecloud.app")
-    .natsUrl("wss://nats.simplecloud.app:443")
-    .component("mein-plugin")
-    .build());
-```
-
-</Tab>
-<Tab title="Kotlin">
-
-```kotlin
-val api = CloudApi.create(CloudApiOptions.builder()
-    .networkId("deine-netzwerk-id")
-    .networkSecret("dein-secret")
-    .controllerUrl("https://controller.simplecloud.app")
-    .natsUrl("wss://nats.simplecloud.app:443")
-    .component("mein-plugin")
-    .build())
-```
-
-</Tab>
-</Tabs>
-
-## Umgebungsvariablen
-
-Die API liest standardmäßig diese Umgebungsvariablen:
-
-| Variable | Standard | Beschreibung |
-| -------- | -------- | ------------ |
-| `SIMPLECLOUD_NETWORK_ID` | `"default"` | Deine Netzwerk-Kennung |
-| `SIMPLECLOUD_NETWORK_SECRET` | `""` | Authentifizierungs-Secret |
-| `SIMPLECLOUD_CONTROLLER_URL` | `"https://controller.simplecloud.app"` | Controller API-Endpunkt |
-| `SIMPLECLOUD_NATS_URL` | `"wss://nats.simplecloud.app:443"` | NATS-Endpunkt für Events |
-| `SIMPLECLOUD_NATS_FAILOVER_RECONNECT_AFTER` | `"30s"` | Wartezeit, bevor die API nach einem Failover wieder zu NATS verbindet |
-| `SIMPLECLOUD_SERVER_VERSION_MANIFEST_URL` | SimpleCloud-Server-Manifest auf GitHub | Manifest für Inline-Blueprints ohne `serverUrl` |
 
 <Note>
-  Innerhalb von SimpleCloud-Servern werden diese Variablen automatisch gesetzt.
-  Du musst sie nur für Standalone-Anwendungen oder externe Services
-  konfigurieren.
+`CloudApi.create()` verwendet die von SimpleCloud bereitgestellten Verbindungseinstellungen. Wenn dein Plugin andere Zeitlimits für Anfragen oder ein anderes Cache-Verhalten benötigt, übergib eine eigene `CloudApiOptions`-Instanz.
 </Note>
 
-## Cache und Timeouts
-
-Die API nutzt standardmäßig einen lokalen Query-Cache. Sie liefert frische Cache-Daten sofort, kann veraltete Daten während einer Hintergrund-Aktualisierung zurückgeben und invalidiert betroffene Einträge automatisch, wenn Cloud-API-Events eintreffen.
-
-```java
-CloudApi api = CloudApi.create(CloudApiOptions.builder()
-    .cache(CacheConfig.builder()
-        .defaultStaleTime(Duration.ofSeconds(5))
-        .defaultCacheTime(Duration.ofMinutes(2))
-        .build())
-    .httpConnectTimeout(Duration.ofSeconds(5))
-    .httpReadTimeout(Duration.ofSeconds(10))
-    .httpWriteTimeout(Duration.ofSeconds(10))
-    .build());
-
-// Cache vollständig deaktivieren
-CloudApi uncached = CloudApi.create(CloudApiOptions.builder()
-    .disableCache()
-    .build());
-```
-
-Verwende `api.cache()`, um Cache-Statistiken zu prüfen oder Einträge manuell zu invalidieren.
-
-## Best Practices
+## Fehlerbehebung
 
 <AccordionGroup>
-  <Accordion title="Eine einzelne API-Instanz verwenden">
-    Erstelle eine `CloudApi`-Instanz und verwende sie wieder. Nutze Dependency Injection wenn dein Framework es unterstützt.
+<Accordion title="Die API-Abhängigkeit kann nicht aufgelöst werden">
 
-    ```java
-    // Gut - einzelne Instanz
-    private final CloudApi api = CloudApi.create();
+Prüfe, ob dein Build beide oben gezeigten Repositories enthält. Aktualisiere anschließend die Abhängigkeiten mit `./gradlew --refresh-dependencies` oder `mvn -U package`.
 
-    // Vermeiden - mehrere Instanzen
-    public void doSomething() {
-        CloudApi api = CloudApi.create(); // Das nicht tun
-    }
-    ```
+</Accordion>
+<Accordion title="Das Plugin schlägt mit NoClassDefFoundError fehl">
 
-  </Accordion>
+Prüfe Folgendes:
 
-  <Accordion title="Async-Operationen richtig behandeln">
-    Alle API-Methoden geben `CompletableFuture` zurück. Blockiere nicht auf dem Haupt-Thread.
+- Das passende Plattform-Plugin `simplecloud-api` ist installiert und aktiviert.
+- Dein Plugin deklariert es als erforderliche Abhängigkeit. Paper-Plugins benötigen außerdem `join-classpath: true`.
+- Dein Build verwendet `compileOnly` oder `provided` und bindet die API nicht per Shading ein.
 
-    ```java
-    // Gut - async Behandlung
-    api.server().getAllServers().thenAccept(servers -> {
-        // Server verarbeiten
-    });
+</Accordion>
+<Accordion title="CloudApi.create() schlägt fehl">
 
-    // Vermeiden - blockieren
-    List<Server> servers = api.server().getAllServers().join(); // Nicht blockieren!
-    ```
+Prüfe, ob SimpleCloud den Server gestartet hat und das passende Plattform-Plugin `simplecloud-api` aktiviert ist.
 
-  </Accordion>
-
-  <Accordion title="Event-Subscriptions aufräumen">
-    Subscriptions implementieren `AutoCloseable`. Schließe sie wenn du fertig bist.
-
-    ```java
-    Subscription sub = api.event().server().onStarted(event -> {
-        System.out.println("Gestartet: " + event.getServer().getServerId());
-    });
-
-    // Beim Herunterfahren
-    sub.close();
-    ```
-
-  </Accordion>
+</Accordion>
 </AccordionGroup>

@@ -1,53 +1,41 @@
 ---
 title: 'Übersicht'
-description: 'SimpleCloud ist ein Management-System für Minecraft Server-Netzwerke mit Auto-Scaling, einem Dashboard und Entwickler-APIs.'
+description: 'Betreibe und verwalte dein Minecraft-Servernetzwerk über ein einziges Dashboard oder die SimpleCloud CLI.'
 ---
 
 <Frame>
-  <img src="https://github.com/simplecloudapp/branding/blob/main/images/header.png?raw=true" alt="SimpleCloud Header" />
+  <img src="https://github.com/simplecloudapp/branding/blob/main/images/header.png?raw=true" alt="SimpleCloud-Logo und Markengrafik" />
 </Frame>
 
-Nutze SimpleCloud, wenn du Server-Gruppen erstellen, persistente Server online halten, mehrere Serverhosts verbinden und dein Netzwerk verwalten möchtest, ohne jede Maschine von Hand zu pflegen.
+Mit SimpleCloud kannst du ein Minecraft-Servernetzwerk auf einer oder mehreren Maschinen betreiben. Über das Dashboard oder die CLI erstellst und steuerst du Server und siehst ihren Status an einem zentralen Ort.
 
-## Für wen ist das?
+## Erste Schritte
 
-- **Netzwerk-Betreiber**, die automatisches Scaling basierend auf Spielerzahlen wollen
-- **Server-Administratoren**, die ein zentrales Dashboard zur Verwaltung mehrerer Server benötigen
-- **Jeder**, der mehr als einen Minecraft-Server betreibt und diese zusammenarbeiten lassen möchte
+Öffne das SimpleCloud Dashboard und melde dich an. Der Einrichtungsassistent stellt dir den Befehl bereit, der SimpleCloud auf deiner ersten Maschine installiert und sie mit deinem Netzwerk verbindet.
 
-## Was kannst du mit SimpleCloud machen?
+<Card title="SimpleCloud installieren" icon="download" href="/de/manual/setup/installation">
+  Verbinde deine erste Maschine und erstelle deinen ersten Server.
+</Card>
 
-- **Server-Gruppen erstellen**, die automatisch hochskalieren wenn Spieler beitreten und herunterskalieren wenn sie gehen
-- **Persistente Server einrichten** für Spielmodi wie Skyblock oder SMP, die ihre Weltdaten behalten
-- **Alles über ein Dashboard verwalten** - Gruppen erstellen, Logs anzeigen, Performance überwachen
-- **Mehrere Maschinen verbinden**, um Server über deine Infrastruktur zu verteilen
-- **Offizielle Plugins installieren** für Routing, Befehle, Schilder, NPCs, Platzhalter und Benachrichtigungen
+## Funktionsweise deiner Server wählen
 
-## Wichtige Features
+- Eine **Servergruppe** erstellt austauschbare Server aus gemeinsamen Einstellungen und Dateien. Verwende Gruppen für Proxys, Lobbys und Spielmodi, die mehrere identische Server oder automatische Skalierung benötigen können.
+- Ein **persistenter Server** ist ein benannter Server, der seine eigene Welt und seine eigenen Dateien behält. Verwende ihn für einen langfristig betriebenen Server wie einen SMP- oder Build-Server.
+- Ein **Serverhost** ist eine Maschine, auf der SimpleCloud deine Minecraft-Server ausführt. Füge einen weiteren Serverhost hinzu, wenn du eine weitere Maschine verwenden möchtest.
 
-- **Auto-Scaling** - Server starten und stoppen basierend auf Spielerzahlen
-- **Dashboard** - Web-Interface zur Verwaltung deines gesamten Netzwerks
-- **CLI** - Kommandozeilen-Tool für lokale und Remote-Verwaltung
-- **Plugins** - Offizielle Erweiterungen für Proxy-Routing, In-Game-Verwaltung und Navigation
-- **Multi-Root-Support** - Verbinde mehrere Serverhosts und synchronisiere gemeinsame Dateien
-
-## Nächste Schritte
+## Grundlagen kennenlernen
 
 <CardGroup cols={2}>
-  <Card title="Installation" icon="download" href="/de/manual/setup/installation">
-    Erstelle dein Konto und verbinde deinen ersten Server-Host
+  <Card title="Servergruppen" icon="layer-group" href="/de/manual/setup/server-groups">
+    Erstelle Server, die eine gemeinsame Konfiguration verwenden.
   </Card>
-  <Card title="Architektur" icon="book" href="/de/manual/introduction/architecture/overview">
-    Verstehe, wie SimpleClouds Architektur funktioniert
+  <Card title="Persistente Server" icon="hard-drive" href="/de/manual/setup/persistent-servers">
+    Erstelle einen Server, der seine Welt und seine Dateien behält.
   </Card>
-  <Card title="Gruppen" icon="layer-group" href="/de/manual/setup/server-groups">
-    Lerne wie du auto-skalierende Server-Gruppen erstellst
+  <Card title="Dashboard" icon="chart-line" href="/de/manual/setup/dashboard">
+    Verwalte und überwache dein Netzwerk im Browser.
   </Card>
-  <Card title="Plugins" icon="plug" href="/de/manual/plugin/overview">
-    Ergänze offizielle SimpleCloud-Plugins in deinen Templates
+  <Card title="CLI" icon="terminal" href="/de/manual/introduction/architecture/cli">
+    Verwalte dein Netzwerk über das Terminal.
   </Card>
 </CardGroup>
-
-<Note>
-  Fragen? Tritt unserem [Discord](https://discord.simplecloud.app) bei oder schau in die [FAQ](/de/manual/introduction/faq).
-</Note>

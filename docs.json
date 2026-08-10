@@ -129,7 +129,6 @@
                     "expanded": false,
                     "root": "de/manual/introduction/architecture/overview",
                     "pages": [
-                      "de/manual/introduction/architecture/controller",
                       "de/manual/introduction/architecture/serverhost",
                       "de/manual/introduction/architecture/cli"
                     ]
@@ -144,6 +143,7 @@
                 "group": "Setup",
                 "pages": [
                   "de/manual/setup/installation",
+                  "de/manual/setup/dashboard",
                   "de/manual/setup/server-groups",
                   "de/manual/setup/persistent-servers",
                   "de/manual/setup/servers",

@@ -1,151 +1,108 @@
 ---
 title: 'Persistente Server'
-description: 'Erstelle einzelne Server-Instanzen, die ihre Identität und Daten über Neustarts hinweg behalten.'
+description: 'Erstelle und verwalte einen Server, der seine Welten, Konfiguration und Plugins behält.'
 ---
 
+Ein persistenter Server ist ein Minecraft-Server oder Proxy, der auf einem Serverhost läuft und seine Dateien behält, wenn er neu gestartet oder deaktiviert wird. Verwende einen persistenten Server für eine Survival-Welt, einen Build-Server oder alles andere, dessen lokale Daten erhalten bleiben müssen.
+
 <Info>
-  Soll SimpleCloud mehrere austauschbare Server je nach Spielerbedarf erstellen? Nutze stattdessen [Server-Gruppen](/de/manual/setup/server-groups).
+  Wenn du mehrere austauschbare Server oder automatische Skalierung benötigst, verwende stattdessen [Servergruppen](/de/manual/setup/server-groups).
 </Info>
 
-## Wann du einen persistenten Server verwendest
+## Voraussetzungen
 
-| Nutze einen persistenten Server, wenn ... | Nutze eine Gruppe, wenn ... |
-| ---------------------------------------- | --------------------------- |
-| Der Server langlebige Weltdaten hat | Server aus einer gemeinsamen Vorlage neu erstellt werden können |
-| Du einen benannten Server wie `survival` willst | Du mehrere Instanzen wie `lobby-1`, `lobby-2` willst |
-| Du den Serverhost beim Setup auswählst | SimpleCloud Server auf Hosts verteilen soll |
-| Du planbare, manuelle Kapazität willst | Du automatische Skalierung willst |
+Verbinde mindestens einen Serverhost und stelle sicher, dass er genügend Arbeitsspeicher für deinen Server hat.
+
+<Warning>
+  SimpleCloud verschiebt oder sichert die Dateien eines persistenten Servers nicht. Sichere Welten und andere wichtige Dateien selbst.
+</Warning>
 
 ## Persistenten Server erstellen
 
 <Steps>
-  <Step title="Server-Wizard öffnen">
-    Öffne im Dashboard **Persistent Servers** und klicke auf **Add Server**.
+  <Step title="Persistent Servers öffnen">
+    Öffne **Persistent Servers** im Dashboard und klicke auf **Add Server**.
   </Step>
 
-  <Step title="Grunddaten festlegen">
-    Lege fest, wie der Server heißt und wofür er verwendet wird:
-
-    - **Name**: Verwende einen stabilen Namen wie `survival`, `spawn` oder `build`. Namen dürfen bis zu 100 ASCII-Buchstaben, Ziffern, Unterstriche und Bindestriche (`[A-Za-z0-9_-]`) enthalten und sind innerhalb des Netzwerks ohne Rücksicht auf Groß-/Kleinschreibung eindeutig — `Survival-1` und `survival-1` gelten als derselbe Name.
-    - **Type**: Wähle **Server** für Game-Server oder **Proxy** für Load Balancer.
-    - **Server host**: Wähle die Maschine, die diesen Server ausführen soll.
-    - **Activate on creation**: Aktiviere dies, wenn der Server sofort starten soll.
+  <Step title="Server auswählen">
+    Gib einen Namen ein, wähle **Server** oder **Proxy** aus und wähle den Serverhost, der ihn ausführen soll. Namen dürfen bis zu 100 ASCII-Buchstaben, Ziffern, Unterstriche und Bindestriche (`[A-Za-z0-9_-]`) enthalten. Bei der Eindeutigkeit innerhalb des Netzwerks wird nicht zwischen Groß- und Kleinschreibung unterschieden – `Survival-1` und `survival-1` gelten als derselbe Name.
   </Step>
 
   <Step title="Software auswählen">
-    Wähle Server-Software und Version. Für eigene Server-JARs kannst du eine direkte Download-URL angeben.
+    Wähle die Serversoftware, Minecraft-Version und Java-Version aus.
 
-    Für Game-Server wählst du außerdem den Configurator, der die Server-Dateien vorbereitet.
+    Wenn die Software nicht aufgeführt ist, wähle **Custom** und fülle die erforderlichen Felder aus.
   </Step>
 
   <Step title="Ressourcen festlegen">
-    Konfiguriere die Ressourcen für diesen Server:
-
-    - **Memory**: Minimaler und maximaler Speicher in MB.
-    - **Max players**: Spielerlimit für diesen Server.
+    Wähle den Arbeitsspeicher und die maximale Spielerzahl aus. Proxys benötigen außerdem einen Startport.
   </Step>
 
-  <Step title="Proxy-Netzwerk konfigurieren">
-    Für Proxy-Server legst du den **Port** für eingehende Spieler-Verbindungen fest.
-  </Step>
-
-  <Step title="Plugins hinzufügen">
-    Füge Plugins von Modrinth, Hangar, Spigot, direkten URLs oder deinen konfigurierten Plugin-Quellen hinzu. Du kannst Plugins auch später in den Server-Einstellungen ergänzen.
-  </Step>
-
-  <Step title="Prüfen und erstellen">
-    Prüfe die Zusammenfassung und klicke auf **Create Server**.
+  <Step title="Server erstellen">
+    Prüfe die Konfiguration und klicke auf **Create Server**. SimpleCloud startet den Server automatisch, sofern du **Activate on creation** nicht deaktiviert hast.
 
     <Check>
-      Wenn der Server aktiv ist, sollte SimpleCloud eine laufende Instanz für diesen persistenten Server starten oder online halten.
+      Öffne den Server und verfolge seinen ersten Start in der Konsole.
     </Check>
   </Step>
 </Steps>
 
-## Serverstatus verstehen
+## Server starten und verwalten
 
-| Status | Bedeutung | Prüfen |
-| ------ | --------- | ------ |
-| **Active** | Der Server ist aktiviert und sollte laufen | Host-Verfügbarkeit und Server-Logs, wenn keine Instanz startet |
-| **Inactive** | Der Server ist deaktiviert | In den allgemeinen Einstellungen aktivieren, wenn er laufen soll |
+Öffne den Server im Dashboard, um seinen Status, seine Konsole und seine Dateien anzuzeigen. Über sein Aktionsmenü kannst du ihn aktivieren, deaktivieren oder neu starten.
 
-## Bestehenden persistenten Server konfigurieren
+- **Enable** weist SimpleCloud an, den Server am Laufen zu halten. Wenn er stoppt, startet SimpleCloud ihn erneut.
+- **Disable** stoppt den Server und lässt ihn gestoppt, bis du ihn wieder aktivierst.
+- **Restart** stoppt und startet den Server, ohne seine Dateien zu löschen.
 
-<AccordionGroup>
-  <Accordion title="Allgemeine Einstellungen">
-    Aktiviere oder deaktiviere den Server, passe Speicher an, ändere das Spielerlimit und füge Tags zum Filtern hinzu.
-  </Accordion>
+Du kannst den Server auch über den Schalter **Active** unter **Settings** aktivieren oder deaktivieren. Speichere alle weiteren Einstellungen, die du änderst. Wenn sich eine Änderung darauf auswirkt, wie der Server startet, starte ihn neu, um die neue Konfiguration anzuwenden.
 
-  <Accordion title="Deployment">
-    Persistente Server laufen auf einem zugewiesenen Serverhost. Ändere diesen nur, wenn du den Server bewusst auf eine andere Maschine verschiebst.
+Verwende die Hauptseite **Settings** für Ressourcen und die Seite **Blueprint** für Software und Startkonfiguration. Auf der Seite **Deployment** änderst du den zugewiesenen Serverhost. Befolge zuvor die folgenden Migrationsschritte.
 
-    <Warning>
-      Das Verschieben eines persistenten Servers verschiebt lokale Weltdaten nicht automatisch. Kopiere benötigte Daten, bevor du den Server auf einem neuen Host startest.
-    </Warning>
-  </Accordion>
+Verwende den Tab **Files**, um Welt, Konfiguration und Plugins zu verwalten. Diese Dateien bleiben erhalten, wenn du den Server neu startest oder deaktivierst.
 
-  <Accordion title="Blueprint">
-    Ändere die Server-Vorlage, zum Beispiel Software-Version, Configurator-Einstellungen, JVM-Optionen und Runtime-Argumente.
+## Server auf einen anderen Serverhost verschieben
 
-    Starte den laufenden Server neu, wenn er Blueprint-Änderungen übernehmen soll.
-  </Accordion>
+Wenn du den zugewiesenen Serverhost änderst, werden die Serverdateien nicht verschoben. Sichere und kopiere sie, bevor du den Server auf dem neuen Host startest.
 
-  <Accordion title="Properties">
-    Füge eigene Key-Value-Daten hinzu, die Plugins und Integrationen lesen können.
+<Steps>
+  <Step title="Server deaktivieren">
+    Deaktiviere den persistenten Server und warte, bis er gestoppt wurde.
+  </Step>
 
-    Properties werden dem laufenden Server als `SIMPLECLOUD_`-Umgebungsvariablen bereitgestellt.
-  </Accordion>
+  <Step title="Dateien kopieren">
+    Kopiere das vollständige Verzeichnis `running/persistent/<server-name>` vom alten Serverhost an denselben Ort auf dem neuen Serverhost.
+  </Step>
 
-  <Accordion title="Workflows">
-    Konfiguriere Automatisierung für Server-Lifecycle-Events:
+  <Step title="Serverhost ändern">
+    Öffne **Settings** > **Deployment**, wähle den neuen Serverhost aus und bestätige die Änderung.
+  </Step>
 
-    - **Manual workflows**: Manuell ausführen.
-    - **On start workflows**: Beim Start des Servers ausführen.
-    - **On stop workflows**: Beim Stoppen des Servers ausführen.
-  </Accordion>
+  <Step title="Aktivieren und prüfen">
+    Aktiviere den Server, tritt ihm bei und bestätige, dass seine Welten und seine Konfiguration vorhanden sind, bevor du die alte Kopie entfernst.
+  </Step>
+</Steps>
 
-  <Accordion title="Plugins">
-    Füge Plugins hinzu, prüfe installierte Plugins oder entferne sie für den Server.
+<Warning>
+  Wenn du den Server auf dem neuen Serverhost startest, bevor du seine Dateien kopiert hast, kann ein neues, leeres Serververzeichnis erstellt werden.
+</Warning>
 
-    Plugin-Änderungen gelten je nach Plugin- und Workflow-Setup beim nächsten Vorbereiten oder Neustarten des Servers.
-  </Accordion>
+## Persistenten Server löschen
 
-  <Accordion title="Danger zone">
-    Lösche den persistenten Server erst, nachdem du benötigte lokale Daten gesichert hast.
-
-    <Warning>
-      Das Dashboard deaktiviert den persistenten Server, wartet bis die laufende Instanz gestoppt ist, und löscht danach den persistenten Server und den zugehörigen Blueprint. Es sichert oder migriert lokale Weltdaten nicht automatisch.
-    </Warning>
-  </Accordion>
-</AccordionGroup>
+Öffne **Settings** > **Danger Zone** und folge den Aufforderungen zum Löschen. SimpleCloud stoppt den Server bei Bedarf und entfernt seine Konfiguration sowie den zugehörigen Blueprint. Die Serverdateien bleiben auf dem Serverhost erhalten.
 
 ## Fehlerbehebung
 
 <AccordionGroup>
-  <Accordion title="Server startet nicht">
-    **Wahrscheinliche Ursache:** Der Server ist inaktiv, der zugewiesene Host ist nicht verfügbar oder der Host hat keine Kapazität.
-
-    **Das solltest du prüfen:**
-
-    1. Prüfe, ob der Server aktiv ist.
-    2. Prüfe den zugewiesenen Serverhost mit `sc status serverhost`.
-    3. Prüfe freien Speicher auf dem Host.
-    4. Prüfe Logs mit `sc logs serverhost`.
+  <Accordion title="Der Server startet nicht">
+    Stelle sicher, dass der Server aktiviert ist, sein Serverhost verbunden ist und der Host genügend freien Arbeitsspeicher hat. Prüfe anschließend die Serverkonsole auf Fehlermeldungen.
   </Accordion>
 
-  <Accordion title="Weltdaten fehlen nach Host-Wechsel">
-    **Wahrscheinliche Ursache:** Der persistente Server wurde einem neuen Host zugewiesen, ohne lokale Dateien zu kopieren.
-
-    **Das solltest du prüfen:**
-
-    1. Stoppe den Server.
-    2. Kopiere Welt- und Plugin-Daten vom alten Host auf den neuen Host.
-    3. Starte den Server wieder.
+  <Accordion title="Die Welt ist nach einem Serverhost-Wechsel leer">
+    Deaktiviere den Server. Kopiere sein Verzeichnis `running/persistent/<server-name>` vom alten auf den neuen Serverhost, aktiviere ihn anschließend und prüfe die Welt erneut.
   </Accordion>
 
-  <Accordion title="Plugin-Änderungen erscheinen nicht">
-    **Wahrscheinliche Ursache:** Der laufende Server wurde noch nicht mit der aktualisierten Plugin-Liste neu gestartet oder vorbereitet.
-
-    Starte den Server nach Plugin-Änderungen neu und prüfe anschließend die Logs auf Plugin-Ladefehler.
+  <Accordion title="Eine Einstellung wurde nicht übernommen">
+    Speichere die Änderung und starte den Server neu. Prüfe seine Konsole, falls das Problem weiterhin besteht.
   </Accordion>
 </AccordionGroup>

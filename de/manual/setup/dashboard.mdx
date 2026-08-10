@@ -1,59 +1,51 @@
 ---
-title: 'Dashboard'
-description: 'Greife über das SimpleCloud Dashboard auf dein Minecraft-Netzwerk zu und verwalte es'
+title: "Dashboard"
+description: "Richte dein Minecraft-Netzwerk im SimpleCloud Dashboard ein und verwalte es dort."
 ---
 
-## Überblick
+Das SimpleCloud Dashboard ist die Browseroberfläche für dein Netzwerk. Verwende es, um Server zu erstellen, ihre Konsolen und Dateien zu öffnen, Spieler zu prüfen und dein Netzwerk zu verwalten.
 
-Das SimpleCloud Dashboard ist eine Weboberfläche, mit der du dein Minecraft-Servernetzwerk im Browser verwaltest.
+Öffne [dash.simplecloud.app](https://dash.simplecloud.app) und melde dich mit deinem SimpleCloud-Konto an.
 
-<Frame>
-  <img src="https://github.com/simplecloudapp/branding/blob/main/media/dashboard/serveroverview.png?raw=true" alt="SimpleCloud Dashboard mit Serverübersicht" />
-</Frame>
+## Netzwerk einrichten
 
-Mit dem Dashboard kannst du:
-
-- Servergruppen erstellen und verwalten
-- Server starten, stoppen und überwachen
-- Logs und Spieleraktivität ansehen
-- Ressourcen deines Netzwerks verwalten
-
-## Dashboard öffnen
-
-Öffne das Dashboard im Browser:
-
-[dash.simplecloud.app](https://dash.simplecloud.app)
-
-Melde dich mit deinem SimpleCloud-Konto an. Wenn du auf derselben Maschine auch die CLI authentifizieren möchtest, führe aus:
-
-```bash
-simplecloud login
-```
-
-## Servergruppe erstellen
-
-Nutze Gruppen für skalierbare Sets austauschbarer Server, zum Beispiel Proxys, Lobbys oder Minigames.
+Erstelle nach der Anmeldung ein Netzwerk für deine Server oder tritt einem bestehenden Netzwerk mit einem Einladungscode bei. Bei einem neuen Netzwerk öffnet sich die Onboarding-Anleitung. Sie verbindet die erste Maschine, auf der deine Minecraft-Server laufen werden.
 
 <Steps>
-  <Step title="Groups öffnen">
-    Öffne **Groups** im Dashboard und klicke auf **Add Group**.
+  <Step title="Maschine konfigurieren">
+    Wähle das Betriebssystem, den Namen, das Speicherlimit und die Java-Versionen aus.
   </Step>
 
-  <Step title="Grunddaten festlegen">
-    Wähle Name, Typ und ob die Gruppe sofort aktiviert werden soll.
-  </Step>
-
-  <Step title="Software und Ressourcen wählen">
-    Wähle Server-Software, Speicher, Spielerlimit, Skalierungsmodus und Deployment-Einstellungen.
-  </Step>
-
-  <Step title="Plugins hinzufügen">
-    Füge Plugins aus den unterstützten Plugin-Quellen hinzu oder überspringe diesen Schritt und ergänze sie später in den Gruppeneinstellungen.
-  </Step>
-
-  <Step title="Gruppe erstellen">
-    Prüfe die Zusammenfassung und klicke auf **Create Group**.
+  <Step title="Installationsbefehl ausführen">
+    Kopiere den generierten Befehl und führe ihn in einem Terminal auf dieser Maschine aus. Das Dashboard erkennt die Installation automatisch. Anschließend kannst du deine erste Servergruppe erstellen oder direkt zur Hauptansicht des Dashboards wechseln.
   </Step>
 </Steps>
 
-Den vollständigen Ablauf findest du unter [Server-Gruppen](/de/manual/setup/server-groups).
+Die Systemanforderungen und Hinweise zur Fehlerbehebung findest du in der [Installationsanleitung](/de/manual/setup/installation).
+
+## Ersten Server erstellen
+
+Wähle aus, wie sich dein Server verhalten soll:
+
+<CardGroup cols={2}>
+  <Card title="Servergruppe" icon="boxes" href="/de/manual/setup/server-groups">
+    Verwende eine Gruppe für Proxys, Lobbys, Minigames und andere Server, die eine Konfiguration teilen und gemeinsam skalieren können.
+  </Card>
+
+  <Card title="Persistenter Server" icon="server" href="/de/manual/setup/persistent-servers">
+    Verwende einen persistenten Server für einen SMP-, Build- oder anderen einzelnen Server, der seine Dateien und Identität behält.
+  </Card>
+</CardGroup>
+
+Öffne **Server Groups** und wähle **Add Group**, oder öffne **Persistent Servers** und wähle **Add Server**. Das Dashboard führt dich durch die übrigen Einstellungen.
+
+## Server verwalten
+
+Unter **Server Groups** und **Persistent Servers** konfigurierst du, was SimpleCloud ausführen soll. Unter **Servers** siehst du die Serverinstanzen, die gerade laufen. Wähle eine Instanz aus, um ihren Status anzuzeigen, ihre Konsole zu öffnen, ihre Dateien zu verwalten oder ihre Leistung zu prüfen.
+
+Weitere häufig verwendete Bereiche sind:
+
+- **Players** für Spieleraktivität und -verlauf
+- **Resources** für Dateien und Plugin-Sammlungen
+- **Monitoring** für die netzwerkweite Leistung
+- **Settings** für Serverhosts, Mitglieder, Rollen und Netzwerkeinstellungen

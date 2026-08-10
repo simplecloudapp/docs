@@ -1,118 +1,51 @@
 ---
-title: 'Cloud API'
-description: 'Baue Integrationen mit SimpleCloud über unsere Java/Kotlin API'
+title: "Cloud API"
+description: "Entwickle Minecraft-Plugins, die mit deinem SimpleCloud-Netzwerk zusammenarbeiten"
 ---
 
-Die Cloud API ist eine Java-Bibliothek zur programmatischen Interaktion mit deinem SimpleCloud-Netzwerk. Verwende sie zum Verwalten von Gruppen, laufenden Servern, Persistent Servern, Spielern, Cache-Zustand und Events in Echtzeit.
+Die Cloud API verbindet dein Java- oder Kotlin-Minecraft-Plugin mit SimpleCloud. Nutze sie, um den aktuellen Zustand deines Netzwerks abzufragen, zu verwalten und auf Änderungen zu reagieren.
 
-## API-Architektur
+Mit der Cloud API kannst du:
 
-| Methode | Gibt zurück | Beschreibung |
-|---------|-------------|--------------|
-| `api.group()` | `GroupApi` | Gruppen erstellen, lesen, aktualisieren, löschen |
-| `api.server()` | `ServerApi` | Laufende Server abfragen, stoppen und aktualisieren |
-| `api.persistentServer()` | `PersistentServerApi` | Persistent Server erstellen, lesen, aktualisieren, löschen |
-| `api.player()` | `PlayerApi` | Spielerdaten, Verbindungen, Messaging |
-| `api.event()` | `EventApi` | Echtzeit-Events abonnieren |
-| `api.cache()` | `QueryCache` | Lokale Query-Cache-Eintraege ansehen, invalidieren und leeren |
+- Servergruppen erstellen und konfigurieren
+- langlebige persistente Server verwalten
+- laufende Serverinstanzen finden und aktualisieren
+- Spieler suchen, ihnen Nachrichten senden und sie zwischen Servern verschieben
+- auf Änderungen an Ressourcen in deinem Netzwerk reagieren
 
-### Event API Unterkategorien
-
-| Methode | Beschreibung |
-|---------|--------------|
-| `api.event().group()` | Gruppen-Lifecycle-Events |
-| `api.event().server()` | Server-Lifecycle-Events |
-| `api.event().persistentServer()` | Persistente Server-Events |
-| `api.event().blueprint()` | Blueprint-Lifecycle-Events |
-
-## Wichtige Features
-
-- **Async-first Design** - Alle Operationen geben `CompletableFuture` (Java) oder Suspend-Funktionen (Kotlin) zurück
-- **Typsichere Modelle** - Stark typisierte Domain-Objekte für Gruppen, Server, Spieler
-- **Echtzeit-Events** - Änderungen über NATS-Messaging abonnieren
-- **Adventure-Integration** - Spieler implementieren Adventure's `Audience` für Rich-Text-Messaging
-- **Persistent-Server-Support** - Lang laufende Server über `api.persistentServer()` verwalten
-- **Query Cache** - Stale-while-revalidate Cache mit automatischer Event-Invalidierung
-- **Umgebungs-bewusst** - Auto-Konfiguration aus `SIMPLECLOUD_*` Umgebungsvariablen
-
-## Schnellbeispiel
-
-<Tabs>
-<Tab title="Java">
-
-```java
-// API initialisieren
-CloudApi api = CloudApi.create();
-
-// Alle Server in einer Gruppe abrufen
-api.server().getServersByGroup("lobby").thenAccept(servers -> {
-    System.out.println("Lobby-Server: " + servers.size());
-});
-
-// Serverstart für eine Gruppe anfordern
-api.group().getGroupByName("lobby")
-    .thenCompose(group -> api.group().requestServerStart(group))
-    .thenRun(() -> System.out.println("Start-Anfrage akzeptiert"));
-
-// Nachricht an Spieler senden (Adventure-Integration)
-api.player().get(playerUUID).thenAccept(player -> {
-    if (player != null) {
-        player.sendMessage(Component.text("Willkommen!").color(NamedTextColor.GREEN));
-    }
-});
-
-// Server-Events abonnieren
-Subscription sub = api.event().server().onStarted(event -> {
-    System.out.println("Server gestartet: " + event.getServerId());
-});
-```
-
-</Tab>
-<Tab title="Kotlin">
-
-```kotlin
-// API initialisieren
-val api = CloudApi.create()
-
-// Alle Server in einer Gruppe abrufen
-val servers = api.server().getServersByGroup("lobby").await()
-println("Lobby-Server: ${servers.size}")
-
-// Serverstart für eine Gruppe anfordern
-val group = api.group().getGroupByName("lobby").await()
-api.group().requestServerStart(group).await()
-println("Start-Anfrage akzeptiert")
-
-// Nachricht an Spieler senden (Adventure-Integration)
-api.player().get(playerUUID).await()?.let { player ->
-    player.sendMessage(Component.text("Willkommen!").color(NamedTextColor.GREEN))
-}
-
-// Server-Events abonnieren
-val sub = api.event().server().onStarted { event ->
-    println("Server gestartet: ${event.serverId}")
-}
-```
-
-</Tab>
-</Tabs>
-
-## Nächste Schritte
+## Wähle deinen Einstieg
 
 <CardGroup cols={2}>
-  <Card title="Installation" icon="download" href="/de/developer/installation">
-    Cloud API zu deinem Projekt hinzufügen
+  <Card title="Cloud API installieren" icon="download" href="/de/developer/installation">
+    Füge die Abhängigkeit hinzu und erstelle einen Client für dein Plugin.
   </Card>
-  <Card title="Servers API" icon="server" href="/de/developer/api/servers">
-    Server-Instanzen verwalten
+  <Card title="Gruppen" icon="layer-group" href="/de/developer/api/groups">
+    Erstelle Gruppen, ändere ihre Konfiguration und fordere neue Server an.
   </Card>
-  <Card title="Persistent Servers API" icon="hard-drive" href="/de/developer/api/persistent-servers">
-    Lang laufende Server verwalten
+  <Card title="Laufende Server" icon="server" href="/de/developer/api/servers">
+    Finde, untersuche, aktualisiere und stoppe Serverinstanzen.
   </Card>
-  <Card title="Players API" icon="users" href="/de/developer/api/players">
-    Spielerdaten und Messaging
+  <Card title="Persistente Server" icon="hard-drive" href="/de/developer/api/persistent-servers">
+    Verwalte Server, deren Identität über Neustarts hinweg bestehen bleibt.
   </Card>
-  <Card title="Events API" icon="bell" href="/de/developer/api/events">
-    Auf Echtzeit-Änderungen reagieren
+  <Card title="Spieler" icon="users" href="/de/developer/api/players">
+    Suche Spieler, sende ihnen Nachrichten und verbinde sie mit Servern.
+  </Card>
+  <Card title="Events" icon="bell" href="/de/developer/api/events">
+    Führe Code aus, wenn sich Gruppen, Server, persistente Server oder Blueprints ändern.
+  </Card>
+</CardGroup>
+
+## Setze typische Abläufe um
+
+<CardGroup cols={2}>
+  <Card title="Spieler verschieben" icon="arrow-right-arrow-left" href="/de/developer/guides/player-transfer">
+    Verschiebe einen Spieler, der online ist, auf einen anderen Server und verarbeite das Ergebnis.
+  </Card>
+  <Card title="Vom Scaler bereitgestellte Server verwalten" icon="scale-balanced" href="/de/developer/guides/server-management">
+    Wähle verfügbare Kapazität aus, ohne mit dem Autoscaling von SimpleCloud in Konflikt zu geraten.
+  </Card>
+  <Card title="Events sicher verarbeiten" icon="bolt" href="/de/developer/guides/event-handling">
+    Abonniere Netzwerkänderungen für die Laufzeit deines Plugins.
   </Card>
 </CardGroup>

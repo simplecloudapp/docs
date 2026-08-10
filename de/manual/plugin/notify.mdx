@@ -6,11 +6,11 @@ tag: 'Proxy'
 
 ## Überblick
 
-Notify sendet MiniMessage-formatierte Chat-Benachrichtigungen an berechtigte Teammitglieder, wenn sich Server- oder Gruppenstatus in deinem SimpleCloud-Netzwerk ändern.
+Notify sendet MiniMessage-formatierte Chat-Benachrichtigungen an berechtigte Teammitglieder, wenn sich der Status eines Servers oder einer Gruppe in deinem SimpleCloud-Netzwerk ändert.
 
 <Note>
-  Dieses Plugin benötigt das `simplecloud-api` Plattform-Plugin und verwendet
-  MiniMessage für Textformatierung. Die Syntax findest du in der
+  Dieses Plugin benötigt das Plattform-Plugin `simplecloud-api` und verwendet
+  MiniMessage zur Textformatierung. Die Syntax findest du in der
   [MiniMessage-Dokumentation](https://docs.papermc.io/adventure/minimessage/).
 </Note>
 
@@ -25,18 +25,18 @@ Notify sendet MiniMessage-formatierte Chat-Benachrichtigungen an berechtigte Tea
 
 1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/notify-plugin/releases) herunter.
 2. Lege es im `plugins/`-Ordner deines Proxy-Templates ab.
-3. Stelle sicher, dass das `simplecloud-api` Plugin auf dem Proxy installiert ist.
+3. Stelle sicher, dass das `simplecloud-api`-Plugin auf dem Proxy installiert ist.
 4. Starte den Proxy einmal, damit `messages.yml` erzeugt wird.
 5. Bearbeite `plugins/notify-velocity/messages.yml` oder `plugins/notify-bungeecord/messages.yml`.
 
 ## Benachrichtigungen
 
-Notify abonniert den Cloud-API-Eventstream und kann Nachrichten für diese Ereignisse senden:
+Notify abonniert den Ereignisstream der Cloud API und kann bei diesen Ereignissen Nachrichten senden:
 
-- Serverstatus wechselt zu `STARTING`, `AVAILABLE` oder `STOPPING`
-- Server wurde gestoppt
-- Gruppe wurde erstellt
-- Gruppe wurde gelöscht
+- Der Serverstatus wechselt zu `STARTING`, `AVAILABLE` oder `STOPPING`
+- Ein Server wurde gestoppt
+- Eine Gruppe wurde erstellt
+- Eine Gruppe wurde gelöscht
 
 Setze eine einzelne Nachricht auf `null`, um genau diese Benachrichtigung zu deaktivieren. Setze `notifications.server` oder `notifications.group` auf `null`, um eine ganze Kategorie zu deaktivieren.
 
@@ -84,7 +84,7 @@ notifications:
 | --------------- | ------------------------------------------------- |
 | `<server>`      | Gruppen- oder Server-Basisname                    |
 | `<group>`       | Gruppenname                                       |
-| `<id>`          | Numerische ID mit führendem Leerzeichen           |
+| `<id>`          | Numerische ID mit führendem Leerzeichen, sofern vorhanden |
 | `<uuid>`        | Server-UUID                                       |
 | `<state>`       | Aktueller Serverstatus                            |
 | `<ip>`          | Server-IP-Adresse                                 |
@@ -106,12 +106,12 @@ notifications:
 
 | Berechtigung                    | Beschreibung                         |
 | ------------------------------- | ------------------------------------ |
-| `notify.state.server.starting`  | Server-Starting-Nachrichten erhalten |
-| `notify.state.server.available` | Server-Available-Nachrichten erhalten |
-| `notify.state.server.stopping`  | Server-Stopping-Nachrichten erhalten |
-| `notify.state.server.stopped`   | Server-Stopped-Nachrichten erhalten  |
-| `notify.state.group.created`    | Gruppen-Erstellt-Nachrichten erhalten |
-| `notify.state.group.deleted`    | Gruppen-Gelöscht-Nachrichten erhalten |
+| `notify.state.server.starting`  | Nachrichten über startende Server erhalten |
+| `notify.state.server.available` | Nachrichten über verfügbare Server erhalten |
+| `notify.state.server.stopping`  | Nachrichten über stoppende Server erhalten |
+| `notify.state.server.stopped`   | Nachrichten über gestoppte Server erhalten  |
+| `notify.state.group.created`    | Nachrichten über erstellte Gruppen erhalten |
+| `notify.state.group.deleted`    | Nachrichten über gelöschte Gruppen erhalten |
 
 <Note>
   Die Berechtigung wird pro Benachrichtigung geprüft. Gib Teammitgliedern nur
@@ -119,5 +119,5 @@ notifications:
 </Note>
 
 <Note>
-  `notify.state.server.deleted` wird weiterhin als Legacy-Alias für Server-Stopped-Benachrichtigungen akzeptiert.
+  `notify.state.server.deleted` wird weiterhin als Legacy-Alias für Benachrichtigungen über gestoppte Server akzeptiert.
 </Note>

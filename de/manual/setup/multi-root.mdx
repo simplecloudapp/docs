@@ -1,247 +1,148 @@
 ---
-title: "Multi-Root Setup"
-description: "SimpleCloud über mehrere Maschinen mit verteilten Serverhosts betreiben"
+title: "SimpleCloud auf mehreren Maschinen ausführen"
+description: "Füge einem Netzwerk Serverhosts hinzu und halte ihre gemeinsamen Dateien synchron"
 ---
 
-## Wann du Multi-Root verwendest
+Verwende mehrere Serverhosts, wenn ein SimpleCloud-Netzwerk Server auf mehreren Maschinen ausführen soll.
 
-Nutze ein Multi-Root-Setup, wenn ein SimpleCloud-Netzwerk Minecraft-Server auf mehr als einer physischen oder virtuellen Maschine ausführen soll.
+Die Einrichtung besteht aus drei Teilen: Füge den neuen Serverhost hinzu, synchronisiere die gemeinsamen Dateien und prüfe, ob der Host bereit ist.
 
 ## Voraussetzungen
 
-- Ein bestehendes SimpleCloud-Netzwerk mit mindestens einem Serverhost
-- Zusätzliche Maschinen, auf denen Serverhosts ausgeführt werden sollen
-- Root- oder sudo-Zugriff auf jeder Maschine
+Du benötigst:
 
-## Teil 1: Serverhosts hinzufügen
+- Ein SimpleCloud-Netzwerk mit einem funktionierenden Serverhost
+- Eine unterstützte Linux- oder macOS-Maschine mit Root- oder `sudo`-Zugriff
+- Netzwerkzugriff zwischen den Serverhosts
 
-Füge jede Maschine mit einem frischen Befehl aus dem Dashboard hinzu. Der Befehl installiert die CLI, authentifiziert den Host, registriert ihn im aktuellen Netzwerk und startet den lokalen Serverhost-Prozess.
+Wähle den vorhandenen Serverhost mit den Dateien, die du behalten möchtest, als
+**primären Synchronisierungshost** aus. Auf diesem Host führst du die Befehle zur
+Initialisierung und Genehmigung aus.
+
+## Serverhost hinzufügen
 
 <Steps>
-  <Step title="Server-Hosts-Einstellungen öffnen">
-    Gehe zum [SimpleCloud Dashboard](https://dash.simplecloud.app), melde dich an, öffne **Settings** und wähle **Server Hosts**.
+  <Step title="Installationsbefehl erstellen">
+    Öffne das [SimpleCloud Dashboard](https://dash.simplecloud.app), wähle dein
+    Netzwerk aus und gehe zu **Settings > Server Hosts**. Wähle **Add Host**.
   </Step>
 
-  <Step title="Add-Host-Befehl erzeugen">
-    Klicke auf **Add Host**. Das Dashboard erzeugt einen Befehl mit einem kurzlebigen Login-Code für das aktuelle Netzwerk.
+  <Step title="SimpleCloud installieren">
+    Kopiere den generierten Befehl und führe ihn auf der Maschine aus, die du
+    hinzufügen möchtest. Der Befehl installiert SimpleCloud, registriert den
+    Serverhost und startet ihn.
+
+    <Warning>
+      Der Befehl enthält einen temporären Anmeldecode. Behandle den vollständigen
+      Befehl als vertraulich und führe ihn nur auf der vorgesehenen Maschine aus.
+    </Warning>
   </Step>
 
-  <Step title="Befehl auf dem neuen Serverhost ausführen">
-    Kopiere den Befehl und führe ihn auf der neuen Maschine aus.
+</Steps>
 
-    SimpleCloud installiert die CLI, registriert die Maschine und startet den Serverhost. Das kann ein paar Minuten dauern.
-  </Step>
+## Gemeinsame Dateien synchronisieren
 
-  <Step title="Verbindung prüfen">
-    Prüfe nach Abschluss, ob die lokale Serverhost-Komponente läuft:
+Serverhosts benötigen dieselben Dateien, wenn sie dieselben Server ausführen
+können. SimpleCloud synchronisiert diese Verzeichnisse standardmäßig nicht. Nach
+der Konfiguration und Aktivierung der Synchronisierung hält sie folgende
+Verzeichnisse synchron:
+
+- `templates/` enthält die Dateien zur Vorbereitung von Servern
+- `workflows/` enthält Workflows zur Vorbereitung und Bereinigung
+- `options/` enthält Configurator-Einstellungen und Plattformzuordnungen
+
+Der verwaltete Cache unter `templates/cache/` ist ausgeschlossen. Jeder Serverhost erstellt seinen eigenen Cache und seine eigenen archivierten Logs.
+
+<Warning>
+  Synchronisiere `secrets/`, `running/` und `logs/` nicht. Anmeldedaten müssen für
+  jeden Serverhost eindeutig bleiben. Laufende Server und Logs verbleiben auf
+  dem Host, der sie erstellt hat.
+</Warning>
+
+Unter Linux bietet die CLI an, Syncthing bei Bedarf zu installieren und zu
+starten. Installiere und starte Syncthing unter macOS, bevor du fortfährst:
+
+```bash
+brew install syncthing jq
+brew services start syncthing
+```
+
+<Steps>
+  <Step title="Synchronisierung initialisieren">
+    Führe auf dem primären Synchronisierungshost Folgendes aus:
 
     ```bash
-    sc status serverhost
+    sc sync init --name serverhost-1
     ```
 
-    Der neue Serverhost sollte außerdem im Dashboard erscheinen, sobald er mit dem Controller verbunden ist.
+    Verwende für jeden Host einen eindeutigen, aussagekräftigen Namen. Nach
+    Abschluss gibt der Befehl den vollständigen Beitrittsbefehl für den neuen
+    Host aus.
+
+    <Note>
+      Wenn dein Serverhost als Root ausgeführt wird, füge `--as-root` hinzu und
+      verwende diese Option bei jedem `sc sync`-Befehl auf dem Host.
+    </Note>
+  </Step>
+
+  <Step title="Neuen Serverhost verbinden">
+    Führe den generierten Befehl `sc sync join ...` auf dem neuen Serverhost aus.
+    Nach Abschluss gibt er einen Genehmigungsbefehl aus.
+  </Step>
+
+  <Step title="Serverhost genehmigen">
+    Führe den generierten Befehl `sc sync approve ...` auf dem primären
+    Synchronisierungshost aus. Die Synchronisierung beginnt automatisch, sobald
+    die Hosts verbunden sind.
   </Step>
 </Steps>
 
-<Tip>
-  Erzeuge für jede Maschine einen eigenen **Add Host**-Befehl. Jeder Serverhost braucht seine eigene Identität und darf das Verzeichnis `secrets/` nicht mit einem anderen Host teilen.
-</Tip>
-
-## Teil 2: Dateien synchronisieren
-
-Bei mehreren Serverhosts musst du Templates, Workflows und Optionen synchron halten. Wir empfehlen die Verwendung von Syncthing für die automatische Dateisynchronisierung.
-
-### Was synchronisiert werden soll
-
-| Verzeichnis  | Zweck                                | Sync?                        |
-| ------------ | ------------------------------------ | ---------------------------- |
-| `templates/` | Server-Templates, Plugins, Tags, benannte Templates und Cache-Regeln | Ja |
-| `workflows/` | Server-Vorbereitungs- und Cleanup-Workflows | Ja |
-| `options/`   | Configurator-Einstellungen und Platform-Mappings | Ja |
-| `secrets/`   | Netzwerk-Anmeldedaten                | Nein - eindeutig pro Host    |
-| `running/`   | Aktive Server-Instanzen              | Nein - nur lokal             |
-| `logs/`      | Serverhost-Logs                      | Nein - nur lokal             |
-
-<Warning>
-  Synchronisiere niemals das Verzeichnis `secrets/`. Jeder Serverhost benötigt seine
-  eigenen eindeutigen Identitäts-Anmeldedaten.
-</Warning>
-
-### Dein SimpleCloud-Verzeichnis finden
-
-Der Installationspfad ist benutzerkonfigurierbar. Dein Serverhost-Verzeichnis enthält:
-
-<Tree>
-  <Tree.Folder name="simplecloud" defaultOpen>
-    <Tree.Folder name="templates" defaultOpen>
-      <Tree.File name="Dies synchronisieren" />
-    </Tree.Folder>
-    <Tree.Folder name="workflows">
-      <Tree.File name="Dies synchronisieren" />
-    </Tree.Folder>
-    <Tree.Folder name="options">
-      <Tree.File name="Dies synchronisieren" />
-    </Tree.Folder>
-    <Tree.Folder name="secrets">
-      <Tree.File name="NICHT synchronisieren" />
-    </Tree.Folder>
-    <Tree.Folder name="running" />
-  </Tree.Folder>
-</Tree>
-
-### Sync auf dem primären Serverhost initialisieren
-
-Führe dies auf dem Serverhost aus, der als primärer Sync-Host dienen soll:
-
-```bash
-sc sync init --name serverhost-1
-```
-
-Die CLI bereitet die verwalteten Verzeichnisse vor, ignoriert `templates/cache/`, konfiguriert Syncthing für `templates/`, `workflows/` und `options/`, speichert die Ordner-IDs in `.simplecloud-sync.json` und gibt einen `sc sync join ...`-Befehl für den nächsten Serverhost aus.
-
-<Note>
-  Wenn du SimpleCloud als root ausführst, füge `--as-root` hinzu, damit die CLI
-  `syncthing@root.service` verwendet.
-</Note>
-
-### Von einem weiteren Serverhost beitreten
-
-Führe auf dem neuen Serverhost den `sc sync join ...`-Befehl aus, den `sc sync init` oder `sc sync add` ausgegeben hat.
-
-```bash
-sc sync join \
-  --primary-device-id PRIMARY_DEVICE_ID \
-  --primary-name serverhost-1 \
-  --templates-id TEMPLATES_FOLDER_ID \
-  --workflows-id WORKFLOWS_FOLDER_ID \
-  --options-id OPTIONS_FOLDER_ID \
-  --name serverhost-2
-```
-
-Nach Abschluss gibt der Join-Befehl einen `sc sync approve ...`-Befehl aus.
-
-### Beitretenden Serverhost genehmigen
-
-Führe den ausgegebenen Approve-Befehl auf dem primären Serverhost aus:
-
-```bash
-sc sync approve --device-id JOINING_DEVICE_ID --name serverhost-2
-```
-
-Für weitere Serverhosts erzeugst du später auf dem primären Serverhost einen neuen Join-Befehl:
+Wenn du später einen weiteren Serverhost hinzufügst, installiere ihn zuerst mit
+einem neuen **Add Host**-Befehl aus dem Dashboard. Führe anschließend den folgenden
+Befehl auf dem primären Synchronisierungshost aus und folge den generierten
+Beitritts- und Genehmigungsbefehlen:
 
 ```bash
 sc sync add --join-name serverhost-3
 ```
 
-Prüfe den Synchronisierungsstatus auf einem beliebigen Host:
+## Einrichtung prüfen
+
+Führe diesen Befehl auf beiden Serverhosts aus:
 
 ```bash
 sc sync status
 ```
 
-### Synchronisierung überprüfen
+Unter **Peers** sollte jeder andere Serverhost als `connected` angezeigt werden.
+Unter **Managed folders** sollten `templates`, `workflows` und `options` jeweils
+als `configured` angezeigt werden.
 
-Teste, ob die Synchronisierung funktioniert:
+<Tip>
+  Ändere Dateien jeweils nur auf einem Serverhost, um Synchronisierungskonflikte zu vermeiden.
+</Tip>
 
-```bash
-CLOUD_DIR=/pfad/zu/simplecloud
+## Unterbrochene Einrichtung reparieren
 
-# Auf Serverhost 1
-echo "sync test" > "$CLOUD_DIR/templates/sync-test.txt"
+- Wenn du den Beitrittsbefehl verlierst, führe `sc sync add` erneut auf dem
+  primären Synchronisierungshost aus, um einen neuen zu generieren.
+- Wenn der Beitritt oder die Genehmigung mit einem Fehler abbricht, behebe das
+  gemeldete Problem und führe den Befehl erneut aus. Die Befehle behalten die
+  bestehenden Synchronisierungseinstellungen bei.
+- Wenn ein Peer als `offline` angezeigt wird, bestätige, dass beide Serverhosts
+  laufen und einander erreichen können. Falls eine Firewall direkte Verbindungen
+  blockiert, erlaube TCP- und UDP-Port `22000` zwischen den Hosts.
+- Wenn du `--as-root` verwendest, gib die Option auch bei `sc sync status` und
+  beim erneuten Ausführen eines Einrichtungsbefehls auf diesem Host an.
 
-# Warte ein paar Sekunden, dann prüfe auf Serverhost 2
-cat "$CLOUD_DIR/templates/sync-test.txt"
+Wenn ein zusätzlicher Host eine falsche Synchronisierungskonfiguration hat, führe
+auf diesem Host `sc sync reset` aus. Dadurch werden seine Synchronisierungseinstellungen
+entfernt, die synchronisierten Dateien bleiben jedoch erhalten. Generiere anschließend
+auf dem primären Synchronisierungshost einen neuen Beitrittsbefehl und wiederhole
+die Schritte für Beitritt und Genehmigung.
 
-# Aufräumen
-rm "$CLOUD_DIR/templates/sync-test.txt"
-```
+## Nächste Schritte
 
-## Best Practices
-
-### Server-Verteilung
-
-Konfiguriere Gruppen, um festzulegen, welche Serverhosts sie ausführen können:
-
-| Strategie         | Anwendungsfall                                           |
-| ----------------- | -------------------------------------------------------- |
-| Beliebiger Host   | Lastverteilung über alle Maschinen                       |
-| Spezifische Hosts | Dedizierte Hardware für ressourcenintensive Server       |
-| Geografisch       | Spieler verbinden sich mit dem nächstgelegenen Serverhost|
-
-### Dateisynchronisierungs-Einstellungen
-
-| Einstellung              | Empfohlen      | Grund                                        |
-| ------------------------ | -------------- | -------------------------------------------- |
-| Ordnertyp                | Senden & Empfangen | Erlaubt Änderungen von jedem Serverhost   |
-| Dateiversionierung       | Einfach        | Behält Backup-Kopien                         |
-| Berechtigungen ignorieren| Aktiviert      | Vermeidet Berechtigungskonflikte             |
-
-### Cache von der Synchronisierung ausschließen
-
-Der Ordner `templates/cache/` enthält lokal generierte Dateien. Erwäge, ihn von der Synchronisierung auszuschließen, um unnötige Übertragungen zu vermeiden.
-
-## Fehlerbehebung
-
-<AccordionGroup>
-  <Accordion title="Serverhost erscheint nicht in der Liste">
-    **Symptom:** Nach dem **Add Host**-Befehl wird der Host nicht angezeigt.
-
-    **Lösungen:**
-    1. Überprüfe, ob der Serverhost läuft: `sc status serverhost`
-    2. Überprüfe die Netzwerkverbindung zum Controller
-    3. Überprüfe, ob Anmeldedaten im Verzeichnis `secrets/` vorhanden sind
-    4. Überprüfe die Serverhost-Logs: `sc logs serverhost`
-
-  </Accordion>
-
-  <Accordion title="Syncthing-Geräte verbinden sich nicht">
-    **Symptom:** Geräte werden als "Getrennt" angezeigt.
-
-    **Lösungen:**
-    1. Stelle sicher, dass die Firewall Port 22000 TCP und UDP erlaubt
-    2. Führe `sc sync status` auf jedem Host aus
-    3. Prüfe, ob der `sc sync approve ...`-Befehl auf dem primären Host ausgeführt wurde
-    4. Wenn du als root arbeitest, verwende `--as-root` bei jedem `sc sync`-Befehl
-
-  </Accordion>
-
-  <Accordion title="Dateien werden nicht zwischen Hosts synchronisiert">
-    **Symptom:** Template-Änderungen erscheinen nicht auf anderen Serverhosts.
-
-    **Lösungen:**
-    1. Führe `sc sync status` aus und prüfe, ob `templates`, `workflows` und `options` konfiguriert sind
-    2. Prüfe, ob die Ordner-IDs in `.simplecloud-sync.json` auf allen Hosts übereinstimmen
-    3. Bestätige, dass der beitretende Host mit `sc sync approve` genehmigt wurde
-    4. Prüfe die von `sc sync status` gemeldeten Syncthing-Verbindungsfehler
-
-  </Accordion>
-
-  <Accordion title="Server starten auf dem falschen Host">
-    **Symptom:** Server starten auf unerwarteten Serverhosts.
-
-    **Lösungen:**
-    1. Überprüfe die Gruppenkonfiguration für Host-Beschränkungen
-    2. Überprüfe, ob alle Serverhosts die erforderlichen Templates synchronisiert haben
-    3. Überprüfe die Serverhost-Verfügbarkeit im Dashboard
-
-  </Accordion>
-
-  <Accordion title="Konfliktdateien erscheinen">
-    **Symptom:** Dateien mit `.sync-conflict` im Namen erscheinen.
-
-    **Ursache:** Dieselbe Datei wurde gleichzeitig auf mehreren Hosts geändert.
-
-    **Lösungen:**
-    1. Überprüfe Konfliktdateien und wähle die richtige Version
-    2. Vermeide es, dieselbe Datei gleichzeitig auf mehreren Hosts zu bearbeiten
-    3. Bestimme einen Host als "primär" für die Template-Bearbeitung
-
-  </Accordion>
-</AccordionGroup>
-
-## Verwandte Themen
-
-- [Templates](/de/manual/setup/templates) - Template-Hierarchie und -Verwaltung
-- [Workflows](/de/manual/configuration/workflows) - Workflow-Konfiguration
-- [Serverhost](/de/manual/introduction/architecture/serverhost) - Serverhost-Architektur
+- [Templates erstellen und verwalten](/de/manual/setup/templates)
+- [Workflows konfigurieren](/de/manual/configuration/workflows)
+- [Festlegen, wo die Server einer Gruppe laufen](/de/manual/setup/server-groups#festlegen-wo-server-laufen)

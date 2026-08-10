@@ -1,155 +1,117 @@
 ---
-title: 'Players API'
-description: 'Spieler verwalten und Cross-Server-Nachrichten senden'
+title: "Players API"
+description: "Suche Spieler, prüfe ihre Präsenz, verschiebe oder kicke sie und verwalte Spielerdaten"
 ---
 
-Die Players API ermöglicht das Abfragen von Spielern, Transferieren zwischen Servern und Senden von Rich-Text-Nachrichten mit Adventure. Zugriff über `api.player()`.
+Mit `api.player()` kannst du Spieler suchen und ihre Präsenz im Netzwerk prüfen. Wenn du die UUID eines Spielers bereits kennst, solltest du darüber suchen, da sich Benutzernamen ändern können.
 
-## Spieler abrufen
+## Spieler suchen
 
-```java
-// Spieler nach UUID
-api.player().get(uuid)
-    .thenAccept(player -> {
-        if (player != null) {
-            System.out.println(player.getName() + " auf " + player.getConnectedServerName());
-        }
-    });
-
-// Spieler nach Username
-api.player().get("Steve")
-    .thenAccept(player -> {
-        if (player != null) {
-            System.out.println("Gefunden: " + player.getUniqueId());
-        }
-    });
-
-// Alle Online-Spieler
-api.player().getOnlinePlayers()
-    .thenAccept(players -> players.forEach(p ->
-        System.out.println(p.getName())));
-
-// Online-Spielerzahl
-api.player().getOnlinePlayerCount()
-    .thenAccept(count -> System.out.println("Online: " + count));
-```
-
-## Spieler-Aktionen
-
-### Spieler transferieren
+Suche einen Spieler anhand seiner UUID und prüfe, ob er online ist, bevor du auf seinen aktuellen Server zugreifst:
 
 ```java
-api.player().get(uuid).thenAccept(player -> {
-    if (player != null) {
-        player.connect("lobby-1").thenAccept(result -> {
-            switch (result) {
-                case SUCCESS -> System.out.println("Transfer erfolgreich");
-                case SERVER_NOT_FOUND -> System.out.println("Server existiert nicht");
-                case ALREADY_CONNECTED -> System.out.println("Bereits auf diesem Server");
-                case CONNECTION_FAILED -> System.out.println("Transfer fehlgeschlagen");
-            }
-        });
+api.player().get(playerId).thenAccept(player -> {
+    if (player == null || !player.isOnline()) {
+        logger.info("Player is offline");
+        return;
     }
+
+    String serverName = player.getConnectedServerName();
+    logger.info(serverName == null
+        ? "Player is connected through a proxy"
+        : "Player is on " + serverName);
 });
 ```
 
-### Spieler kicken
+`get(UUID)` gibt `null` zurück, wenn SimpleCloud keinen gespeicherten Spieler mit dieser UUID kennt. Du kannst einen Spieler auch anhand seines Benutzernamens suchen; dabei wird die Groß- und Kleinschreibung nicht berücksichtigt:
 
 ```java
-player.kick(Component.text("Server wird neugestartet")
-    .color(NamedTextColor.RED));
+api.player().get("Steve");
 ```
 
-## Adventure-Integration
+Ein `CloudPlayer` enthält den Zustand zum Zeitpunkt der Abfrage. Rufe den Spieler erneut ab, wenn eine spätere Aktion von seiner aktuellen Präsenz abhängt.
 
-`CloudPlayer` implementiert Adventure's `Audience` Interface:
+## Spieler auflisten, die online sind
 
-### Nachrichten senden
+Rufe die Liste der Spieler ab, die online sind, wenn du die Spieler selbst benötigst, oder frage nur ihre Anzahl ab:
 
 ```java
-// Farbiger Text
-player.sendMessage(Component.text("Erfolg!")
-    .color(NamedTextColor.GREEN));
-
-// Klickbarer Text
-player.sendMessage(Component.text("Hier klicken")
-    .clickEvent(ClickEvent.runCommand("/help"))
-    .hoverEvent(HoverEvent.showText(Component.text("/help ausführen"))));
+api.player().getOnlinePlayers();
+api.player().getOnlinePlayerCount();
 ```
 
-### Titles senden
+Wenn kein Spieler online ist, ist die Liste leer und die Anzahl `0`.
+
+## Spielerdaten prüfen
+
+| Methode | Wert |
+| --- | --- |
+| `getUniqueId()` | Spieler-UUID |
+| `getName()` | Benutzername |
+| `getDisplayName()` | Gespeicherter Anzeigename |
+| `isOnline()` | Ob der Spieler zum Zeitpunkt der Abfrage online war |
+| `getConnectedProxyName()` | Name des verbundenen Proxys oder `null` |
+| `getConnectedServerName()` | Name des registrierten Backend-Servers oder `null` |
+| `getSessionId()` | Aktive Sitzungs-ID oder `null` |
+| `getFirstSeen()` | Zeitstempel der ersten Sichtung im ISO-8601-Format oder `null` |
+| `getLastSeen()` | Zeitstempel der letzten Sichtung im ISO-8601-Format oder `null` |
+| `getOnlineTimeSeconds()` | Kumulierte Onlinezeit |
+| `getProperties()` | Unveränderliche benutzerdefinierte Eigenschaften oder eine leere Map |
+
+## Spieler verbinden
+
+Rufe `connect(...)` mit dem auf dem Proxy des Spielers registrierten Servernamen auf, zum Beispiel `lobby-1`. Übergib nicht die Server-UUID.
+
+Zum Verbinden von Spielern muss der Provider `simplecloud-api` auf dem Velocity- oder BungeeCord-Proxy installiert sein.
+
+| Ergebnis | Bedeutung |
+| --- | --- |
+| `SUCCESS` | Der Spieler wurde mit dem Zielserver verbunden. |
+| `SERVER_NOT_FOUND` | Der Proxy kennt den Namen des Zielservers nicht. |
+| `ALREADY_CONNECTED` | Der Spieler ist bereits mit dem Zielserver verbunden. |
+| `PLAYER_NOT_FOUND` | Wird derzeit nicht von `connect(...)` zurückgegeben; der Leitfaden zum Verschieben von Spielern verwendet es, wenn seine Spielersuche keinen Spieler findet, der online ist. |
+| `CONNECTION_FAILED` | Die Verbindung konnte nicht hergestellt werden, beispielsweise weil der Spieler nicht mehr verfügbar ist. |
+
+Unter [Spieler auf einen anderen Server verschieben](/de/developer/guides/player-transfer) findest du einen vollständigen Ablauf zum Verschieben eines Spielers.
+
+## Spieler kicken
+
+Übergib eine Adventure-Komponente mit dem Grund, der dem Spieler angezeigt wird:
 
 ```java
+player.kick(Component.text("Server restarting"));
+```
+
+Zum Kicken von Spielern muss der Provider `simplecloud-api` auf dem Velocity- oder BungeeCord-Proxy installiert sein.
+
+## Adventure-Inhalte senden
+
+`CloudPlayer` implementiert `Audience` von Adventure. Du kannst daher Nachrichten, Actionbars, Titel, Sounds, Bossbars, Bücher sowie Kopf- und Fußzeilen der Spielerliste senden.
+
+```java
+player.sendMessage(Component.text("Welcome!"));
+player.sendActionBar(Component.text("Combat mode enabled"));
 player.showTitle(Title.title(
-    Component.text("Willkommen!").color(NamedTextColor.GOLD),
-    Component.text("auf dem Server").color(NamedTextColor.GRAY),
-    Title.Times.times(
-        Duration.ofMillis(500),
-        Duration.ofSeconds(3),
-        Duration.ofMillis(500)
-    )
+    Component.text("Welcome"),
+    Component.text("to the server")
 ));
 ```
 
-### Action Bar senden
+Für entfernte Adventure-Inhalte muss der Provider `simplecloud-api` auf dem Paper- oder Folia-Server des Spielers installiert sein.
 
-```java
-player.sendActionBar(Component.text("⚔ Kampfmodus aktiviert")
-    .color(NamedTextColor.RED));
-```
+## Onlinezeit und Eigenschaften verwalten
 
-## CloudPlayer Model
+Spielereigenschaften speichern benutzerdefinierte Zeichenketten für deine Plugins.
 
-<ResponseField name="uniqueId" type="UUID" required>
-  Spieler-UUID.
-</ResponseField>
+| Aufgabe | Methode |
+| --- | --- |
+| Onlinezeit auslesen | `getOnlineTimeSeconds(playerId)` |
+| Onlinezeit festlegen | `setOnlineTimeSeconds(playerId, seconds)` |
+| Onlinezeit zurücksetzen | `resetOnlineTime(playerId)` |
+| Zeit hinzufügen oder entfernen | `addOnlineTimeSeconds(playerId, seconds)` oder `removeOnlineTimeSeconds(playerId, seconds)` |
+| Eine Eigenschaft festlegen | `updatePlayerProperty(playerId, key, value)` |
+| Mehrere Eigenschaften festlegen | `updatePlayerProperties(playerId, properties)` |
+| Eine Eigenschaft löschen | `deletePlayerProperty(playerId, key)` |
+| Mehrere Eigenschaften löschen | `deletePlayerProperties(playerId, keys)` |
 
-<ResponseField name="name" type="string" required>
-  Spieler-Username.
-</ResponseField>
-
-<ResponseField name="displayName" type="string">
-  Anzeigename des Spielers.
-</ResponseField>
-
-<ResponseField name="connectedServerName" type="string">
-  Aktueller Server-Name.
-</ResponseField>
-
-<ResponseField name="connectedProxyName" type="string">
-  Verbundener Proxy-Name.
-</ResponseField>
-
-<ResponseField name="online" type="boolean" required>
-  Ob der Spieler aktuell online ist.
-</ResponseField>
-
-<ResponseField name="onlineTimeSeconds" type="long" required>
-  Gesamte Online-Zeit in Sekunden.
-</ResponseField>
-
-<ResponseField name="sessionId" type="string | null">
-  Aktive Session-ID oder `null`, wenn sie nicht verfügbar ist.
-</ResponseField>
-
-<ResponseField name="firstSeen" type="string">
-  Erster Login-Zeitpunkt im ISO-8601-Format.
-</ResponseField>
-
-<ResponseField name="lastSeen" type="string">
-  Letzter Login-Zeitpunkt im ISO-8601-Format.
-</ResponseField>
-
-<ResponseField name="properties" type="object">
-  Spieler-spezifische Properties.
-</ResponseField>
-
-## ConnectResult
-
-| Wert | Beschreibung |
-|------|--------------|
-| `SUCCESS` | Transfer erfolgreich |
-| `SERVER_NOT_FOUND` | Zielserver existiert nicht |
-| `ALREADY_CONNECTED` | Spieler bereits auf diesem Server |
-| `PLAYER_NOT_FOUND` | Spieler ging offline |
-| `CONNECTION_FAILED` | Transfer fehlgeschlagen |
+Die Onlinezeit muss zwischen `0` und `Integer.MAX_VALUE` Sekunden liegen. Aktualisierungen von Eigenschaften führen die übergebenen Werte mit der vorhandenen Map zusammen; Löschmethoden entfernen nur die angegebenen Schlüssel.

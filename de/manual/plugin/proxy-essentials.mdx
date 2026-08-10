@@ -1,6 +1,6 @@
 ---
 title: 'Proxy Essentials'
-description: 'Konfiguriere SimpleCloud MOTDs, Tablists, Joinstates, Player Counts und Proxy-Layouts'
+description: 'Konfiguriere SimpleCloud-MOTDs, Tablists, Joinstates, Spielerzahlen und Proxy-Layouts'
 tag: 'Proxy'
 ---
 
@@ -25,7 +25,7 @@ Alle Einstellungen liegen in Dateien und können vom Proxy aus neu geladen werde
   </Step>
 
   <Step title="API-Plugin installieren">
-    Stelle sicher, dass das `simplecloud-api` Plugin im selben Proxy-Template installiert ist. Proxy Essentials nutzt es für Spielerzahlen und SimpleCloud-bezogene Proxy-Zustände.
+    Stelle sicher, dass das `simplecloud-api`-Plugin im selben Proxy-Template installiert ist. Proxy Essentials nutzt es für Spielerzahlen und SimpleCloud-bezogene Proxy-Zustände.
   </Step>
 
   <Step title="Konfiguration erzeugen">
@@ -33,7 +33,7 @@ Alle Einstellungen liegen in Dateien und können vom Proxy aus neu geladen werde
   </Step>
 
   <Step title="Proxy-Verhalten konfigurieren">
-    Konfiguriere Joinstates, MOTD-Layouts, Tablists und Player Counts.
+    Konfiguriere Joinstates, MOTD-Layouts, Tablists und Spielerzahlen.
 
     <Check>
       Nach einem Reload oder Neustart sollte `/scproxy reload` die Proxy-Essentials-Konfiguration ohne Fehler neu laden.
@@ -45,14 +45,14 @@ Alle Einstellungen liegen in Dateien und können vom Proxy aus neu geladen werde
 
 | Datei | Zweck |
 | ----- | ----- |
-| `config.yml` | Joinstates, Whitelist, Player Count und Tablist |
+| `config.yml` | Joinstates, Whitelist, Spielerzahl und Tablist |
 | `layout/*.yml` | Serverlisten-MOTD-Layouts |
 | `placeholder.yml` | Datums-, Zeit- und Ping-Farben |
 | `messages.yml` | Kick- und Befehlsnachrichten |
 
 ## Joinstates
 
-Joinstates steuern, ob ein Spieler beitreten darf und welches MOTD-Layout erzwungen wird.
+Joinstates steuern, ob ein Spieler beitreten darf und welches MOTD-Layout erzwungen wird, solange der jeweilige Status aktiv ist.
 
 ```yaml
 version: "2"
@@ -78,9 +78,9 @@ whitelist:
     - Notch
 ```
 
-### Player Count
+### Spielerzahl
 
-Der Player Count kann diese Proxy-Gruppe plus weitere Gruppen oder Persistent Server zusammenzaehlen. Das Update-Intervall wird in Ticks konfiguriert.
+Die Spielerzahl kann diese Proxy-Gruppe sowie weitere Gruppen oder persistente Server umfassen. Das Aktualisierungsintervall wird in Ticks konfiguriert.
 
 ```yaml
 player-count:
@@ -129,7 +129,7 @@ version:
 
 ## Tablist
 
-Tablist-Layouts werden in `config.yml` konfiguriert. Die Update-Zeit ist in Ticks.
+Tablist-Layouts werden in `config.yml` konfiguriert. Das Aktualisierungsintervall wird in Ticks angegeben.
 
 ```yaml
 tablist:
@@ -163,9 +163,9 @@ tablist:
 | ----------- | ------- | ------------ |
 | `<online_players>` | MOTD, Tablist | Summierte Online-Spieler |
 | `<max_players>` | MOTD, Tablist | Maximale Spielerzahl anhand des Slot-Modus |
-| `<date:FORMAT>` | MOTD, Tablist | Aktuelles Datum/Zeit mit MiniMessage-Datumsformat |
+| `<date:FORMAT>` | MOTD, Tablist | Aktuelles Datum und aktuelle Uhrzeit im MiniMessage-Datumsformat |
 | `<env:NAME>` | MOTD, Tablist | Wert einer Umgebungsvariable |
-| `<env:NAME:default>` | MOTD, Tablist | Umgebungsvariable mit Fallback |
+| `<env:NAME:default>` | MOTD, Tablist | Wert einer Umgebungsvariable mit Fallback |
 | `<server_name>` | Tablist | Aktueller Server des Spielers |
 | `<ping>` | Tablist | Ping des Spielers mit konfigurierter Farbe |
 

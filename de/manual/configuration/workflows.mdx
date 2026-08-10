@@ -1,230 +1,199 @@
 ---
-title: 'Workflows'
-description: 'Definiere Server-Vorbereitung und Cleanup mit Serverhost-Workflows'
+title: "Workflows"
+description: "Führe Dateioperationen beim Starten und Stoppen eines Servers oder bei Bedarf aus"
 ---
 
-## Was Workflows sind
+Workflows führen eine Abfolge von Dateioperationen auf einem Serverhost aus. Du kannst sie manuell oder bei jedem Start und Stopp eines Servers ausführen.
 
-Workflows sind YAML-Dateien, die der Serverhost während der Vorbereitung oder beim Cleanup eines Servers ausführt. Sie kopieren Template-Dateien, laden konfigurierte Plugins herunter, wenden Configurators an, verwalten Cache-Dateien und entfernen temporäre Laufzeitverzeichnisse.
+In dieser Anleitung erstellst du einen Backup-Workflow, führst ihn im Dashboard aus und erfährst anschließend, wie du ihn anpasst.
 
-Workflow-Dateien liegen in `workflows/`. Die Workflow-ID besteht aus Namespace und Dateiname ohne `.yml`, zum Beispiel `internal/setup` für `workflows/internal/setup.yml`.
+## Backup-Workflow ausführen
 
-## Standard-Workflows
+<Steps>
+  <Step title="Workflow erstellen">
+    Erstelle die Datei `workflows/default/backup.yml` in deinem Serverhost-Verzeichnis:
 
-Jeder Serverhost erstellt beim ersten Start die Standard-Workflow-Dateien:
+    ```yaml workflows/default/backup.yml
+    name: Backup Workflow
 
-| Workflow | Zweck |
-| -------- | ----- |
-| `internal/setup` | Bereitet ein Serververzeichnis vor, bevor der Prozess startet |
-| `internal/cleanup` | Kopiert Cache- und Log-Daten und entfernt temporäre Verzeichnisse dynamischer Server |
-
-Servergruppen und persistente Server speichern ihre Workflows in der Basiskonfiguration:
-
-```yaml
-workflows:
-  when:
-    start:
-      - internal/setup
-    stop:
-      - internal/cleanup
-```
-
-Das Dashboard verwaltet die üblichen Standardwerte für dich. Bearbeite Workflow-Dateien direkt nur, wenn du eigene Vorbereitung, Backups, Uploads oder Cleanup-Schritte brauchst.
-
-## Workflow-Struktur
-
-Ein Workflow hat einen lesbaren `name`, optionale `variables` und eine `steps`-Liste. Jeder Step hat einen `name`, einen `uses`-Action-Identifier, optionale `if`- und `async`-Einstellungen und Action-Parameter unter `with`.
-
-```yaml
-# workflows/default/backup.yml
-name: Backup Workflow
-
-steps:
-  - name: copy-running-to-backup
-    uses: simplecloud/copy
-    with:
-      from: "{{ runtime.server-dir }}"
-      to: "{{ runtime.templates }}/.backup/{{ runtime.name }}/{{ time.now.date }}/{{ time.now.dateTime }}-{{ runtime.nice-id }}"
-      init-dir-if-missing: true
-```
-
-Variablen sind hilfreich, wenn mehrere Steps denselben Pfad oder Wert verwenden:
-
-```yaml
-name: Archive World
-
-variables:
-  backup-dir: "{{ runtime.templates }}/.backup/{{ runtime.name }}/{{ time.now.date }}"
-
-steps:
-  - name: compress-world
-    uses: simplecloud/compress
-    with:
-      from: "{{ runtime.server-dir }}/world"
-      to: "{{ vars.backup-dir }}/world.zip"
-```
-
-## Runtime-Werte
-
-Workflow-Ausdrücke verwenden `{{ ... }}`-Syntax. Die wichtigsten Werte sind:
-
-| Wert | Beschreibung |
-| ---- | ------------ |
-| `{{ runtime.name }}` | Gruppenname oder Name des persistenten Servers |
-| `{{ runtime.nice-id }}` | Laufzeitname, zum Beispiel `lobby-1` |
-| `{{ runtime.type }}` | Gemappter Servertyp, zum Beispiel `server` oder `proxy` |
-| `{{ runtime.persistent }}` | Ob es ein persistenter Server ist |
-| `{{ runtime.numerical-id }}` | Numerische ID bei Gruppenservern |
-| `{{ runtime.server-dir }}` | Verzeichnis des Servers, der vorbereitet wird |
-| `{{ runtime.templates }}` | Template-Wurzelverzeichnis |
-| `{{ runtime.port }}` | Zugewiesener Server-Port |
-| `{{ runtime.software }}` | Server-Software aus dem Blueprint |
-| `{{ runtime.mapped-software }}` | Plattformgemappter Software-Name |
-| `{{ runtime.minecraft-version }}` | Minecraft-Version aus dem Blueprint |
-| `{{ runtime.configurator }}` | Configurator aus dem Blueprint |
-| `{{ runtime.tags }}` | Tags der Gruppe oder des persistenten Servers |
-| `{{ runtime.properties.<key> }}` | Eigene Property aus der Basiskonfiguration |
-| `{{ vars.<key> }}` | Variable aus dem Workflow oder einem `foreach`-Step |
-| `{{ time.now.date }}` | Aktuelles lokales Datum, hilfreich für Backup-Ordner |
-
-## Häufige Actions
-
-### `simplecloud/copy`
-
-Kopiert eine Datei oder ein Verzeichnis.
-
-```yaml
-- name: copy-template
-  uses: simplecloud/copy
-  with:
-    from: "{{ runtime.templates }}/{{ runtime.name }}"
-    to: "{{ runtime.server-dir }}"
-    init-dir-if-missing: true
-    replace: false
-```
-
-| Feld | Beschreibung |
-| ---- | ------------ |
-| `from` | Quelldatei oder Quellverzeichnis |
-| `to` | Zieldatei oder Zielverzeichnis |
-| `replace` | Ob vorhandene Dateien überschrieben werden. Standard ist `true` |
-| `init-dir-if-missing` | Erstellt ein fehlendes Quellverzeichnis und fährt fort. Standard ist `false` |
-| `exclude` | Optionaler Pfad oder Liste von Pfaden/Globs, die übersprungen werden |
-
-### `simplecloud/delete`
-
-Löscht eine Datei oder ein Verzeichnis.
-
-```yaml
-- name: delete-running-dir
-  uses: simplecloud/delete
-  if: "{{ runtime.persistent }} == false"
-  with:
-    path: "{{ runtime.server-dir }}"
-```
-
-Optionale Felder sind `force` und `min-age`, zum Beispiel `10m`, `2h` oder `7d`.
-
-### `simplecloud/foreach`
-
-Führt verschachtelte Steps für jedes Element einer Liste aus.
-
-```yaml
-- name: copy-tagged
-  uses: simplecloud/foreach
-  with:
-    items: "{{ runtime.tags }}"
-    as: tag
     steps:
-      - name: copy-tag-{{ vars.tag }}
+      - name: copy-running-to-backup
         uses: simplecloud/copy
         with:
-          from: "{{ runtime.templates }}/_tagged/{{ vars.tag }}"
-          to: "{{ runtime.server-dir }}"
-          replace: false
-```
+          from: "{{ runtime.server-dir }}"
+          to: "{{ runtime.templates }}/.backup/{{ runtime.name }}/{{ time.now.date }}/{{ time.now.dateTime }}-{{ runtime.nice-id }}-{{ runtime.process-id }}"
+          init-dir-if-missing: true
+    ```
+  </Step>
 
-### `simplecloud/load-plugins`
+  <Step title="Workflow laden">
+    Starte den Serverhost neu. SimpleCloud verwendet den Dateipfad als Workflow-ID. Dieser Workflow erhält daher die ID `default/backup`.
+  </Step>
 
-Lädt konfigurierte Plugins von Modrinth, Hangar, Spigot oder direkten URLs herunter und kopiert sie in das Plugin-Verzeichnis des Servers.
+  <Step title="Workflow zuweisen">
+    Öffne im Dashboard eine Servergruppe oder einen persistenten Server und gehe zu **Settings > Workflows**. Füge unter **Manual Workflows** den Eintrag `default/backup` hinzu.
+  </Step>
+
+  <Step title="Workflow ausführen">
+    Starte den Server, falls er noch nicht läuft. Öffne anschließend sein Aktionsmenü und führe zum Testen `default/backup` aus.
+  </Step>
+
+  <Step title="Backup prüfen">
+    Öffne auf dem Serverhost dieses Verzeichnis:
+
+    ```text
+    templates/.backup/<name>/<date>/<date-time>-<server>-<process-id>/
+    ```
+
+    Prüfe, ob das Zielverzeichnis die erwarteten Dateien enthält. Zeitstempel und Prozess-ID trennen die einzelnen Backup-Läufe voneinander.
+  </Step>
+</Steps>
+
+<Note>
+  Ein Workflow ist nur auf Serverhosts verfügbar, auf denen seine Datei vorhanden ist. Wenn die betroffenen Server auf mehreren Serverhosts ausgeführt werden können, füge jedem von ihnen dieselbe Datei hinzu und starte die Serverhosts neu.
+</Note>
+
+Bei der manuellen Aktion werden die Dateien kopiert, während der Minecraft-Server läuft. Dateien, die sich während des Kopierens ändern, etwa Welten und Plugin-Daten, ergeben möglicherweise kein konsistentes Backup. Füge für solche Dateien `default/backup` unter **On Stop Workflows** hinzu und stoppe den Server normal. Stop-Workflows werden ausgeführt, nachdem der Serverprozess beendet wurde.
+
+Platziere `default/backup` vor `internal/cleanup`.
+
+<Warning>
+  `internal/cleanup` entfernt das laufende Verzeichnis eines Gruppenservers. Jeder Workflow, der dieses Verzeichnis liest, muss vor dem Cleanup ausgeführt werden.
+</Warning>
+
+<Note>
+  Dieser Workflow erstellt Dateikopien, testet jedoch keine Wiederherstellungen und entfernt keine alten Backups. Prüfe, ob du die benötigten Daten wiederherstellen kannst, und lege eine Aufbewahrungsstrategie für `templates/.backup/` fest.
+</Note>
+
+## Workflow-Datei verstehen
+
+Der Backup-Workflow hat dieselbe grundlegende Struktur wie jeder andere Workflow:
+
+- `name` identifiziert den Workflow in den Serverhost-Logs.
+- `steps` enthält die Operationen in ihrer Ausführungsreihenfolge.
+- `name` innerhalb eines Steps identifiziert diesen Step in den Logs.
+- `uses` wählt die Aktion aus. Dieser Workflow verwendet `simplecloud/copy`.
+- `with` enthält die von der Aktion benötigten Werte.
+
+In diesem Workflow verweist `from` auf das laufende Serververzeichnis. `to` erzeugt einen eindeutigen Backup-Pfad. Fehlt die Quelle, erstellt `init-dir-if-missing: true` ein leeres Quellverzeichnis, anstatt einen Fehler auszulösen. Prüfe immer, ob das fertige Backup die erwarteten Dateien enthält.
+
+### Vom Workflow verwendete Werte
+
+Werte innerhalb von `{{ ... }}` werden beim Ausführen des Workflows ersetzt.
+
+| Wert | Ergebnis |
+| --- | --- |
+| `{{ runtime.server-dir }}` | Laufendes Serververzeichnis |
+| `{{ runtime.templates }}` | Template-Verzeichnis des Serverhosts |
+| `{{ runtime.name }}` | Name der Servergruppe oder des persistenten Servers |
+| `{{ runtime.nice-id }}` | Name des laufenden Servers, zum Beispiel `lobby-1` |
+| `{{ runtime.process-id }}` | ID des laufenden Prozesses |
+| `{{ time.now.date }}` | Aktuelles Datum |
+| `{{ time.now.dateTime }}` | Aktuelles Datum und aktuelle Uhrzeit |
+
+## Backup-Workflow anpassen
+
+Verwende den Backup-Workflow als Ausgangspunkt:
+
+<Steps>
+  <Step title="Workflow kopieren">
+    Kopiere `workflows/default/backup.yml` an einen neuen Pfad, zum Beispiel `workflows/custom/world-backup.yml`.
+  </Step>
+
+  <Step title="Workflow ändern">
+    Gib ihm einen neuen `name` und passe anschließend die Kopierpfade und Ausschlüsse an deine Aufgabe an.
+  </Step>
+
+  <Step title="Workflows neu laden">
+    Starte jeden Serverhost neu, auf dem die neue Datei vorhanden ist.
+  </Step>
+
+  <Step title="Neue ID zuweisen">
+    Füge unter **Settings > Workflows** den Eintrag `custom/world-backup` hinzu. Die Workflow-ID entspricht immer dem Pfad unterhalb von `workflows/`, jedoch ohne `.yml`.
+  </Step>
+</Steps>
+
+### Kopierumfang ändern
+
+Die Aktion `simplecloud/copy` unterstützt unter `with` diese Einstellungen:
+
+| Einstellung | Zweck |
+| --- | --- |
+| `from` | Zu kopierende Datei oder zu kopierendes Verzeichnis |
+| `to` | Ziel des Kopiervorgangs |
+| `replace` | Gibt an, ob vorhandene Dateien überschrieben werden; Standardwert ist `true` |
+| `exclude` | Pfad oder Liste von Pfaden, die ausgelassen werden |
+| `init-dir-if-missing` | Gibt an, ob das Quellverzeichnis erstellt wird, wenn es nicht existiert; Standardwert ist `false` |
+
+Füge beispielsweise eine `exclude`-Liste hinzu, um Logs und Caches auszulassen, während der Rest des Backups unverändert bleibt:
 
 ```yaml
-- name: load-plugins
-  uses: simplecloud/load-plugins
-  with:
-    minecraft-version: "{{ runtime.minecraft-version }}"
-    platform: "{{ runtime.software }}"
-    plugins-dir: "{{ runtime.server-dir }}/plugins"
-    cache-dir: "{{ runtime.cache-dir }}"
-    type: "{{ runtime.type }}"
+with:
+  from: "{{ runtime.server-dir }}"
+  to: "{{ runtime.templates }}/.backup/{{ runtime.name }}/{{ time.now.date }}/{{ time.now.dateTime }}-{{ runtime.nice-id }}-{{ runtime.process-id }}"
+  init-dir-if-missing: true
+  exclude:
+    - "logs/**"
+    - "cache/**"
 ```
 
-### `simplecloud/configurate`
+Muster unter `exclude` sind relativ zu `from`.
 
-Wendet einen Configurator aus `options/configurators/` an.
+## Verfügbare Aktionen
 
-```yaml
-- name: configurate-server
-  uses: simplecloud/configurate
-  with:
-    configurator: "{{ runtime.configurator }}"
-    dir: "{{ runtime.server-dir }}"
-```
+<AccordionGroup>
+  <Accordion title="Dateien kopieren">
+    `simplecloud/copy` kopiert eine Datei oder ein Verzeichnis von `from` nach `to`. Mit `replace` legst du fest, ob vorhandene Dateien überschrieben werden. Mit `exclude` lässt du passende Pfade aus.
+  </Accordion>
 
-Siehe [Configurators](/de/manual/configuration/configurators) für das Configurator-Dateiformat.
+  <Accordion title="Archive erstellen oder entpacken">
+    `simplecloud/compress` erstellt ein Archiv und `simplecloud/decompress` entpackt eines. Beide Aktionen benötigen `from` und `to`; `replace` ist optional. Der Dateiname des Archivs bestimmt sein Format.
+  </Accordion>
 
-### Archive und Uploads
+  <Accordion title="Datei hochladen">
+    `simplecloud/upload` sendet die Datei unter `from` an die URL unter `to`. Die Aktion lädt Dateien hoch, keine Verzeichnisse. Du kannst außerdem die HTTP-`method` und einen Wert für `authorization-bearer` festlegen.
 
-Nutze `simplecloud/compress`, `simplecloud/decompress` und `simplecloud/upload` für Backups oder externe Speicher-Workflows.
+    <Warning>
+      Workflow-Dateien enthalten Klartext. Speichere darin keine langlebigen Zugriffstokens.
+    </Warning>
+  </Accordion>
 
-```yaml
-- name: compress-world
-  uses: simplecloud/compress
-  with:
-    from: "{{ runtime.server-dir }}/world"
-    to: "{{ runtime.templates }}/.backup/{{ runtime.name }}/world.zip"
-```
+  <Accordion title="Dateien löschen">
+    `simplecloud/delete` entfernt den unter `path` angegebenen Inhalt. Verwende `min-age`, zum Beispiel `7d`, um neuere Dateien zu behalten.
 
-```yaml
-- name: upload-backup
-  uses: simplecloud/upload
-  with:
-    from: "{{ runtime.templates }}/.backup/{{ runtime.name }}/world.zip"
-    to: "https://example.com/backups/world.zip"
-    method: PUT
-```
+    <Warning>
+      Löschpfade sind nicht auf das Serververzeichnis beschränkt. Prüfe den endgültigen Pfad, bevor du den Workflow ausführst.
+    </Warning>
+  </Accordion>
 
-## Bedingungen und Async-Steps
+  <Accordion title="Steps wiederholen">
+    `simplecloud/foreach` führt verschachtelte Steps für jeden Eintrag unter `items` aus. Lege mit `as` den Variablennamen fest, den die verschachtelten `steps` verwenden.
+  </Accordion>
+</AccordionGroup>
 
-Nutze `if`, um einen Step nur auszuführen, wenn eine Bedingung passt. Bedingungen unterstützen Vergleiche, `&&`, `||`, `exists(...)`, `!exists(...)` und `value(path, default)`.
+## Eingebaute Workflows
 
-```yaml
-- name: copy-logs-to-archive
-  uses: simplecloud/copy
-  if: "{{ runtime.persistent }} == false"
-  with:
-    from: "{{ runtime.server-dir }}/logs/"
-    to: "{{ runtime.templates }}/cache/logs/{{ runtime.name }}/{{ runtime.nice-id }}"
-```
+| Workflow | Zweck |
+| --- | --- |
+| `internal/setup` | Bereitet das Serververzeichnis vor dem Start vor |
+| `internal/cleanup` | Bereinigt Dateien, nachdem der Server gestoppt wurde |
 
-Setze `async: true` nur für unabhängige Steps. Der Workflow wartet auf asynchrone Arbeit, bevor er Erfolg oder Fehler meldet.
+<Warning>
+  Lass `internal/setup` und `internal/cleanup` zugewiesen, sofern du ihr Verhalten nicht bewusst ersetzt.
+</Warning>
 
 ## Fehlerbehebung
 
 <AccordionGroup>
-  <Accordion title="Ein Workflow läuft nicht">
-    Prüfe die Workflow-Liste der Servergruppe oder des persistenten Servers. Die Workflow-ID muss zum Pfad unter `workflows/` passen, zum Beispiel `internal/setup`.
+  <Accordion title="Der Workflow wird nicht aufgelistet">
+    Workflow-IDs werden manuell im Dashboard eingetragen. Prüfe, ob die Datei auf dem Serverhost vorhanden ist, starte den Serverhost neu und füge die ID erneut hinzu.
   </Accordion>
 
-  <Accordion title="Ein Workflow kann nicht geladen werden">
-    Stelle sicher, dass die YAML-Datei `name` und `steps` enthält und dass jeder Step einen `uses`-Action-Identifier hat.
+  <Accordion title="Der Workflow wird nicht gefunden">
+    Prüfe, ob die ID dem Dateipfad entspricht. `custom/world-backup` muss beispielsweise auf `workflows/custom/world-backup.yml` verweisen.
   </Accordion>
 
-  <Accordion title="Ein Wert wird nicht ersetzt">
-    Verwende Syntax wie `{{ runtime.name }}` oder `{{ vars.name }}`. Prozent-Platzhalter wie `%server-dir%` gehören zu Configurators, nicht zu Workflows.
-  </Accordion>
-
-  <Accordion title="Plugin- oder Template-Dateien fehlen">
-    Prüfe den Quellpfad der betroffenen `simplecloud/copy`-Action und ob `init-dir-if-missing` für diesen Ordner aktiviert werden sollte.
+  <Accordion title="Ein Backup fehlt">
+    Suche in den Serverhost-Logs nach `Backup Workflow` und `copy-running-to-backup`. Prüfe bei einem automatischen Backup außerdem, ob `default/backup` vor `internal/cleanup` steht.
   </Accordion>
 </AccordionGroup>

@@ -6,7 +6,7 @@ tag: 'Server'
 
 ## Überblick
 
-Das Signs Plugin lässt Spieler Schilder anklicken, um sich mit SimpleCloud-Gruppenservern zu verbinden. Schilder aktualisieren sich automatisch mit Serverstatus, Spielerzahlen, MiniMessage-Text und optionalen Animationen.
+Mit dem Signs-Plugin können Spieler Schilder anklicken, um sich mit SimpleCloud-Gruppenservern zu verbinden. Die Anzeige der Schilder aktualisiert sich automatisch anhand von Serverstatus, Spielerzahl und MiniMessage-Text und unterstützt optionale Animationen.
 
 ## Unterstützte Software
 
@@ -19,9 +19,9 @@ Das Signs Plugin lässt Spieler Schilder anklicken, um sich mit SimpleCloud-Grup
 
 1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/sign-plugin/releases) herunter.
 2. Lege es im `plugins/`-Ordner deines Server-Templates ab.
-3. Stelle sicher, dass das `simplecloud-api` Plugin auf dem Server installiert ist.
+3. Stelle sicher, dass das `simplecloud-api`-Plugin auf dem Server installiert ist.
 4. Starte den Server einmal, damit die Standard-Layouts erzeugt werden.
-5. Schaue im Spiel auf ein Schild und registriere es mit `/sign add <group>`.
+5. Sieh im Spiel ein Schild an und registriere es mit `/sign add <group>`.
 
 ## Befehle
 
@@ -36,8 +36,8 @@ Der Befehl ist als `/simplecloudsign`, `/simplecloudsigns`, `/scsigns`, `/scsign
 | `/sign remove <group>` | Alle Schilder für einen registrierten Zielschlüssel entfernen |
 
 <Note>
-  Du musst auf den Schildblock schauen, den du hinzufügen oder entfernen
-  möchtest. Der Befehl prüft bis zu 8 Blöcke Entfernung.
+  Du musst den Schildblock ansehen, den du hinzufügen oder entfernen möchtest.
+  Der Befehl prüft in einer Entfernung von bis zu 8 Blöcken.
 </Note>
 
 ## Berechtigungen
@@ -74,7 +74,7 @@ frames:
 | `name` | Eindeutiger Layoutname |
 | `rule` | Eingebaute Regel, die entscheidet, wann das Layout gilt |
 | `priority` | Höhere Prioritäten gewinnen, wenn mehrere Layouts passen |
-| `serverName` | Namensmuster zum Auflösen des Zielservers |
+| `serverName` | Namensmuster zum Auflösen der Zielserver |
 | `frame-update-interval` | Animationsintervall in Millisekunden |
 | `frames` | Ein oder mehrere vierzeilige Schild-Frames |
 
@@ -108,5 +108,5 @@ Das Feld `serverName` unterstützt diese Ersetzungen:
 | `%numerical-id%` | Numerische ID |
 
 <Frame>
-  <img src="https://raw.githubusercontent.com/simplecloudapp/branding/refs/heads/main/media/plugin/signs/preview.png" alt="SimpleCloud Signs Ingame-Vorschau" />
+  <img src="https://raw.githubusercontent.com/simplecloudapp/branding/refs/heads/main/media/plugin/signs/preview.png" alt="Vorschau der SimpleCloud-Schilder im Spiel" />
 </Frame>

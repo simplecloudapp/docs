@@ -1,132 +1,97 @@
 ---
 title: "Installation"
-description: "Starte SimpleCloud im Dashboard und nutze die CLI später, wenn du Serverhosts verbinden oder verwalten möchtest."
+description: "Verbinde deine erste Maschine mit SimpleCloud."
 ---
 
-## Im Dashboard starten
+Installiere SimpleCloud über das Dashboard. Nach Abschluss der Einrichtung erkennt das Dashboard deinen Serverhost automatisch und öffnet dein Netzwerk.
 
-Das Dashboard ist der Hauptweg für das Onboarding. Es erstellt dein Netzwerk oder lässt dich einem Netzwerk beitreten, erzeugt den passenden Installationsbefehl für deine Maschine und erkennt den ersten Serverhost automatisch.
+## Voraussetzungen
+
+Du benötigst eine Linux- oder macOS-Maschine mit `curl` und einer Internetverbindung. Verwende Linux für einen Serverhost im Produktivbetrieb. macOS eignet sich für lokale Tests. Windows wird noch nicht unterstützt.
+
+Führe die Einrichtung mit einem Konto aus, das am Installationsort Dateien erstellen darf. Unter Linux benötigt das Konto außerdem `sudo`-Zugriff, falls die Einrichtung eine fehlende Voraussetzung installieren muss.
+
+## Ersten Serverhost verbinden
 
 <Steps>
-  <Step title="Dashboard öffnen">
-    Gehe zum [SimpleCloud Dashboard](https://dash.simplecloud.app) und melde dich an oder erstelle ein Konto.
-
-    Du kannst einen Magic Link oder einen der verfügbaren SSO-Anbieter verwenden.
+  <Step title="Im Dashboard anmelden">
+    Öffne das [SimpleCloud Dashboard](https://dash.simplecloud.app) und melde dich an.
   </Step>
 
-  <Step title="Netzwerk erstellen oder beitreten">
-    Erstelle ein neues Netzwerk, wenn du frisch startest, oder tritt einem bestehenden Netzwerk mit einer Einladung bei.
-
-    Sobald das Netzwerk existiert, öffnet das Dashboard den Onboarding-Assistenten, wenn noch kein Serverhost verbunden ist.
+  <Step title="Netzwerk erstellen oder ihm beitreten">
+    Erstelle ein Netzwerk oder tritt einem bestehenden Netzwerk mit einem Einladungscode bei. Wenn dein Netzwerk noch keinen Serverhost hat, öffnet das Dashboard den Einrichtungsassistenten.
   </Step>
 
-  <Step title="Ersten Serverhost konfigurieren">
-    Wähle Betriebssystem, Hostnamen, Speicherlimit, Java-Runtimes und ob SimpleCloud nach dem Setup starten soll.
+  <Step title="Serverhost konfigurieren">
+    Wähle das Betriebssystem aus, gib einen eindeutigen Namen ein und lege fest, wie viel Arbeitsspeicher SimpleCloud verwenden darf.
 
-    Linux ist für Produktion empfohlen. macOS eignet sich für lokale Tests. Windows-Setup ist noch nicht verfügbar.
+    Das Speicherlimit ist die Kapazität, die Minecraft-Servern auf dieser Maschine zur Verfügung steht. Lasse daher genügend Arbeitsspeicher für das Betriebssystem frei. Lasse Java 21 oder eine neuere Version ausgewählt. Die Einrichtung installiert die ausgewählten Java-Versionen und weitere erforderliche Software.
   </Step>
 
-  <Step title="Generierten Befehl ausführen">
-    Kopiere den Befehl aus dem Dashboard und führe ihn auf der Maschine aus, die Minecraft-Server hosten soll.
+  <Step title="Einrichtungsbefehl ausführen">
+    Öffne auf der Maschine ein Terminal und wechsle in das Verzeichnis, das die Installation enthalten soll. Der Befehl installiert SimpleCloud dort in einem Ordner namens `simplecloud`.
 
-    Der Befehl installiert die CLI, authentifiziert sich mit einem generierten Login-Code, registriert die Maschine als Serverhost und startet ihn auf Wunsch direkt.
+    Führe den im Dashboard angezeigten Befehl aus und befolge alle Aufforderungen im Terminal.
+
+    <Warning>
+      Der Befehl enthält einen temporären Anmeldecode. Teile ihn nicht und speichere ihn nicht in Skripten oder Dokumentation.
+    </Warning>
   </Step>
 
-  <Step title="Auf Erkennung warten">
-    Lass das Dashboard geöffnet, während der Befehl läuft. Sobald der Serverhost verbunden ist, erkennt das Dashboard ihn und öffnet die Hauptansicht des Netzwerks.
+  <Step title="Einrichtung abschließen">
+    Warte, bis im Terminal **Setup complete** angezeigt wird. Das Dashboard erkennt den Serverhost automatisch und öffnet dein Netzwerk.
   </Step>
 </Steps>
-
-## CLI später installieren
-
-Nutze dies, wenn du die CLI auf einer Maschine brauchst, die nicht durch das komplette Onboarding geht.
-
-<Tabs>
-  <Tab title="Linux / macOS">
-    ```bash
-    curl -fsSL https://get.simplecloud.app | bash
-    ```
-
-    Prüfe die Installation:
-
-    ```bash
-    simplecloud --version
-    ```
-
-    Du kannst `sc` überall verwenden, wo die Dokumentation `simplecloud` zeigt.
-  </Tab>
-
-  <Tab title="Windows">
-    <Note>
-      Der CLI-Installer unterstützt Windows noch nicht. Nutze Linux für Produktion oder macOS für lokale Tests.
-    </Note>
-  </Tab>
-</Tabs>
 
 ## Weiteren Serverhost hinzufügen
 
-Füge nach dem Onboarding weitere Maschinen über das Dashboard hinzu, statt den ersten Setup-Befehl erneut zu verwenden.
+Öffne **Settings > Server Hosts**, wähle **Add Host** und führe den generierten Befehl auf der neuen Maschine aus. Verwende für jeden Serverhost einen neuen Befehl.
 
-<Steps>
-  <Step title="Server-Hosts-Einstellungen öffnen">
-    Öffne im Dashboard **Settings** und gehe zu **Server Hosts**.
-  </Step>
+Wenn du mehrere Maschinen gemeinsam verwenden möchtest, fahre mit [SimpleCloud auf mehreren Maschinen ausführen](/de/manual/setup/multi-root) fort.
 
-  <Step title="Frischen Befehl erzeugen">
-    Klicke auf **Add Host**. Das Dashboard erzeugt einen neuen Login-Code und einen Befehl für das aktuelle Netzwerk.
-  </Step>
+## Nur die CLI installieren
 
-  <Step title="Auf der neuen Maschine ausführen">
-    Kopiere den generierten Befehl auf die neue Maschine und führe ihn dort aus.
+Der Dashboard-Befehl installiert die CLI bereits. Führe den folgenden Befehl aus, um nur die CLI auf einer Linux- oder macOS-Maschine zu installieren:
 
-    Der Befehl sieht ungefähr so aus. Nutze aber den exakten Befehl aus deinem Dashboard, weil er Netzwerk, Login-Code und Hostnamen enthält:
+```bash
+curl -fsSL https://get.simplecloud.app | bash
+```
 
-    ```bash
-    curl -fsSL https://get.simplecloud.app | bash ; ~/.bun/bin/simplecloud setup \
-      --yes \
-      --auto-install-deps \
-      --start \
-      --network dein-netzwerk \
-      --code DEIN_LOGIN_CODE \
-      --host-name host-2
-    ```
-  </Step>
-</Steps>
+Prüfe, ob sie verfügbar ist:
 
-## Teammitglieder einladen
+```bash
+sc --version
+```
 
-So fügst du andere zu deinem Netzwerk hinzu:
-
-1. Öffne **Settings** im Dashboard.
-2. Gehe zu **Members**.
-3. Klicke auf **Invite Member**.
-4. Gib die E-Mail-Adresse ein und waehle eine Rolle.
+Dadurch wird die Maschine nicht als Serverhost verbunden. Verwende einen vom Dashboard generierten Einrichtungsbefehl, wenn sie Minecraft-Server ausführen soll.
 
 ## Fehlerbehebung
 
 <AccordionGroup>
-  <Accordion title="Das Dashboard kann keinen Login-Code erzeugen">
-    Schließe den Dialog oder den Onboarding-Schritt, öffne ihn erneut und erzeuge einen frischen Befehl.
-
-    Wenn das Problem bleibt, melde dich ab und wieder an, damit das Dashboard einen neuen authentifizierten Device-Code erstellen kann.
+  <Accordion title="Die Shell findet sc nicht">
+    Öffne ein neues Terminal und führe `sc --version` erneut aus.
   </Accordion>
 
-  <Accordion title="Der Installer kann keine Dateien herunterladen">
-    Stelle sicher, dass die Maschine per HTTPS ins Internet kommt.
-
-    Der Installer braucht ausgehenden Zugriff auf `get.simplecloud.app` und die Release-Download-Hosts, die SimpleCloud verwendet.
+  <Accordion title="Der Einrichtungsbefehl ist abgelaufen">
+    Kehre zum Dashboard zurück und generiere einen neuen Befehl.
   </Accordion>
 
-  <Accordion title="Der Serverhost erscheint nicht im Dashboard">
-    1. Prüfe, ob der Befehl ohne Fehler abgeschlossen wurde.
-    2. Prüfe mit `sc status serverhost`, ob der Serverhost läuft.
-    3. Sieh dir die Serverhost-Logs mit `sc logs serverhost` an.
-    4. Erzeuge einen frischen **Add Host**-Befehl, wenn der Login-Code alt war oder falsch kopiert wurde.
+  <Accordion title="Die Einrichtung kann eine Voraussetzung nicht installieren">
+    Stelle sicher, dass die Maschine Internetzugriff hat. Verwende unter Linux ein Konto, das `sudo` ausführen darf. Führe den Einrichtungsbefehl anschließend erneut aus.
   </Accordion>
 
-  <Accordion title="Setup scheitert beim Installieren von Abhängigkeiten">
-    Führe den generierten Dashboard-Befehl unter Linux mit einem Benutzer aus, der benötigte Pakete installieren darf, oder installiere fehlende Abhängigkeiten manuell und versuche es erneut.
+  <Accordion title="Der Serverhost wird nicht im Dashboard angezeigt">
+    Prüfe zuerst, ob das Terminal **Setup complete** erreicht hat. Falls ja, prüfe den Serverhost-Status und die aktuellen Logs:
 
-    Für lokale Tests auf macOS sollte der Befehl in einer normalen Shell mit Zugriff auf dein Benutzerprofil laufen.
+    ```bash
+    sc status serverhost
+    sc logs serverhost
+    ```
+
+    Falls die Einrichtung nicht abgeschlossen wurde, behebe den im Terminal angezeigten Fehler, generiere im Dashboard einen neuen Befehl und versuche es im selben übergeordneten Verzeichnis erneut.
   </Accordion>
 </AccordionGroup>
+
+## Nächster Schritt
+
+Erstelle eine [Servergruppe](/de/manual/setup/server-groups) für Server, die mit der Nachfrage skalieren, oder einen [persistenten Server](/de/manual/setup/persistent-servers) für einen einzelnen, langfristig betriebenen Minecraft-Server.

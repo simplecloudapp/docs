@@ -1,206 +1,82 @@
 ---
-title: 'Serverhost'
-description: 'Der Ausführungsagent, der Minecraft-Server startet und verwaltet'
+title: "Serverhost"
+description: "Verbinde eine Maschine, auf der SimpleCloud Minecraft-Server ausführen kann"
 ---
 
-## Was der Serverhost macht
+Ein Serverhost ist eine Maschine, die Minecraft-Server für dein SimpleCloud-Netzwerk ausführt. Installiere auf jeder Maschine, deren CPU und Arbeitsspeicher SimpleCloud verwenden soll, einen Serverhost.
 
-Der Serverhost läuft auf jeder Maschine, die Minecraft-Server für dein SimpleCloud-Netzwerk starten soll. Er verbindet sich mit dem Controller, empfängt Start-Anfragen, bereitet Serverdateien vor, startet den Serverprozess, meldet Zustände und räumt nach gestoppten dynamischen Servern auf.
+Der Serverhost läuft im Hintergrund. Über das Dashboard verwaltest du die Minecraft-Server und legst fest, welche Serverhosts sie ausführen dürfen. Verwende die CLI auf einem Serverhost, wenn du den Serverhost selbst starten, stoppen, aktualisieren oder untersuchen musst.
 
-## Aufgaben
+## Aufgaben eines Serverhosts
 
-### Server-Lebenszyklus
+Ein Serverhost:
 
-Der Serverhost verwaltet den lokalen Lebenszyklus jedes Servers:
+- Bereitet Minecraft-Serverdateien aus deinen Templates vor
+- Startet und stoppt Minecraft-Server
+- Wendet die von dir konfigurierte Software, Plugins, Arbeitsspeicher- und weitere Einstellungen an
+- Sendet Serverstatus, Logs und Ressourcennutzung an SimpleCloud
 
-1. **Vorbereitung** - Start-Workflows ausführen, Templates kopieren und konfigurierte Plugins laden
-2. **Konfiguration** - Configurators für Ports, Forwarding-Secrets, Spielerlimits und weitere Dateien anwenden
-3. **Ausführung** - Den Server mit dem konfigurierten Runner starten
-4. **Monitoring** - Den lokalen Prozess überwachen, Logs weiterleiten und Zustände melden
-5. **Cleanup** - Stop-Workflows ausführen und temporäre Verzeichnisse dynamischer Server entfernen
+## Serverhost hinzufügen
 
-### Workflow-Ausführung
+Öffne im Dashboard **Settings > Server Hosts** und wähle **Add Host**. Konfiguriere den Host und führe anschließend den generierten Einrichtungsbefehl auf der Maschine aus, die du hinzufügen möchtest.
 
-Workflows definieren Vorbereitung und Cleanup. Der Standard-Setup-Workflow kopiert Cache-Daten, gemeinsame Templates, Tag-Templates und das benannte Template, bevor er Plugins lädt und den ausgewählten Configurator anwendet.
+Der Befehl installiert SimpleCloud, verbindet den Serverhost mit deinem Netzwerk und startet ihn. Die Voraussetzungen und den vollständigen Einrichtungsablauf findest du in der [Installationsanleitung](/de/manual/setup/installation).
 
-### Plugin-Loading
+Unter **Settings > Server Hosts** kannst du die Einstellungen eines Hosts anzeigen und ändern. Beim Konfigurieren einer Servergruppe wählst du aus, welche Hosts ihre Server ausführen dürfen.
 
-Der Serverhost kann konfigurierte Plugins aus mehreren Quellen laden:
+## Serverhost prüfen oder steuern
 
-| Quelle | Beschreibung |
-| ------ | ------------ |
-| Modrinth | Plugin- oder Mod-Versionen von Modrinth |
-| Hangar | PaperMC-Hangar-Projekte |
-| Spigot | SpigotMC-Ressourcen |
-| URL | Direkter HTTP(S)-Download |
-
-## Architektur
-
-```mermaid
-flowchart TB
-    subgraph Serverhost["Serverhost"]
-        NATS["NATS-Verbindung"]
-        KeepAlive["Keep-alive"]
-        FileBrowser["File-Browser-API"]
-
-        subgraph Workflow["Workflow Engine"]
-            Copy["copy/delete"]
-            Plugins["load-plugins"]
-            Config["configurate"]
-            Archives["compress/upload"]
-        end
-
-        subgraph Deploy["Deployment Manager"]
-            Screen["Screen/Tmux"]
-            Docker["Docker"]
-        end
-
-        subgraph Configs["Configurators"]
-            YAML["YML"]
-            JSON["JSON"]
-            Props["PROPERTIES"]
-            TOML["TOML"]
-            Text["TXT"]
-        end
-    end
-```
-
-## Runner-Modi
-
-### Screen oder Tmux
-
-Der lokale Runner startet Server als detached Prozesse über einen Terminal-Multiplexer.
+Führe diese Befehle im SimpleCloud-Installationsverzeichnis aus:
 
 ```bash
-sc start --runner screen
-```
-
-Mit `sc attach serverhost` kannst du dich an die Serverhost-Komponenten-Konsole anhängen.
-
-### Docker
-
-Der Docker-Runner startet jeden Server in einem eigenen Container. Nutze ihn, wenn du stärkere Prozessisolation und Docker-gesteuerte Ressourcenlimits möchtest.
-
-```bash
-sc start --runner docker
-```
-
-Docker muss auf der Serverhost-Maschine installiert sein.
-
-## Verzeichnisstruktur
-
-<Tree>
-  <Tree.Folder name="secrets" defaultOpen>
-    <Tree.File name="network-id.key" />
-    <Tree.File name="network-secret.key" />
-    <Tree.File name="serverhost-id.key" />
-  </Tree.Folder>
-  <Tree.Folder name="options" defaultOpen>
-    <Tree.Folder name="configurators">
-      <Tree.File name="paper_velocity.yml" />
-      <Tree.File name="velocity.yml" />
-    </Tree.Folder>
-    <Tree.File name="platform-mappings.yml" />
-  </Tree.Folder>
-  <Tree.Folder name="workflows" defaultOpen>
-    <Tree.Folder name="internal">
-      <Tree.File name="setup.yml" />
-      <Tree.File name="cleanup.yml" />
-    </Tree.Folder>
-  </Tree.Folder>
-  <Tree.Folder name="templates" defaultOpen>
-    <Tree.Folder name="_every">
-      <Tree.Folder name="every" />
-      <Tree.Folder name="every_proxy" />
-      <Tree.Folder name="every_server" />
-      <Tree.Folder name="every_paper" />
-      <Tree.Folder name="every_velocity" />
-    </Tree.Folder>
-    <Tree.Folder name="_tagged">
-      <Tree.Folder name="minigames" />
-    </Tree.Folder>
-    <Tree.Folder name="lobby" />
-    <Tree.Folder name="cache" />
-  </Tree.Folder>
-  <Tree.Folder name="running" />
-  <Tree.Folder name="logs" />
-</Tree>
-
-## Server-Vorbereitung
-
-Wenn eine Start-Anfrage eintrifft:
-
-```mermaid
-flowchart TD
-    A[Start-Anfrage empfangen] --> B[Lokales Deployment prüfen]
-    B --> C[Freien Port finden]
-    C --> D[Runtime-Kontext erstellen]
-    D --> E[Start-Workflows ausführen]
-
-    subgraph Setup["Standard-Setup-Workflow"]
-        E --> F[Cache wiederherstellen]
-        F --> G[_every Templates kopieren]
-        G --> H[Tagged Templates kopieren]
-        H --> I[Benanntes Template kopieren]
-        I --> J[Konfigurierte Plugins laden]
-        J --> K[Configurator anwenden]
-    end
-
-    K --> L[Startbefehl bauen]
-    L --> M[Mit Screen/Tmux oder Docker starten]
-    M --> N[Zustand an Controller melden]
-```
-
-Dynamische Gruppenserver nutzen temporäre Verzeichnisse unter `running/`. Persistente Server behalten ihr Laufzeitverzeichnis zwischen Neustarts.
-
-## Kommunikation
-
-Der Serverhost kommuniziert mit dem Controller über NATS und Controller-HTTP-APIs:
-
-| Kanal | Zweck |
-| ----- | ----- |
-| Start-Anfragen | Der Controller beauftragt einen bestimmten Serverhost mit einem Serverstart |
-| Keep-alive | Der Serverhost meldet Version, Laufzeit und installierte Java-Versionen |
-| Server-Events | Der Serverhost meldet Starting-, Stopped- und Cleanup-complete-Events |
-| Log-Weiterleitung | Der Serverhost leitet Serverlogs für Dashboard und CLI weiter |
-| File-Browser-API | Das Dashboard kann erlaubte Serverhost-Dateien anzeigen und bearbeiten |
-
-Jeder Serverhost synchronisiert außerdem den Controller-Zustand und stoppt lokale verwaiste Server, die nicht mehr zum Controller-Zustand gehören.
-
-## Setup-Optionen
-
-Serverhost-Setup verwendet die aktuellen CLI-Setup-Optionen:
-
-| Option | Beschreibung |
-| ------ | ------------ |
-| `--network` | Network-ID oder Slug |
-| `--install-dir` | Serverhost-Installationsverzeichnis |
-| `--host-name` | Anzeigename des Serverhosts |
-| `--max-memory` | Maximaler Speicher für Serverprozesse, zum Beispiel `80%` oder `32gb` |
-| `--start` / `--no-start` | SimpleCloud nach dem Setup starten oder Start überspringen |
-| `--auto-install-deps` / `--no-auto-install-deps` | Erforderliche Abhängigkeiten automatisch installieren oder Installation überspringen |
-| `--install` | Setup-Installables installieren, zum Beispiel `--install java:21` |
-| `-y, --yes` | Wo möglich nicht-interaktive Defaults verwenden |
-
-## Monitoring
-
-```bash
-# Serverhost-Status prüfen
+# Prüfen, ob der Serverhost läuft
 sc status serverhost
 
-# Serverhost-Logs anzeigen
-sc logs serverhost
+# Aktuelle Serverhost-Logs anzeigen
+sc logs serverhost --lines 200
 
-# Serverlog anzeigen
-sc server logs <group> <id>
+# Serverhost starten oder stoppen
+sc start serverhost
+sc stop serverhost
+
+# Serverhost neu starten und ein verfügbares Update installieren
+sc restart serverhost --update
 ```
 
-<Note>
-  Wenn ein Serverhost neu startet, vergleicht er lokale Deployments mit dem Controller-Zustand und hängt sich, wo möglich, wieder an Server an, die weiterhin ihm gehören.
-</Note>
+### Was mit laufenden Minecraft-Servern geschieht
 
-## Verwandte Themen
+Wenn du einen Serverhost stoppst oder neu startest, fragt die CLI, ob auch die Minecraft-Server auf dieser Maschine gestoppt werden sollen.
 
-- [Templates](/de/manual/setup/templates) - Template-Hierarchie und Dateilayout
-- [Configurators](/de/manual/configuration/configurators) - Server-Konfigurationssystem
-- [Workflows](/de/manual/configuration/workflows) - Server-Vorbereitungs- und Cleanup-Workflows
+- Wähle **Yes**, wenn du die Maschine offline nimmst oder die Minecraft-Server ebenfalls stoppen müssen.
+- Wähle **No** für kurze Wartungsarbeiten am Serverhost, wenn die Minecraft-Server online bleiben sollen. Nach dem Neustart verbindet sich der Serverhost wieder mit ihnen.
+
+<Warning>
+  Fahre die Maschine nicht herunter und starte sie nicht neu, solange Minecraft-Server darauf laufen. Stoppe sie zuerst, damit sie ihre Daten ordnungsgemäß speichern können.
+</Warning>
+
+## Probleme mit einem Serverhost beheben
+
+Wenn ein Serverhost offline ist oder ein Server nicht startet, prüfe Folgendes:
+
+- Der Serverhost ist online.
+- Er hat genügend freien Arbeitsspeicher für den Server.
+- Die erforderliche Java-Version ist installiert.
+- Die Gruppe darf diesen Serverhost verwenden.
+
+Führe `sc logs serverhost --lines 200` aus, um weitere Informationen zu erhalten. Du kannst außerdem die Logs des betroffenen Minecraft-Servers im Dashboard prüfen.
+
+## Mehrere Serverhosts verwenden
+
+Mit mehreren Serverhosts kann SimpleCloud Server auf die Maschinen verteilen, die für die jeweilige Gruppe zugelassen sind. Das erhöht die Kapazität, aber die Maschinen teilen sich kein Dateisystem.
+
+- Halte Templates, Workflows und Configurator-Dateien synchron, damit ein Server auf jedem zulässigen Host korrekt starten kann.
+- Solange ein Server läuft, befinden sich seine Dateien und Logs nur auf dem Serverhost, der ihn gestartet hat.
+- Die Dateien eines persistenten Servers bleiben auf dem ihm zugewiesenen Serverhost. Wenn du seinen Serverhost änderst, werden diese Dateien nicht verschoben.
+
+Folge der Anleitung [SimpleCloud auf mehreren Maschinen ausführen](/de/manual/setup/multi-root), um eine weitere Maschine hinzuzufügen und die gemeinsamen Dateien zu synchronisieren.
+
+## Verwandte Seiten
+
+- [Templates](/de/manual/setup/templates) erklärt, wie Serverdateien vorbereitet werden.
+- [Configurators](/de/manual/configuration/configurators) erklärt automatische Konfigurationsänderungen.
+- [Workflows](/de/manual/configuration/workflows) erklärt erweiterte Schritte zur Vorbereitung und Bereinigung.

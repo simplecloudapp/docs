@@ -1,50 +1,62 @@
 ---
-title: 'FAQ'
-description: 'Häufig gestellte Fragen zu SimpleCloud'
+title: "FAQ"
+description: "Antworten auf häufige Fragen zur Einrichtung und Verwendung von SimpleCloud."
 ---
 
 <AccordionGroup>
   <Accordion title="Was ist SimpleCloud?">
-    SimpleCloud ist ein Management-System für Minecraft-Server-Netzwerke mit Auto-Scaling, Dashboard und CLI.
+    Mit SimpleCloud kannst du ein Minecraft-Servernetzwerk über ein einziges
+    Dashboard oder den Befehl `sc` einrichten und verwalten.
 
-    Mehr erfahren in der [Übersicht](/de/manual/introduction/overview).
+    In der [SimpleCloud-Übersicht](/de/manual/introduction/overview) erfährst du,
+    wie dein Netzwerk organisiert wird.
   </Accordion>
 
-  <Accordion title="Welche Minecraft-Versionen werden unterstützt?">
-    SimpleCloud kann Java-Serverprozesse ausführen. Eingebaute Configurators fokussieren gängige Setups mit Paper, Spigot, Velocity, BungeeCord und Waterfall; andere Software kann eigene Templates und Configurators benötigen.
-
-    Blueprints für gängige Plattformen findest du in der [Gruppen-Dokumentation](/de/manual/setup/server-groups).
+  <Accordion title="Wo soll ich anfangen?">
+    Beginne mit der [Installationsanleitung](/de/manual/setup/installation). Sie
+    führt dich von der Anmeldung im Dashboard bis zur Verbindung deines ersten
+    Serverhosts.
   </Accordion>
 
-  <Accordion title="Brauche ich einen dedizierten Server?">
-    SimpleCloud läuft auf jedem Linux-System oder macOS (Entwicklung). Für Produktion wird ein dedizierter Server oder VPS empfohlen.
+  <Accordion title="Soll ich eine Servergruppe oder einen persistenten Server erstellen?">
+    Verwende eine **Servergruppe**, wenn alle Server dieselbe Einrichtung teilen
+    sollen und ihre lokalen Dateien einen Austausch nicht überdauern müssen.
+    Gruppen eignen sich gut für Lobbys, Minigames und Proxys.
 
-    Siehe [Installation](/de/manual/setup/installation) für Details.
+    Verwende einen **persistenten Server** für einen benannten Server, der seine
+    Dateien behält, beispielsweise einen SMP-, Skyblock- oder Build-Server.
+
+    Vergleiche die Optionen unter [Servergruppen](/de/manual/setup/server-groups)
+    und [Persistente Server](/de/manual/setup/persistent-servers).
   </Accordion>
 
-  <Accordion title="Wie funktioniert Auto-Scaling?">
-    Gruppen starten automatisch Server wenn Spieler beitreten und fahren inaktive Server herunter. Du konfigurierst Mindest-/Höchstzahlen und der Controller verwaltet den Rest.
+  <Accordion title="Welche Betriebssysteme kann ich verwenden?">
+    Dein Serverhost kann unter Linux oder macOS laufen. Linux wird für den
+    Produktivbetrieb empfohlen, während sich macOS für lokale Tests eignet.
+    Windows-Serverhosts werden noch nicht unterstützt.
 
-    Mehr unter [Gruppen](/de/manual/setup/server-groups).
+    Du kannst das Web-Dashboard von einem anderen Gerät aus verwenden.
+
+    Die Systemanforderungen findest du in der
+    [Installationsanleitung](/de/manual/setup/installation).
   </Accordion>
 
-  <Accordion title="Kann ich meine Weltdaten behalten?">
-    Ja - verwende einen [Persistenten Server](/de/manual/setup/persistent-servers) anstelle einer Gruppe. Diese behalten ihre Daten zwischen Neustarts.
+  <Accordion title="Welche Minecraft-Serversoftware kann ich verwenden?">
+    Wähle eine der Softwareoptionen aus, die das Dashboard anbietet. Wenn deine Software nicht aufgeführt ist, wähle **Custom** und fülle die erforderlichen Felder aus.
+
+    Folge den Schritten zum Erstellen einer [Servergruppe](/de/manual/setup/server-groups#servergruppe-erstellen)
+    oder eines [persistenten Servers](/de/manual/setup/persistent-servers#persistenten-server-erstellen).
   </Accordion>
 
-  <Accordion title="Was ist der Unterschied zwischen Plugins und Droplets?">
-    Plugins laufen innerhalb von Minecraft-Servern für In-Game-Features. Droplets sind unabhängige Dienste für Infrastruktur-Aufgaben.
-
-    Starte mit der [Plugin-Übersicht](/de/manual/plugin/overview).
+  <Accordion title="Benötige ich fortgeschrittene technische Kenntnisse?">
+    Für die grundlegende Einrichtung benötigst du keine fortgeschrittenen
+    technischen Kenntnisse. Du solltest ein Terminal öffnen und den vom
+    Dashboard bereitgestellten Befehl ausführen können. Für weiterführende
+    Anpassungen können Kenntnisse deiner Minecraft-Serversoftware erforderlich sein.
   </Accordion>
 
-  <Accordion title="Wie aktualisiere ich SimpleCloud?">
-    Nutze `simplecloud upgrade cli` für die CLI und `simplecloud upgrade` für unterstützte installierte Targets. Die CLI weist dich darauf hin, wenn sie zu weit hinter der neuesten Version liegt.
-
-    Mehr unter [Updates](/de/manual/introduction/updates).
+  <Accordion title="Wo erhalte ich Hilfe?">
+    Tritt dem [SimpleCloud Discord](https://discord.simplecloud.app) bei, um Hilfe
+    von der Community zu erhalten.
   </Accordion>
 </AccordionGroup>
-
-<Note>
-  Deine Frage nicht dabei? Tritt unserem [Discord](https://discord.simplecloud.app) bei.
-</Note>

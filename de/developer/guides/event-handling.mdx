@@ -1,156 +1,69 @@
 ---
-title: 'Events in Echtzeit behandeln'
-description: 'Auf Server-, Gruppen- und Persistent-Server-Änderungen mit der Events API reagieren'
+title: 'Auf Serververfügbarkeit reagieren'
+description: 'Führe deine Plugin-Logik aus, sobald ein Server verfügbar wird'
 ---
 
-Diese Anleitung zeigt Muster für die Echtzeit-Event-Behandlung in deinen Plugins.
+Verwende ein Server-Event, wenn dein Plugin seine Arbeit fortsetzen soll, sobald ein Server verfügbar wird. Ein Matchmaking- oder Routing-System kann damit beispielsweise Anfragen fortsetzen, die auf den Start eines Servers gewartet haben.
 
-## Einfache Event-Behandlung
+## Auf verfügbare Server warten
 
-### Events abonnieren
+Der Listener verwendet den `CloudApi`-Client, den dein Plugin bereits verwaltet, und benachrichtigt deinen Anwendungscode, sobald ein Server verfügbar wird:
 
-```java
-Subscription sub = api.event().server().onStarted(event -> {
-    System.out.println("Server gestartet: " + event.getServerId());
-});
+```java ServerAvailabilityListener.java
+package com.example;
 
-// Schließen wenn fertig
-sub.close();
-```
+import app.simplecloud.api.CloudApi;
+import app.simplecloud.api.event.Subscription;
+import app.simplecloud.api.server.ServerState;
 
-### Plugin-Lebenszyklus-Verwaltung
+public final class ServerAvailabilityListener implements AutoCloseable {
+    private final Subscription subscription;
 
-```java
-public class MeinPlugin extends JavaPlugin {
-    private CloudApi api;
-    private final List<Subscription> subscriptions = new ArrayList<>();
-
-    @Override
-    public void onEnable() {
-        api = CloudApi.create();
-        registerEvents();
-    }
-
-    @Override
-    public void onDisable() {
-        subscriptions.forEach(Subscription::close);
-        subscriptions.clear();
-    }
-
-    private void registerEvents() {
-        subscriptions.add(api.event().server().onStarted(this::onServerStarted));
-        subscriptions.add(api.event().server().onStopped(this::onServerStopped));
-        subscriptions.add(api.event().group().onUpdated(this::onGroupUpdated));
-    }
-
-    private void onServerStarted(ServerStartedEvent event) {
-        getLogger().info("Server gestartet: " + event.getServerId());
-    }
-
-    private void onServerStopped(ServerStoppedEvent event) {
-        getLogger().info("Server gestoppt: " + event.getServerId());
-    }
-
-    private void onGroupUpdated(GroupUpdatedEvent event) {
-        getLogger().info("Gruppe aktualisiert: " + event.getServerGroupId());
-    }
-}
-```
-
-## Gängige Event-Muster
-
-### Server anfordern, wenn eine Gruppe leer wird
-
-```java
-public void setupAutoStart(String groupName, int minimum) {
-    api.event().server().onStopped(event -> {
-        Server stopped = event.getServer();
-        if (!stopped.isFromGroup() || !groupName.equals(stopped.getGroup().getName())) {
-            return;
-        }
-
-        api.server().getServersByGroup(groupName).thenAccept(servers -> {
-            long running = servers.stream()
-                .filter(server -> server.getState() != ServerState.STOPPING)
-                .filter(server -> server.getState() != ServerState.CLEANUP)
-                .count();
-
-            if (running < minimum) {
-                api.group().getGroupByName(groupName).thenCompose(group -> {
-                    if (group == null) {
-                        return CompletableFuture.failedFuture(
-                            new IllegalArgumentException("Gruppe nicht gefunden: " + groupName));
-                    }
-                    return api.group().requestServerStart(group);
-                });
+    public ServerAvailabilityListener(
+        CloudApi cloudApi,
+        Runnable onServerAvailable
+    ) {
+        subscription = cloudApi.event().server().onStateChanged(event -> {
+            if (event.getNewState() == ServerState.AVAILABLE) {
+                onServerAvailable.run();
             }
         });
-    });
+    }
+
+    @Override
+    public void close() {
+        subscription.close();
+    }
 }
 ```
 
-### Alle Status-Änderungen loggen
+Erstelle den Listener beim Start deines Plugins und verknüpfe ihn mit der Arbeit, die auf einen verfügbaren Server wartet:
 
 ```java
-public void setupStateLogging() {
-    api.event().server().onStateChanged(event -> {
-        String message = String.format("[%s] %s -> %s",
-            event.getServerId(),
-            event.getOldState(),
-            event.getNewState());
-
-        logger.info(message);
-    });
-}
+serverAvailability = new ServerAvailabilityListener(
+    cloudApi,
+    () -> matchmaking.refreshAvailableServers()
+);
 ```
 
-### Staff bei Server-Crash benachrichtigen
+Behandle den Callback als Signal, wartende Arbeit erneut zu versuchen oder die deinem Routing-System bekannten Ziele zu aktualisieren.
+
+<Note>
+Events melden nur Änderungen, die nach dem Abonnieren eintreten. Wenn dein Plugin beim Start auch den aktuellen Zustand benötigt, rufe ihn separat über die [Servers API](/de/developer/api/servers) ab.
+</Note>
+
+Wenn der Callback den Zustand von Bukkit, Folia, Velocity oder BungeeCord verändert, plane diese plattformspezifische Arbeit über den Scheduler der jeweiligen Plattform ein.
+
+## Listener schließen
+
+Schließe den Listener beim Beenden deines Plugins, bevor du den gemeinsam verwendeten `CloudApi`-Client schließt:
 
 ```java
-public void setupCrashNotifications() {
-    api.event().server().onStopped(event -> {
-        if (!event.getCrashed()) return;
-
-        notifyStaff(Component.text("[Alert] Server abgestürzt: " + event.getServerId())
-            .color(NamedTextColor.RED));
-    });
+if (serverAvailability != null) {
+    serverAvailability.close();
 }
 ```
 
-## Events filtern
+Damit werden zukünftige Callbacks beendet. Der Listener schließt den gemeinsam verwendeten `CloudApi`-Client nicht.
 
-### Nach Gruppe filtern
-
-Server Events werden sowohl für Gruppen-Server als auch für persistente Server ausgelöst. Nutze das enthaltene `Server`-Model, um persistente Server-Instanzen zu überspringen.
-
-```java
-public void watchGroup(String groupName) {
-    api.event().server().onStarted(event -> {
-        Server server = event.getServer();
-        if (server.isFromGroup() && groupName.equals(server.getGroup().getName())) {
-            handleGroupServerStart(event);
-        }
-    });
-}
-```
-
-## Einmalige Events
-
-### Auf bestimmten Server warten
-
-```java
-public CompletableFuture<Void> waitForServer(String serverId) {
-    CompletableFuture<Void> future = new CompletableFuture<>();
-
-    Subscription sub = api.event().server().onStateChanged(event -> {
-        if (event.getServerId().equals(serverId) &&
-            event.getNewState() == ServerState.AVAILABLE) {
-            future.complete(null);
-        }
-    });
-
-    future.whenComplete((result, error) -> sub.close());
-
-    return future;
-}
-```
+In der [Referenz zur Events API](/de/developer/api/events) findest du die weiteren Event-Kategorien und Callback-Typen.

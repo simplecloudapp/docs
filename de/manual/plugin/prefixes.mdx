@@ -1,6 +1,6 @@
 ---
 title: 'Prefixes'
-description: 'Erfahre, wie das Prefixes Plugin Ranggruppen, Chat-Formatierung, Tablist-Einträge, Name Tags und die Synchronisierung zwischen Servern verwaltet.'
+description: 'Erfahre, wie das Prefixes-Plugin Ranggruppen, Chatformatierung, Tablist-Einträge, Namensanzeigen und die serverübergreifende Synchronisierung verwaltet'
 tag: 'Server'
 ---
 
@@ -8,13 +8,14 @@ import { DependencySnippet } from "/snippets/DependencySnippet.jsx";
 
 ## Übersicht
 
-Das Prefixes Plugin verwaltet die Rang Anzeige auf deinen Servern. Jeder Spieler gehört zu einer Gruppe, und diese Gruppe bestimmt, wie der Spieler im Chat, in der Tablist und über seinem Kopf dargestellt wird.
+Das Prefixes-Plugin verwaltet die Ranganzeigen auf deinen Servern. Jeder Spieler gehört zu einer Gruppe. Diese Gruppe bestimmt, wie der Spieler im Chat, in der Tablist und über seinem Kopf dargestellt wird.
 
 Das Plugin:
-- Wendet Prefixes, Suffixes, Farben und Anzeigenamen auf Chat, Tablist und Name Tags an
+
+- Wendet Präfixe, Suffixe, Farben und Anzeigenamen auf Chat, Tablist und Namensanzeigen an
 - Liest Gruppen entweder aus der `config.yml` oder aus LuckPerms
-- Synchronisiert Chat Nachrichten und Tablist Einträge zwischen den Servern deines Netzwerks
-- Bietet eine API, um Prefix Daten auszulesen und eigene Gruppen zu registrieren
+- Synchronisiert Chatnachrichten und Tablist-Einträge zwischen den Servern deines Netzwerks
+- Bietet eine API, um Präfixdaten auszulesen und eigene Gruppen zu registrieren
 
 ## Unterstützte Software
 
@@ -25,16 +26,16 @@ Das Plugin:
 | Fabric        | 🔄 Geplant     |
 
 <Note>
-  Du möchtest eine andere Server-Software unterstützen? Erstelle einfach einen Pull Request auf
-  [GitHub](https://github.com/simplecloudapp/prefixes-plugin/pulls)!
+  Du möchtest eine andere Server-Software unterstützen? Reiche auf
+  [GitHub](https://github.com/simplecloudapp/prefixes-plugin/pulls) einen Pull Request ein!
 </Note>
 
 ## Schnelle Einrichtung
 
-1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases) herunter
-2. Packe es in den Plugins Ordner deines Server Templates
-3. Starte deinen Server
-4. Passe die `config.yml` und `messages.yml` nach deinen Wünschen an
+1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases) herunter.
+2. Lege es im `plugins/`-Ordner deines Server-Templates ab.
+3. Starte deinen Server.
+4. Passe `config.yml` und `messages.yml` an deine Anforderungen an.
 
 ---
 
@@ -149,13 +150,13 @@ groups:
   chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
 ```
 
-**LuckPerms Zuordnung**
+**LuckPerms-Zuordnung**
 
 Wenn `source` auf `LUCKPERMS` steht, kommt jeder Wert aus der LuckPerms-Gruppe:
 
 | LuckPerms-Wert      | Prefixes-Wert  | Standard, wenn nicht gesetzt                                        |
 | ------------------- | -------------- | ------------------------------------------------------------------- |
-| Gruppenname         | `name`         | entfällt                                                            |
+| Gruppenname         | `name`         | –                                                                   |
 | Gruppengewicht      | `priority`     | `0`                                                                 |
 | Gruppen-Prefix      | `prefix`       | leer                                                                |
 | Gruppen-Suffix      | `suffix`       | leer                                                                |
@@ -177,7 +178,7 @@ Hier findest du alle verfügbaren Platzhalter.
 
 | Platzhalter     | Verfügbar in                  | Beschreibung                                       |
 | --------------- | ----------------------------- | -------------------------------------------------- |
-| `<prefix>`      | `chat-format`                 | Prefix der Gruppe des Spielers                     |
+| `<prefix>`      | `chat-format`                 | Präfix der Gruppe des Spielers                     |
 | `<suffix>`      | `chat-format`                 | Suffix der Gruppe des Spielers                     |
 | `<color>`       | `chat-format`, `display-name` | Teamfarbe der Gruppe, wird als Formatierung gesetzt |
 | `<playername>`  | `chat-format`, `display-name` | Reiner Spielername                                 |
@@ -186,8 +187,8 @@ Hier findest du alle verfügbaren Platzhalter.
 | `<message>`     | `chat-format`                 | Inhalt der Chat-Nachricht                          |
 
 <Tip>
-  Nutze `<color>`, statt denselben Hex Code in jeden Wert zu schreiben. Die Farbe wird als Style
-  gesetzt, alles danach übernimmt sie automatisch.
+  Verwende `<color>`, anstatt denselben Hex-Code in jeden Wert zu schreiben. Die Farbe wird als
+  Formatierung angewendet, sodass alle folgenden Inhalte die Gruppenfarbe übernehmen.
 </Tip>
 
 #### Funktionsschalter
@@ -231,7 +232,7 @@ Du kannst mehrere Gruppennamen und persistente Server-IDs kombinieren. Damit zwe
 
 Über die API liest du die Prefix-Daten eines Spielers aus und registrierst eigene Gruppen.
 
-### Dependency
+### Abhängigkeit
 
 <DependencySnippet
   language="de"
@@ -450,9 +451,9 @@ api.addGroup(new VipGroup()).thenAccept(created -> {
 
 ---
 
-## Best Practices
+## Bewährte Vorgehensweisen
 
 - Vergib eindeutige Prioritäten, damit die Reihenfolge in der Tablist vorhersehbar bleibt
 - Nutze für alle Gruppen dasselbe `chat-format`, außer ein Rang soll im Chat bewusst auffallen
-- Verwende `<color>` in `display-name` und `chat-format`, statt Hex Codes zu wiederholen
+- Verwende `<color>` in `display-name` und `chat-format`, anstatt Hex-Codes zu wiederholen
 - Lass `default-group` auf eine Gruppe mit leerer `permission` zeigen, damit jeder Spieler eine Gruppe bekommt

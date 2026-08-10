@@ -1,121 +1,112 @@
 ---
 title: 'Configurators'
-description: 'Automatische Serverkonfiguration basierend auf Server-Software'
+description: 'Passe Software-Konfigurationsdateien an, bevor ein Server startet'
 ---
 
-## Was Configurators tun
+Bevor ein Server startet, schreibt SimpleCloud mit einem Configurator Werte wie den zugewiesenen Port und das Spielerlimit in die Konfigurationsdateien der Server-Software. Wenn du eine Gruppe oder einen persistenten Server erstellst, wählt das Dashboard einen eingebauten Configurator aus. Für eine Standardkonfiguration musst du daher nichts weiter tun.
 
-Configurators bearbeiten Server-Software-Dateien während der Vorbereitung. Sie setzen Werte wie Ports, Forwarding-Secrets, Online-Mode und Spielerlimits, bevor der Serverprozess startet.
+Erstelle einen eigenen Configurator, wenn du Einstellungen hinzufügen möchtest, die der eingebaute Configurator nicht verwaltet. Verwende stattdessen [Templates](/de/manual/setup/templates), wenn du nur dieselben Dateien auf deine Server kopieren möchtest.
 
-Der Serverhost lädt Configurators aus `options/configurators/{name}.yml`. Eine Gruppe oder ein persistenter Server wählt den Configurator über die Blueprint-Einstellungen.
+<Warning>
+  Ein eigener Configurator ersetzt den ausgewählten eingebauten Configurator. Behalte die eingebauten Einstellungen bei, die dein Server benötigt – insbesondere den Port und die Proxy-Einstellungen.
+</Warning>
 
-## Configurator-Struktur
+## Eigenen Configurator erstellen
 
-Jeder Configurator hat eine `paths`-Liste. Jeder Eintrag nennt eine Datei, den Dateityp und die Daten, die geschrieben oder gemergt werden sollen.
+Dieses Beispiel erweitert den Configurator **Paper/Spigot Standalone** um den Schwierigkeitsgrad und die Sichtweite. Wenn dein Server über einen Proxy verbunden wird, beginne stattdessen mit dem passenden Proxy-Configurator.
 
-```yaml
-# options/configurators/paper_velocity.yml
-paths:
-  - path: "server.properties"
-    type: "PROPERTIES"
-    data:
-      server-ip: "0.0.0.0"
-      server-port: %port%
-      max-players: %max-players%
-      online-mode: false
+<Steps>
+  <Step title="Configurator-Datei erstellen">
+    Erstelle auf dem Serverhost die Datei `options/configurators/paper_survival.yml`:
 
-  - path: "config/paper-global.yml"
-    type: "YML"
-    data:
-      proxies:
-        velocity:
-          enabled: "true"
-          online-mode: "true"
-          secret: "%forwarding-secret%"
-```
+    ```yaml options/configurators/paper_survival.yml
+    paths:
+      - path: "server.properties"
+        type: "PROPERTIES"
+        data:
+          server-ip: "0.0.0.0"
+          server-port: %port%
+          max-players: %max-players%
+          online-mode: true
+          difficulty: "hard"
+          view-distance: 10
+    ```
 
-## Unterstützte Dateitypen
+    Jeder Wert unter `path` ist relativ zum Verzeichnis des jeweiligen Servers. Die Datei kann mehrere `path`-Einträge enthalten, wenn du mehr als eine Datei konfigurieren möchtest.
+  </Step>
 
-| Typ | Verwendung |
-| --- | ---------- |
-| `YML` | YAML-Dateien wie `config.yml`, `spigot.yml` oder `paper-global.yml` |
-| `PROPERTIES` | Java-`.properties`-Dateien wie `server.properties` |
-| `TOML` | TOML-Dateien wie `velocity.toml` |
-| `JSON` | JSON-Konfigurationsdateien |
-| `TXT` | Textdateien wie `forwarding.secret` |
+  <Step title="Configurator auswählen">
+    Öffne die Gruppe oder den persistenten Server im Dashboard und gehe zu **Settings > Blueprint**. Wähle unter **Software Configuration** die Option **Custom**, gib `paper_survival` ein und speichere die Änderung.
+  </Step>
 
-## Platzhalter
+  <Step title="Änderungen anwenden">
+    Starte die Gruppe oder den persistenten Server neu. SimpleCloud wendet den Configurator vor dem Start auf jeden Server an, der diesen Blueprint verwendet.
+  </Step>
+</Steps>
 
-Configurators verwenden Prozent-Platzhalter. Der Serverhost ersetzt sie, bevor er die YAML-Datei liest.
+<Warning>
+  Wenn der Server auf mehreren Serverhosts ausgeführt werden kann, füge die Configurator-Datei jedem dieser Serverhosts hinzu.
+</Warning>
 
-| Platzhalter | Beschreibung |
-| ----------- | ------------ |
-| `%port%` | Zugewiesener Server-Port |
-| `%group%` | Gruppenname |
-| `%numerical-id%` | Numerische Server-ID innerhalb der Gruppe |
-| `%type%` | Servertyp |
-| `%min-memory%` | Minimaler Speicher in MB |
-| `%max-memory%` | Maximaler Speicher in MB |
-| `%max-players%` | Maximale Spielerzahl |
-| `%forwarding-secret%` | Proxy-Forwarding-Secret |
-| `%velocity-config-version%` | Velocity-Config-Version, wenn verfügbar |
+## Configurator-Referenz
 
-Server- und Blueprint-Properties können ebenfalls als Platzhalter bereitgestellt werden. Halte eigene Property-Namen stabil, damit Templates und Configurators nicht auseinanderlaufen.
+Jeder Eintrag unter `paths` gibt eine Konfigurationsdatei, ihr Format und die anzuwendenden Werte an.
 
-## Velocity-Beispiel
+<AccordionGroup>
+  <Accordion title="Unterstützte Dateitypen">
+    | Typ | Dateiformat |
+    | --- | --- |
+    | `YML` | YAML |
+    | `JSON` | JSON |
+    | `TOML` | TOML |
+    | `PROPERTIES` | Java-Properties |
+    | `TXT` | Textdatei |
 
-```yaml
-# options/configurators/velocity.yml
-paths:
-  - path: "velocity.toml"
-    type: "TOML"
-    data:
-      bind: "0.0.0.0:%port%"
-      show-max-players: %max-players%
-      forwarding-secret-file: "forwarding.secret"
-      player-info-forwarding-mode: "MODERN"
+    Strukturierte Dateien behalten Werte bei, die nicht im Configurator angegeben sind. `TXT` ersetzt die gesamte Datei.
+  </Accordion>
 
-  - path: "forwarding.secret"
-    type: "TXT"
-    data: "%forwarding-secret%"
-```
+  <Accordion title="Verfügbare Platzhalter">
+    Verwende Platzhalter, wenn ein Wert von der Serverinstanz abhängt.
 
-## Eingebaute Configurators
+    | Platzhalter | Wert |
+    | --- | --- |
+    | `%port%` | Zugewiesener Port |
+    | `%group%` | Name der Gruppe oder des persistenten Servers |
+    | `%numerical-id%` | Instanznummer |
+    | `%type%` | Server- oder Proxy-Typ |
+    | `%min-memory%` | Minimaler Arbeitsspeicher in MB |
+    | `%max-memory%` | Maximaler Arbeitsspeicher in MB |
+    | `%max-players%` | Spielerlimit |
+    | `%forwarding-secret%` | Forwarding-Secret des Proxys |
+    | `%velocity-config-version%` | Velocity-Konfigurationsversion |
 
-| Configurator | Zweck |
-| ------------ | ----- |
-| `spigot` | Spigot oder Paper hinter einem BungeeCord-ähnlichen Proxy |
-| `spigot_standalone` | Eigenständiger Spigot- oder Paper-Server |
-| `paper_velocity` | Paper hinter Velocity Modern Forwarding |
-| `velocity` | Velocity-Proxy |
-| `bungeecord` | BungeeCord-Proxy |
-| `waterfall` | Waterfall-Proxy |
-| `luckperms` | LuckPerms-Storage-Konfiguration |
+    Setze Platzhalter in Anführungszeichen, wenn ihr Ergebnis Text sein muss:
 
-## Configurator anwenden
+    ```yaml
+    server-name: "%group%"
+    server-port: %port%
+    ```
 
-Die Standard-Setup-Action ruft `configurate` mit dem konfigurierten Blueprint-Wert auf:
-
-```yaml
-- name: configurate-server
-  uses: simplecloud/configurate
-  with:
-    configurator: "{{ runtime.configurator }}"
-    dir: "{{ runtime.server-dir }}"
-```
+    Eigene Properties der Gruppe oder des persistenten Servers stehen ebenfalls als Platzhalter zur Verfügung. Eine Property namens `motd` kannst du beispielsweise als `%motd%` verwenden.
+  </Accordion>
+</AccordionGroup>
 
 ## Fehlerbehebung
 
 <AccordionGroup>
-  <Accordion title="Konfiguration wird nicht angewendet">
-    Prüfe, ob der Blueprint den erwarteten Configurator-Namen auswählt und ob `options/configurators/{name}.yml` auf dem Serverhost existiert.
+  <Accordion title="Der Configurator wird nicht gefunden">
+    Prüfe, ob `options/configurators/{name}.yml` auf jedem Serverhost vorhanden ist, auf dem der Server ausgeführt werden kann. Der im Dashboard angegebene eigene Name muss dem Dateinamen ohne `.yml` entsprechen.
   </Accordion>
 
-  <Accordion title="Ein Platzhalter bleibt in der generierten Datei">
-    Verwende Prozent-Syntax wie `%port%`, nicht `{{port}}`. Prüfe außerdem, ob die Runtime den verwendeten Platzhalter wirklich bereitstellt.
+  <Accordion title="Eine Einstellung ändert sich nicht">
+    Starte zuerst den Server neu. Wenn sich der Wert weiterhin nicht ändert, prüfe, ob `path` relativ zum Serververzeichnis ist, `type` dem Dateiformat entspricht und die Einstellung korrekt unter `data` eingerückt ist.
   </Accordion>
 
-  <Accordion title="Der Configurator kann nicht gelesen werden">
-    Prüfe, ob jeder Eintrag `path`, großgeschriebenes `type` und `data` enthält. `type` muss einer von `YML`, `PROPERTIES`, `TOML`, `JSON` oder `TXT` sein.
+  <Accordion title="Ein Platzhalter bleibt in der Datei stehen">
+    Prüfe die Schreibweise des Platzhalters und verwende die Prozent-Syntax, zum Beispiel `%port%`. Füge für einen eigenen Platzhalter der Gruppe oder dem persistenten Server eine Property mit demselben Namen hinzu.
+  </Accordion>
+
+  <Accordion title="Der Server startet nach Auswahl des Configurators nicht">
+    Prüfe das Serverhost-Log auf einen Configurator-Fehler. Häufige Ursachen sind ungültiges YAML, ein nicht unterstützter `type` oder ein Wert, dessen Struktur nicht zur Zieldatei passt.
   </Accordion>
 </AccordionGroup>
