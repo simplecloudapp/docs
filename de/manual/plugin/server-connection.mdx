@@ -1,12 +1,10 @@
 ---
-title: 'Server-Verbindung'
-description: 'Erfahre, wie das Server-Connection-Plugin von SimpleCloud Server registriert, Fallbacks und Join-Routing steuert und Navigationsbefehle bereitstellt'
+title: 'Server Connection'
+description: 'Registriere SimpleCloud-Server auf einem Proxy und steuere Beitritte, Fallbacks und Navigationsbefehle'
 tag: 'Proxy'
 ---
 
-## Übersicht
-
-Das Server-Connection-Plugin ist das zentrale Proxy-Plugin für SimpleCloud-v3-Netzwerke. Es hält die auf deinem Proxy registrierten Backend-Server mit der Server-Registry von SimpleCloud synchron und übernimmt das gesamte Spieler-Routing.
+Server Connection hält die auf einem Proxy registrierten Backend-Server mit SimpleCloud synchron. Es leitet Spieler beim Beitritt, beim Serverwechsel und bei einem Fallback weiter.
 
 Das Plugin:
 
@@ -14,30 +12,44 @@ Das Plugin:
 - Leitet Spieler beim Betreten des Netzwerks auf den richtigen Server weiter
 - Leitet Spieler auf Fallback-Server um, wenn ihr aktueller Server nicht mehr verfügbar ist
 - Bietet konfigurierbare Navigationsbefehle, mit denen Spieler den Server wechseln können
-- Unterstützt den flexiblen Abgleich von Servernamen über konfigurierbare Operationen
+- Gleicht registrierte Servernamen exakt, nach Präfix oder Suffix sowie mit Glob-, Regex- und Zahlenregeln ab
 
 ## Unterstützte Software
 
-| Software   | Support        |
+| Software   | Unterstützung  |
 | ----------- | -------------- |
-| Velocity    | ✅ Vollständig |
-| BungeeCord  | ✅ Vollständig |
-| Waterdog PE | ✅ Vollständig |
-| Gate        | 🔄 Geplant     |
+| Velocity | Vollständig |
+| BungeeCord | Vollständig |
+| Waterdog PE | Vollständig |
+| Gate | Geplant |
 
-<Note>
-  Du möchtest eine andere Proxy-Software unterstützen? Reiche auf
-  [GitHub](https://github.com/simplecloudapp/server-connection-plugin/pulls) einen Pull Request ein!
-</Note>
+## Plugin installieren
 
-## Schnelle Einrichtung
+<Steps>
+  <Step title="Proxy-Plugins installieren">
+    Lade Server Connection von [GitHub](https://github.com/simplecloudapp/server-connection-plugin/releases) herunter und lege die JAR-Datei im Ordner `plugins/` des Proxy-Templates ab. Die Standard-Templates enthalten `simplecloud-api` bereits. Füge es bei einem eigenen Template über die Einstellung **Plugins** des Ziels oder über die CLI hinzu.
+  </Step>
 
-1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/server-connection-plugin/releases) herunter.
-2. Lege es im `plugins/`-Ordner deines Proxy-Templates ab.
-3. Starte deinen Proxy-Server.
-4. Passe `config.yml`, `commands.yml` und `messages.yml` an deine Anforderungen an.
+  <Step title="Konfiguration erzeugen">
+    Starte einen passenden Proxy. Das Plugin legt `config.yml`, `commands.yml` und `messages.yml` unter `plugins/simplecloud-connection/` an.
+  </Step>
 
----
+  <Step title="Lobby-Server abgleichen">
+    Die Standardverbindung wählt Proxy-Registrierungsnamen aus, die mit `lobby` beginnen. Verwendet deine Lobby-Gruppe einen anderen Namen, ändere die Verbindung `lobby` und verwende denselben Namen unter `network-join-targets`, `fallback` und in `commands.yml`.
+  </Step>
+
+  <Step title="Konfiguration ins Template übernehmen">
+    Kopiere bei einem Gruppen-Proxy `plugins/simplecloud-connection/` vor dem Stoppen an denselben Pfad im Template. Unter [Templates](/de/manual/setup/templates) findest du den vollständigen Ablauf.
+  </Step>
+
+  <Step title="Proxy neu starten und testen">
+    Starte den Proxy nach Änderungen an der Registrierung oder an Spielerbefehlen neu. Betritt das Netzwerk, um das erste Ziel zu testen, und führe anschließend von einem anderen Backend `/lobby` aus. Für Fallbacks verwendet der Proxy dieselbe Verbindung.
+  </Step>
+</Steps>
+
+<Warning>
+  Mit `registration.enabled: true` ersetzt Server Connection die Liste der registrierten Proxy-Server durch die SimpleCloud-Server. Trage jedes externe Backend unter `registration.additional-servers` ein oder setze die Registrierung auf `false`, wenn ein anderes Plugin die Liste verwaltet.
+</Warning>
 
 ## Konfiguration
 
@@ -212,16 +224,14 @@ rules:
 
 Regeln werden der Reihe nach abgearbeitet. Wenn eine Regel fehlschlägt und keine `bypass-permission` greift, wird die komplette Verbindung übersprungen.
 
-#### Prioritäten & Fallback-Auflösung
+#### Prioritäten und Fallback-Auflösung
 
 Sowohl `network-join-targets` als auch `fallback` unterstützen mehrere Zielverbindungen mit Prioritäten:
 
-- Zielverbindungen werden von der **höchsten zur niedrigsten Priorität** abgearbeitet.
-- Haben mehrere Ziele die gleiche Priorität, wird eines davon **zufällig** ausgewählt.
-- Wenn ein Ziel gerade keinen verfügbaren Server hat, wird automatisch die nächstniedrigere Priorität versucht.
-- Die optionale `from`-Liste bei Fallbacks beschränkt die Weiterleitung auf Spieler, die von ganz bestimmten Servern kommen.
-
----
+- Zielverbindungen werden von der **höchsten zur niedrigsten Priorität** abgearbeitet
+- Haben mehrere Ziele die gleiche Priorität, wird eines davon **zufällig** ausgewählt
+- Hat ein Ziel keinen verfügbaren Server, wird automatisch die nächstniedrigere Priorität versucht
+- Die optionale `from`-Liste beschränkt einen Fallback auf Spieler, die von bestimmten Servern kommen
 
 ### commands.yml
 
@@ -248,4 +258,37 @@ commands:
 
 Befehle folgen derselben Logik wie `network-join-targets` und `fallback`.
 
----
+Änderungen an Verbindungsabgleichen, Regeln, Beitrittszielen, Fallbacks und Nachrichten kannst du mit diesem Befehl laden:
+
+```text
+/connection reload
+```
+
+Starte den Proxy nach jeder Änderung an `commands.yml` neu. Der Reload liest die Datei zwar ein, bereits registrierte Proxy-Befehle behalten aber ihre bisherigen Einstellungen. Starte ebenfalls nach Änderungen an `registration.additional-servers` oder den Registrierungsmustern neu, damit der Proxy seine Serverliste neu aufbaut.
+
+## Berechtigungen
+
+| Berechtigung | Beschreibung |
+| ------------ | ------------ |
+| `simplecloud.connection.reload` | `/connection reload` verwenden |
+| Wert aus `commands.yml` | Den jeweiligen Navigationsbefehl verwenden; ein leerer Wert erlaubt ihn allen Spielern |
+
+## Fehlerbehebung
+
+<AccordionGroup>
+  <Accordion title="Spieler betreten den Proxy, erhalten aber keinen Server">
+    Prüfe, ob `network-join-targets.enabled` auf `true` steht, die genannten Verbindungen existieren und jeder Matcher mindestens einen registrierten Server auswählt. Der Standard-Matcher erwartet Registrierungsnamen, die mit `lobby` beginnen.
+  </Accordion>
+
+  <Accordion title="Ein neuer Navigationsbefehl existiert nicht">
+    Starte den Proxy nach jeder Änderung an `commands.yml` neu. `/connection reload` liest die Datei, aktualisiert oder registriert aber keine bereits laufenden Proxy-Befehle.
+  </Accordion>
+
+  <Accordion title="Ein externes Backend ist vom Proxy verschwunden">
+    Trage es unter `registration.additional-servers` ein und starte den Proxy neu. Bei aktivierter Registrierung baut Server Connection die Liste der Proxy-Server beim Start neu auf.
+  </Accordion>
+
+  <Accordion title="Eine Subdomain-Route verwendet immer das normale Beitrittsziel">
+    Verwende den vollständigen Hostnamen in `address.routes`, richte dessen DNS auf den Proxy und prüfe, ob `target-connection` eine vorhandene Verbindung mit einem verfügbaren Server bezeichnet. Wildcards und Verbindungsregeln gelten nicht für Subdomain-Routen.
+  </Accordion>
+</AccordionGroup>

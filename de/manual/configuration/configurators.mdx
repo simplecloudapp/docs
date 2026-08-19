@@ -3,12 +3,12 @@ title: 'Configurators'
 description: 'Passe Software-Konfigurationsdateien an, bevor ein Server startet'
 ---
 
-Bevor ein Server startet, schreibt SimpleCloud mit einem Configurator Werte wie den zugewiesenen Port und das Spielerlimit in die Konfigurationsdateien der Server-Software. Wenn du eine Gruppe oder einen persistenten Server erstellst, wählt das Dashboard einen eingebauten Configurator aus. Für eine Standardkonfiguration musst du daher nichts weiter tun.
+Vor jedem Serverstart schreibt ein Configurator Werte wie den zugewiesenen Port und das Spielerlimit in die Konfigurationsdateien der Serversoftware. Wenn du eine Gruppe oder einen persistenten Server erstellst, wählt das Dashboard einen eingebauten Configurator aus. Für die Standardkonfiguration musst du nichts weiter einrichten.
 
 Erstelle einen eigenen Configurator, wenn du Einstellungen hinzufügen möchtest, die der eingebaute Configurator nicht verwaltet. Verwende stattdessen [Templates](/de/manual/setup/templates), wenn du nur dieselben Dateien auf deine Server kopieren möchtest.
 
 <Warning>
-  Ein eigener Configurator ersetzt den ausgewählten eingebauten Configurator. Behalte die eingebauten Einstellungen bei, die dein Server benötigt – insbesondere den Port und die Proxy-Einstellungen.
+  Ein eigener Configurator ersetzt den ausgewählten eingebauten Configurator. Übernimm daraus alle Einstellungen, die dein Server benötigt. Dazu gehören insbesondere der Port und die Proxy-Einstellungen.
 </Warning>
 
 ## Eigenen Configurator erstellen
@@ -32,7 +32,7 @@ Dieses Beispiel erweitert den Configurator **Paper/Spigot Standalone** um den Sc
           view-distance: 10
     ```
 
-    Jeder Wert unter `path` ist relativ zum Verzeichnis des jeweiligen Servers. Die Datei kann mehrere `path`-Einträge enthalten, wenn du mehr als eine Datei konfigurieren möchtest.
+    Jeder Wert unter `path` verweist auf eine Datei relativ zum jeweiligen Serververzeichnis. Ein Configurator kann mehrere `path`-Einträge enthalten und damit mehrere Dateien ändern.
   </Step>
 
   <Step title="Configurator auswählen">
@@ -88,6 +88,12 @@ Jeder Eintrag unter `paths` gibt eine Konfigurationsdatei, ihr Format und die an
     ```
 
     Eigene Properties der Gruppe oder des persistenten Servers stehen ebenfalls als Platzhalter zur Verfügung. Eine Property namens `motd` kannst du beispielsweise als `%motd%` verwenden.
+
+    Verwende eine [Secret-Referenz](/de/manual/configuration/secrets) als Configurator-Wert, um ein Passwort, Token oder einen anderen vertraulichen Wert einzusetzen:
+
+    ```yaml
+    password: "{{ secrets.DATABASE_PASSWORD }}"
+    ```
   </Accordion>
 </AccordionGroup>
 

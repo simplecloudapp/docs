@@ -4,13 +4,11 @@ description: "Use SimpleCloud's in-game proxy commands for groups, servers, and 
 tag: 'Proxy'
 ---
 
-## Overview
-
 The Cloud Command plugin adds proxy commands for day-to-day network operations. You can inspect groups and servers, start and stop group servers, move players, and send player messages.
 
 The root command is available as `/cloud`, `/sc`, and `/simplecloud`.
 
-## Supported Software
+## Supported software
 
 | Software   | Plugin Support |
 | ---------- | -------------- |
@@ -18,12 +16,31 @@ The root command is available as `/cloud`, `/sc`, and `/simplecloud`.
 | BungeeCord | Yes            |
 | Gate       | Planned        |
 
-## Quick Setup
+## Install the plugin
 
-1. Download the plugin from [GitHub](https://github.com/simplecloudapp/command-plugin/releases).
-2. Place it in your proxy template's `plugins/` folder.
-3. Make sure the `simplecloud-api` plugin is installed on the proxy.
-4. Start the proxy once to generate the message configuration.
+<Steps>
+  <Step title="Install Cloud Command on the proxy">
+    Download Cloud Command from [GitHub](https://github.com/simplecloudapp/command-plugin/releases) and place it in the proxy template's `plugins/` folder. Standard SimpleCloud templates already include `simplecloud-api`; add it through the target's **Plugins** setting or the CLI if you use a custom template.
+  </Step>
+
+  <Step title="Generate the message file">
+    Start a matching proxy once. Cloud Command creates `plugins/simplecloud-command/messages.yml` in the running proxy directory.
+  </Step>
+
+  <Step title="Keep the message file in the template">
+    For a group proxy, copy `plugins/simplecloud-command/messages.yml` from the running proxy to the same path in its template before stopping it. Files left only in a temporary proxy directory disappear when that proxy stops.
+
+    See [Templates](/en/manual/setup/templates) for the complete workflow.
+  </Step>
+
+  <Step title="Verify the commands">
+    Give yourself `simplecloud.command.use`, join through the proxy, and run `/cloud`.
+
+    <Check>
+      The help menu lists the subcommands you have permission to use.
+    </Check>
+  </Step>
+</Steps>
 
 ## Commands
 
@@ -64,6 +81,8 @@ Use `group` for a server group target and `ps` for a persistent server target.
 | ------- | ----------- |
 | `/cloud reload` | Run the command plugin's reload command |
 
+`/cloud reload` rereads `plugins/simplecloud-command/messages.yml` from the running proxy. Restart the proxy if you edited the template copy instead.
+
 ## Permissions
 
 | Permission | Description |
@@ -90,3 +109,19 @@ Use `group` for a server group target and `ps` for a persistent server target.
 <Frame>
   <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/cloud-command/help.png?raw=true" alt="Cloud Command help menu" />
 </Frame>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="The proxy cannot load Cloud Command">
+    Confirm that `simplecloud-api` is installed and enabled on the same proxy. Cloud Command declares it as a required dependency.
+  </Accordion>
+
+  <Accordion title="A command is missing from the help menu">
+    Grant the matching permission. The help menu hides subcommands the sender cannot use.
+  </Accordion>
+
+  <Accordion title="Message changes disappear after a restart">
+    Edit `plugins/simplecloud-command/messages.yml` in the proxy template, or copy the tested file back to the template before a temporary group proxy stops.
+  </Accordion>
+</AccordionGroup>

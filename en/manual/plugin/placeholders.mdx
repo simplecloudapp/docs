@@ -4,33 +4,48 @@ description: 'Expose SimpleCloud server, persistent-server, and group data throu
 tag: 'Server'
 ---
 
-## Overview
-
 The Placeholders plugin integrates with [PlaceholderAPI](https://github.com/PlaceholderAPI/PlaceholderAPI) and registers the `simplecloud` expansion. You can use SimpleCloud values in scoreboards, chat formats, holograms, tab displays, and any other plugin that supports PlaceholderAPI.
 
-## Supported Software
+## Supported software
 
 | Server Type   | PlaceholderAPI | This Plugin |
 | ------------- | -------------- | ----------- |
 | Paper & Forks | Yes            | Yes         |
 | Purpur        | Yes            | Yes         |
+| Folia         | Yes            | Yes         |
 | Spigot        | Yes            | No          |
 | Other         | No             | No          |
 
-## Quick Setup
+## Install the plugin
 
-1. Download the plugin from [GitHub](https://github.com/simplecloudapp/placeholder-plugin/releases).
-2. Download and install [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/).
-3. Make sure the `simplecloud-api` plugin is installed on the server.
-4. Place all three plugins in your server template's `plugins/` folder.
-5. Start the server.
+<Steps>
+  <Step title="Install the required plugins">
+    Download Placeholders from [GitHub](https://github.com/simplecloudapp/placeholder-plugin/releases) and [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/). Folia requires PlaceholderAPI 2.11.7 or newer. Place both JARs in the server template's `plugins/` folder. Standard SimpleCloud templates already include `simplecloud-api`; add it through the target's **Plugins** setting or the CLI if you use a custom template.
+  </Step>
+
+  <Step title="Start a matching server">
+    Start a server from the template. The plugin registers the `simplecloud` expansion with PlaceholderAPI; it does not require a separate expansion download.
+  </Step>
+
+  <Step title="Test a placeholder">
+    Join the server and run:
+
+    ```text
+    /papi parse me %simplecloud_server_id%
+    ```
+
+    <Check>
+      A group server returns its SimpleCloud server UUID. A persistent server returns a value when you use a `persistent_server_*` placeholder instead.
+    </Check>
+  </Step>
+</Steps>
 
 <Note>
   The expansion identifier is `simplecloud`, so every placeholder starts with
   `%simplecloud_...%`.
 </Note>
 
-## Server Placeholders
+## Server placeholders
 
 These placeholders resolve from the current SimpleCloud server using `SIMPLECLOUD_UNIQUE_ID`.
 
@@ -48,7 +63,7 @@ These placeholders resolve from the current SimpleCloud server using `SIMPLECLOU
 | `%simplecloud_server_player_count%` | Current player count |
 | `%simplecloud_server_state%` | Current server state |
 
-## Group Placeholders
+## Group placeholders
 
 These placeholders resolve from the current SimpleCloud group using `SIMPLECLOUD_GROUP`.
 
@@ -61,7 +76,7 @@ These placeholders resolve from the current SimpleCloud group using `SIMPLECLOUD
 | `%simplecloud_group_max_players%` | Maximum players per server |
 | `%simplecloud_group_player_count%` | Summed player count across group servers |
 
-## Persistent-Server Placeholders
+## Persistent-server placeholders
 
 These placeholders resolve from the current persistent server using `SIMPLECLOUD_UNIQUE_ID`.
 
@@ -77,7 +92,7 @@ These placeholders resolve from the current persistent server using `SIMPLECLOUD
 | `%simplecloud_persistent_server_player_count%` | Current player count, or `0` when no instance is running |
 | `%simplecloud_persistent_server_is_active%` | Whether the persistent server is active |
 
-## Target Another Resource
+## Target another resource
 
 By default, the placeholders above return information about the server on which the plugin is running. To display information about another resource, add its selector before the property.
 
@@ -110,7 +125,7 @@ Use the same properties that appear after the resource prefix in the tables abov
   exist, the running server is offline, or the selector is invalid.
 </Warning>
 
-## Example Usage
+## Example usage
 
 ```yaml
 scoreboard:
@@ -132,3 +147,19 @@ scoreboard:
   available. For a targeted placeholder, verify the resource name, UUID, or
   numerical ID.
 </Tip>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="PlaceholderAPI leaves the placeholder unchanged">
+    Confirm that PlaceholderAPI, `simplecloud-api`, and `simplecloud-placeholder` are enabled on the same Paper server. Then check the server log for dependency or expansion registration errors.
+  </Accordion>
+
+  <Accordion title="A current-server placeholder returns no value">
+    Run the server through SimpleCloud. Current-resource placeholders depend on the `SIMPLECLOUD_UNIQUE_ID` or `SIMPLECLOUD_GROUP` environment variable set by SimpleCloud.
+  </Accordion>
+
+  <Accordion title="A targeted placeholder returns no value">
+    Check the resource name, UUID, or numerical ID. The target must exist, and a targeted running server must be online.
+  </Accordion>
+</AccordionGroup>

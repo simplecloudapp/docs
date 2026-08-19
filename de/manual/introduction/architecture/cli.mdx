@@ -3,7 +3,7 @@ title: "CLI"
 description: "Richte SimpleCloud über dein Terminal ein und verwalte es dort"
 ---
 
-Mit der SimpleCloud CLI kannst du einen Serverhost einrichten und dein Netzwerk über das Terminal verwalten. Verwende sie, um die SimpleCloud-Installation auf der aktuellen Maschine zu steuern oder Gruppen und Minecraft-Server in deinem gesamten Netzwerk zu verwalten.
+Richte mit der SimpleCloud CLI einen Serverhost ein und verwalte dein Netzwerk über das Terminal. Die CLI steuert die SimpleCloud-Installation auf der aktuellen Maschine sowie Gruppen und Minecraft-Server im gesamten Netzwerk.
 
 <Tip>
   Führe `sc --help` aus, um alle Befehle anzuzeigen. Mit `sc <command> --help` erhältst du Hilfe zu einem bestimmten Befehl.
@@ -23,7 +23,7 @@ Prüfe anschließend, ob die CLI verfügbar ist:
 sc --version
 ```
 
-Folge für die vollständige Ersteinrichtung der [Installationsanleitung](/de/manual/setup/installation).
+Für die Einrichtung des ersten Serverhosts über das Dashboard folgst du der [Installationsanleitung](/de/manual/setup/installation). Wenn du die Einrichtung vollständig über die CLI durchführen möchtest, fahre unten fort.
 
 ## Serverhost einrichten
 
@@ -97,7 +97,7 @@ Führe `sc login` aus, wenn du dich erneut anmelden musst. Mit `sc whoami` prüf
 
 ## Zwischen Netzwerken wechseln
 
-Die CLI speichert jedes Netzwerk als Context und sendet Netzwerkbefehle an den aktiven Context. Bei der Einrichtung wird dein erster Context automatisch erstellt.
+Die CLI speichert jedes Netzwerk als Kontext und sendet Netzwerkbefehle an den aktiven Kontext. Bei der Einrichtung legt sie den ersten Kontext automatisch an.
 
 ```bash
 sc context list
@@ -118,7 +118,7 @@ Folge für den vollständigen Ablauf der Anleitung [SimpleCloud auf mehreren Mas
 
 ## Weitere Befehle entdecken
 
-Die CLI unterstützt außerdem Templates, persistente Server, mehrere Contexts und erweiterte Installationsoptionen. Für diese Abläufe gibt es eigene Anleitungen. Die integrierte Hilfe der CLI zeigt dir jederzeit die aktuelle Befehlssyntax:
+Die CLI unterstützt außerdem Templates, persistente Server, mehrere Kontexte und erweiterte Installationsoptionen. Für diese Aufgaben gibt es eigene Anleitungen. Die integrierte Hilfe zeigt dir jederzeit die aktuelle Befehlssyntax:
 
 ```bash
 sc group --help

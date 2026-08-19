@@ -1,9 +1,13 @@
 ---
-title: 'Groups API'
+title: 'API für Gruppen'
 description: 'Erstelle, suche, aktualisiere und lösche Servergruppen'
 ---
 
 Eine Gruppe beschreibt mehrere Server, die dieselbe Software, dieselben Ressourcen und dasselbe Skalierungsverhalten verwenden. Mit `api.group()` kannst du Gruppen verwalten oder einen weiteren Server für eine Gruppe anfordern.
+
+<Note>
+  Die Ausschnitte auf dieser Referenzseite zeigen einzelne API-Aufrufe. Sie verwenden `api` für den unter [Installation](/de/developer/installation) erzeugten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
+</Note>
 
 ## Gruppe erstellen
 
@@ -31,7 +35,7 @@ CreateGroupRequest request = CreateGroupRequest.builder()
 
 api.group().createGroup(request)
     .thenAccept(group -> System.out.println(
-        "Created " + group.getName() + " with ID " + group.getServerGroupId()
+        "Gruppe " + group.getName() + " mit ID " + group.getServerGroupId() + " erstellt"
     ));
 ```
 
@@ -48,7 +52,7 @@ Lege nicht gleichzeitig `createBlueprint` und einen vorhandenen Blueprint oder e
 
 <Accordion title="Felder von CreateGroupRequest">
   <ParamField body="name" type="string" required>
-    Gruppenname. Bis zu 100 Zeichen aus ASCII-Buchstaben, Ziffern, Unterstrichen und Bindestrichen (`[A-Za-z0-9_-]`). Der Name muss innerhalb des Netzwerks eindeutig sein; Groß- und Kleinschreibung werden nicht berücksichtigt. `Lobby` und `lobby` gelten daher als derselbe Name. Eine Gruppe und ein persistenter Server dürfen denselben Namen haben. Wenn du eine Gruppe mit einem Namen erstellst oder umbenennst, der sich von einer vorhandenen Gruppe nur durch Groß- und Kleinschreibung unterscheidet, wird `409 Conflict` zurückgegeben.
+    Gruppenname mit bis zu 100 ASCII-Buchstaben, Ziffern, Unterstrichen oder Bindestrichen (`[A-Za-z0-9_-]`). Namen sind innerhalb des Netzwerks eindeutig; Groß- und Kleinschreibung werden nicht berücksichtigt. `Lobby` und `lobby` bezeichnen daher dieselbe Gruppe. Eine Gruppe und ein persistenter Server dürfen denselben Namen haben. Beim Erstellen oder Umbenennen auf eine reine Variante der Groß- und Kleinschreibung gibt die API `409 Conflict` zurück.
   </ParamField>
 
   <ParamField body="type" type="GroupServerType">
@@ -116,7 +120,7 @@ api.group().getGroupById("group-uuid")
     .thenAccept(group -> System.out.println(group.getName()));
 ```
 
-Beide Methoden werden mit einem Fehler abgeschlossen, wenn die Gruppe nicht vorhanden ist. Bei der Suche nach Namen wird die Groß- und Kleinschreibung nicht berücksichtigt.
+Das zurückgegebene Future schlägt fehl, wenn die Gruppe nicht vorhanden ist. Bei der Suche nach Namen wird die Groß- und Kleinschreibung nicht berücksichtigt.
 
 Verwende `GroupQuery`, um die Gruppenliste nach Typ, Tag oder Ergebnislimit zu filtern:
 
@@ -144,7 +148,7 @@ UpdateGroupRequest update = UpdateGroupRequest.builder()
     .build();
 
 api.group().updateGroup("group-uuid", update)
-    .thenAccept(group -> System.out.println("Updated " + group.getName()));
+    .thenAccept(group -> System.out.println("Gruppe " + group.getName() + " aktualisiert"));
 ```
 
 Du kannst `name`, `type`, `minMemory`, `maxMemory`, `maxPlayers`, `active`, `priority`, `deployment`, `scaling`, `source`, `workflows`, `properties` und `tags` aktualisieren.
@@ -162,10 +166,10 @@ Map<String, Object> properties = Map.of(
 );
 
 api.group().updateGroupProperties("group-uuid", properties)
-    .thenAccept(updated -> System.out.println("Properties: " + updated));
+    .thenAccept(updated -> System.out.println("Eigenschaften: " + updated));
 
 api.group().deleteGroupProperty("group-uuid", "region")
-    .thenAccept(remaining -> System.out.println("Properties: " + remaining));
+    .thenAccept(remaining -> System.out.println("Eigenschaften: " + remaining));
 ```
 
 Verwende `deleteGroupProperties`, um mehrere Schlüssel gleichzeitig zu entfernen. Jede Eigenschaftsmethode gibt die daraus resultierende Map zurück.
@@ -177,7 +181,7 @@ Fordere einen zusätzlichen Server an, wenn eine bestimmte Aktion deiner Anwendu
 ```java
 api.group().getGroupByName("lobby")
     .thenCompose(api.group()::requestServerStart)
-    .thenRun(() -> System.out.println("Start requested"));
+    .thenRun(() -> System.out.println("Serverstart angefordert"));
 ```
 
 Dadurch wird eine einzelne Startanforderung in die Warteschlange gestellt, ohne die Skalierungskonfiguration der Gruppe zu ändern. Verwende die [Servers API](/de/developer/api/servers) oder Server-Events, wenn dein Plugin auf den neuen Server warten muss.
@@ -324,7 +328,7 @@ Die folgenden Felder sind über die Getter von `Group` verfügbar.
   </ResponseField>
 
   <ResponseField name="scalingMode" type="ScalingMode | null">
-    `SLOTS` hält freie Kapazität vor. `PLAYERS` skaliert anhand der Spielerauslastung.
+    `SLOTS` entspricht dem Dashboard-Modus **Slots** und hält freie Kapazität vor. `PLAYERS` entspricht dem Dashboard-Modus **Servers** und startet Server anhand der Spielerauslastung.
   </ResponseField>
 
   <ResponseField name="availableSlots" type="integer" required>
@@ -340,7 +344,7 @@ Die folgenden Felder sind über die Getter von `Group` verfügbar.
   </ResponseField>
 
   <Note>
-    Beim Erstellen und Aktualisieren von Gruppen werden die Skalierungsmodi `SLOTS` und `PLAYERS` unterstützt.
+    `SLOTS` kann Server starten und stoppen. `PLAYERS` startet Server nur; zusätzliche Instanzen werden nicht automatisch gestoppt.
   </Note>
 </Accordion>
 

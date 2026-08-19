@@ -5,7 +5,7 @@ description: "Run file operations when a server starts, stops, or on demand"
 
 Workflows run a sequence of file operations on a serverhost. You can run them manually or whenever a server starts or stops.
 
-This guide creates a backup workflow, runs it from the dashboard, and then shows you how to adapt it.
+Create a backup workflow, run it from the dashboard, and then adapt it to your files.
 
 ## Run the backup workflow
 
@@ -153,9 +153,7 @@ Patterns in `exclude` are relative to `from`.
   <Accordion title="Upload a file">
     `simplecloud/upload` sends the file in `from` to the URL in `to`. It uploads files, not directories. You can also set the HTTP `method` and an `authorization-bearer` value.
 
-    <Warning>
-      Workflow files are plain text. Do not store long-lived access tokens in them.
-    </Warning>
+    Store long-lived access tokens under **Settings > Secrets** and set `authorization-bearer` to a [secret reference](/en/manual/configuration/secrets), such as `"{{ secrets.BACKUP_TOKEN }}"`.
   </Accordion>
 
   <Accordion title="Delete files">

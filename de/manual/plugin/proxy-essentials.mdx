@@ -4,8 +4,6 @@ description: 'Konfiguriere SimpleCloud-MOTDs, Tablists, Joinstates, Spielerzahle
 tag: 'Proxy'
 ---
 
-## Überblick
-
 Proxy Essentials stellt Serverlisten-MOTDs, Tablist-Header und -Footer, berechtigungsbasierte Joinstates und netzwerkweite Spielerzahlen für SimpleCloud-Proxys bereit. Es läuft auf deinem Velocity- oder BungeeCord-Proxy und wendet diese Funktionen im gesamten Netzwerk an.
 
 ## Unterstützte Software
@@ -15,11 +13,11 @@ Proxy Essentials stellt Serverlisten-MOTDs, Tablist-Header und -Footer, berechti
 | Velocity   | Ja                    |
 | BungeeCord | Ja                    |
 
-## Schnellstart
+## Plugin installieren
 
 <Steps>
   <Step title="Proxy-Plugins installieren">
-    Lade Proxy Essentials von [GitHub](https://github.com/simplecloudapp/proxy-essentials-plugin/releases) herunter und lege es im `plugins/`-Ordner des Proxy-Templates ab. Installiere `simplecloud-api` im selben Proxy-Template.
+    Lade Proxy Essentials von [GitHub](https://github.com/simplecloudapp/proxy-essentials-plugin/releases) herunter und lege es im `plugins/`-Ordner des Proxy-Templates ab. Die Standard-Templates enthalten `simplecloud-api` bereits. Füge es bei einem eigenen Template über die Einstellung **Plugins** des Ziels oder über die CLI hinzu.
   </Step>
 
   <Step title="Konfiguration erzeugen">
@@ -34,7 +32,7 @@ Proxy Essentials stellt Serverlisten-MOTDs, Tablist-Header und -Footer, berechti
   <Step title="Erzeugte Dateien im Template sichern">
     Kopiere bei einem Gruppen-Proxy das erzeugte Plugin-Verzeichnis vom laufenden Proxy an denselben Pfad in seinem Proxy-Template. Änderungen nur im temporären `running`-Verzeichnis verschwinden sonst, sobald der Proxy stoppt.
 
-    Unter [Templates](/de/manual/setup/templates) erfährst du, wie Template-Dateien auf laufende Services kopiert werden.
+    Unter [Templates](/de/manual/setup/templates) erfährst du, wie du die erzeugten Dateien in ein Template übernimmst. Template-Änderungen gelten beim nächsten Start des Proxys.
   </Step>
 
   <Step title="Änderungen anwenden und prüfen">
@@ -62,22 +60,22 @@ Proxy Essentials stellt Serverlisten-MOTDs, Tablist-Header und -Footer, berechti
 
 ## Joinstates
 
-Ein Joinstate ist eine benannte Zugriffsregel. Die Liste `joinstates` in der `config.yml` definiert die verfügbaren Regeln. Der aktive Status wird auf der ausgewählten SimpleCloud-Gruppe oder dem Service gespeichert.
+Ein Joinstate ist eine benannte Zugriffsregel. Die Liste `joinstates` in der `config.yml` definiert die verfügbaren Regeln. Der aktive Status wird auf der ausgewählten SimpleCloud-Gruppe oder Serverinstanz gespeichert.
 
 Joinstates können:
 
 - Eine Berechtigung für das Betreten des Proxys oder eines Backend-Servers verlangen
 - Eine separate Berechtigung für den Beitritt zu einem vollen Proxy-Netzwerk verlangen
 - Ein Wartungs-MOTD-Layout für den Proxy auswählen
-- Für eine vollständige Gruppe oder einen einzelnen laufenden Service gelten
+- Für eine vollständige Gruppe oder eine einzelne laufende Serverinstanz gelten
 
 ### Proxy- und Backend-Gruppen verhalten sich unterschiedlich
 
 | Ziel | Auswirkung |
 | ---- | ---------- |
 | Proxy-Gruppe | Steuert den Beitritt zum Netzwerk, prüft die Berechtigung für ein volles Netzwerk und kann ein Serverlisten-Layout erzwingen |
-| Backend-Gruppe wie `Lobby` | Steuert, ob Spieler diese Backend-Services betreten oder zu ihnen wechseln dürfen |
-| Einzelner Service wie `Lobby-1` | Überschreibt den Zugriff nur für diesen laufenden Service |
+| Backend-Gruppe wie `Lobby` | Steuert, ob Spieler diese Backend-Serverinstanzen betreten oder zu ihnen wechseln dürfen |
+| Einzelne Serverinstanz wie `Lobby-1` | Überschreibt den Zugriff nur für diese laufende Instanz |
 
 <Info>
   Wenn du nur die Gruppe `Lobby` auf Wartung setzt, ändert sich die öffentliche Netzwerk-MOTD nicht. Setze die **Proxy-Gruppe** auf Wartung, wenn du das gesamte Netzwerk sperren und das Wartungs-Layout anzeigen möchtest.
@@ -111,7 +109,7 @@ joinstates:
 | `permission.join` | Benötigte Beitrittsberechtigung; ein leerer Wert erlaubt allen den Zutritt |
 | `permission.full` | Benötigte Berechtigung, wenn die Proxy-Gruppe ihr Spielerlimit erreicht hat |
 | `forced-motd-layout` | Fallback-MOTD-Layout, solange dieser Status auf dem Proxy aktiv ist; `null` erzwingt kein Layout |
-| `initial-state` | Fallback für Gruppen oder Services ohne gespeicherten Status; eine Änderung schaltet bestehende Gruppen nicht um |
+| `initial-state` | Fallback für Gruppen oder Serverinstanzen ohne gespeicherten Status; eine Änderung schaltet bestehende Gruppen nicht um |
 | `initial-layout` | Fallback-MOTD-Layout, wenn kein gespeichertes oder erzwungenes Layout greift |
 
 Führe `/scproxy reload` aus, nachdem du Statusdefinitionen hinzugefügt oder geändert hast. Das Neuladen einer Definition aktiviert sie nicht.
@@ -134,7 +132,7 @@ Im folgenden Beispiel heißt die Proxy-Gruppe `Proxy`:
     /scproxy joinstate set Proxy maintenance
     ```
 
-    Der Gruppenbefehl speichert den Status auf der Gruppe und ihren aktuell laufenden Services. Services ohne eigenen Status verwenden den Gruppenstatus.
+    Der Gruppenbefehl speichert den Status auf der Gruppe und ihren aktuell laufenden Serverinstanzen. Instanzen ohne eigenen Status verwenden den Gruppenstatus.
   </Step>
 
   <Step title="Aktiven Status prüfen">
@@ -152,20 +150,20 @@ Im folgenden Beispiel heißt die Proxy-Gruppe `Proxy`:
   </Step>
 </Steps>
 
-Um nur eine Backend-Gruppe oder einen einzelnen Service zu sperren, verwende zum Beispiel:
+Um nur eine Backend-Gruppe oder eine einzelne Serverinstanz zu sperren, verwende zum Beispiel:
 
 ```text
 /scproxy joinstate set Lobby maintenance
 /scproxy joinstate set Lobby 1 maintenance
 ```
 
-Der erste Befehl ändert die vollständige `Lobby`-Gruppe und ihre laufenden Services. Der zweite ändert nur `Lobby-1`.
+Der erste Befehl ändert die vollständige `Lobby`-Gruppe und ihre laufenden Serverinstanzen. Der zweite ändert nur `Lobby-1`.
 
 ### Priorität der MOTD-Layouts
 
 Der Proxy bestimmt sein Serverlisten-Layout in dieser Reihenfolge:
 
-1. Ein gültiges Layout, das mit `/scproxy layout set` auf dem Proxy-Service oder der Gruppe gespeichert wurde
+1. Ein gültiges Layout, das mit `/scproxy layout set` auf der Proxy-Instanz oder der Gruppe gespeichert wurde
 2. `forced-motd-layout` des aktiven Joinstates
 3. `initial-layout`
 
@@ -185,7 +183,7 @@ motd:
   update-type: RANDOM # RANDOM oder QUEUE
   layouts:
     - name: public
-      line1: '<color:#0ea5e9>A simplecloud.app network'
+      line1: '<color:#0ea5e9>Ein SimpleCloud-Netzwerk'
       line2: ' '
 
 server-icon:
@@ -202,7 +200,7 @@ player-list:
 version:
   name:
     enabled: false
-    text: Example
+    text: Beispiel
   slots:
     enabled: true
     type: REAL # REAL, FAKE oder DYNAMIC
@@ -284,13 +282,13 @@ Veraltete `&`- und `§`-Farbcodes werden nicht unterstützt.
 | `/scproxy reload` | `config.yml`, `placeholder.yml`, `messages.yml` und alle MOTD-Layouts neu laden |
 | `/scproxy joinstate help` | Joinstate-Befehle anzeigen |
 | `/scproxy joinstate info <group>` | Gespeicherten Status einer Gruppe anzeigen |
-| `/scproxy joinstate info <group> <id>` | Effektiven Status eines Services anzeigen |
-| `/scproxy joinstate set <group> <joinstate>` | Status auf einer Gruppe und ihren laufenden Services setzen |
-| `/scproxy joinstate set <group> <id> <joinstate>` | Status auf einem Service setzen |
+| `/scproxy joinstate info <group> <id>` | Effektiven Status einer Serverinstanz anzeigen |
+| `/scproxy joinstate set <group> <joinstate>` | Status auf einer Gruppe und ihren laufenden Serverinstanzen setzen |
+| `/scproxy joinstate set <group> <id> <joinstate>` | Status auf einer Serverinstanz setzen |
 | `/scproxy layout help` | Layout-Befehle anzeigen |
 | `/scproxy layout info` | `initial-layout` anzeigen |
 | `/scproxy layout info <group>` | Gespeichertes oder ermitteltes Layout einer Gruppe anzeigen |
-| `/scproxy layout set <group> <layout>` | Layout auf einer Gruppe und ihren laufenden Services speichern |
+| `/scproxy layout set <group> <layout>` | Layout auf einer Gruppe und ihren laufenden Serverinstanzen speichern |
 
 ## Platzhalter
 
@@ -303,6 +301,10 @@ Veraltete `&`- und `§`-Farbcodes werden nicht unterstützt.
 | `<env:NAME:default>` | MOTD, Tablist | Wert einer Umgebungsvariable mit Fallback |
 | `<server_name>` | Tablist | Aktueller Backend-Server des Spielers |
 | `<ping>` | Tablist | Ping des Spielers mit der Farbe der passenden Schwelle |
+
+<Warning>
+  Gib über `<env:NAME>` keine Tokens, Passwörter oder anderen Geheimnisse aus. MOTDs sind öffentlich und Tablist-Inhalte für verbundene Spieler sichtbar.
+</Warning>
 
 Konfiguriere die Farben für `<ping>` in der `placeholder.yml`:
 
@@ -416,11 +418,11 @@ Entferne die Proxy-Essentials-JAR aus allen passenden Proxy-Templates und starte
 
 <AccordionGroup>
   <Accordion title="Das Plugin oder seine Konfiguration erscheint nicht">
-    Prüfe, ob Proxy Essentials und `simplecloud-api` im **Proxy-Template** liegen, und starte anschließend einen passenden Proxy neu. Prüfe die Proxy-Konsole und das plattformspezifische Datenverzeichnis aus dem Schnellstart. Eine Installation auf einer Lobby lädt das Proxy-Plugin nicht.
+    Prüfe, ob Proxy Essentials und `simplecloud-api` im **Proxy-Template** liegen, und starte anschließend einen passenden Proxy neu. Prüfe die Proxy-Konsole und das plattformspezifische Datenverzeichnis aus dem Abschnitt **Plugin installieren**. Eine Installation auf einer Lobby lädt das Proxy-Plugin nicht.
   </Accordion>
 
   <Accordion title="Ein Reload-Befehl ändert nichts">
-    Verwende `/scproxy reload` und nicht `/tab reload`. Prüfe, ob du die Dateien des laufenden Proxys bearbeitet hast. Änderungen nur im Template benötigen einen Proxy-Neustart. Änderungen nur in einem temporären laufenden Gruppen-Service verschwinden beim Stoppen.
+    Verwende `/scproxy reload` und nicht `/tab reload`. Prüfe, ob du die Dateien des laufenden Proxys bearbeitet hast. Änderungen nur im Template benötigen einen Proxy-Neustart. Änderungen nur in einer temporären laufenden Gruppeninstanz verschwinden beim Stoppen.
   </Accordion>
 
   <Accordion title="Die Tablist eines anderen Plugins wird weiterhin überschrieben">

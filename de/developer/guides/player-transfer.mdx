@@ -1,13 +1,15 @@
 ---
 title: "Spieler auf einen anderen Server verschieben"
-description: "Verbinde einen Spieler, der online ist, mit einem bekannten Server und verarbeite das Ergebnis"
+description: "Verbinde einen Spieler mit einem bekannten Server und verarbeite das Ergebnis"
 ---
 
-Verwende `CloudPlayer.connect(...)`, wenn du bereits weißt, welchem Server der Spieler beitreten soll. Die Methode erwartet den auf dem Proxy des Spielers registrierten Namen, zum Beispiel `lobby-1` – nicht die von `Server.getServerId()` zurückgegebene Server-UUID.
+Verwende `CloudPlayer.connect(...)`, wenn der Zielserver bereits feststeht. Die Methode erwartet den Namen, unter dem der Server auf dem Proxy des Spielers registriert ist, zum Beispiel `lobby-1`. Übergib nicht die von `Server.getServerId()` zurückgegebene Server-UUID.
+
+Installiere zuerst die [Cloud API](/de/developer/installation), füge das Plattform-Plugin `simplecloud-api` als Abhängigkeit hinzu und verwende einen gemeinsamen `CloudApi`-Client. Installiere `simplecloud-api` auf jedem Proxy, der den Spieler verarbeiten kann, da dieser Proxy die Verbindung herstellt.
 
 ## Spieler verschieben
 
-Suche den Spieler anhand seiner UUID, prüfe, ob er online ist, und verbinde ihn mit dem registrierten Servernamen:
+Dieses vollständige Beispiel sucht den Spieler anhand seiner UUID, prüft seinen Online-Status und verarbeitet jedes Verbindungsergebnis:
 
 ```java PlayerTransferService.java
 import app.simplecloud.api.CloudApi;
@@ -15,12 +17,16 @@ import app.simplecloud.api.player.CloudPlayer;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class PlayerTransferService {
     private final CloudApi api;
+    private final Logger logger;
 
-    public PlayerTransferService(CloudApi api) {
+    public PlayerTransferService(CloudApi api, Logger logger) {
         this.api = api;
+        this.logger = logger;
     }
 
     public CompletableFuture<CloudPlayer.ConnectResult> transfer(
@@ -37,41 +43,41 @@ public final class PlayerTransferService {
             return player.connect(registeredServerName);
         });
     }
+
+    public void transferToLobby(UUID playerId) {
+        transfer(playerId, "lobby-1")
+            .thenAccept(result -> {
+                switch (result) {
+                    case SUCCESS, ALREADY_CONNECTED ->
+                        logger.info("Spieler ist mit lobby-1 verbunden");
+                    case SERVER_NOT_FOUND ->
+                        logger.warning("lobby-1 ist nicht auf dem Proxy registriert");
+                    case PLAYER_NOT_FOUND ->
+                        logger.info("Spieler ist nicht mehr online");
+                    case CONNECTION_FAILED ->
+                        logger.warning("Spieler konnte nicht mit lobby-1 verbunden werden");
+                }
+            })
+            .exceptionally(error -> {
+                logger.log(Level.WARNING, "Spieler konnte nicht verschoben werden", error);
+                return null;
+            });
+    }
 }
 ```
 
-Rufe `transfer(...)` aus deinem Befehls- oder Matchmaking-Ablauf auf und verarbeite das Ergebnis:
+Erzeuge einen `PlayerTransferService` mit dem gemeinsamen `CloudApi`-Client und Logger deines Plugins. Rufe `transferToLobby(...)` aus deinem Befehls- oder Matchmaking-Ablauf auf.
 
-```java
-transferService.transfer(playerId, "lobby-1")
-    .thenAccept(result -> {
-        switch (result) {
-            case SUCCESS, ALREADY_CONNECTED ->
-                logger.info("Player is connected to lobby-1");
-            case SERVER_NOT_FOUND ->
-                logger.warning("lobby-1 is not registered on the proxy");
-            case PLAYER_NOT_FOUND ->
-                logger.info("Player is no longer online");
-            case CONNECTION_FAILED ->
-                logger.warning("Could not connect player to lobby-1");
-        }
-    })
-    .exceptionally(error -> {
-        logger.log(Level.WARNING, "Could not transfer player", error);
-        return null;
-    });
-```
-
-Dieser Leitfaden gibt `PLAYER_NOT_FOUND` zurück, wenn die Suche keinen Spieler findet, der online ist. Wenn der Spieler die Verbindung nach dieser Prüfung trennt, gibt `connect(...)` den Wert `CONNECTION_FAILED` zurück.
+Der Service gibt `PLAYER_NOT_FOUND` zurück, wenn die Suche keinen Online-Spieler findet. Trennt der Spieler danach die Verbindung, gibt `connect(...)` den Wert `CONNECTION_FAILED` zurück.
 
 ## Verbindungsergebnisse
 
 | Ergebnis | Bedeutung |
-| --- | --- |
+| -------- | --------- |
 | `SUCCESS` | Der Spieler wurde mit dem Ziel verbunden. |
 | `ALREADY_CONNECTED` | Der Spieler ist bereits mit dem Ziel verbunden. |
 | `SERVER_NOT_FOUND` | Der übergebene Name ist auf dem Proxy des Spielers nicht registriert. |
-| `PLAYER_NOT_FOUND` | Die Suche dieses Leitfadens hat keinen Spieler gefunden, der online ist. |
+| `PLAYER_NOT_FOUND` | Die Suche des Beispiels hat keinen Online-Spieler gefunden. |
 | `CONNECTION_FAILED` | Der Proxy konnte die Verbindung nicht herstellen. |
 
-Wenn dein Plugin zuerst ein verfügbares Ziel finden muss, lies [Spieler mit Autoscaling weiterleiten](/de/developer/guides/server-management).
+Wenn dein Plugin zuerst ein verfügbares Ziel suchen muss, lies [Spieler mit Autoscaling weiterleiten](/de/developer/guides/server-management).

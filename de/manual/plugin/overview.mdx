@@ -1,16 +1,16 @@
 ---
 title: 'Übersicht'
-description: 'Plugins erweitern SimpleCloud-Funktionalität direkt in deinen Minecraft-Servern'
+description: 'Installiere Plugins, die Minecraft-Server und Proxys um SimpleCloud-Funktionen erweitern'
 ---
 
-Plugins sind serverseitige Erweiterungen, die innerhalb deiner Minecraft-Server laufen. Sie nutzen die Cloud API, um mit deiner Netzwerkinfrastruktur zu interagieren.
+Plugins laufen innerhalb deiner Minecraft-Server oder Proxys. Über die Cloud API lesen sie Daten aus deinem SimpleCloud-Netzwerk und lösen dort Aktionen aus.
 
 ## Offizielle Plugins
 
 | Plugin | Plattform | Beschreibung |
 |--------|-----------|--------------|
 | [Server Connection](/de/manual/plugin/server-connection) | Proxy | Registriert Server und verwaltet Joins, Fallbacks und Hub-Befehle |
-| [Cloud Command](/de/manual/plugin/cloud-command) | Proxy | In-Game Cloud-Management-Befehle |
+| [Cloud Command](/de/manual/plugin/cloud-command) | Proxy | Befehle zur Netzwerkverwaltung im Spiel |
 | [Proxy Essentials](/de/manual/plugin/proxy-essentials) | Proxy | MOTD, Tablist, Joinstates, Layouts und Spielerzahlen |
 | [Notify](/de/manual/plugin/notify) | Proxy | Server- und Gruppen-Eventbenachrichtigungen |
 | [Prefixes](/de/manual/plugin/prefixes) | Server | Verwaltung von Spielerpräfixen |
@@ -22,7 +22,7 @@ Plugins sind serverseitige Erweiterungen, die innerhalb deiner Minecraft-Server 
 
 ### Über das Dashboard
 
-Beim Erstellen oder Bearbeiten einer Gruppe kannst du in den Plugin-Einstellungen Plugins hinzufügen. Suche nach den gewünschten Plugins. Sie werden automatisch auf allen Servern dieser Gruppe installiert.
+Beim Erstellen oder Bearbeiten einer Gruppe kannst du in den Plugin-Einstellungen nach Plugins suchen und sie hinzufügen. Neue Server der Gruppe starten mit den ausgewählten Plugins. Verwende bei einer bereits laufenden Gruppe nach dem Speichern **Hold to rolling restart**, um alle Instanzen nacheinander zu ersetzen.
 
 ### Über die CLI
 
@@ -30,17 +30,17 @@ Beim Erstellen oder Bearbeiten einer Gruppe kannst du in den Plugin-Einstellunge
 # Plugins einer Gruppe auflisten
 sc group plugin list lobby
 
-# Plugin zu einer Gruppe hinzufügen
-sc group plugin add lobby proxy-essentials
+# Plugin zu einer Proxy-Gruppe hinzufügen
+sc group plugin add proxy proxy-essentials
 
-# Plugin zu einem persistenten Server hinzufügen
-sc persistent-server plugin add spawn proxy-essentials
+# Plugin zu einem persistenten Proxy hinzufügen
+sc persistent-server plugin add proxy-main proxy-essentials
 
 # Plugin von einer Gruppe entfernen
-sc group plugin remove lobby proxy-essentials
+sc group plugin remove proxy proxy-essentials
 ```
 
-Die optionale Plugin-Suchanfrage kann ein Suchbegriff, ein Modrinth-Slug wie `mr:luckperms`, eine Spigot-ID wie `sp:28140` oder eine Plugin-URL sein.
+Als optionale Suchangabe kannst du einen Namen, einen Modrinth-Slug wie `mr:luckperms`, eine Spigot-ID wie `sp:28140` oder eine Plugin-URL verwenden.
 
 ### Manuell
 
@@ -50,16 +50,12 @@ Lege Plugin-JARs in den `plugins/`-Ordner deines Templates:
 cp mein-plugin.jar templates/lobby/plugins/
 ```
 
-## Plugins vs Droplets
+## Plugins und Droplets
 
 | | Plugins | Droplets |
 |---|---------|----------|
-| **Läuft auf** | Innerhalb des Minecraft-Servers | Unabhängiger Dienst |
+| **Läuft auf** | Innerhalb eines Minecraft-Servers oder Proxys | Unabhängiger Dienst |
 | **Zweck** | Funktionen im Spiel | Infrastrukturaufgaben |
 | **Beispiele** | Schilder, NPCs, Befehle | Spielerdaten, Ressourcenpakete |
 
-Informationen zu Integrationen auf Infrastrukturebene findest du in der [Entwicklerdokumentation](/de/developer/overview).
-
-<Note>
-  Ideen für neue Plugins? Teile sie auf unserem [Discord](https://discord.simplecloud.app) oder trage auf [GitHub](https://github.com/simplecloudapp) bei.
-</Note>
+Mit der [Dokumentation zur Cloud API](/de/developer/overview) entwickelst du Minecraft-Plugins. Eine Anleitung zur Droplet-Entwicklung ist noch nicht verfügbar.

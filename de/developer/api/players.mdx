@@ -1,9 +1,13 @@
 ---
-title: "Players API"
+title: "API für Spieler"
 description: "Suche Spieler, prüfe ihre Präsenz, verschiebe oder kicke sie und verwalte Spielerdaten"
 ---
 
 Mit `api.player()` kannst du Spieler suchen und ihre Präsenz im Netzwerk prüfen. Wenn du die UUID eines Spielers bereits kennst, solltest du darüber suchen, da sich Benutzernamen ändern können.
+
+<Note>
+  Die Ausschnitte auf dieser Referenzseite zeigen einzelne API-Aufrufe. Sie verwenden `api` für den unter [Installation](/de/developer/installation) erzeugten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
+</Note>
 
 ## Spieler suchen
 
@@ -12,14 +16,14 @@ Suche einen Spieler anhand seiner UUID und prüfe, ob er online ist, bevor du au
 ```java
 api.player().get(playerId).thenAccept(player -> {
     if (player == null || !player.isOnline()) {
-        logger.info("Player is offline");
+        logger.info("Spieler ist offline");
         return;
     }
 
     String serverName = player.getConnectedServerName();
     logger.info(serverName == null
-        ? "Player is connected through a proxy"
-        : "Player is on " + serverName);
+        ? "Spieler ist nur mit einem Proxy verbunden"
+        : "Spieler ist auf " + serverName);
 });
 ```
 
@@ -79,7 +83,7 @@ Unter [Spieler auf einen anderen Server verschieben](/de/developer/guides/player
 Übergib eine Adventure-Komponente mit dem Grund, der dem Spieler angezeigt wird:
 
 ```java
-player.kick(Component.text("Server restarting"));
+player.kick(Component.text("Der Server startet neu"));
 ```
 
 Zum Kicken von Spielern muss der Provider `simplecloud-api` auf dem Velocity- oder BungeeCord-Proxy installiert sein.
@@ -89,11 +93,11 @@ Zum Kicken von Spielern muss der Provider `simplecloud-api` auf dem Velocity- od
 `CloudPlayer` implementiert `Audience` von Adventure. Du kannst daher Nachrichten, Actionbars, Titel, Sounds, Bossbars, Bücher sowie Kopf- und Fußzeilen der Spielerliste senden.
 
 ```java
-player.sendMessage(Component.text("Welcome!"));
-player.sendActionBar(Component.text("Combat mode enabled"));
+player.sendMessage(Component.text("Willkommen!"));
+player.sendActionBar(Component.text("Kampfmodus aktiviert"));
 player.showTitle(Title.title(
-    Component.text("Welcome"),
-    Component.text("to the server")
+    Component.text("Willkommen"),
+    Component.text("auf dem Server")
 ));
 ```
 
@@ -114,4 +118,6 @@ Spielereigenschaften speichern benutzerdefinierte Zeichenketten für deine Plugi
 | Eine Eigenschaft löschen | `deletePlayerProperty(playerId, key)` |
 | Mehrere Eigenschaften löschen | `deletePlayerProperties(playerId, keys)` |
 
-Die Onlinezeit muss zwischen `0` und `Integer.MAX_VALUE` Sekunden liegen. Aktualisierungen von Eigenschaften führen die übergebenen Werte mit der vorhandenen Map zusammen; Löschmethoden entfernen nur die angegebenen Schlüssel.
+Die Onlinezeit muss zwischen `0` und `Integer.MAX_VALUE` Sekunden liegen. Die Methoden zum Addieren und Subtrahieren lesen den aktuellen Wert, bevor sie das Ergebnis schreiben. Parallele Änderungen können sich deshalb gegenseitig überschreiben.
+
+Aktualisierungen von Eigenschaften führen die übergebenen Werte mit der vorhandenen Map zusammen; Löschmethoden entfernen nur die angegebenen Schlüssel. Die zusammengeführten Eigenschaften dürfen als JSON höchstens 4 KB groß sein.

@@ -1,6 +1,6 @@
 ---
 title: 'Servergruppen'
-description: 'Erstelle eine Gruppe von Minecraft-Servern und konfiguriere ihre Skalierung.'
+description: 'Erstelle eine Gruppe von Minecraft-Servern und konfiguriere ihre Skalierung'
 ---
 
 Eine Servergruppe erstellt austauschbare Server aus einer gemeinsamen Konfiguration. Verwende eine Gruppe, wenn du mehrere identische Server benötigst oder SimpleCloud die Serveranzahl automatisch für dich anpassen soll.
@@ -30,7 +30,7 @@ Wenn die rechte Spalte zu deinem Vorhaben passt, lies den Abschnitt [Persistente
   </Step>
 
   <Step title="Typ und Namen auswählen">
-    Wähle **Server** oder **Proxy** aus und gib anschließend einen eindeutigen Namen ein. Namen dürfen bis zu 100 ASCII-Buchstaben, Ziffern, Unterstriche und Bindestriche (`[A-Za-z0-9_-]`) enthalten. Bei der Eindeutigkeit innerhalb des Netzwerks wird nicht zwischen Groß- und Kleinschreibung unterschieden – `Lobby` und `lobby` gelten als derselbe Name.
+    Wähle **Server** oder **Proxy** aus und gib einen eindeutigen Namen ein. Namen dürfen bis zu 100 ASCII-Buchstaben, Ziffern, Unterstriche und Bindestriche (`[A-Za-z0-9_-]`) enthalten. SimpleCloud unterscheidet bei Namen nicht zwischen Groß- und Kleinschreibung. `Lobby` und `lobby` gelten deshalb als derselbe Name.
 
     Aktiviere **Activate on creation**, wenn SimpleCloud die Gruppe sofort starten soll.
   </Step>
@@ -64,10 +64,10 @@ Die Skalierung steuert, wie viele Server SimpleCloud bereithält. Öffne die Gru
 
 Für beide Modi gelten diese Grenzen:
 
-- **Minimum Servers** ist die grundlegende Anzahl an Servern, die von der Gruppe ausgeführt werden.
-- **Maximum Servers** ist die höchste Anzahl an Servern, welche die Gruppe ausführen darf.
+- **Minimum Servers** ist die Mindestanzahl der Server, die in der Gruppe laufen.
+- **Maximum Servers** ist die Höchstanzahl der Server, die in der Gruppe laufen dürfen.
 
-Wähle anschließend den Modus aus, der zum gewünschten Wachstum der Gruppe passt.
+Wähle anschließend den Modus, der zum gewünschten Skalierungsverhalten passt.
 
 ### Nach Spielerplätzen skalieren
 
@@ -91,7 +91,7 @@ Wenn **Minimum Servers** beispielsweise auf `2` und **Player Threshold** auf `0.
   Der Modus **Servers** startet Server nur. Zusätzliche Server werden nicht automatisch gestoppt. Wähle **Slots**, wenn die Gruppe auch abwärts skalieren soll.
 </Note>
 
-Speichere deine Änderungen und beobachte anschließend im Tab **Servers**, wie sich die Gruppe an die neue Kapazität annähert.
+Speichere deine Änderungen. Im Tab **Servers** kannst du beobachten, wie die Gruppe Server startet oder stoppt, bis die neue Kapazität erreicht ist.
 
 ## Festlegen, wo Server laufen
 
@@ -108,7 +108,7 @@ Wenn du alle Serverhosts deaktivierst, kann SimpleCloud keinen neuen Server für
 Bei einem Rolling Restart werden die Server der Gruppe nacheinander ersetzt, sodass während der Änderung Kapazität verfügbar bleibt. **Restart all** stoppt die aktuellen Server gemeinsam. Wenn du die Gruppe deaktivierst, werden sie gestoppt, ohne dass Ersatz gestartet wird.
 
 <Warning>
-  Dateien, die nur innerhalb eines Gruppenservers gespeichert sind, sind temporär. Verwende für Daten, die einen Austausch überdauern müssen, einen persistenten Server.
+  Dateien, die nur innerhalb eines Gruppenservers gespeichert sind, sind temporär. Verwende für Daten, die nach dem Stoppen erhalten bleiben müssen, einen persistenten Server.
 </Warning>
 
 ## Fehlerbehebung

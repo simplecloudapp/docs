@@ -1,6 +1,6 @@
 ---
 title: 'Persistente Server'
-description: 'Erstelle und verwalte einen Server, der seine Welten, Konfiguration und Plugins behält.'
+description: 'Erstelle und verwalte einen Server, der seine Welten, Konfiguration und Plugins behält'
 ---
 
 Ein persistenter Server ist ein Minecraft-Server oder Proxy, der auf einem Serverhost läuft und seine Dateien behält, wenn er neu gestartet oder deaktiviert wird. Verwende einen persistenten Server für eine Survival-Welt, einen Build-Server oder alles andere, dessen lokale Daten erhalten bleiben müssen.
@@ -25,7 +25,7 @@ Verbinde mindestens einen Serverhost und stelle sicher, dass er genügend Arbeit
   </Step>
 
   <Step title="Server auswählen">
-    Gib einen Namen ein, wähle **Server** oder **Proxy** aus und wähle den Serverhost, der ihn ausführen soll. Namen dürfen bis zu 100 ASCII-Buchstaben, Ziffern, Unterstriche und Bindestriche (`[A-Za-z0-9_-]`) enthalten. Bei der Eindeutigkeit innerhalb des Netzwerks wird nicht zwischen Groß- und Kleinschreibung unterschieden – `Survival-1` und `survival-1` gelten als derselbe Name.
+    Gib einen Namen ein, wähle **Server** oder **Proxy** aus und bestimme den Serverhost, der ihn ausführen soll. Namen dürfen bis zu 100 ASCII-Buchstaben, Ziffern, Unterstriche und Bindestriche (`[A-Za-z0-9_-]`) enthalten. SimpleCloud unterscheidet bei Namen nicht zwischen Groß- und Kleinschreibung. `Survival-1` und `survival-1` gelten deshalb als derselbe Name.
   </Step>
 
   <Step title="Software auswählen">
@@ -57,7 +57,7 @@ Verbinde mindestens einen Serverhost und stelle sicher, dass er genügend Arbeit
 
 Du kannst den Server auch über den Schalter **Active** unter **Settings** aktivieren oder deaktivieren. Speichere alle weiteren Einstellungen, die du änderst. Wenn sich eine Änderung darauf auswirkt, wie der Server startet, starte ihn neu, um die neue Konfiguration anzuwenden.
 
-Verwende die Hauptseite **Settings** für Ressourcen und die Seite **Blueprint** für Software und Startkonfiguration. Auf der Seite **Deployment** änderst du den zugewiesenen Serverhost. Befolge zuvor die folgenden Migrationsschritte.
+Auf der Hauptseite **Settings** änderst du die Ressourcen, unter **Blueprint** die Software und Startkonfiguration. Unter **Deployment** weist du einen anderen Serverhost zu. Befolge davor die Migrationsschritte im nächsten Abschnitt.
 
 Verwende den Tab **Files**, um Welt, Konfiguration und Plugins zu verwalten. Diese Dateien bleiben erhalten, wenn du den Server neu startest oder deaktivierst.
 
@@ -71,7 +71,19 @@ Wenn du den zugewiesenen Serverhost änderst, werden die Serverdateien nicht ver
   </Step>
 
   <Step title="Dateien kopieren">
-    Kopiere das vollständige Verzeichnis `running/persistent/<server-name>` vom alten Serverhost an denselben Ort auf dem neuen Serverhost.
+    Der Pfad `running/persistent/<server-name>` gilt relativ zur SimpleCloud-Installation auf beiden Hosts. Kopiere das vollständige Verzeichnis, während der Server deaktiviert ist. Führe beispielsweise auf dem alten Host `rsync` aus und ersetze Benutzerkonto, Host, Installationspfad und Servernamen:
+
+    ```bash
+    rsync -a --numeric-ids \
+      /srv/simplecloud/running/persistent/survival-1/ \
+      simplecloud@new-host:/srv/simplecloud/running/persistent/survival-1/
+    ```
+
+    Führe die Kopie mit dem Benutzerkonto aus, dem die SimpleCloud-Installation gehört, damit Eigentümer und Berechtigungen auf dem Ziel passen.
+  </Step>
+
+  <Step title="Ziel prüfen">
+    Führe auf dem neuen Serverhost `ls -ld /srv/simplecloud/running/persistent/survival-1` aus und prüfe mehrere enthaltene Dateien. Das Benutzerkonto des SimpleCloud-Dienstes muss das kopierte Verzeichnis lesen und beschreiben können.
   </Step>
 
   <Step title="Serverhost ändern">
@@ -79,7 +91,7 @@ Wenn du den zugewiesenen Serverhost änderst, werden die Serverdateien nicht ver
   </Step>
 
   <Step title="Aktivieren und prüfen">
-    Aktiviere den Server, tritt ihm bei und bestätige, dass seine Welten und seine Konfiguration vorhanden sind, bevor du die alte Kopie entfernst.
+    Aktiviere den Server, tritt ihm bei und bestätige, dass seine Welten und seine Konfiguration vorhanden sind. Behalte die alte Kopie, bis diese Prüfung erfolgreich war.
   </Step>
 </Steps>
 

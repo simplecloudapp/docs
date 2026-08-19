@@ -1,11 +1,11 @@
 ---
 title: 'Overview'
-description: 'Plugins extend SimpleCloud functionality directly within your Minecraft servers'
+description: 'Install plugins that add SimpleCloud features to your Minecraft servers and proxies'
 ---
 
-Plugins are server-side extensions that run inside your Minecraft servers. They use the Cloud API to interact with your network infrastructure.
+Plugins run inside your Minecraft servers or proxies. They add in-game and proxy features by reading and changing SimpleCloud network data through the Cloud API.
 
-## Official Plugins
+## Official plugins
 
 | Plugin | Platform | Description |
 |--------|----------|-------------|
@@ -18,48 +18,44 @@ Plugins are server-side extensions that run inside your Minecraft servers. They 
 | [NPCs](/en/manual/plugin/npcs) | Server | NPC interactions, holograms, and server navigation |
 | [Placeholders](/en/manual/plugin/placeholders) | Server | PlaceholderAPI integration for servers and groups |
 
-## Installing Plugins
+## Install plugins
 
-### Via Dashboard
+### Use the dashboard
 
-When creating or editing a group, you can add plugins from the Plugins settings. Search for plugins and they'll be automatically installed on all servers in that group.
+When you create or edit a group, add plugins in its **Plugins** settings. New servers in that group start with the selected plugins. For a group that is already running, save the change and use **Hold to rolling restart** to replace its instances one at a time.
 
-### Via CLI
+### Use the CLI
 
 ```bash
 # List plugins for a group
 sc group plugin list lobby
 
-# Add a plugin to a group
-sc group plugin add lobby proxy-essentials
+# Add a plugin to a proxy group
+sc group plugin add proxy proxy-essentials
 
-# Add a plugin to a persistent server
-sc persistent-server plugin add spawn proxy-essentials
+# Add a plugin to a persistent proxy
+sc persistent-server plugin add proxy-main proxy-essentials
 
 # Remove a plugin from a group
-sc group plugin remove lobby proxy-essentials
+sc group plugin remove proxy proxy-essentials
 ```
 
 The optional plugin query can be a search term, a Modrinth slug such as `mr:luckperms`, a Spigot ID such as `sp:28140`, or a plugin URL.
 
-### Manually
+### Install a JAR manually
 
-Place plugin JARs in your template's `plugins/` folder:
+Place a plugin JAR in the `plugins/` folder of the matching template:
 
 ```bash
 cp my-plugin.jar templates/lobby/plugins/
 ```
 
-## Plugins vs Droplets
+## Plugins and droplets
 
 | | Plugins | Droplets |
 |---|---------|----------|
-| **Runs on** | Inside Minecraft server | Independent service |
+| **Runs on** | Inside a Minecraft server or proxy | As an independent service |
 | **Purpose** | In-game features | Infrastructure tasks |
 | **Examples** | Signs, NPCs, commands | Player data, resource packs |
 
-For infrastructure-level integrations, see the [Developer docs](/en/developer/overview).
-
-<Note>
-  Have ideas for new plugins? Share them on our [Discord](https://discord.simplecloud.app) or contribute on [GitHub](https://github.com/simplecloudapp).
-</Note>
+Use the [Cloud API developer docs](/en/developer/overview) to build Minecraft plugins. Droplet development documentation is not available yet.

@@ -1,9 +1,9 @@
 ---
 title: "Templates"
-description: "Füge Plugins, Konfiguration, Welten und weitere Dateien zu den Servern hinzu, die sie benötigen."
+description: "Füge Plugins, Konfiguration, Welten und weitere Dateien zu den Servern hinzu, die sie benötigen"
 ---
 
-Templates legen fest, mit welchen Dateien ein Server startet. Füge eine Datei einmal zu einem Template hinzu. SimpleCloud kopiert sie dann beim Start auf jeden passenden Server.
+Templates legen fest, mit welchen Dateien ein Server startet. Lege eine Datei einmal im passenden Template ab. SimpleCloud kopiert sie beim Start auf jeden zugehörigen Server.
 
 Templates eignen sich am besten für Gruppenserver, die mit einem neuen Verzeichnis starten. Wenn Dateien, die sich während des Serverbetriebs ändern, nach dem Stoppen erhalten bleiben müssen, verwende einen [persistenten Server](/de/manual/setup/persistent-servers).
 
@@ -21,7 +21,7 @@ Templates eignen sich am besten für Gruppenserver, die mit einem neuen Verzeich
 Dateien, die beispielsweise nur von der Gruppe `lobby` verwendet werden, gehören in `templates/lobby/`. Ein Plugin, das jeder Paper-Server benötigt, gehört in `templates/_every/every_paper/`.
 
 <Tip>
-  Verwende den spezifischsten Ordner, der alle Server umfasst, welche die Dateien benötigen. Dadurch bleiben nicht betroffene Server und Templates übersichtlicher.
+  Verwende den spezifischsten Ordner, der alle Server mit diesen Dateien umfasst. So bleiben die übrigen Server und Templates übersichtlich.
 </Tip>
 
 ## Ordnerstruktur des Servers beibehalten
@@ -42,12 +42,14 @@ running/lobby/lobby-1/plugins/Lobby/config.yml
 
 Der generierte Servername, zum Beispiel `lobby-1`, kann sich zwischen Starts unterscheiden. Der Pfad unterhalb dieses Namens bleibt gleich.
 
+Verwende [Secrets](/de/manual/configuration/secrets) für Passwörter und Tokens. Füge eine Referenz wie `{{ secrets.DATABASE_PASSWORD }}` statt des echten Werts in das Template ein.
+
 <Steps>
   <Step title="Passenden Template-Ordner öffnen">
     Öffne den Ordner für die Gruppe, das Tag, die Software oder den Servertyp, den du ändern möchtest. Erstelle den Ordner, falls er noch nicht vorhanden ist.
   </Step>
 
-  <Step title="Dateien mit ihren serverrelativen Pfaden hinzufügen">
+  <Step title="Dateien am relativen Serverpfad hinzufügen">
     Um ein Plugin im Ordner `plugins` des Servers abzulegen, erstelle im Template einen Ordner `plugins` und lade dort die JAR-Datei hoch. Behalte für Konfigurations- und Weltordner dieselbe Struktur bei, die sie innerhalb eines laufenden Servers verwenden.
   </Step>
 
@@ -88,7 +90,7 @@ templates/lobby/plugins/Lobby/config.yml
   Kopiere Dateien aus einem Gruppenserver, bevor du ihn stoppst. SimpleCloud entfernt das `running`-Verzeichnis dieses Servers, wenn er stoppt.
 </Warning>
 
-Die Dateien eines persistenten Servers werden unter `running/persistent/{name}/` gespeichert und bleiben nach dem Stoppen erhalten. Bearbeite diese Dateien direkt, sofern ein Template eine Datei nicht nur dann bereitstellen soll, wenn sie fehlt.
+Die Dateien eines persistenten Servers liegen unter `running/persistent/{name}/` und bleiben nach dem Stoppen erhalten. Bearbeite vorhandene Dateien direkt. Ein Template eignet sich hier nur für Dateien, die SimpleCloud bei Bedarf hinzufügen soll.
 
 ## Dateien mit Tags teilen
 
@@ -121,7 +123,7 @@ Templates gehören zu dem Serverhost, auf dem sie gespeichert sind. Wenn eine Gr
 
 <AccordionGroup>
   <Accordion title="Eine Datei fehlt">
-    Prüfe, ob der Ordner zum Gruppennamen, Tag, zur Software oder zum Servertyp passt. Bestätige anschließend, dass der Pfad unterhalb des Template-Ordners dem erwarteten Pfad innerhalb des Servers entspricht. Starte nach Änderungen einen neuen Gruppenserver.
+    Prüfe, ob der Ordner zum Gruppennamen, Tag, zur Software oder zum Servertyp passt. Vergleiche danach den Pfad unterhalb des Template-Ordners mit dem erwarteten Pfad innerhalb des Servers. Starte nach Änderungen einen neuen Gruppenserver.
   </Accordion>
 
   <Accordion title="Eine Template-Änderung wird nicht angezeigt">
@@ -137,6 +139,6 @@ Templates gehören zu dem Serverhost, auf dem sie gespeichert sind. Wenn eine Gr
   </Accordion>
 
   <Accordion title="Die Änderung erscheint nur auf einem Serverhost">
-    Synchronisiere den Ordner `templates` auf allen Serverhosts, welche die Gruppe ausführen können.
+    Synchronisiere den Ordner `templates` auf allen Serverhosts, auf denen die Gruppe laufen kann.
   </Accordion>
 </AccordionGroup>

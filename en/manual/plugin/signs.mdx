@@ -4,24 +4,45 @@ description: "Use SimpleCloud's signs plugin for server navigation and live stat
 tag: 'Server'
 ---
 
-## Overview
+The Signs plugin lets players click signs to connect to SimpleCloud group servers or persistent servers. Signs update automatically with server state, player counts, MiniMessage text, and optional animations.
 
-The Signs plugin lets players click signs to connect to SimpleCloud group servers. Signs update automatically with server state, player counts, MiniMessage text, and optional animations.
+## Supported software
 
-## Supported Software
-
-| Server Type   | Plugin Support |
+| Server type   | Plugin support |
 | ------------- | -------------- |
-| Paper & Forks | Yes            |
+| Paper and forks | Yes          |
 | Spigot        | No             |
 
-## Quick Setup
+<Warning>
+  Sign registrations and their world must stay together. A persistent hub is the simplest place to run this plugin. To prepare a temporary group server, configure the signs on a persistent staging server, stop it cleanly, and then copy the world and `plugins/simplecloud-signs/locations/` into the group template. Do not copy a live world into the template.
+</Warning>
 
-1. Download the plugin from [GitHub](https://github.com/simplecloudapp/sign-plugin/releases).
-2. Place it in your server template's `plugins/` folder.
-3. Make sure the `simplecloud-api` plugin is installed on the server.
-4. Start the server once to generate the default layouts.
-5. Look at a sign in-game and register it with `/sign add <group>`.
+## Install the plugin
+
+<Steps>
+  <Step title="Install the server plugins">
+    Download Signs from [GitHub](https://github.com/simplecloudapp/sign-plugin/releases) and place it in the Paper server template's `plugins/` folder. Standard SimpleCloud templates already include `simplecloud-api`; add it through the target's **Plugins** setting or the CLI if you use a custom template.
+  </Step>
+
+  <Step title="Generate the layouts">
+    Start a matching server. The plugin creates its default layouts under `plugins/simplecloud-signs/layouts/`.
+  </Step>
+
+  <Step title="Register a sign">
+    Place a sign, look directly at it, and run one of these commands:
+
+    ```text
+    /sign add group Lobby
+    /sign add persistent MainLobby
+    ```
+
+    Use the first form for a server group and the second for a persistent server.
+  </Step>
+
+  <Step title="Test the sign">
+    Wait for the sign text to update, then click it. A group sign sends the player to the server currently assigned to that sign. A persistent-server sign sends the player to that persistent server when it is available.
+  </Step>
+</Steps>
 
 ## Commands
 
@@ -31,9 +52,10 @@ The command is available as `/simplecloudsign`, `/simplecloudsigns`, `/scsigns`,
 | ------- | ----------- |
 | `/sign help` | Show command help |
 | `/sign list [page] [group]` | List registered signs, optionally filtered by target |
-| `/sign add <group>` | Register the sign you are looking at for a server group |
+| `/sign add group <group>` | Register the sign you are looking at for a server group |
+| `/sign add persistent <persistent-server>` | Register the sign you are looking at for a persistent server |
 | `/sign remove` | Unregister the sign you are looking at |
-| `/sign remove <group>` | Remove all signs for a registered target key |
+| `/sign remove <target>` | Remove all signs for a registered group or persistent-server target |
 
 <Note>
   You must look at the sign block you want to add or remove. The command checks
@@ -52,13 +74,13 @@ The command is available as `/simplecloudsign`, `/simplecloudsigns`, `/scsigns`,
 
 ## Layouts
 
-Layouts define what a sign displays for a matching server state. The plugin ships default layouts for `STARTING`, `OFFLINE`, `MAINTENANCE`, `FULL`, `EMPTY`, and `ONLINE`.
+Layouts define what a sign displays for a matching server state. The plugin ships layouts for `STARTING`, `OFFLINE`, `MAINTENANCE`, `FULL`, `EMPTY`, and `ONLINE`. Restart the server after editing a layout because the plugin reads layout files during startup.
 
 ```yaml
 name: "online_default"
 rule: "ONLINE"
 priority: 9
-serverName: "%group%-%numerical-id%"
+behind-block: "LIME_CONCRETE"
 frame-update-interval: 1250
 
 frames:
@@ -74,7 +96,10 @@ frames:
 | `name` | Unique layout name |
 | `rule` | Built-in rule name used to decide when the layout applies |
 | `priority` | Higher priority layouts win when multiple layouts match |
-| `serverName` | Name pattern used to resolve target servers |
+| `type` | Optional target type: `ALL`, `GROUP`, or `PERSISTENT` |
+| `matcher` | Optional name matchers that limit which servers use the layout |
+| `serverName` | Optional proxy registration name; defaults to `%server-name%` |
+| `behind-block` | Optional block material placed behind a directional sign |
 | `frame-update-interval` | Animation interval in milliseconds |
 | `frames` | One or more four-line sign frames |
 
@@ -84,9 +109,11 @@ Use MiniMessage placeholder syntax inside layout lines.
 
 | Placeholder | Description |
 | ----------- | ----------- |
+| `<server-name>` | Group server name or persistent-server name |
 | `<group>` | Group name for group servers |
 | `<numerical-id>` | Numerical ID for group servers |
-| `<type>` | Server type |
+| `<persistent-server>` | Persistent-server name |
+| `<server-id>` | Server UUID |
 | `<host>` | Serverhost ID |
 | `<ip>` | Server IP address |
 | `<port>` | Server port |
@@ -95,18 +122,38 @@ Use MiniMessage placeholder syntax inside layout lines.
 | `<max-players>` | Maximum players |
 | `<player-count>` | Current player count |
 | `<state>` | Server state |
+| `<property:name>` | Custom server property named `name` |
+| `<property:name:default>` | Custom server property with a fallback value |
 | `<player_name>` | Player name when a player-specific update runs |
 | `<player_sender>` | Player's current server when available |
 
-## Server Name Patterns
+## Server name patterns
 
 The `serverName` field supports these replacement tokens:
 
 | Token | Description |
 | ----- | ----------- |
+| `%server-name%` | Default group server name or persistent-server name |
 | `%group%` | Group name |
 | `%numerical-id%` | Numerical ID |
+| `%persistent-server%` | Persistent-server name |
 
 <Frame>
   <img src="https://raw.githubusercontent.com/simplecloudapp/branding/refs/heads/main/media/plugin/signs/preview.png" alt="SimpleCloud signs in-game preview" />
 </Frame>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="The add or remove command cannot find the sign">
+    Look directly at the sign and stand within eight blocks of it before running the command.
+  </Accordion>
+
+  <Accordion title="The sign stays offline">
+    Confirm that its target exists. A group sign also needs an eligible running server; a persistent-server sign needs that server to be active and registered on the proxy.
+  </Accordion>
+
+  <Accordion title="A layout change does not appear">
+    Restart the server after editing a layout. The plugin reads layout files during startup.
+  </Accordion>
+</AccordionGroup>

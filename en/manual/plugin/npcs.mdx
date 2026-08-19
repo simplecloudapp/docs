@@ -1,175 +1,186 @@
 ---
 title: 'NPCs'
-description: "Use SimpleCloud's NPC plugin for interactive server navigation and holograms"
+description: 'Create or link NPCs that display SimpleCloud status and send players to server groups or persistent servers'
 tag: 'Server'
 ---
 
-## Overview
+The NPCs plugin connects an NPC from a supported provider to a SimpleCloud server group or persistent server. It can create the NPC for you, display live status in a hologram, and send players to an available target when they click.
 
-The SimpleCloud NPC plugin adds SimpleCloud actions, holograms, and feedback options to NPCs created by supported NPC plugins. You create the NPC in your NPC system, then use `/scnpc apply <id>` to let SimpleCloud manage interactions for that NPC.
+The normal workflow uses `/scnpcs create`. Use `/scnpcs link` when the NPC already exists in Citizens, FancyNpcs, MythicMobs, or ZNPCsPlus.
+
+## Supported software
+
+| Server software | Support |
+| --------------- | ------- |
+| Paper and forks | Yes |
+| Spigot | No |
+
+## Supported NPC providers
+
+| Provider | Create with `/scnpcs create` | Link an existing NPC |
+| -------- | ---------------------------- | -------------------- |
+| Citizens | Yes | Yes |
+| FancyNpcs | Yes | Yes |
+| ZNPCsPlus | Yes | Yes |
+| MythicMobs | No | Yes |
+
+You need at least one supported provider. The NPCs plugin disables itself if it cannot find one during startup.
 
 <Warning>
-  This plugin requires one supported NPC plugin on the server. The standalone
-  namespace module exists in the repository, but the current Paper plugin loads
-  third-party namespaces only.
+  NPC definitions, provider data, and world entities must stay together. A persistent hub is the simplest place to run this plugin. To prepare a temporary group server, configure the NPCs on a persistent staging server, stop it cleanly, and then copy the world, `plugins/simplecloud-npc/`, and the provider's data into the group template. Do not copy a live world into the template.
 </Warning>
 
-## Supported Software
+## Install the plugin
 
-| Server Type   | Plugin Support |
-| ------------- | -------------- |
-| Paper & Forks | Yes            |
-| Spigot        | No             |
+<Steps>
+  <Step title="Install the plugins">
+    Download the NPCs plugin from [GitHub](https://github.com/simplecloudapp/npc-plugin/releases) and install one supported NPC provider. Place both JARs in the Paper server template's `plugins/` folder. Standard SimpleCloud templates already include `simplecloud-api`; add it through the target's **Plugins** setting or the CLI if you use a custom template.
+  </Step>
 
-## Supported NPC Plugins
+  <Step title="Create an NPC for a target">
+    Start the server, stand where the NPC should appear, and choose a unique ID and an existing SimpleCloud group or persistent-server name. For a group named `Lobby`, run:
 
-| Plugin | Status | Notes |
-| ------ | ------ | ----- |
-| [Citizens](https://citizensnpcs.co) | Supported | Left and right click interactions |
-| [FancyNpcs](https://fancyplugins.de/FancyNpcs) | Supported | Uses FancyNpcs NPC names as IDs |
-| [MythicMobs](https://www.spigotmc.org/resources/5702) | Supported | Right click interactions |
-| PlayerNPC | Supported | Uses PlayerNPC IDs |
+    ```text
+    /scnpcs create lobby-selector Lobby
+    ```
 
-## Quick Setup
+    If more than one installed provider can create NPCs, add the provider name:
 
-1. Download the SimpleCloud NPC plugin from [GitHub](https://github.com/simplecloudapp/npc-plugin/releases).
-2. Install one supported NPC plugin.
-3. Make sure the `simplecloud-api` plugin is installed on the server.
-4. Place the plugins in your server template's `plugins/` folder.
-5. Start the server.
-6. Create an NPC with your NPC plugin.
-7. Run `/scnpc apply <id>` to create a SimpleCloud NPC config for it.
+    ```text
+    /scnpcs create lobby-selector Lobby citizens
+    ```
+  </Step>
+
+  <Step title="Verify the result">
+    Run `/scnpcs info lobby-selector`. Its status should be `complete`, and the NPC should have a two-line hologram. Right-click it to join the available `Lobby` server with the fewest players.
+  </Step>
+</Steps>
+
+## Link an existing NPC
+
+Use the provider's native reference when an NPC already exists:
+
+```text
+/scnpcs link lobby-selector citizens 12 Lobby
+```
+
+This creates the SimpleCloud ID `lobby-selector`, links Citizens NPC `12`, and targets `Lobby`. Provider references differ by plugin, so use command suggestions to select the installed provider and NPC.
+
+Linked NPCs remain owned by their provider. `/scnpcs unlink lobby-selector` removes only the SimpleCloud configuration and hologram.
+
+## Default behavior
+
+A newly created or linked NPC starts with:
+
+- A `default` hologram that shows the target name and player count
+- A `maintenance` hologram that shows the target as unavailable
+- A right-click action that joins the target in the `default` state
+- A right-click message in the `maintenance` state
+
+For a group target, the join action selects an `AVAILABLE` server with the fewest players. For a persistent-server target, it uses that persistent server's proxy registration name.
 
 ## Commands
 
-The command is available as `/simplecloudnpc`, `/scnpc`, and `/cloudnpc`.
+The root command is available as `/simplecloudnpcs`, `/scnpcs`, and `/scnpc`.
 
 | Command | Description |
 | ------- | ----------- |
-| `/scnpc` | Show help |
-| `/scnpc apply <id>` | Create a SimpleCloud config for an existing NPC |
-| `/scnpc <id>` | Show help for one NPC |
-| `/scnpc <id> setHologramGroup <name>` | Set the group used for hologram placeholders |
-| `/scnpc <id> setOption <key> <value>` | Set a global player feedback option |
-| `/scnpc <id> getOption <key>` | Show a global option value |
-| `/scnpc <id> removeOption <key>` | Remove a global option |
-| `/scnpc openInventory <name>` | Open a configured SimpleCloud NPC inventory |
-| `/scnpc createInventory <name> <groupName>` | Create an inventory for a group |
-| `/scnpc <id> interact <interaction>` | Show interaction details |
-| `/scnpc <id> interact <interaction> setAction <action>` | Set the action for an interaction |
-| `/scnpc <id> interact <interaction> setOption <key> <value>` | Set an interaction option |
-| `/scnpc <id> interact <interaction> getOption <key>` | Show an interaction option |
-| `/scnpc <id> interact <interaction> removeOption <key>` | Remove an interaction option |
+| `/scnpcs help [topic]` | Show the main help or the `create`, `link`, `edit`, `target`, `hologram`, `action`, `pushback`, or `admin` page |
+| `/scnpcs create <id> <target> [provider]` | Create a provider NPC at your position and configure it |
+| `/scnpcs link <id> <provider> <reference> <target>` | Link an existing provider NPC |
+| `/scnpcs list` | List configured NPCs |
+| `/scnpcs info <id>` | Show provider, target, hologram, action count, and configuration status |
+| `/scnpcs edit <id>` | Show the editable sections |
+| `/scnpcs unlink <id>` | Remove the SimpleCloud configuration but keep the provider NPC |
+| `/scnpcs delete <id>` | Delete the configuration and, for a managed NPC, its provider NPC |
+| `/scnpcs placeholders` | List target placeholders |
+| `/scnpcs reload` | Reload NPC definitions and `messages.yml` |
+
+<Warning>
+  `/scnpcs delete` also deletes the provider NPC when SimpleCloud created it. Use `/scnpcs unlink` when you want to keep that NPC in the provider.
+</Warning>
+
+## Change targets
+
+An NPC can try more than one target. It checks them in their configured order and uses the first target with an available destination.
+
+```text
+/scnpcs edit lobby-selector target list
+/scnpcs edit lobby-selector target add BackupLobby
+/scnpcs edit lobby-selector target remove Lobby
+```
+
+An NPC must keep at least one target. Group and persistent-server names are matched without case sensitivity, but a name is rejected if it identifies both resource types.
+
+## Edit the hologram
+
+Hologram layouts are selected by join state. Use `default` for normal operation and `maintenance` for a target whose `joinstate` property is `maintenance`.
+
+```text
+/scnpcs edit lobby-selector hologram line set default 1 <#38bdf8><bold><target_name>
+/scnpcs edit lobby-selector hologram line add maintenance <#dc2626>Come back later
+/scnpcs edit lobby-selector hologram height 2.5
+```
+
+Line numbers start at `1`. Run `/scnpcs help hologram` for the enable, disable, add, set, and remove forms.
+
+### Target placeholders
+
+| Placeholder | Description |
+| ----------- | ----------- |
+| `<target_name>` | Group or persistent-server name |
+| `<target_type>` | Target resource type |
+| `<target_online_players>` | Current player count |
+| `<target_max_players>` | Maximum player count |
+| `<target_min_memory>` | Minimum memory in MB |
+| `<target_max_memory>` | Maximum memory in MB |
+| `<target_property:key>` | Custom target property named `key` |
+| `<target_id>` | Persistent-server ID |
+| `<target_pretty_name>` | Persistent-server display name |
+| `<target_motd>` | Persistent-server MOTD |
+
+## Configure click actions
+
+Actions are scoped to an interaction and join state. Supported interactions are `RIGHT_CLICK`, `LEFT_CLICK`, `SHIFT_RIGHT_CLICK`, and `SHIFT_LEFT_CLICK`.
+
+For example, these commands keep the default join action and add feedback when a player clicks:
+
+```text
+/scnpcs edit lobby-selector action join-target RIGHT_CLICK default true
+/scnpcs edit lobby-selector action play-sound RIGHT_CLICK default block.note_block.pling
+/scnpcs edit lobby-selector action send-message RIGHT_CLICK maintenance <#dc2626>The lobby is under maintenance.
+```
+
+The plugin can also execute a player command, teleport the player, show a title, send the player to a proxy-registered server, or transfer the player to an external address. Run `/scnpcs help action` for the exact command forms.
+
+`execute-command` supports `<playername>` and `<playeruuid>` in the configured command.
 
 ## Permissions
 
 | Permission | Description |
 | ---------- | ----------- |
-| `simplecloud.command.npc` | Use all NPC commands |
+| `simplecloud.npcs.command` | Use all NPC management commands; granted to operators by default |
 
-## Interactions
+## Troubleshooting
 
-The default interaction names are:
+<AccordionGroup>
+  <Accordion title="The NPCs plugin disables itself during startup">
+    Install and enable Citizens, FancyNpcs, MythicMobs, or ZNPCsPlus on the same Paper server. Then restart the server and check the console for the list of available providers.
+  </Accordion>
 
-- `RIGHT_CLICK`
-- `LEFT_CLICK`
+  <Accordion title="Create asks for a provider">
+    More than one installed provider supports NPC creation. Add `citizens`, `fancynpcs`, or `znpcsplus` to the end of the create command.
+  </Accordion>
 
-<Note>
-  A namespace can expose fewer interactions. MythicMobs currently supports
-  `RIGHT_CLICK` only.
-</Note>
+  <Accordion title="The target is missing or ambiguous">
+    Confirm that the group or persistent server exists. If both resource types use the same name, rename one of them before creating or linking the NPC.
+  </Accordion>
 
-## Actions
-
-| Action | Required Options | Description |
-| ------ | ---------------- | ----------- |
-| `RUN_COMMAND` | `command.name` | Runs a command as the player |
-| `RUN_CONSOLE_COMMAND` | `command.name` | Runs a command as console |
-| `CONNECT_TO_SERVER` | `server.name` | Sends the player to a proxy-registered server |
-| `TRANSFER_TO_SERVER` | `server.ip`, `server.port` | Transfers the player to an external server |
-| `QUICK_JOIN` | `group.name` | Finds a server in a group and sends the player there |
-| `OPEN_INVENTORY` | `inventory.name` | Opens a configured inventory |
-
-`RUN_COMMAND` and `RUN_CONSOLE_COMMAND` support `<playername>` and `<playeruuid>` replacements in `command.name`.
-
-### Quick Join Options
-
-| Option | Default | Description |
-| ------ | ------- | ----------- |
-| `group.name` | Required | Group to search |
-| `server.name.pattern` | `<group_name>-<numerical_id>` | Server name passed to the proxy |
-| `filter.player.count` | `LEAST` | `LEAST` or `MOST` player count selection |
-| `filter.server.state` | `AVAILABLE` | Required server state |
-| `message.failed.server.finder` | Empty | Optional message when no server matches |
-
-## Feedback Options
-
-Feedback options can be set globally on the NPC or on a specific interaction. They run in addition to the interaction action.
-
-| Option | Description |
-| ------ | ----------- |
-| `send.message` | Send a chat message |
-| `send.actionbar` | Send an action bar message |
-| `send.title` | Show a title |
-| `send.subtitle` | Show a subtitle |
-| `play.sound` | Play an Adventure sound key |
-| `sound.volume` | Sound volume, default `3F` |
-| `sound.pitch` | Sound pitch, default `2F` |
-| `sound.source` | Sound source, default `master` |
-
-## NPC Configuration
-
-The generated NPC config stores holograms, interactions, and global options.
-
-```yaml
-version: "3"
-id: "0"
-
-hologramConfiguration:
-  placeholderGroupName: "lobby"
-  holograms:
-    - startHeight: 2.073
-      joinState: ""
-      lores:
-        - text: "<#38bdf8><bold><group_name>"
-          billboard: CENTER
-          alignment: CENTER
-        - text: "waiting for <#a3a3a3><group_player_count:available> players"
-          billboard: CENTER
-          alignment: CENTER
-
-actions:
-  - playerInteraction: LEFT_CLICK
-    action: QUICK_JOIN
-    options:
-      group.name: lobby
-      filter.player.count: LEAST
-      filter.server.state: AVAILABLE
-      server.name.pattern: "<group_name>-<numerical_id>"
-
-  - playerInteraction: RIGHT_CLICK
-    action: TRANSFER_TO_SERVER
-    options:
-      server.ip: demo-server.com
-      server.port: "25565"
-
-options:
-  send.message: "<#38bdf8>Choose a server"
-  play.sound: block.chest.open
-  sound.pitch: "2F"
-  sound.volume: "3F"
-  sound.source: master
-```
-
-## Hologram Placeholders
-
-`placeholderGroupName` references the group used for hologram placeholders.
-
-Examples:
-
-- Group placeholder: `<group_name>`
-- Group player count placeholder: `<group_player_count:available>`
+  <Accordion title="The NPC exists but does not join a server">
+    Run `/scnpcs info <id>` and resolve any incomplete status. For a group target, confirm that at least one server is in the `AVAILABLE` state. For a persistent server, confirm that it is active and registered on the proxy.
+  </Accordion>
+</AccordionGroup>
 
 <Frame>
-  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/npcs/npc.png?raw=true" alt="SimpleCloud NPC example with hologram" />
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/npcs/npc.png?raw=true" alt="SimpleCloud NPC with a two-line target status hologram" />
 </Frame>

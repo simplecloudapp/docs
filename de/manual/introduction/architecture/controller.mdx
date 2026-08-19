@@ -16,7 +16,7 @@ Wenn du eine Gruppe aktivierst, ihre Skalierungseinstellungen änderst oder eine
 3. Der Serverhost bereitet den Minecraft-Server vor und führt ihn aus.
 4. Status, Logs und Ressourcennutzung werden im Dashboard und in der CLI verfügbar.
 
-Der Controller stellt anschließend weiterhin den von dir konfigurierten Zustand sicher. Er kann beispielsweise einen weiteren Gruppenserver starten, wenn Spieler mehr Kapazität benötigen, oder einen von dir gestoppten Gruppenserver ersetzen, solange die Gruppe ihn weiterhin benötigt.
+Danach hält der Controller den von dir konfigurierten Zustand aufrecht. Er startet beispielsweise einen weiteren Gruppenserver, wenn Spieler mehr Kapazität benötigen. Einen manuell gestoppten Gruppenserver kann er ersetzen, solange die Skalierungseinstellungen der Gruppe diesen Server weiterhin erfordern.
 
 <Note>
   Der Controller koordiniert Minecraft-Server, führt sie aber nicht selbst aus. Deine Serverhosts stellen die Maschinen und Ressourcen bereit, auf denen sie laufen.
@@ -30,11 +30,11 @@ Wenn ein Server nicht startet, prüfe zuerst, ob ein zulässiger Serverhost onli
 
 ## Verwandte Seiten
 
-<CardGroup cols={2}>
+<Columns cols={2}>
   <Card title="Servergruppen" icon="layer-group" href="/de/manual/setup/server-groups">
     Lege fest, wie SimpleCloud deine Minecraft-Server ausführt.
   </Card>
   <Card title="Serverhost" icon="server" href="/de/manual/introduction/architecture/serverhost">
     Erfahre, wo deine Minecraft-Server laufen.
   </Card>
-</CardGroup>
+</Columns>

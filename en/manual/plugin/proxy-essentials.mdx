@@ -4,22 +4,20 @@ description: "Configure SimpleCloud MOTDs, tablists, join states, player counts,
 tag: 'Proxy'
 ---
 
-## Overview
-
 Proxy Essentials provides server list MOTDs, tablist headers and footers, permission-based join states, and network-wide player counts for SimpleCloud proxies. It runs on your Velocity or BungeeCord proxy and applies these features across the network.
 
-## Supported Software
+## Supported software
 
 | Software   | Plugin Support |
 | ---------- | -------------- |
 | Velocity   | Yes            |
 | BungeeCord | Yes            |
 
-## Quick Setup
+## Install the plugin
 
 <Steps>
   <Step title="Install the proxy plugins">
-    Download Proxy Essentials from [GitHub](https://github.com/simplecloudapp/proxy-essentials-plugin/releases) and place it in the proxy template's `plugins/` folder. Install `simplecloud-api` in the same proxy template.
+    Download Proxy Essentials from [GitHub](https://github.com/simplecloudapp/proxy-essentials-plugin/releases) and place it in the proxy template's `plugins/` folder. Standard SimpleCloud templates already include `simplecloud-api`; add it through the target's **Plugins** setting or the CLI if you use a custom template.
   </Step>
 
   <Step title="Generate the configuration">
@@ -34,7 +32,7 @@ Proxy Essentials provides server list MOTDs, tablist headers and footers, permis
   <Step title="Keep the generated files in the template">
     For a group proxy, copy the generated plugin data directory from the running proxy back to the same path in its proxy template. Otherwise, changes made only in the temporary running directory disappear when that proxy stops.
 
-    See [Templates](/en/manual/setup/templates) for how template files are copied to running services.
+    See [Templates](/en/manual/setup/templates) for how to move generated files into a template. Template changes apply the next time the proxy starts.
   </Step>
 
   <Step title="Apply and verify changes">
@@ -50,7 +48,7 @@ Proxy Essentials provides server list MOTDs, tablist headers and footers, permis
   `/tab reload` belongs to a different tablist plugin and does not reload Proxy Essentials. Use `/scproxy reload` on the proxy.
 </Note>
 
-## Generated Files
+## Generated files
 
 | File | Purpose |
 | ---- | ------- |
@@ -60,24 +58,24 @@ Proxy Essentials provides server list MOTDs, tablist headers and footers, permis
 | `placeholder.yml` | Ping color thresholds |
 | `messages.yml` | Kick and command messages |
 
-## Join States
+## Join states
 
-A join state is a named access policy. The `joinstates` list in `config.yml` defines the available policies; the active state is stored on the selected SimpleCloud group or service.
+A join state is a named access policy. The `joinstates` list in `config.yml` defines the available policies; the active state is stored on the selected SimpleCloud group or server instance.
 
 Join states can:
 
 - Require a permission to enter the proxy or a backend server
 - Require a separate permission to enter a full proxy network
 - Select a maintenance MOTD layout for the proxy
-- Apply to a complete group or one running service
+- Apply to a complete group or one running server instance
 
 ### Proxy groups and backend groups behave differently
 
 | Target | Effect |
 | ------ | ------ |
 | Proxy group | Controls entry to the network, checks the full-network permission, and can select a forced server list layout |
-| Backend group, such as `Lobby` | Controls whether players may connect or switch to those backend services |
-| One service, such as `Lobby-1` | Overrides access for only that running service |
+| Backend group, such as `Lobby` | Controls whether players may connect or switch to those backend server instances |
+| One server instance, such as `Lobby-1` | Overrides access for only that running instance |
 
 <Info>
   Setting the `Lobby` group to maintenance does not change the public network MOTD. Set the **proxy group** to maintenance when you want to restrict the whole network and show its maintenance layout.
@@ -111,7 +109,7 @@ joinstates:
 | `permission.join` | Permission required to enter; an empty value allows everyone |
 | `permission.full` | Permission required to enter when the proxy group has reached its player limit |
 | `forced-motd-layout` | Fallback MOTD layout while this state is active on the proxy; `null` does not force one |
-| `initial-state` | Fallback for groups or services without a stored state; changing it does not switch existing groups |
+| `initial-state` | Fallback for groups or server instances without a stored state; changing it does not switch existing groups |
 | `initial-layout` | Fallback MOTD layout when no stored or forced layout applies |
 
 Run `/scproxy reload` after adding or changing state definitions. Reloading a definition does not activate it.
@@ -134,7 +132,7 @@ Assume the proxy group is named `Proxy`:
     /scproxy joinstate set Proxy maintenance
     ```
 
-    The group command stores the state on the group and its currently running services. Services without their own state fall back to the group state.
+    The group command stores the state on the group and its currently running server instances. Instances without their own state fall back to the group state.
   </Step>
 
   <Step title="Verify the active state">
@@ -152,20 +150,20 @@ Assume the proxy group is named `Proxy`:
   </Step>
 </Steps>
 
-To restrict only a backend group or one service, use for example:
+To restrict only a backend group or one server instance, use for example:
 
 ```text
 /scproxy joinstate set Lobby maintenance
 /scproxy joinstate set Lobby 1 maintenance
 ```
 
-The first command changes the complete `Lobby` group and its running services. The second changes only `Lobby-1`.
+The first command changes the complete `Lobby` group and its running server instances. The second changes only `Lobby-1`.
 
 ### MOTD layout priority
 
 The proxy resolves its server list layout in this order:
 
-1. A valid layout stored on the proxy service or group by `/scproxy layout set`
+1. A valid layout stored on the proxy instance or group by `/scproxy layout set`
 2. The active join state's `forced-motd-layout`
 3. `initial-layout`
 
@@ -173,7 +171,7 @@ A layout stored with `/scproxy layout set` takes priority over `forced-motd-layo
 
 The `whitelist` block currently present in the generated `config.yml` is not evaluated by the join checks. Use `permission.join` for administrator or maintenance access.
 
-## Server List Layouts
+## Server list layouts
 
 Each file in `layout/` is one selectable server list layout. The file name is its layout name, so `layout/maintenance.yml` is referenced as `maintenance`.
 
@@ -244,7 +242,7 @@ tablist:
 
 Multiple `layout` entries under the same name rotate automatically. Currently, the lowest `update-time` from all tablist entries becomes one global interval for every entry. Use the same value for all entries and restart the proxy after changing it, because `/scproxy reload` does not recreate the scheduled task.
 
-## Player Count
+## Player count
 
 The displayed count includes all proxies in the current proxy group. You can add other groups and persistent servers.
 
@@ -260,7 +258,7 @@ player-count:
 
 The update interval is measured in ticks.
 
-## Backend Kick Handling
+## Backend kick handling
 
 ```yaml config.yml
 show-kick-reason: false
@@ -269,7 +267,7 @@ show-kick-reason: false
 - `false` keeps the proxy's normal fallback behavior after a backend kick.
 - `true` disconnects the player from the proxy with the backend's kick reason instead of sending them to a fallback server.
 
-## Text Formatting
+## Text formatting
 
 Proxy Essentials uses [MiniMessage](https://docs.papermc.io/adventure/minimessage/) for MOTDs, tablists, and messages. Use tags such as `<red>`, `<color:#0ea5e9>`, `<bold>`, and `<br>`.
 
@@ -284,13 +282,13 @@ Legacy `&` and `§` color codes are not supported.
 | `/scproxy reload` | Reload `config.yml`, `placeholder.yml`, `messages.yml`, and all MOTD layouts |
 | `/scproxy joinstate help` | Show join-state commands |
 | `/scproxy joinstate info <group>` | Show the stored state for a group |
-| `/scproxy joinstate info <group> <id>` | Show the effective state for one service |
-| `/scproxy joinstate set <group> <joinstate>` | Set a state on a group and its running services |
-| `/scproxy joinstate set <group> <id> <joinstate>` | Set a state on one service |
+| `/scproxy joinstate info <group> <id>` | Show the effective state for one server instance |
+| `/scproxy joinstate set <group> <joinstate>` | Set a state on a group and its running server instances |
+| `/scproxy joinstate set <group> <id> <joinstate>` | Set a state on one server instance |
 | `/scproxy layout help` | Show layout commands |
 | `/scproxy layout info` | Show `initial-layout` |
 | `/scproxy layout info <group>` | Show the layout stored or resolved for a group |
-| `/scproxy layout set <group> <layout>` | Store a layout on a group and its running services |
+| `/scproxy layout set <group> <layout>` | Store a layout on a group and its running server instances |
 
 ## Placeholders
 
@@ -303,6 +301,10 @@ Legacy `&` and `§` color codes are not supported.
 | `<env:NAME:default>` | MOTD, tablist | Environment variable value with a fallback |
 | `<server_name>` | Tablist | Player's current backend server |
 | `<ping>` | Tablist | Player ping with the configured threshold color |
+
+<Warning>
+  Do not expose tokens, passwords, or other secrets through `<env:NAME>`. MOTDs are public, and tablist content is visible to connected players.
+</Warning>
 
 Configure `<ping>` colors in `placeholder.yml`:
 
@@ -332,7 +334,7 @@ pingColors:
 
 The last two permissions are defaults from `config.yml`; you can replace them with permissions from your own permission scheme.
 
-## Choose Which Features Proxy Essentials Manages
+## Choose which features Proxy Essentials manages
 
 Proxy Essentials does not have to manage every feature at once. For example, you can use its join states while another proxy plugin provides the MOTD or tablist. Configure one provider for each feature so plugins do not overwrite each other's output.
 
@@ -416,11 +418,11 @@ Remove the Proxy Essentials JAR from all matching proxy templates and restart th
 
 <AccordionGroup>
   <Accordion title="The plugin or its configuration does not appear">
-    Confirm that Proxy Essentials and `simplecloud-api` are in the **proxy** template, then restart a matching proxy. Check the proxy console and the platform-specific data directory listed in Quick Setup. Installing the JAR on a Lobby does not load the proxy plugin.
+    Confirm that Proxy Essentials and `simplecloud-api` are in the **proxy** template, then restart a matching proxy. Check the proxy console and the platform-specific data directory listed under **Install the plugin**. Installing the JAR on a Lobby does not load the proxy plugin.
   </Accordion>
 
   <Accordion title="A reload command changes nothing">
-    Use `/scproxy reload`, not `/tab reload`. Confirm that you edited the files belonging to the running proxy. Changes made only in a template require a proxy restart; changes made only in a temporary running group service disappear when it stops.
+    Use `/scproxy reload`, not `/tab reload`. Confirm that you edited the files belonging to the running proxy. Changes made only in a template require a proxy restart; changes made only in a temporary running group instance disappear when it stops.
   </Accordion>
 
   <Accordion title="Another plugin's tablist keeps being overwritten">

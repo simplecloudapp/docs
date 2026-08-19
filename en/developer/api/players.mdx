@@ -5,6 +5,10 @@ description: "Look up players, inspect presence, transfer or kick them, and mana
 
 Use `api.player()` to find players and inspect their network presence. Prefer UUID lookup when you already know the player's UUID because usernames can change.
 
+<Note>
+  The snippets on this reference page show focused API calls. They use `api` for the shared `CloudApi` client created in [Installation](/en/developer/installation) and belong inside your plugin's methods.
+</Note>
+
 ## Look up a player
 
 Look up a player by UUID and check whether they are online before using their current server:
@@ -114,4 +118,6 @@ Player properties store custom string values for your plugins.
 | Delete one property | `deletePlayerProperty(playerId, key)` |
 | Delete several properties | `deletePlayerProperties(playerId, keys)` |
 
-Online time must be between `0` and `Integer.MAX_VALUE` seconds. Property updates merge the supplied values with the existing map; delete methods remove only the specified keys.
+Online time must be between `0` and `Integer.MAX_VALUE` seconds. The add and remove helpers read the current value before writing the result, so concurrent changes can overwrite one another.
+
+Property updates merge the supplied values with the existing map, while delete methods remove only the specified keys. The merged properties must fit within 4 KB when encoded as JSON.

@@ -1,14 +1,12 @@
 ---
 title: 'Prefixes'
-description: 'Erfahre, wie das Prefixes-Plugin Ranggruppen, Chatformatierung, Tablist-Einträge, Namensanzeigen und die serverübergreifende Synchronisierung verwaltet'
+description: 'Konfiguriere Ranggruppen, Chat, Tablist, Namensanzeigen und serverübergreifende Synchronisierung'
 tag: 'Server'
 ---
 
 import { DependencySnippet } from "/snippets/DependencySnippet.jsx";
 
-## Übersicht
-
-Das Prefixes-Plugin verwaltet die Ranganzeigen auf deinen Servern. Jeder Spieler gehört zu einer Gruppe. Diese Gruppe bestimmt, wie der Spieler im Chat, in der Tablist und über seinem Kopf dargestellt wird.
+Das Prefixes-Plugin steuert, wie Spielerränge im Chat, in der Tablist und als Namensanzeige erscheinen. Jeder Spieler gehört zu einer Gruppe, deren Einstellungen diese Darstellungen festlegen.
 
 Das Plugin:
 
@@ -19,31 +17,45 @@ Das Plugin:
 
 ## Unterstützte Software
 
-| Software      | Support        |
+| Software      | Unterstützung  |
 | ------------- | -------------- |
-| Paper & Forks | ✅ Vollständig |
-| Minestom      | 🔄 Geplant     |
-| Fabric        | 🔄 Geplant     |
+| Paper und Forks | Vollständig |
+| Minestom | Geplant |
+| Fabric | Geplant |
 
-<Note>
-  Du möchtest eine andere Server-Software unterstützen? Reiche auf
-  [GitHub](https://github.com/simplecloudapp/prefixes-plugin/pulls) einen Pull Request ein!
-</Note>
+## Plugin installieren
 
-## Schnelle Einrichtung
+<Steps>
+  <Step title="Server-Plugins installieren">
+    Lade Prefixes von [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases) herunter und lege die JAR-Datei im Ordner `plugins/` des Paper-Server-Templates ab. Die Standard-Templates enthalten `simplecloud-api` bereits. Füge es bei einem eigenen Template über die Einstellung **Plugins** des Ziels oder über die CLI hinzu.
 
-1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases) herunter.
-2. Lege es im `plugins/`-Ordner deines Server-Templates ab.
-3. Starte deinen Server.
-4. Passe `config.yml` und `messages.yml` an deine Anforderungen an.
+    Installiere zusätzlich LuckPerms, wenn du `general.source: LUCKPERMS` verwenden möchtest.
+  </Step>
 
----
+  <Step title="Konfiguration erzeugen">
+    Starte einen passenden Server. Prefixes legt `config.yml` und `messages.yml` unter `plugins/simplecloud-prefixes/` an.
+  </Step>
+
+  <Step title="Konfiguration ins Template übernehmen">
+    Kopiere bei einem Gruppenserver `plugins/simplecloud-prefixes/` vor dem Stoppen an denselben Pfad im Template. Bearbeite anschließend die Kopie im Template.
+
+    Unter [Templates](/de/manual/setup/templates) findest du den vollständigen Ablauf.
+  </Step>
+
+  <Step title="Konfiguration anwenden und prüfen">
+    Führe nach Änderungen an Dateien eines laufenden Servers `/scprefix reload` aus. Starte stattdessen einen neuen Server, wenn du das Template bearbeitet hast.
+
+    <Check>
+      Betritt den Server und prüfe für jede aktivierte Funktion, ob dein Gruppenpräfix im Chat, in der Tablist und im Anzeigenamen erscheint.
+    </Check>
+  </Step>
+</Steps>
 
 ## Konfiguration
 
 ### config.yml
 
-Die Hauptkonfigurationsdatei. Hierüber steuerst du die Gruppenquelle, die Gruppen selbst, einzelne Plugin-Funktionen und die Synchronisierung zwischen den Servern.
+Die Hauptkonfigurationsdatei steuert die Gruppenquelle, Gruppendefinitionen, einzelne Funktionen und die Synchronisierung zwischen Servern.
 
 ```yaml
 # Version des Konfigurationsformats. Ändere diesen Wert nicht.
@@ -156,7 +168,7 @@ Wenn `source` auf `LUCKPERMS` steht, kommt jeder Wert aus der LuckPerms-Gruppe:
 
 | LuckPerms-Wert      | Prefixes-Wert  | Standard, wenn nicht gesetzt                                        |
 | ------------------- | -------------- | ------------------------------------------------------------------- |
-| Gruppenname         | `name`         | –                                                                   |
+| Gruppenname         | `name`         | Nicht verfügbar                                                     |
 | Gruppengewicht      | `priority`     | `0`                                                                 |
 | Gruppen-Prefix      | `prefix`       | leer                                                                |
 | Gruppen-Suffix      | `suffix`       | leer                                                                |
@@ -216,8 +228,6 @@ Die Liste `sources` legt fest, von welchen Servern dieser Server Aktualisierunge
 
 Du kannst mehrere Gruppennamen und persistente Server-IDs kombinieren. Damit zwei Server Aktualisierungen in beide Richtungen austauschen, muss jeder beteiligte Server Aktualisierungen aus der Gruppe oder von der ID des jeweils anderen empfangen.
 
----
-
 ## Befehle
 
 | Befehl             | Permission                            | Beschreibung                |
@@ -226,13 +236,11 @@ Du kannst mehrere Gruppennamen und persistente Server-IDs kombinieren. Damit zwe
 | `/scprefix help`   | `simplecloud.prefixes.command`        | Zeigt die Befehlsübersicht. |
 | `/scprefix reload` | `simplecloud.prefixes.command.reload` | Lädt die Konfiguration neu. |
 
----
-
 ## API
 
-Über die API liest du die Prefix-Daten eines Spielers aus und registrierst eigene Gruppen.
+Mit der API liest du die Präfixdaten eines Spielers aus und registrierst eigene Gruppen.
 
-### Abhängigkeit
+### Abhängigkeit hinzufügen
 
 <DependencySnippet
   language="de"
@@ -281,15 +289,19 @@ PrefixesApi api = registration.getProvider();
 </Tab>
 </Tabs>
 
+<Note>
+  Die folgenden kurzen Beispiele setzen die oben erzeugte Instanz `api` und einen Plattformspieler namens `player` voraus. Füge sie in die Methoden deines Plugins ein. Das Beispiel für eine eigene Gruppe zeigt eine vollständige Klasse.
+</Note>
+
 ### Spieler verwalten
 
 Die Gruppe eines Spielers holen:
 
 <CodeGroup>
 ```kotlin Kotlin
-val group = api.getPrimaryGroup(player.uniqueId).await()
-
-player.sendMessage(Component.text("Deine Gruppe: ${group?.name ?: "keine"}"))
+api.getPrimaryGroup(player.uniqueId).thenAccept { group ->
+    player.sendMessage(Component.text("Deine Gruppe: ${group?.name ?: "keine"}"))
+}
 ```
 
 ```java Java
@@ -305,9 +317,9 @@ Die Anzeigewerte eines Spielers holen:
 
 <CodeGroup>
 ```kotlin Kotlin
-val data = api.getPrefixData(player.uniqueId).await()
-
-player.sendMessage(data.prefix.append(data.displayName).append(data.suffix))
+api.getPrefixData(player.uniqueId).thenAccept { data ->
+    player.sendMessage(data.prefix.append(data.displayName).append(data.suffix))
+}
 ```
 
 ```java Java
@@ -321,10 +333,12 @@ Prüfen, ob ein Spieler in einer bestimmten Gruppe ist:
 
 <CodeGroup>
 ```kotlin Kotlin
-val vip = api.getGroups().find { it.name == "vip" } ?: return
+val vip = api.getGroups().find { it.name == "vip" }
 
-if (vip.containsPlayerAsync(player.uniqueId).await()) {
-    player.sendMessage(Component.text("Willkommen zurück!"))
+vip?.containsPlayerAsync(player.uniqueId)?.thenAccept { isVip ->
+    if (isVip) {
+        player.sendMessage(Component.text("Willkommen zurück!"))
+    }
 }
 ```
 
@@ -365,7 +379,17 @@ Eigene Gruppe registrieren:
 
 <CodeGroup>
 ```kotlin Kotlin
-class VipGroup : PrefixesGroup {
+import app.simplecloud.prefixes.api.PrefixesApi
+import app.simplecloud.prefixes.api.group.PrefixesGroup
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.TextColor
+import net.kyori.adventure.text.minimessage.MiniMessage
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+
+class VipGroup(private val members: Set<UUID>) : PrefixesGroup {
+    private val miniMessage = MiniMessage.miniMessage()
+
     override val name = "vip"
     override val priority = 50
     override val permission = "simplecloud.prefix.group.vip"
@@ -375,20 +399,37 @@ class VipGroup : PrefixesGroup {
     override val displayName = "<color><playername>"
     override val chatFormat = "<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>"
 
-    override fun containsPlayer(id: UUID) =
-        containsPlayerAsync(id).join()
+    override fun containsPlayer(id: UUID) = id in members
 
     override fun containsPlayerAsync(id: UUID) =
-        CompletableFuture.completedFuture(false)
+        CompletableFuture.completedFuture(containsPlayer(id))
 }
 
-if (!api.addGroup(VipGroup()).await()) {
-    println("Es gibt bereits eine Gruppe namens vip")
-}
+fun registerVipGroup(api: PrefixesApi, members: Set<UUID>): CompletableFuture<Void> =
+    api.addGroup(VipGroup(members)).thenAccept { created ->
+        if (!created) {
+            println("Es gibt bereits eine Gruppe namens vip")
+        }
+    }
 ```
 
 ```java Java
-public class VipGroup implements PrefixesGroup {
+import app.simplecloud.prefixes.api.PrefixesApi;
+import app.simplecloud.prefixes.api.group.PrefixesGroup;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+public final class VipGroup implements PrefixesGroup {
+    private final Set<UUID> members;
+
+    public VipGroup(Set<UUID> members) {
+        this.members = Set.copyOf(members);
+    }
 
     @Override
     public String getName() {
@@ -432,24 +473,29 @@ public class VipGroup implements PrefixesGroup {
 
     @Override
     public boolean containsPlayer(UUID id) {
-        return containsPlayerAsync(id).join();
+        return members.contains(id);
     }
 
     @Override
     public CompletableFuture<Boolean> containsPlayerAsync(UUID id) {
-        return CompletableFuture.completedFuture(false);
+        return CompletableFuture.completedFuture(containsPlayer(id));
+    }
+
+    public static CompletableFuture<Void> register(
+        PrefixesApi api,
+        Set<UUID> members
+    ) {
+        return api.addGroup(new VipGroup(members)).thenAccept(created -> {
+            if (!created) {
+                System.out.println("Es gibt bereits eine Gruppe namens vip");
+            }
+        });
     }
 }
-
-api.addGroup(new VipGroup()).thenAccept(created -> {
-    if (!created) {
-        System.out.println("Es gibt bereits eine Gruppe namens vip");
-    }
-});
 ```
 </CodeGroup>
 
----
+Übergib beim Registrieren die UUIDs der Gruppenmitglieder. Wenn sich die Mitgliedschaft zur Laufzeit ändert, ersetze das kopierte Set durch den threadsicheren Mitgliederspeicher deines Plugins.
 
 ## Bewährte Vorgehensweisen
 

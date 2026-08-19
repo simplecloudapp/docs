@@ -1,6 +1,6 @@
 ---
 title: "Templates"
-description: "Add plugins, configuration, worlds, and other files to the servers that need them."
+description: "Add plugins, configuration, worlds, and other files to the servers that need them"
 ---
 
 Templates define the files a server starts with. Add a file to a template once, and SimpleCloud copies it to every matching server when it starts.
@@ -41,6 +41,8 @@ running/lobby/lobby-1/plugins/Lobby/config.yml
 ```
 
 The generated server name, such as `lobby-1`, can differ between starts. The path below that name remains the same.
+
+Use [secrets](/en/manual/configuration/secrets) for passwords and tokens. Put a reference such as `{{ secrets.DATABASE_PASSWORD }}` in the template instead of the real value.
 
 <Steps>
   <Step title="Open the matching template folder">

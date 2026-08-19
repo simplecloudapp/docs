@@ -88,6 +88,12 @@ Each entry under `paths` identifies a configuration file, its format, and the va
     ```
 
     Custom properties from the group or persistent server are also available as placeholders. For example, a property named `motd` can be used as `%motd%`.
+
+    To insert a password, token, or another private value, use a [secret reference](/en/manual/configuration/secrets) as the Configurator value:
+
+    ```yaml
+    password: "{{ secrets.DATABASE_PASSWORD }}"
+    ```
   </Accordion>
 </AccordionGroup>
 

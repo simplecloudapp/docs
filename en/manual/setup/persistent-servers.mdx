@@ -1,6 +1,6 @@
 ---
 title: 'Persistent Servers'
-description: 'Create and manage a server that keeps its worlds, configuration, and plugins.'
+description: 'Create and manage a server that keeps its worlds, configuration, and plugins'
 ---
 
 A persistent server is a Minecraft server or proxy that runs on one serverhost and keeps its files when it restarts or is disabled. Use one for a survival world, build server, or anything else that must keep its local data.
@@ -25,7 +25,7 @@ Connect at least one serverhost and make sure it has enough memory for your serv
   </Step>
 
   <Step title="Choose the server">
-    Enter a name, choose **Server** or **Proxy**, and select the serverhost that will run it. Names may contain up to 100 ASCII letters, digits, underscores, and hyphens (`[A-Za-z0-9_-]`) and are unique within the network case-insensitively — `Survival-1` and `survival-1` count as the same name.
+    Enter a name, choose **Server** or **Proxy**, and select the serverhost that will run it. Names may contain up to 100 ASCII letters, digits, underscores, and hyphens (`[A-Za-z0-9_-]`). Names are unique within the network regardless of capitalization, so `Survival-1` and `survival-1` count as the same name.
   </Step>
 
   <Step title="Choose the software">
@@ -71,7 +71,19 @@ Changing the assigned serverhost does not move the server's files. Back up and c
   </Step>
 
   <Step title="Copy its files">
-    Copy the complete `running/persistent/<server-name>` directory from the old serverhost to the same location on the new serverhost.
+    The path `running/persistent/<server-name>` is relative to the SimpleCloud installation on each host. Copy the complete directory while the server is disabled. For example, run `rsync` from the old host and replace the account, host, installation path, and server name:
+
+    ```bash
+    rsync -a --numeric-ids \
+      /srv/simplecloud/running/persistent/survival-1/ \
+      simplecloud@new-host:/srv/simplecloud/running/persistent/survival-1/
+    ```
+
+    Run the copy as the account that owns the SimpleCloud installation so file ownership and permissions remain usable on the destination.
+  </Step>
+
+  <Step title="Check the destination">
+    On the new serverhost, run `ls -ld /srv/simplecloud/running/persistent/survival-1` and inspect several files below it. Confirm that the SimpleCloud service account can read and write the copied directory.
   </Step>
 
   <Step title="Change the serverhost">
@@ -79,7 +91,7 @@ Changing the assigned serverhost does not move the server's files. Back up and c
   </Step>
 
   <Step title="Enable and verify">
-    Enable the server, join it, and confirm that its worlds and configuration are present before removing the old copy.
+    Enable the server, join it, and confirm that its worlds and configuration are present. Keep the old copy until this check succeeds.
   </Step>
 </Steps>
 

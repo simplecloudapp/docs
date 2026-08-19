@@ -1,11 +1,15 @@
 ---
-title: 'Persistent Servers API'
+title: 'API für persistente Server'
 description: 'Erstelle, suche, aktualisiere und lösche persistente Server'
 ---
 
 Ein persistenter Server ist eine einzelne langlebige Serverkonfiguration, zum Beispiel ein Survival-Server. Anders als eine Gruppe skaliert er nicht auf mehrere Instanzen.
 
 Mit `api.persistentServer()` kannst du persistente Server erstellen und verwalten.
+
+<Note>
+  Die Ausschnitte auf dieser Referenzseite zeigen einzelne API-Aufrufe. Sie verwenden `api` für den unter [Installation](/de/developer/installation) erzeugten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
+</Note>
 
 ## Persistenten Server erstellen
 
@@ -30,7 +34,7 @@ CreatePersistentServerRequest request = CreatePersistentServerRequest.builder()
 
 api.persistentServer().createPersistentServer(request)
     .thenAccept(server -> System.out.println(
-        "Created " + server.getName() + " with ID " + server.getPersistentServerId()));
+        "Persistenten Server " + server.getName() + " mit ID " + server.getPersistentServerId() + " erstellt"));
 ```
 
 Um stattdessen einen vorhandenen Blueprint zu verwenden, ersetze `createBlueprint(...)` durch eine Quelle:
@@ -46,7 +50,7 @@ Lege entweder `source` oder `createBlueprint` fest, nicht beides.
 
 <Accordion title="Felder von CreatePersistentServerRequest">
   <ParamField body="name" type="string" required>
-    Name des persistenten Servers. Bis zu 100 Zeichen aus ASCII-Buchstaben, Ziffern, Unterstrichen und Bindestrichen (`[A-Za-z0-9_-]`). Der Name muss innerhalb des Netzwerks eindeutig sein; Groß- und Kleinschreibung werden nicht berücksichtigt. `Survival-1` und `survival-1` gelten daher als derselbe Name. Ein persistenter Server und eine Gruppe dürfen denselben Namen haben. Wenn du einen persistenten Server mit einem Namen erstellst oder umbenennst, der sich von einem vorhandenen persistenten Server nur durch Groß- und Kleinschreibung unterscheidet, wird `409 Conflict` zurückgegeben.
+    Name des persistenten Servers mit bis zu 100 ASCII-Buchstaben, Ziffern, Unterstrichen oder Bindestrichen (`[A-Za-z0-9_-]`). Namen sind innerhalb des Netzwerks eindeutig; Groß- und Kleinschreibung werden nicht berücksichtigt. `Survival-1` und `survival-1` bezeichnen daher denselben persistenten Server. Ein persistenter Server und eine Gruppe dürfen denselben Namen haben. Beim Erstellen oder Umbenennen auf eine reine Variante der Groß- und Kleinschreibung gibt die API `409 Conflict` zurück.
   </ParamField>
 
   <ParamField body="type" type="GroupServerType | null">
@@ -110,7 +114,7 @@ api.persistentServer().getPersistentServerById("persistent-server-uuid")
     .thenAccept(server -> System.out.println(server.getName()));
 ```
 
-Beide Methoden werden mit einem Fehler abgeschlossen, wenn kein persistenter Server übereinstimmt. Bei der Suche nach Namen wird die Groß- und Kleinschreibung nicht berücksichtigt.
+Das zurückgegebene Future schlägt fehl, wenn kein persistenter Server übereinstimmt. Bei der Suche nach Namen wird die Groß- und Kleinschreibung nicht berücksichtigt.
 
 Verwende eine Abfrage, um die Liste zu filtern:
 
@@ -139,7 +143,7 @@ UpdatePersistentServerRequest update = UpdatePersistentServerRequest.builder()
 
 api.persistentServer()
     .updatePersistentServer("persistent-server-uuid", update)
-    .thenAccept(server -> System.out.println("Updated " + server.getName()));
+    .thenAccept(server -> System.out.println("Server " + server.getName() + " aktualisiert"));
 ```
 
 Du kannst den Namen, Typ, Arbeitsspeicher, das Spielerlimit, den Aktivierungszustand, die Priorität, den zugewiesenen Serverhost, die Quelle, Workflows, Eigenschaften und Tags aktualisieren.
@@ -152,11 +156,11 @@ Verwende die Eigenschaftsmethoden, um benutzerdefinierte Eigenschaften zu änder
 api.persistentServer().updatePersistentServerProperties(
     "persistent-server-uuid",
     Map.of("gameMode", "SURVIVAL", "region", "eu-central")
-).thenAccept(properties -> System.out.println("Properties: " + properties));
+).thenAccept(properties -> System.out.println("Eigenschaften: " + properties));
 
 api.persistentServer()
     .deletePersistentServerProperty("persistent-server-uuid", "region")
-    .thenAccept(properties -> System.out.println("Properties: " + properties));
+    .thenAccept(properties -> System.out.println("Eigenschaften: " + properties));
 ```
 
 `updatePersistentServerProperties` führt die übergebenen Werte mit den vorhandenen Eigenschaften zusammen. Du kannst außerdem eine einzelne Eigenschaft aktualisieren oder mehrere Eigenschaften löschen.
@@ -166,14 +170,14 @@ api.persistentServer()
 ```java
 api.persistentServer()
     .deletePersistentServer("persistent-server-uuid")
-    .thenRun(() -> System.out.println("Deleted persistent server"));
+    .thenRun(() -> System.out.println("Persistenten Server gelöscht"));
 ```
 
 <Warning>
-  Deaktiviere den persistenten Server zuerst, stoppe seine Instanz und lösche die Konfiguration, nachdem die Instanz beendet wurde. Ihre Dateien bleiben auf dem Serverhost erhalten.
+  Deaktiviere den persistenten Server zuerst, stoppe seine Instanz und lösche die Konfiguration, nachdem die Instanz beendet wurde. Die Serverdateien bleiben auf dem Serverhost erhalten.
 </Warning>
 
-## Felder von PersistentServer
+## Modell des persistenten Servers
 
 `PersistentServer` erweitert `ServerBase` und stellt die folgenden Felder bereit.
 

@@ -3,10 +3,14 @@ title: 'Events API'
 description: 'Subscribe to group, server, persistent server, and blueprint events'
 ---
 
-Use events to react when resources in your SimpleCloud network change. Subscribe through `cloudApi.event()` and use the event's stable resource ID in your callback:
+Use events to react when resources in your SimpleCloud network change. Subscribe through `api.event()` and use the event's stable resource ID in your callback:
+
+<Note>
+  The snippets on this reference page show focused API calls. They use `api` for the shared `CloudApi` client created in [Installation](/en/developer/installation) and belong inside your plugin's methods.
+</Note>
 
 ```java
-Subscription subscription = cloudApi.event().server().onStateChanged(event -> {
+Subscription subscription = api.event().server().onStateChanged(event -> {
     String serverId = event.getServerId();
     // React to the state change.
 });
@@ -35,7 +39,7 @@ Close each subscription when you no longer need it. Both `close()` and `unsubscr
 
 Every callback provides `getNetworkId()` and an ISO 8601 timestamp through `getTimestamp()`. The remaining getters depend on the event type.
 
-Prefer the stable ID getter when identifying a resource. Query the matching resource API when you need its current data; model getters such as `getServer()`, `getGroup()`, and `getBlueprint()` can be unavailable for an event.
+Prefer the stable ID getter when identifying a resource. Some event payloads omit the embedded model. In that case, model getters such as `getServer()`, `getGroup()`, and `getBlueprint()` throw `IllegalStateException`. Query the matching resource API when you need its current data.
 
 <AccordionGroup>
   <Accordion title="Server callback getters">

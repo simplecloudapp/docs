@@ -1,15 +1,15 @@
 ---
 title: "Installation"
-description: "Verbinde deine erste Maschine mit SimpleCloud."
+description: "Verbinde deine erste Maschine mit SimpleCloud"
 ---
 
 Installiere SimpleCloud über das Dashboard. Nach Abschluss der Einrichtung erkennt das Dashboard deinen Serverhost automatisch und öffnet dein Netzwerk.
 
 ## Voraussetzungen
 
-Du benötigst eine Linux- oder macOS-Maschine mit `curl` und einer Internetverbindung. Verwende Linux für einen Serverhost im Produktivbetrieb. macOS eignet sich für lokale Tests. Windows wird noch nicht unterstützt.
+Du benötigst eine Linux- oder macOS-Maschine mit `curl` und Internetzugang. Verwende Linux für einen Serverhost im Produktivbetrieb. macOS eignet sich für lokale Tests. Windows wird noch nicht unterstützt.
 
-Führe die Einrichtung mit einem Konto aus, das am Installationsort Dateien erstellen darf. Unter Linux benötigt das Konto außerdem `sudo`-Zugriff, falls die Einrichtung eine fehlende Voraussetzung installieren muss.
+Führe die Einrichtung mit einem Benutzerkonto aus, das im gewählten Installationsverzeichnis Dateien erstellen darf. Unter Linux benötigt das Konto außerdem `sudo`-Zugriff, falls die Einrichtung fehlende Software installieren muss.
 
 ## Ersten Serverhost verbinden
 
@@ -25,7 +25,7 @@ Führe die Einrichtung mit einem Konto aus, das am Installationsort Dateien erst
   <Step title="Serverhost konfigurieren">
     Wähle das Betriebssystem aus, gib einen eindeutigen Namen ein und lege fest, wie viel Arbeitsspeicher SimpleCloud verwenden darf.
 
-    Das Speicherlimit ist die Kapazität, die Minecraft-Servern auf dieser Maschine zur Verfügung steht. Lasse daher genügend Arbeitsspeicher für das Betriebssystem frei. Lasse Java 21 oder eine neuere Version ausgewählt. Die Einrichtung installiert die ausgewählten Java-Versionen und weitere erforderliche Software.
+    Das Speicherlimit ist die Kapazität, die Minecraft-Servern auf dieser Maschine zur Verfügung steht. Lasse daher genügend Arbeitsspeicher für das Betriebssystem frei. Wähle Java 21 oder eine neuere Version aus. Die Einrichtung installiert die ausgewählten Java-Versionen und weitere erforderliche Software.
   </Step>
 
   <Step title="Einrichtungsbefehl ausführen">
@@ -81,7 +81,7 @@ Dadurch wird die Maschine nicht als Serverhost verbunden. Verwende einen vom Das
   </Accordion>
 
   <Accordion title="Der Serverhost wird nicht im Dashboard angezeigt">
-    Prüfe zuerst, ob das Terminal **Setup complete** erreicht hat. Falls ja, prüfe den Serverhost-Status und die aktuellen Logs:
+    Prüfe zuerst, ob im Terminal **Setup complete** angezeigt wurde. Falls ja, prüfe den Serverhost-Status und die aktuellen Logs:
 
     ```bash
     sc status serverhost

@@ -5,6 +5,10 @@ description: 'Find, inspect, update, and stop running server instances'
 
 A server is one running instance created from a group or persistent server. Use `api.server()` to inspect and manage that instance. To change how servers are created, update the owning [group](/en/developer/api/groups) or [persistent server](/en/developer/api/persistent-servers) instead.
 
+<Note>
+  The snippets on this reference page show focused API calls. They use `api` for the shared `CloudApi` client created in [Installation](/en/developer/installation) and belong inside your plugin's methods.
+</Note>
+
 ## Find available capacity
 
 Use `ServerQuery` to find instances by source, state, host, or numerical ID. This example calculates the reported free slots across playable lobby servers:

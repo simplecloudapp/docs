@@ -1,12 +1,16 @@
 ---
-title: 'Events API'
+title: 'API für Events'
 description: 'Abonniere Events für Gruppen, Server, persistente Server und Blueprints'
 ---
 
-Mit Events kannst du auf Änderungen an Ressourcen in deinem SimpleCloud-Netzwerk reagieren. Abonniere sie über `cloudApi.event()` und verwende im Callback die stabile Ressourcen-ID des Events:
+Mit Events kannst du auf Änderungen an Ressourcen in deinem SimpleCloud-Netzwerk reagieren. Abonniere sie über `api.event()` und verwende im Callback die stabile Ressourcen-ID des Events:
+
+<Note>
+  Die Ausschnitte auf dieser Referenzseite zeigen einzelne API-Aufrufe. Sie verwenden `api` für den unter [Installation](/de/developer/installation) erzeugten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
+</Note>
 
 ```java
-Subscription subscription = cloudApi.event().server().onStateChanged(event -> {
+Subscription subscription = api.event().server().onStateChanged(event -> {
     String serverId = event.getServerId();
     // React to the state change.
 });
@@ -35,7 +39,7 @@ Schließe jedes Abonnement, sobald du es nicht mehr benötigst. Sowohl `close()`
 
 Jeder Callback stellt `getNetworkId()` und über `getTimestamp()` einen Zeitstempel im ISO-8601-Format bereit. Die übrigen Getter hängen vom Event-Typ ab.
 
-Verwende zur Identifizierung einer Ressource bevorzugt den Getter für ihre stabile ID. Frage die passende Ressourcen-API ab, wenn du ihre aktuellen Daten benötigst. Modell-Getter wie `getServer()`, `getGroup()` und `getBlueprint()` können für ein Event nicht verfügbar sein.
+Verwende zur Identifizierung einer Ressource bevorzugt den Getter für ihre stabile ID. Manche Event-Payloads enthalten kein eingebettetes Modell. In diesem Fall werfen Modell-Getter wie `getServer()`, `getGroup()` und `getBlueprint()` eine `IllegalStateException`. Frage die passende Ressourcen-API ab, wenn du aktuelle Daten benötigst.
 
 <AccordionGroup>
   <Accordion title="Getter von Server-Callbacks">

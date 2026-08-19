@@ -1,10 +1,8 @@
 ---
 title: 'Notify'
-description: "Learn about SimpleCloud's notify plugin for real-time server and group notifications"
+description: 'Send server and group state notifications to staff across your proxy network'
 tag: 'Proxy'
 ---
-
-## Overview
 
 Notify sends MiniMessage-formatted chat notifications to permitted staff when server and group state changes happen in your SimpleCloud network.
 
@@ -15,20 +13,38 @@ Notify sends MiniMessage-formatted chat notifications to permitted staff when se
   syntax.
 </Note>
 
-## Supported Software
+## Supported software
 
 | Software   | Plugin Support |
 | ---------- | -------------- |
 | Velocity   | Yes            |
 | BungeeCord | Yes            |
 
-## Quick Setup
+## Install the plugin
 
-1. Download the plugin from [GitHub](https://github.com/simplecloudapp/notify-plugin/releases).
-2. Place it in your proxy template's `plugins/` folder.
-3. Make sure the `simplecloud-api` plugin is installed on the proxy.
-4. Start the proxy once to generate `messages.yml`.
-5. Edit `plugins/notify-velocity/messages.yml` or `plugins/notify-bungeecord/messages.yml`.
+<Steps>
+  <Step title="Install Notify on the proxy">
+    Download Notify from [GitHub](https://github.com/simplecloudapp/notify-plugin/releases) and place it in the proxy template's `plugins/` folder. Standard SimpleCloud templates already include `simplecloud-api`; add it through the target's **Plugins** setting or the CLI if you use a custom template.
+  </Step>
+
+  <Step title="Generate the configuration">
+    Start a matching proxy once. Notify creates `plugins/simplecloud-notify/messages.yml` in the running proxy directory.
+  </Step>
+
+  <Step title="Keep the configuration in the template">
+    For a group proxy, copy `plugins/simplecloud-notify/messages.yml` from the running proxy to the same path in its template before stopping it. Changes that exist only in a temporary running directory disappear when that proxy stops.
+
+    See [Templates](/en/manual/setup/templates) for the complete workflow.
+  </Step>
+
+  <Step title="Apply your changes">
+    Run `/scnotify reload config` after editing the file on a running proxy. If you edited the template copy, restart the proxy instead.
+
+    <Check>
+      A successful reload prints `Notify configuration was reloaded.`
+    </Check>
+  </Step>
+</Steps>
 
 ## Notifications
 
@@ -40,6 +56,8 @@ Notify subscribes to the Cloud API event stream and can send messages for:
 - Group deleted events
 
 Set a notification message to `null` to disable that specific notification. Set the whole `notifications.server` or `notifications.group` section to `null` to disable that category.
+
+Staff can also disable notifications for themselves with `/scnotify disable` and turn them back on with `/scnotify enable`. Notify stores this choice in the player's SimpleCloud properties, so it follows the player across proxies. Notifications are enabled by default.
 
 ## Configuration
 
@@ -79,7 +97,7 @@ notifications:
 
 ## Placeholders
 
-### Server Notifications
+### Server notifications
 
 | Placeholder     | Description                                      |
 | --------------- | ------------------------------------------------ |
@@ -96,12 +114,24 @@ notifications:
 | `<updated>`     | Last update timestamp using `format.date`        |
 | `<create_date>` | Creation timestamp using `format.date`           |
 
-### Group Notifications
+### Group notifications
 
 | Placeholder | Description                           |
 | ----------- | ------------------------------------- |
 | `<group>`   | Group name                            |
 | `<time>`    | Current timestamp using `format.date` |
+
+## Commands
+
+| Command | Description |
+| ------- | ----------- |
+| `/scnotify` or `/scnotify help` | Show the commands available to you |
+| `/scnotify enable` | Receive notifications again |
+| `/scnotify disable` | Stop receiving notifications without changing permissions |
+| `/scnotify set <player> <true\|false>` | Enable or disable notifications for an online player |
+| `/scnotify reload config` | Reload `messages.yml` |
+
+The toggle controls all Notify messages for that player. Event permissions still decide which categories an enabled player receives.
 
 ## Permissions
 
@@ -113,11 +143,31 @@ notifications:
 | `notify.state.server.stopped`   | Receive server stopped messages       |
 | `notify.state.group.created`    | Receive group created messages        |
 | `notify.state.group.deleted`    | Receive group deleted messages        |
+| `simplecloud.command.notify.help` | Use `/scnotify` and `/scnotify help` |
+| `simplecloud.command.notify.reload.config` | Reload `messages.yml` |
+| `simplecloud.command.notify.toggle.self` | Enable or disable your own notifications |
+| `simplecloud.command.notify.toggle.other` | Change notifications for another online player |
 
 <Note>
   The permission check happens per notification. Give staff only the event
   categories they should receive.
 </Note>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="The proxy cannot load Notify">
+    Confirm that `simplecloud-api` is installed and enabled on the same proxy. Notify requires it to receive SimpleCloud events and access player properties.
+  </Accordion>
+
+  <Accordion title="A staff member receives no notifications">
+    Run `/scnotify enable` as that player, then grant the permission for each event category they should receive. The personal toggle and the event permission must both allow the message.
+  </Accordion>
+
+  <Accordion title="Message changes disappear after a restart">
+    Edit `plugins/simplecloud-notify/messages.yml` in the proxy template, or copy the tested file back before a temporary group proxy stops.
+  </Accordion>
+</AccordionGroup>
 
 <Note>
   `notify.state.server.deleted` is still accepted as a legacy alias for stopped-server notifications.

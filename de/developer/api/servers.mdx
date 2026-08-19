@@ -1,9 +1,13 @@
 ---
-title: 'Servers API'
+title: 'API für Serverinstanzen'
 description: 'Finde, untersuche, aktualisiere und stoppe laufende Serverinstanzen'
 ---
 
 Ein Server ist eine einzelne laufende Instanz, die aus einer Gruppe oder einem persistenten Server erstellt wurde. Mit `api.server()` kannst du diese Instanz untersuchen und verwalten. Um zu ändern, wie Server erstellt werden, aktualisiere stattdessen die zugehörige [Gruppe](/de/developer/api/groups) oder den zugehörigen [persistenten Server](/de/developer/api/persistent-servers).
+
+<Note>
+  Die Ausschnitte auf dieser Referenzseite zeigen einzelne API-Aufrufe. Sie verwenden `api` für den unter [Installation](/de/developer/installation) erzeugten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
+</Note>
 
 ## Verfügbare Kapazität finden
 
@@ -23,7 +27,7 @@ api.server().getAllServers(query)
         ))
         .sum())
     .thenAccept(capacity ->
-        System.out.println("Lobby capacity: " + capacity));
+        System.out.println("Lobby-Kapazität: " + capacity));
 ```
 
 Das Ergebnis ist eine Momentaufnahme und keine Reservierung. Wenn du damit auswählst, mit welchem Server ein Spieler verbunden werden soll, behalte die Routing-Regeln in deiner Anwendung und verarbeite das Verbindungsergebnis. Unter [Spieler mit Autoscaling weiterleiten](/de/developer/guides/server-management) findest du einen vollständigen Routing-Ablauf.
@@ -86,7 +90,7 @@ api.server().getServerByNumericalId("lobby", 1)
     .thenAccept(server -> System.out.println(server.getServerId()));
 ```
 
-Diese Suchen werden mit einem Fehler abgeschlossen, wenn kein passender Server vorhanden ist.
+Das zurückgegebene Future schlägt fehl, wenn kein passender Server vorhanden ist.
 
 ### Aktuellen Server abrufen
 
@@ -97,7 +101,7 @@ api.server().getCurrentServer()
     .thenAccept(server -> System.out.println(server.getServerId()));
 ```
 
-`getCurrentServer()` verwendet die Umgebungsvariable `SIMPLECLOUD_UNIQUE_ID` und wird mit einem Fehler abgeschlossen, wenn der aktuelle Prozess keiner Instanz zugeordnet ist.
+`getCurrentServer()` verwendet die Umgebungsvariable `SIMPLECLOUD_UNIQUE_ID`. Das zurückgegebene Future schlägt fehl, wenn der aktuelle Prozess keiner Instanz zugeordnet ist.
 
 ## Auf die zugehörige Konfiguration zugreifen
 
@@ -107,7 +111,7 @@ Jede Instanz gehört entweder zu einer Gruppe oder zu einem persistenten Server.
 api.server().getServerById("server-uuid")
     .thenAccept(server -> {
         if (server.isFromGroup()) {
-            System.out.println("Group: " + server.getGroup().getName());
+            System.out.println("Gruppe: " + server.getGroup().getName());
         } else {
             System.out.println(
                 "Persistent server: " +
@@ -135,7 +139,7 @@ UpdateServerRequest update = UpdateServerRequest.builder()
 
 api.server().updateServer("server-uuid", update)
     .thenAccept(server ->
-        System.out.println("Updated slots: " + server.getMaxPlayers()));
+        System.out.println("Aktualisierte Plätze: " + server.getMaxPlayers()));
 ```
 
 Der Builder unterstützt `state`, `properties`, `minMemory`, `maxMemory` und `maxPlayers`. Änderungen gelten für diese Instanz, nicht für ihre zugehörige Konfiguration. `playerCount` ist eine Laufzeit-Beobachtung, die vom Serverhost gemeldet wird, und ist über die HTTP-API schreibgeschützt; wird das Feld in einer Update-Anfrage gesendet, weist die API es als unbekanntes Feld ab. Die Plattform meldet normalerweise `state`; lege diesen Wert nur fest, wenn deine Integration für diese Meldung zuständig ist.
@@ -159,7 +163,7 @@ Verwende `updateServerProperty`, um einen einzelnen Schlüssel festzulegen, und 
 
 ```java
 api.server().stopServer("server-uuid")
-    .thenRun(() -> System.out.println("Shutdown initiated"));
+    .thenRun(() -> System.out.println("Stopp eingeleitet"));
 ```
 
 Das Future wird abgeschlossen, wenn SimpleCloud den Stopp einleitet, nicht erst nach Abschluss der Bereinigung. Verwende [Events für Serverzustände](/de/developer/api/events), wenn dein Plugin die späteren Übergänge im Lebenszyklus beobachten muss.

@@ -1,48 +1,61 @@
 ---
 title: 'Server Connection'
-description: "Learn how SimpleCloud's server connection plugin handles server registration, fallback, join routing and navigation commands"
+description: 'Register SimpleCloud servers on a proxy and control joins, fallbacks, and navigation commands'
 tag: 'Proxy'
 ---
 
-## Overview
-
-The Server Connection Plugin is the central proxy plugin for SimpleCloud v3 networks. It keeps your proxy's registered child servers in sync with SimpleCloud's server registry and handles all player routing logic.
+Server Connection keeps a proxy's registered backend servers in sync with SimpleCloud and routes players when they join, switch servers, or need a fallback.
 
 The plugin:
+
 - Automatically registers and unregisters SimpleCloud servers on your proxy
 - Routes players to the correct server on network join
 - Redirects players to fallback servers when their server becomes unavailable
 - Provides configurable navigation commands for players to switch servers
-- Supports flexible server name matching via configurable operations
+- Matches registered server names with exact, prefix, suffix, glob, regex, and numeric rules
 
-## Supported Software
+## Supported software
 
 | Software    | Support        |
 | ----------- | -------------- |
-| Velocity    | ✅ Full        |
-| BungeeCord  | ✅ Full        |
-| Waterdog PE | ✅ Full        |
-| Gate        | 🔄 Planned     |
+| Velocity    | Full        |
+| BungeeCord  | Full        |
+| Waterdog PE | Full        |
+| Gate        | Planned     |
 
-<Note>
-  Want to add support for another proxy software? Submit an pull request on
-  [GitHub](https://github.com/simplecloudapp/server-connection-plugin/pulls)!
-</Note>
+## Install the plugin
 
-## Quick Setup
+<Steps>
+  <Step title="Install the proxy plugins">
+    Download Server Connection from [GitHub](https://github.com/simplecloudapp/server-connection-plugin/releases) and place it in the proxy template's `plugins/` folder. Standard SimpleCloud templates already include `simplecloud-api`; add it through the target's **Plugins** setting or the CLI if you use a custom template.
+  </Step>
 
-1. Download the plugin from [GitHub](https://github.com/simplecloudapp/server-connection-plugin/releases)
-2. Place it in your proxy template's plugins folder
-3. Start your proxy server
-4. Edit `config.yml`, `commands.yml` and `messages.yml` to your needs
+  <Step title="Generate the configuration">
+    Start a matching proxy. The plugin creates `config.yml`, `commands.yml`, and `messages.yml` under `plugins/simplecloud-connection/`.
+  </Step>
 
----
+  <Step title="Match your lobby servers">
+    The default connection matches proxy registration names that start with `lobby`. If your lobby group uses another name, change the `lobby` connection and keep its name consistent in `network-join-targets`, `fallback`, and `commands.yml`.
+  </Step>
+
+  <Step title="Keep the configuration in the template">
+    For a group proxy, copy `plugins/simplecloud-connection/` from the running proxy to the same path in its template before the proxy stops. See [Templates](/en/manual/setup/templates) for the complete workflow.
+  </Step>
+
+  <Step title="Restart and test the proxy">
+    Restart after changing registration or player command settings. Join the network to test the initial route, then run `/lobby` from another backend to test the generated navigation command. The proxy uses the same connection when it needs a fallback server.
+  </Step>
+</Steps>
+
+<Warning>
+  With `registration.enabled: true`, Server Connection replaces the proxy's registered server list with SimpleCloud servers. Add every external backend to `registration.additional-servers`, or set registration to `false` when another plugin manages the list.
+</Warning>
 
 ## Configuration
 
 ### config.yml
 
-The main configuration file. Controls server registration, connections, network join routing and fallback behavior.
+The main configuration file controls server registration, connections, network join routing, and fallback behavior.
 
 ```yaml
 version: 2
@@ -121,7 +134,7 @@ fallback:
       from: []
 ```
 
-#### Subdomain Routes
+#### Subdomain routes
 
 The `address.routes` section selects a connection from the hostname a player uses to join the proxy. Each `subdomain` must be the complete, exact hostname. For example, use `new.example.com`, not only `new`.
 
@@ -163,7 +176,7 @@ Point every routed hostname to the proxy with an `A`, `AAAA`, or `CNAME` DNS rec
 - **Default target:** If no route matches, its target connection does not exist, or no matching server is available, the plugin continues with `network-join-targets`.
 - **Connection rules:** Subdomain routes do not evaluate connection rules. A permission rule on the target connection does not restrict players joining through that hostname. Use prioritized `network-join-targets` when routing should depend on a permission.
 
-#### Matcher Operations
+#### Matcher operations
 
 The `server-name-matcher` supports the following operations:
 
@@ -177,13 +190,13 @@ The `server-name-matcher` supports the following operations:
 | `PATTERN`    | Glob style pattern match                         | `lobby-*`     |
 | `GREATER_THAN` | Numeric comparison                             | `5`           |
 
-Set `negate: true` to invert any operation e.g. match all servers that do **not** start with `lobby`.
+Set `negate: true` to invert any operation. For example, it can match all servers that do **not** start with `lobby`.
 
-#### Connection Rules
+#### Connection rules
 
 Connections can have rules that must pass before a player is allowed to use them. If a rule fails, the connection is skipped and the next priority is tried. There are two rule types:
 
-**Permission Rule**
+**Permission rule**
 
 Checks whether a player has a specific permission.
 
@@ -195,7 +208,7 @@ rules:
     bypass-permission: rank.admin # Optional: skip this rule if the player has this permission
 ```
 
-**Environment Variable Rule**
+**Environment variable rule**
 
 Checks a system environment variable against a value using a matcher operation.
 
@@ -211,7 +224,7 @@ rules:
 
 Rules are evaluated in order. If any rule fails and no `bypass-permission` applies, the entire connection is skipped.
 
-#### Priority & Fallback Resolution
+#### Priority and fallback resolution
 
 Both `network-join-targets` and `fallback` support multiple target connections with priorities:
 
@@ -219,8 +232,6 @@ Both `network-join-targets` and `fallback` support multiple target connections w
 - If multiple targets share the same priority, one is picked **randomly** among them
 - If a target connection has no available server, the next lower priority is tried automatically
 - The optional `from` list on fallback targets restricts them to players coming from specific servers
-
----
 
 ### commands.yml
 
@@ -247,4 +258,37 @@ commands:
 
 Commands follow the same logic as `network-join-targets` and `fallback`.
 
----
+Changes to connection matching, rules, join targets, fallback targets, and messages can be loaded with:
+
+```text
+/connection reload
+```
+
+Restart the proxy after any change to `commands.yml`. The reload reads the file, but already registered proxy commands keep their previous settings. Also restart after changing `registration.additional-servers` or registration name patterns so the proxy rebuilds its registered server list.
+
+## Permissions
+
+| Permission | Description |
+| ---------- | ----------- |
+| `simplecloud.connection.reload` | Use `/connection reload` |
+| Value from `commands.yml` | Use that player navigation command; an empty value allows everyone |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Players join the proxy but no server is selected">
+    Confirm that `network-join-targets.enabled` is `true`, its connection names exist, and each matcher selects at least one registered server. The default matcher expects registration names beginning with `lobby`.
+  </Accordion>
+
+  <Accordion title="A new navigation command does not exist">
+    Restart the proxy after any change to `commands.yml`. `/connection reload` reads the file, but it does not update or register the proxy commands that are already running.
+  </Accordion>
+
+  <Accordion title="An external backend disappeared from the proxy">
+    Add it under `registration.additional-servers` and restart. When registration is enabled, Server Connection rebuilds the proxy's registered server list at startup.
+  </Accordion>
+
+  <Accordion title="A subdomain route always uses the normal join target">
+    Use the complete hostname in `address.routes`, point that hostname to the proxy, and confirm that `target-connection` names an existing connection with an available server. Wildcards and connection rules do not apply to subdomain routes.
+  </Accordion>
+</AccordionGroup>

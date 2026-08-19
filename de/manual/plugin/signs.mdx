@@ -1,27 +1,48 @@
 ---
 title: 'Signs'
-description: 'Nutze SimpleCloud Signs für Servernavigation und Live-Statusanzeigen'
+description: 'Verbinde Spieler über Schilder mit Servergruppen und persistenten Servern'
 tag: 'Server'
 ---
 
-## Überblick
-
-Mit dem Signs-Plugin können Spieler Schilder anklicken, um sich mit SimpleCloud-Gruppenservern zu verbinden. Die Anzeige der Schilder aktualisiert sich automatisch anhand von Serverstatus, Spielerzahl und MiniMessage-Text und unterstützt optionale Animationen.
+Mit dem Signs-Plugin können Spieler Schilder anklicken, um sich mit SimpleCloud-Gruppenservern oder persistenten Servern zu verbinden. Die Schilder zeigen automatisch Serverstatus und Spielerzahlen an; ihre Layouts unterstützen MiniMessage und Animationen.
 
 ## Unterstützte Software
 
-| Servertyp      | Plugin-Unterstützung |
-| -------------- | --------------------- |
-| Paper & Forks  | Ja                    |
-| Spigot         | Nein                  |
+| Servertyp | Unterstützung |
+| --------- | ------------- |
+| Paper und Forks | Ja |
+| Spigot | Nein |
 
-## Schnellstart
+<Warning>
+  Schildregistrierungen und ihre Welt müssen zusammenbleiben. Am einfachsten betreibst du das Plugin auf einer persistenten Lobby. Für eine temporäre Servergruppe konfigurierst du die Schilder auf einem persistenten Staging-Server, stoppst ihn sauber und kopierst anschließend die Welt und `plugins/simplecloud-signs/locations/` ins Gruppen-Template. Kopiere keine laufende Welt ins Template.
+</Warning>
 
-1. Lade das Plugin von [GitHub](https://github.com/simplecloudapp/sign-plugin/releases) herunter.
-2. Lege es im `plugins/`-Ordner deines Server-Templates ab.
-3. Stelle sicher, dass das `simplecloud-api`-Plugin auf dem Server installiert ist.
-4. Starte den Server einmal, damit die Standard-Layouts erzeugt werden.
-5. Sieh im Spiel ein Schild an und registriere es mit `/sign add <group>`.
+## Plugin installieren
+
+<Steps>
+  <Step title="Server-Plugins installieren">
+    Lade Signs von [GitHub](https://github.com/simplecloudapp/sign-plugin/releases) herunter und lege die JAR-Datei im Ordner `plugins/` des Paper-Server-Templates ab. Die Standard-Templates enthalten `simplecloud-api` bereits. Füge es bei einem eigenen Template über die Einstellung **Plugins** des Ziels oder über die CLI hinzu.
+  </Step>
+
+  <Step title="Layouts erzeugen">
+    Starte einen passenden Server. Das Plugin legt seine Standardlayouts unter `plugins/simplecloud-signs/layouts/` an.
+  </Step>
+
+  <Step title="Schild registrieren">
+    Platziere ein Schild, sieh es direkt an und führe einen dieser Befehle aus:
+
+    ```text
+    /sign add group Lobby
+    /sign add persistent MainLobby
+    ```
+
+    Verwende den ersten Befehl für eine Servergruppe und den zweiten für einen persistenten Server.
+  </Step>
+
+  <Step title="Schild testen">
+    Warte, bis sich der Text aktualisiert, und klicke auf das Schild. Ein Gruppenschild verbindet den Spieler mit dem Server, der diesem Schild gerade zugewiesen ist. Ein Schild für einen persistenten Server verbindet ihn, sobald dieser verfügbar ist.
+  </Step>
+</Steps>
 
 ## Befehle
 
@@ -31,13 +52,13 @@ Der Befehl ist als `/simplecloudsign`, `/simplecloudsigns`, `/scsigns`, `/scsign
 | ------ | ------------ |
 | `/sign help` | Hilfe anzeigen |
 | `/sign list [page] [group]` | Registrierte Schilder auflisten, optional nach Ziel gefiltert |
-| `/sign add <group>` | Das anvisierte Schild für eine Servergruppe registrieren |
+| `/sign add group <group>` | Das anvisierte Schild für eine Servergruppe registrieren |
+| `/sign add persistent <persistent-server>` | Das anvisierte Schild für einen persistenten Server registrieren |
 | `/sign remove` | Das anvisierte Schild entfernen |
-| `/sign remove <group>` | Alle Schilder für einen registrierten Zielschlüssel entfernen |
+| `/sign remove <target>` | Alle Schilder einer registrierten Gruppe oder eines persistenten Servers entfernen |
 
 <Note>
-  Du musst den Schildblock ansehen, den du hinzufügen oder entfernen möchtest.
-  Der Befehl prüft in einer Entfernung von bis zu 8 Blöcken.
+  Du musst den Schildblock ansehen, den du hinzufügen oder entfernen möchtest. Der Befehl prüft bis zu acht Blöcke weit.
 </Note>
 
 ## Berechtigungen
@@ -52,13 +73,13 @@ Der Befehl ist als `/simplecloudsign`, `/simplecloudsigns`, `/scsigns`, `/scsign
 
 ## Layouts
 
-Layouts definieren, was ein Schild für einen passenden Serverstatus anzeigt. Das Plugin bringt Standardlayouts für `STARTING`, `OFFLINE`, `MAINTENANCE`, `FULL`, `EMPTY` und `ONLINE` mit.
+Layouts bestimmen, was ein Schild für einen Serverstatus anzeigt. Das Plugin enthält Layouts für `STARTING`, `OFFLINE`, `MAINTENANCE`, `FULL`, `EMPTY` und `ONLINE`. Starte den Server nach einer Layoutänderung neu, da das Plugin die Dateien beim Start liest.
 
 ```yaml
 name: "online_default"
 rule: "ONLINE"
 priority: 9
-serverName: "%group%-%numerical-id%"
+behind-block: "LIME_CONCRETE"
 frame-update-interval: 1250
 
 frames:
@@ -74,7 +95,10 @@ frames:
 | `name` | Eindeutiger Layoutname |
 | `rule` | Eingebaute Regel, die entscheidet, wann das Layout gilt |
 | `priority` | Höhere Prioritäten gewinnen, wenn mehrere Layouts passen |
-| `serverName` | Namensmuster zum Auflösen der Zielserver |
+| `type` | Optionaler Zieltyp: `ALL`, `GROUP` oder `PERSISTENT` |
+| `matcher` | Optionale Namensfilter für dieses Layout |
+| `serverName` | Optionaler Registrierungsname auf dem Proxy; Standard ist `%server-name%` |
+| `behind-block` | Optionales Blockmaterial hinter einem gerichteten Schild |
 | `frame-update-interval` | Animationsintervall in Millisekunden |
 | `frames` | Ein oder mehrere vierzeilige Schild-Frames |
 
@@ -84,29 +108,51 @@ Verwende MiniMessage-Platzhalter in Layout-Zeilen.
 
 | Platzhalter | Beschreibung |
 | ----------- | ------------ |
+| `<server-name>` | Name des Gruppenservers oder persistenten Servers |
 | `<group>` | Gruppenname für Gruppenserver |
 | `<numerical-id>` | Numerische ID für Gruppenserver |
-| `<type>` | Servertyp |
+| `<persistent-server>` | Name des persistenten Servers |
+| `<server-id>` | Server-UUID |
 | `<host>` | Serverhost-ID |
 | `<ip>` | Server-IP-Adresse |
 | `<port>` | Server-Port |
-| `<min-memory>` | Minimaler Speicher in MB |
-| `<max-memory>` | Maximaler Speicher in MB |
-| `<max-players>` | Maximale Spieler |
-| `<player-count>` | Aktuelle Spieleranzahl |
+| `<min-memory>` | Minimaler Arbeitsspeicher in MB |
+| `<max-memory>` | Maximaler Arbeitsspeicher in MB |
+| `<max-players>` | Maximale Spielerzahl |
+| `<player-count>` | Aktuelle Spielerzahl |
 | `<state>` | Serverstatus |
-| `<player_name>` | Spielername bei spielerspezifischen Updates |
-| `<player_sender>` | Aktueller Server des Spielers, wenn verfügbar |
+| `<property:name>` | Eigene Servereigenschaft `name` |
+| `<property:name:default>` | Eigene Servereigenschaft mit Ersatzwert |
+| `<player_name>` | Spielername bei einer spielerspezifischen Aktualisierung |
+| `<player_sender>` | Aktueller Server des Spielers, falls verfügbar |
 
-## Servernamen-Muster
+## Muster für Servernamen
 
 Das Feld `serverName` unterstützt diese Ersetzungen:
 
 | Token | Beschreibung |
 | ----- | ------------ |
+| `%server-name%` | Standardname des Gruppenservers oder persistenten Servers |
 | `%group%` | Gruppenname |
 | `%numerical-id%` | Numerische ID |
+| `%persistent-server%` | Name des persistenten Servers |
 
 <Frame>
   <img src="https://raw.githubusercontent.com/simplecloudapp/branding/refs/heads/main/media/plugin/signs/preview.png" alt="Vorschau der SimpleCloud-Schilder im Spiel" />
 </Frame>
+
+## Fehlerbehebung
+
+<AccordionGroup>
+  <Accordion title="Der Befehl findet das Schild nicht">
+    Sieh das Schild direkt an und stelle dich höchstens acht Blöcke entfernt hin, bevor du den Befehl ausführst.
+  </Accordion>
+
+  <Accordion title="Das Schild bleibt offline">
+    Prüfe, ob das Ziel existiert. Ein Gruppenschild benötigt außerdem einen geeigneten laufenden Server. Ein persistenter Server muss aktiv und auf dem Proxy registriert sein.
+  </Accordion>
+
+  <Accordion title="Eine Layoutänderung erscheint nicht">
+    Starte den Server nach der Änderung neu. Das Plugin liest Layoutdateien beim Start.
+  </Accordion>
+</AccordionGroup>

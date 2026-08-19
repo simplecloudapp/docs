@@ -3,9 +3,9 @@ title: "Workflows"
 description: "Führe Dateioperationen beim Starten und Stoppen eines Servers oder bei Bedarf aus"
 ---
 
-Workflows führen eine Abfolge von Dateioperationen auf einem Serverhost aus. Du kannst sie manuell oder bei jedem Start und Stopp eines Servers ausführen.
+Workflows führen eine oder mehrere Dateioperationen auf einem Serverhost aus. Du kannst sie manuell oder bei jedem Start und Stopp eines Servers ausführen.
 
-In dieser Anleitung erstellst du einen Backup-Workflow, führst ihn im Dashboard aus und erfährst anschließend, wie du ihn anpasst.
+Erstelle einen Backup-Workflow, führe ihn im Dashboard aus und passe ihn anschließend an deine Dateien an.
 
 ## Backup-Workflow ausführen
 
@@ -45,7 +45,7 @@ In dieser Anleitung erstellst du einen Backup-Workflow, führst ihn im Dashboard
     templates/.backup/<name>/<date>/<date-time>-<server>-<process-id>/
     ```
 
-    Prüfe, ob das Zielverzeichnis die erwarteten Dateien enthält. Zeitstempel und Prozess-ID trennen die einzelnen Backup-Läufe voneinander.
+    Prüfe, ob das Zielverzeichnis die erwarteten Dateien enthält. Zeitstempel und Prozess-ID geben jedem Lauf ein eigenes Zielverzeichnis.
   </Step>
 </Steps>
 
@@ -53,7 +53,7 @@ In dieser Anleitung erstellst du einen Backup-Workflow, führst ihn im Dashboard
   Ein Workflow ist nur auf Serverhosts verfügbar, auf denen seine Datei vorhanden ist. Wenn die betroffenen Server auf mehreren Serverhosts ausgeführt werden können, füge jedem von ihnen dieselbe Datei hinzu und starte die Serverhosts neu.
 </Note>
 
-Bei der manuellen Aktion werden die Dateien kopiert, während der Minecraft-Server läuft. Dateien, die sich während des Kopierens ändern, etwa Welten und Plugin-Daten, ergeben möglicherweise kein konsistentes Backup. Füge für solche Dateien `default/backup` unter **On Stop Workflows** hinzu und stoppe den Server normal. Stop-Workflows werden ausgeführt, nachdem der Serverprozess beendet wurde.
+Bei der manuellen Aktion werden die Dateien kopiert, während der Minecraft-Server läuft. Ändern sich dabei Welten oder Plugin-Daten, kann die Kopie inkonsistent sein. Füge für solche Dateien `default/backup` unter **On Stop Workflows** hinzu und stoppe den Server normal. Stop-Workflows werden ausgeführt, nachdem der Serverprozess beendet wurde.
 
 Platziere `default/backup` vor `internal/cleanup`.
 
@@ -62,7 +62,7 @@ Platziere `default/backup` vor `internal/cleanup`.
 </Warning>
 
 <Note>
-  Dieser Workflow erstellt Dateikopien, testet jedoch keine Wiederherstellungen und entfernt keine alten Backups. Prüfe, ob du die benötigten Daten wiederherstellen kannst, und lege eine Aufbewahrungsstrategie für `templates/.backup/` fest.
+  Dieser Workflow erstellt Dateikopien, prüft jedoch nicht, ob sie sich wiederherstellen lassen, und entfernt keine alten Backups. Teste die Wiederherstellung der benötigten Daten und lege eine Aufbewahrungsstrategie für `templates/.backup/` fest.
 </Note>
 
 ## Workflow-Datei verstehen
@@ -75,7 +75,7 @@ Der Backup-Workflow hat dieselbe grundlegende Struktur wie jeder andere Workflow
 - `uses` wählt die Aktion aus. Dieser Workflow verwendet `simplecloud/copy`.
 - `with` enthält die von der Aktion benötigten Werte.
 
-In diesem Workflow verweist `from` auf das laufende Serververzeichnis. `to` erzeugt einen eindeutigen Backup-Pfad. Fehlt die Quelle, erstellt `init-dir-if-missing: true` ein leeres Quellverzeichnis, anstatt einen Fehler auszulösen. Prüfe immer, ob das fertige Backup die erwarteten Dateien enthält.
+In diesem Workflow verweist `from` auf das laufende Serververzeichnis. `to` erzeugt für jeden Lauf einen eigenen Backup-Pfad. Fehlt die Quelle, erstellt `init-dir-if-missing: true` ein leeres Quellverzeichnis, anstatt einen Fehler auszulösen. Prüfe deshalb immer, ob das Backup die erwarteten Dateien enthält.
 
 ### Vom Workflow verwendete Werte
 
@@ -101,7 +101,7 @@ Verwende den Backup-Workflow als Ausgangspunkt:
   </Step>
 
   <Step title="Workflow ändern">
-    Gib ihm einen neuen `name` und passe anschließend die Kopierpfade und Ausschlüsse an deine Aufgabe an.
+    Gib ihm einen neuen `name` und passe die Kopierpfade und Ausschlüsse an deine Aufgabe an.
   </Step>
 
   <Step title="Workflows neu laden">
@@ -153,9 +153,7 @@ Muster unter `exclude` sind relativ zu `from`.
   <Accordion title="Datei hochladen">
     `simplecloud/upload` sendet die Datei unter `from` an die URL unter `to`. Die Aktion lädt Dateien hoch, keine Verzeichnisse. Du kannst außerdem die HTTP-`method` und einen Wert für `authorization-bearer` festlegen.
 
-    <Warning>
-      Workflow-Dateien enthalten Klartext. Speichere darin keine langlebigen Zugriffstokens.
-    </Warning>
+    Speichere langlebige Zugriffstokens unter **Settings > Secrets** und setze `authorization-bearer` auf eine [Secret-Referenz](/de/manual/configuration/secrets), zum Beispiel `"{{ secrets.BACKUP_TOKEN }}"`.
   </Accordion>
 
   <Accordion title="Dateien löschen">

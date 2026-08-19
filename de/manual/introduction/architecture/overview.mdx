@@ -1,13 +1,13 @@
 ---
 title: "Architektur"
-description: "Verstehe, wie Dashboard, CLI und Serverhost zusammenarbeiten."
+description: "Verstehe, wie Dashboard, CLI, Controller und Serverhost zusammenarbeiten"
 ---
 
-SimpleCloud trennt die Verwaltung deines Netzwerks von der Ausführung deiner Minecraft-Server. Du verwaltest dasselbe Netzwerk über das Dashboard oder die CLI, während Serverhosts die Maschinen bereitstellen, auf denen es läuft.
+SimpleCloud trennt die Verwaltung deines Netzwerks von der Ausführung deiner Minecraft-Server. Dashboard und CLI greifen auf dasselbe Netzwerk zu. Die Serverhosts führen dessen Minecraft-Server auf ihren Maschinen aus.
 
-## Die drei Bestandteile
+## Die drei Bestandteile, die du verwendest
 
-<CardGroup cols={3}>
+<Columns cols={3}>
   <Card title="Dashboard" icon="browser" href="/de/manual/setup/dashboard">
     Die Weboberfläche zum Konfigurieren deines Netzwerks und zum Anzeigen von Servern, Logs und Status.
   </Card>
@@ -17,7 +17,9 @@ SimpleCloud trennt die Verwaltung deines Netzwerks von der Ausführung deiner Mi
   <Card title="Serverhost" icon="server" href="/de/manual/introduction/architecture/serverhost">
     Der Hintergrunddienst, der Minecraft-Server auf seiner Maschine vorbereitet und ausführt.
   </Card>
-</CardGroup>
+</Columns>
+
+Der gehostete Controller koordiniert diese Bestandteile und speichert den Netzwerkzustand. Du musst ihn nicht selbst installieren oder betreiben.
 
 ## So arbeiten sie zusammen
 
@@ -25,13 +27,13 @@ SimpleCloud trennt die Verwaltung deines Netzwerks von der Ausführung deiner Mi
 2. Konfiguriere Gruppen und persistente Server im Dashboard oder in der CLI.
 3. SimpleCloud startet die angeforderten Minecraft-Server auf einem geeigneten Serverhost und meldet deren Status und Logs.
 
-Dashboard und CLI ändern dasselbe Netzwerk. Wähle die Oberfläche, die zu deiner Aufgabe passt. Der Serverhost ersetzt keine der beiden Oberflächen – er führt die Minecraft-Server aus, die du darüber konfigurierst.
+Änderungen im Dashboard sind auch in der CLI sichtbar und umgekehrt. Wähle die Oberfläche, die zu deiner Aufgabe passt. Ein Serverhost ersetzt keine der beiden Oberflächen. Er führt die Minecraft-Server aus, die du dort konfigurierst.
 
 Wenn du eine weitere Maschine hinzufügst, installiere dort einen weiteren Serverhost. SimpleCloud kann dann beide Maschinen für dein Netzwerk verwenden.
 
 ## Nächste Schritte
 
-<CardGroup cols={2}>
+<Columns cols={2}>
   <Card title="SimpleCloud installieren" icon="download" href="/de/manual/setup/installation">
     Verbinde deine erste Maschine und verwende das Dashboard.
   </Card>
@@ -41,4 +43,4 @@ Wenn du eine weitere Maschine hinzufügst, installiere dort einen weiteren Serve
   <Card title="Persistenten Server erstellen" icon="hard-drive" href="/de/manual/setup/persistent-servers">
     Führe einen benannten Server aus, dessen Dateien über Neustarts hinweg erhalten bleiben.
   </Card>
-</CardGroup>
+</Columns>

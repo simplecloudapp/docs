@@ -43,9 +43,9 @@ Initialisierung und Genehmigung aus.
 ## Gemeinsame Dateien synchronisieren
 
 Serverhosts benötigen dieselben Dateien, wenn sie dieselben Server ausführen
-können. SimpleCloud synchronisiert diese Verzeichnisse standardmäßig nicht. Nach
-der Konfiguration und Aktivierung der Synchronisierung hält sie folgende
-Verzeichnisse synchron:
+können. Das Hinzufügen eines Serverhosts aktiviert noch keine Synchronisierung.
+Nach der folgenden Syncthing-Einrichtung hält SimpleCloud diese Verzeichnisse
+synchron:
 
 - `templates/` enthält die Dateien zur Vorbereitung von Servern
 - `workflows/` enthält Workflows zur Vorbereitung und Bereinigung
@@ -136,10 +136,10 @@ als `configured` angezeigt werden.
   beim erneuten Ausführen eines Einrichtungsbefehls auf diesem Host an.
 
 Wenn ein zusätzlicher Host eine falsche Synchronisierungskonfiguration hat, führe
-auf diesem Host `sc sync reset` aus. Dadurch werden seine Synchronisierungseinstellungen
-entfernt, die synchronisierten Dateien bleiben jedoch erhalten. Generiere anschließend
-auf dem primären Synchronisierungshost einen neuen Beitrittsbefehl und wiederhole
-die Schritte für Beitritt und Genehmigung.
+dort `sc sync reset` aus. Der Befehl entfernt die Synchronisierungseinstellungen,
+lässt die synchronisierten Dateien aber bestehen. Generiere danach auf dem
+primären Synchronisierungshost einen neuen Beitrittsbefehl und wiederhole die
+Schritte für Beitritt und Genehmigung.
 
 ## Nächste Schritte
 

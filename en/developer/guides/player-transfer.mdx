@@ -3,7 +3,9 @@ title: "Transfer a player to another server"
 description: "Connect an online player to a known server and handle the result"
 ---
 
-Use `CloudPlayer.connect(...)` when you already know which server the player should join. The method expects the name registered on the player's proxy, such as `lobby-1`—not the server UUID returned by `Server.getServerId()`.
+Use `CloudPlayer.connect(...)` when you already know which server the player should join. The method expects the name registered on the player's proxy, such as `lobby-1`. Do not pass the server UUID returned by `Server.getServerId()`.
+
+Before you begin, [install the Cloud API](/en/developer/installation), require the `simplecloud-api` platform plugin, and create one shared `CloudApi` client. Install `simplecloud-api` on every proxy that may handle the player because that proxy performs the transfer.
 
 ## Transfer the player
 
@@ -15,12 +17,16 @@ import app.simplecloud.api.player.CloudPlayer;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class PlayerTransferService {
     private final CloudApi api;
+    private final Logger logger;
 
-    public PlayerTransferService(CloudApi api) {
+    public PlayerTransferService(CloudApi api, Logger logger) {
         this.api = api;
+        this.logger = logger;
     }
 
     public CompletableFuture<CloudPlayer.ConnectResult> transfer(
@@ -37,32 +43,32 @@ public final class PlayerTransferService {
             return player.connect(registeredServerName);
         });
     }
+
+    public void transferToLobby(UUID playerId) {
+        transfer(playerId, "lobby-1")
+            .thenAccept(result -> {
+                switch (result) {
+                    case SUCCESS, ALREADY_CONNECTED ->
+                        logger.info("Player is connected to lobby-1");
+                    case SERVER_NOT_FOUND ->
+                        logger.warning("lobby-1 is not registered on the proxy");
+                    case PLAYER_NOT_FOUND ->
+                        logger.info("Player is no longer online");
+                    case CONNECTION_FAILED ->
+                        logger.warning("Could not connect player to lobby-1");
+                }
+            })
+            .exceptionally(error -> {
+                logger.log(Level.WARNING, "Could not transfer player", error);
+                return null;
+            });
+    }
 }
 ```
 
-Call `transfer(...)` from your command or matchmaking flow and handle the result:
+Create one `PlayerTransferService` from your plugin's shared `CloudApi` and logger. Call `transferToLobby(...)` from your command or matchmaking flow.
 
-```java
-transferService.transfer(playerId, "lobby-1")
-    .thenAccept(result -> {
-        switch (result) {
-            case SUCCESS, ALREADY_CONNECTED ->
-                logger.info("Player is connected to lobby-1");
-            case SERVER_NOT_FOUND ->
-                logger.warning("lobby-1 is not registered on the proxy");
-            case PLAYER_NOT_FOUND ->
-                logger.info("Player is no longer online");
-            case CONNECTION_FAILED ->
-                logger.warning("Could not connect player to lobby-1");
-        }
-    })
-    .exceptionally(error -> {
-        logger.log(Level.WARNING, "Could not transfer player", error);
-        return null;
-    });
-```
-
-This guide returns `PLAYER_NOT_FOUND` when its lookup finds no online player. If the player disconnects after that check, `connect(...)` returns `CONNECTION_FAILED`.
+The service returns `PLAYER_NOT_FOUND` when its lookup finds no online player. If the player disconnects after that check, `connect(...)` returns `CONNECTION_FAILED`.
 
 ## Connection results
 
@@ -71,7 +77,7 @@ This guide returns `PLAYER_NOT_FOUND` when its lookup finds no online player. If
 | `SUCCESS` | The player connected to the destination. |
 | `ALREADY_CONNECTED` | The player is already connected to the destination. |
 | `SERVER_NOT_FOUND` | The supplied name is not registered on the player's proxy. |
-| `PLAYER_NOT_FOUND` | This guide's lookup found no online player. |
+| `PLAYER_NOT_FOUND` | The lookup found no online player. |
 | `CONNECTION_FAILED` | The proxy could not complete the connection. |
 
 If your plugin needs to find an available destination first, see [Route players with autoscaling](/en/developer/guides/server-management).

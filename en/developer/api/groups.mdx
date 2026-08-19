@@ -5,6 +5,10 @@ description: 'Create, query, update, and delete server groups'
 
 A group describes a set of servers that share the same software, resources, and scaling behavior. Use `api.group()` to manage groups or request another server for a group.
 
+<Note>
+  The snippets on this reference page show focused API calls. They use `api` for the shared `CloudApi` client created in [Installation](/en/developer/installation) and belong inside your plugin's methods.
+</Note>
+
 ## Create a group
 
 This example creates a Paper lobby group and its blueprint. SimpleCloud keeps one lobby running and can scale the group up to three servers while maintaining 20 available player slots.
@@ -48,7 +52,7 @@ Do not set both `createBlueprint` and an existing blueprint or image source.
 
 <Accordion title="CreateGroupRequest fields">
   <ParamField body="name" type="string" required>
-    Group name. Up to 100 characters of ASCII letters, digits, underscores, and hyphens (`[A-Za-z0-9_-]`). Must be unique within the network, case-insensitive — `Lobby` and `lobby` are treated as the same name. A group and a persistent server may share a name. Creating or renaming to a name that only differs by case from an existing group returns `409 Conflict`.
+    Group name. Use up to 100 ASCII letters, digits, underscores, or hyphens (`[A-Za-z0-9_-]`). Names are unique within the network and case-insensitive, so `Lobby` and `lobby` identify the same group. A group and a persistent server may share a name. Creating or renaming a group to a case-only variation of an existing name returns `409 Conflict`.
   </ParamField>
 
   <ParamField body="type" type="GroupServerType">
@@ -324,7 +328,7 @@ The following fields are available through `Group` getters.
   </ResponseField>
 
   <ResponseField name="scalingMode" type="ScalingMode | null">
-    `SLOTS` maintains free capacity. `PLAYERS` scales from player utilization.
+    `SLOTS` is the dashboard's **Slots** mode and maintains free capacity. `PLAYERS` is the dashboard's **Servers** mode and starts servers from player utilization.
   </ResponseField>
 
   <ResponseField name="availableSlots" type="integer" required>
@@ -340,7 +344,7 @@ The following fields are available through `Group` getters.
   </ResponseField>
 
   <Note>
-    Group create and update operations support `SLOTS` and `PLAYERS` scaling modes.
+    `SLOTS` can start and stop servers. `PLAYERS` only starts servers; it does not stop extra instances automatically.
   </Note>
 </Accordion>
 
