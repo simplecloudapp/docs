@@ -3,13 +3,9 @@ title: "Updates"
 description: "Halte die SimpleCloud CLI und den Serverhost auf dem neuesten Stand"
 ---
 
-Der Serverhost aktualisiert sich automatisch und startet neu, wenn ihm eine neue Version zugewiesen wird. Dieser Neustart stoppt die Minecraft-Server auf dem Serverhost nicht. Die CLI aktualisiert sich nicht automatisch, informiert dich aber, wenn eine neue Version verfügbar ist.
-
-Diese Updates betreffen nur SimpleCloud. Deine Minecraft-Serversoftware oder Plugins werden dadurch nicht aktualisiert.
-
 ## CLI aktualisieren
 
-Führe Folgendes aus:
+Die CLI informiert dich, wenn eine neue Version verfügbar ist, aktualisiert sich aber nicht automatisch. Führe zum Installieren der neuesten Version Folgendes aus:
 
 ```bash
 sc upgrade cli
@@ -19,9 +15,19 @@ Der Befehl ersetzt die CLI durch die neueste Version. Er startet weder den Serve
 
 Führe anschließend `sc --version` aus, um die installierte Version zu bestätigen.
 
+## Automatische Serverhost-Updates
+
+SimpleCloud weist jedem Serverhost automatisch die neueste Version zu. Weicht die zugewiesene von der installierten Version ab, lädt der Serverhost das Update herunter und startet sich neu.
+
+Der Neustart betrifft nur den Serverhost-Prozess. Die Minecraft-Server laufen weiter, weil sie in eigenen Prozessen ausgeführt werden.
+
+Automatische Updates aktualisieren weder die CLI noch Minecraft-Serversoftware oder Plugins. Aktualisiere diese getrennt.
+
 ## Serverhost sofort aktualisieren
 
-Normalerweise musst du den Serverhost nicht selbst aktualisieren. Führe den folgenden Befehl in deinem SimpleCloud-Installationsverzeichnis aus, um ein verfügbares Update sofort zu installieren:
+Normalerweise musst du den Serverhost nicht selbst aktualisieren.
+
+Führe den folgenden Befehl in deinem SimpleCloud-Installationsverzeichnis aus, um ein verfügbares Update sofort zu installieren:
 
 ```bash
 sc restart --update

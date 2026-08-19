@@ -3,13 +3,9 @@ title: 'Route players with autoscaling'
 description: 'Send a player to an available server without managing group capacity yourself'
 ---
 
-When a player needs a server, query the group for available capacity and connect them to the least-loaded instance.
-
-<Note>
-  Let SimpleCloud manage the number of servers in a group. This workflow only chooses from instances that are ready now.
-</Note>
-
 ## Route a player to a group
+
+Let SimpleCloud manage the number of servers in a group. This workflow only chooses from instances that are ready now.
 
 The following router finds playable servers in a group, ignores full instances, and attempts one connection. It returns `NoCapacity` when no suitable server is available and `ConnectionAttempted` with the result from `CloudPlayer.connect` otherwise.
 

@@ -3,15 +3,11 @@ title: 'API für persistente Server'
 description: 'Erstelle, suche, aktualisiere und lösche persistente Server'
 ---
 
-Ein persistenter Server ist eine einzelne langlebige Serverkonfiguration, zum Beispiel ein Survival-Server. Anders als eine Gruppe skaliert er nicht auf mehrere Instanzen.
-
-Mit `api.persistentServer()` kannst du persistente Server erstellen und verwalten.
-
-<Note>
-  Die Ausschnitte auf dieser Referenzseite zeigen einzelne API-Aufrufe. Sie verwenden `api` für den unter [Installation](/de/developer/installation) erzeugten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
-</Note>
-
 ## Persistenten Server erstellen
+
+Ein persistenter Server behält eine Serverkonfiguration und skaliert im Gegensatz zu einer Gruppe nicht auf mehrere Instanzen.
+
+Die Beispiele verwenden den unter [Installation](/de/developer/installation) erstellten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
 
 Dieses Beispiel erstellt `survival-1` mit einem neuen Paper-Blueprint. Da der persistente Server aktiv ist, startet SimpleCloud seine Instanz und ersetzt sie, nachdem sie gestoppt wurde.
 
@@ -50,7 +46,11 @@ Lege entweder `source` oder `createBlueprint` fest, nicht beides.
 
 <Accordion title="Felder von CreatePersistentServerRequest">
   <ParamField body="name" type="string" required>
-    Name des persistenten Servers mit bis zu 100 ASCII-Buchstaben, Ziffern, Unterstrichen oder Bindestrichen (`[A-Za-z0-9_-]`). Namen sind innerhalb des Netzwerks eindeutig; Groß- und Kleinschreibung werden nicht berücksichtigt. `Survival-1` und `survival-1` bezeichnen daher denselben persistenten Server. Ein persistenter Server und eine Gruppe dürfen denselben Namen haben. Beim Erstellen oder Umbenennen auf eine reine Variante der Groß- und Kleinschreibung gibt die API `409 Conflict` zurück.
+    Verwende bis zu 100 ASCII-Buchstaben, Ziffern, Unterstriche oder Bindestriche (`[A-Za-z0-9_-]`). Namen persistenter Server sind innerhalb des Netzwerks eindeutig.
+
+    Beim Abgleich wird die Groß- und Kleinschreibung nicht berücksichtigt, sodass `Survival-1` und `survival-1` denselben persistenten Server bezeichnen. Beim Erstellen oder Umbenennen auf eine reine Variante der Groß- und Kleinschreibung gibt die API `409 Conflict` zurück.
+
+    Ein persistenter Server und eine Gruppe dürfen denselben Namen haben.
   </ParamField>
 
   <ParamField body="type" type="GroupServerType | null">

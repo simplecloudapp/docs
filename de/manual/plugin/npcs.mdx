@@ -4,10 +4,6 @@ description: 'Erstelle oder verknüpfe NPCs, die SimpleCloud-Status anzeigen und
 tag: 'Server'
 ---
 
-Das NPCs-Plugin verbindet einen NPC eines unterstützten Anbieters mit einer SimpleCloud-Servergruppe oder einem persistenten Server. Es kann den NPC erstellen, den aktuellen Status in einem Hologramm anzeigen und Spieler per Klick mit einem verfügbaren Ziel verbinden.
-
-Im üblichen Ablauf verwendest du `/scnpcs create`. Nutze `/scnpcs link`, wenn der NPC bereits in Citizens, FancyNpcs, MythicMobs oder ZNPCsPlus existiert.
-
 ## Unterstützte Software
 
 | Serversoftware | Unterstützung |
@@ -24,17 +20,23 @@ Im üblichen Ablauf verwendest du `/scnpcs create`. Nutze `/scnpcs link`, wenn d
 | ZNPCsPlus | Ja | Ja |
 | MythicMobs | Nein | Ja |
 
+Verwende `/scnpcs create` für einen neuen NPC. Nutze `/scnpcs link`, wenn der NPC bereits in Citizens, FancyNpcs, MythicMobs oder ZNPCsPlus existiert.
+
 Du benötigst mindestens einen unterstützten Anbieter. Das NPCs-Plugin deaktiviert sich beim Start, wenn es keinen findet.
 
 <Warning>
-  NPC-Definitionen, Anbieterdaten und Weltobjekte müssen zusammenbleiben. Am einfachsten betreibst du das Plugin auf einer persistenten Lobby. Für eine temporäre Servergruppe konfigurierst du die NPCs auf einem persistenten Staging-Server, stoppst ihn sauber und kopierst anschließend die Welt, `plugins/simplecloud-npc/` und die Anbieterdaten ins Gruppen-Template. Kopiere keine laufende Welt ins Template.
+  NPC-Definitionen, Anbieterdaten und Weltobjekte müssen zusammenbleiben. Am einfachsten betreibst du das Plugin auf einer persistenten Lobby.
+
+  Für eine temporäre Servergruppe konfigurierst du die NPCs auf einem persistenten Staging-Server. Stoppe ihn sauber und kopiere anschließend die Welt, `plugins/simplecloud-npc/` und die Anbieterdaten ins Gruppen-Template. Kopiere keine laufende Welt ins Template.
 </Warning>
 
 ## Plugin installieren
 
 <Steps>
   <Step title="Plugins installieren">
-    Lade das NPCs-Plugin von [GitHub](https://github.com/simplecloudapp/npc-plugin/releases) und einen unterstützten NPC-Anbieter herunter. Lege beide JAR-Dateien im Ordner `plugins/` des Paper-Server-Templates ab. Die Standard-Templates enthalten `simplecloud-api` bereits. Füge es bei einem eigenen Template über die Einstellung **Plugins** des Ziels oder über die CLI hinzu.
+    Lade das NPCs-Plugin von [GitHub](https://github.com/simplecloudapp/npc-plugin/releases) und einen unterstützten NPC-Anbieter herunter. Lege beide JAR-Dateien im Ordner `plugins/` des Paper-Server-Templates ab.
+
+    Die Standard-Templates enthalten `simplecloud-api` bereits. Füge es bei einem eigenen Template über die Einstellung **Plugins** des Ziels oder über die CLI hinzu.
   </Step>
 
   <Step title="NPC für ein Ziel erstellen">

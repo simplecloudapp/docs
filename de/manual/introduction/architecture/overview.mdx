@@ -3,8 +3,6 @@ title: "Architektur"
 description: "Verstehe, wie Dashboard, CLI, Controller und Serverhost zusammenarbeiten"
 ---
 
-SimpleCloud trennt die Verwaltung deines Netzwerks von der Ausführung deiner Minecraft-Server. Dashboard und CLI greifen auf dasselbe Netzwerk zu. Die Serverhosts führen dessen Minecraft-Server auf ihren Maschinen aus.
-
 ## Die drei Bestandteile, die du verwendest
 
 <Columns cols={3}>
@@ -27,7 +25,9 @@ Der gehostete Controller koordiniert diese Bestandteile und speichert den Netzwe
 2. Konfiguriere Gruppen und persistente Server im Dashboard oder in der CLI.
 3. SimpleCloud startet die angeforderten Minecraft-Server auf einem geeigneten Serverhost und meldet deren Status und Logs.
 
-Änderungen im Dashboard sind auch in der CLI sichtbar und umgekehrt. Wähle die Oberfläche, die zu deiner Aufgabe passt. Ein Serverhost ersetzt keine der beiden Oberflächen. Er führt die Minecraft-Server aus, die du dort konfigurierst.
+Änderungen im Dashboard sind auch in der CLI sichtbar und umgekehrt. Wähle die Oberfläche, die zu deiner Aufgabe passt.
+
+Ein Serverhost ersetzt keine der beiden Oberflächen. Er führt die Minecraft-Server aus, die du dort konfigurierst.
 
 Wenn du eine weitere Maschine hinzufügst, installiere dort einen weiteren Serverhost. SimpleCloud kann dann beide Maschinen für dein Netzwerk verwenden.
 

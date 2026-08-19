@@ -3,13 +3,11 @@ title: "API für Spieler"
 description: "Suche Spieler, prüfe ihre Präsenz, verschiebe oder kicke sie und verwalte Spielerdaten"
 ---
 
-Mit `api.player()` kannst du Spieler suchen und ihre Präsenz im Netzwerk prüfen. Wenn du die UUID eines Spielers bereits kennst, solltest du darüber suchen, da sich Benutzernamen ändern können.
-
-<Note>
-  Die Ausschnitte auf dieser Referenzseite zeigen einzelne API-Aufrufe. Sie verwenden `api` für den unter [Installation](/de/developer/installation) erzeugten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
-</Note>
-
 ## Spieler suchen
+
+Die Beispiele verwenden den unter [Installation](/de/developer/installation) erstellten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
+
+Wenn du die UUID eines Spielers kennst, verwende sie statt des Benutzernamens, da sich dieser ändern kann.
 
 Suche einen Spieler anhand seiner UUID und prüfe, ob er online ist, bevor du auf seinen aktuellen Server zugreifst:
 

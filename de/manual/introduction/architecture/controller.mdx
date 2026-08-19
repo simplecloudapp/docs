@@ -3,10 +3,6 @@ title: "Controller"
 description: "So koordiniert SimpleCloud dein Netzwerk im Hintergrund"
 ---
 
-Der Controller koordiniert dein SimpleCloud-Netzwerk im Hintergrund. Über das Dashboard oder die [CLI](/de/manual/introduction/architecture/cli) legst du fest, was ausgeführt werden soll. Der Controller arbeitet mit deinen Serverhosts zusammen, um diese Konfiguration umzusetzen.
-
-Er verwaltet den Zustand deiner Servergruppen, persistenten Server und verbundenen [Serverhosts](/de/manual/introduction/architecture/serverhost). Außerdem hält er das Dashboard und die CLI über deren aktuellen Zustand auf dem Laufenden.
-
 ## Von der Konfiguration zum laufenden Server
 
 Wenn du eine Gruppe aktivierst, ihre Skalierungseinstellungen änderst oder einen persistenten Server startest:
@@ -15,6 +11,10 @@ Wenn du eine Gruppe aktivierst, ihre Skalierungseinstellungen änderst oder eine
 2. Er wählt einen zulässigen Serverhost mit ausreichenden Ressourcen aus.
 3. Der Serverhost bereitet den Minecraft-Server vor und führt ihn aus.
 4. Status, Logs und Ressourcennutzung werden im Dashboard und in der CLI verfügbar.
+
+Über das Dashboard oder die [CLI](/de/manual/introduction/architecture/cli) legst du fest, was ausgeführt werden soll. Der Controller verwaltet den Zustand deiner Servergruppen, persistenten Server und verbundenen [Serverhosts](/de/manual/introduction/architecture/serverhost).
+
+Er hält das Dashboard und die CLI auf dem Laufenden.
 
 Danach hält der Controller den von dir konfigurierten Zustand aufrecht. Er startet beispielsweise einen weiteren Gruppenserver, wenn Spieler mehr Kapazität benötigen. Einen manuell gestoppten Gruppenserver kann er ersetzen, solange die Skalierungseinstellungen der Gruppe diesen Server weiterhin erfordern.
 

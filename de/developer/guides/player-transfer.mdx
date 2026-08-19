@@ -3,11 +3,11 @@ title: "Spieler auf einen anderen Server verschieben"
 description: "Verbinde einen Spieler mit einem bekannten Server und verarbeite das Ergebnis"
 ---
 
-Verwende `CloudPlayer.connect(...)`, wenn der Zielserver bereits feststeht. Die Methode erwartet den Namen, unter dem der Server auf dem Proxy des Spielers registriert ist, zum Beispiel `lobby-1`. Übergib nicht die von `Server.getServerId()` zurückgegebene Server-UUID.
+## Spieler verschieben
 
 Installiere zuerst die [Cloud API](/de/developer/installation), füge das Plattform-Plugin `simplecloud-api` als Abhängigkeit hinzu und verwende einen gemeinsamen `CloudApi`-Client. Installiere `simplecloud-api` auf jedem Proxy, der den Spieler verarbeiten kann, da dieser Proxy die Verbindung herstellt.
 
-## Spieler verschieben
+Übergib den registrierten Servernamen, zum Beispiel `lobby-1`, statt der von `Server.getServerId()` zurückgegebenen UUID.
 
 Dieses vollständige Beispiel sucht den Spieler anhand seiner UUID, prüft seinen Online-Status und verarbeitet jedes Verbindungsergebnis:
 

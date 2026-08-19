@@ -4,12 +4,6 @@ description: 'Sende Statusmeldungen zu Servern und Gruppen an Teammitglieder im 
 tag: 'Proxy'
 ---
 
-Notify sendet formatierte Chatmeldungen an berechtigte Teammitglieder, wenn sich der Status von Servern oder Gruppen im SimpleCloud-Netzwerk ändert.
-
-<Note>
-  Das Plugin benötigt `simplecloud-api` und verwendet MiniMessage für Textformatierungen. Die unterstützte Syntax findest du in der [MiniMessage-Dokumentation](https://docs.papermc.io/adventure/minimessage/).
-</Note>
-
 ## Unterstützte Software
 
 | Software | Unterstützung |
@@ -57,6 +51,8 @@ Setze eine einzelne Nachricht auf `null`, um sie zu deaktivieren. Mit `null` fü
 Teammitglieder können alle Meldungen für sich mit `/scnotify disable` ausschalten und mit `/scnotify enable` wieder einschalten. Notify speichert diese Einstellung in den SimpleCloud-Eigenschaften des Spielers, sodass sie proxyübergreifend gilt. Standardmäßig sind Benachrichtigungen aktiviert.
 
 ## Konfiguration
+
+Notify verwendet MiniMessage für Textformatierungen. Die unterstützte Syntax findest du in der [MiniMessage-Dokumentation](https://docs.papermc.io/adventure/minimessage/).
 
 Die erzeugte `messages.yml` enthält Nachrichtentexte, wiederverwendbare Variablen und Formatoptionen:
 

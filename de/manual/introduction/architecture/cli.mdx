@@ -3,12 +3,6 @@ title: "CLI"
 description: "Richte SimpleCloud über dein Terminal ein und verwalte es dort"
 ---
 
-Richte mit der SimpleCloud CLI einen Serverhost ein und verwalte dein Netzwerk über das Terminal. Die CLI steuert die SimpleCloud-Installation auf der aktuellen Maschine sowie Gruppen und Minecraft-Server im gesamten Netzwerk.
-
-<Tip>
-  Führe `sc --help` aus, um alle Befehle anzuzeigen. Mit `sc <command> --help` erhältst du Hilfe zu einem bestimmten Befehl.
-</Tip>
-
 ## CLI installieren
 
 Führe den Installer auf der Maschine aus, die SimpleCloud hosten soll:
@@ -48,9 +42,7 @@ Verwende diese Befehle, um die lokale Installation zu steuern:
 | Serverhost-Logs anzeigen | `sc logs serverhost` |
 | Serverhost-Konsole öffnen | `sc attach serverhost` |
 
-<Note>
-  Lokale Befehle wie `sc start` verwalten SimpleCloud auf der aktuellen Maschine. Befehle unter `sc server` verwalten Minecraft-Server in deinem Netzwerk.
-</Note>
+Lokale Befehle wie `sc start` verwalten SimpleCloud auf der aktuellen Maschine. Befehle unter `sc server` verwalten Minecraft-Server in deinem Netzwerk.
 
 ## Gruppen und Server verwalten
 
@@ -121,6 +113,7 @@ Folge für den vollständigen Ablauf der Anleitung [SimpleCloud auf mehreren Mas
 Die CLI unterstützt außerdem Templates, persistente Server, mehrere Kontexte und erweiterte Installationsoptionen. Für diese Aufgaben gibt es eigene Anleitungen. Die integrierte Hilfe zeigt dir jederzeit die aktuelle Befehlssyntax:
 
 ```bash
+sc --help
 sc group --help
 sc server --help
 sc persistent-server --help

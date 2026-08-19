@@ -3,12 +3,6 @@ title: "CLI"
 description: "Set up and manage SimpleCloud from your terminal"
 ---
 
-Use the SimpleCloud CLI to set up a serverhost and manage your network from the terminal. It controls the SimpleCloud installation on the current machine and manages groups and Minecraft servers across your network.
-
-<Tip>
-  Run `sc --help` to see all commands, or `sc <command> --help` for help with a specific command.
-</Tip>
-
 ## Install the CLI
 
 Run the installer on the machine that will host SimpleCloud:
@@ -48,9 +42,7 @@ Use these commands to operate the local installation:
 | View serverhost logs | `sc logs serverhost` |
 | Open the serverhost console | `sc attach serverhost` |
 
-<Note>
-  Local commands such as `sc start` manage SimpleCloud on the current machine. Commands under `sc server` manage Minecraft servers in your network.
-</Note>
+Local commands such as `sc start` manage SimpleCloud on the current machine. Commands under `sc server` manage Minecraft servers in your network.
 
 ## Manage groups and servers
 
@@ -121,6 +113,7 @@ Follow [Multi-root setup](/en/manual/setup/multi-root) for the complete process.
 The CLI also supports templates, persistent servers, multiple contexts, and advanced installation options. These workflows have their own guides, while the CLI's built-in help always shows the current command syntax:
 
 ```bash
+sc --help
 sc group --help
 sc server --help
 sc persistent-server --help

@@ -3,16 +3,18 @@ title: 'Server'
 description: 'Verstehe und verwalte die Minecraft-Serverinstanzen, die in deinem Netzwerk laufen'
 ---
 
-Eine Serverinstanz ist ein laufender Minecraft-Server oder Proxy. Jede Instanz wird entweder aus einer [Servergruppe](/de/manual/setup/server-groups) oder einem [persistenten Server](/de/manual/setup/persistent-servers) erstellt:
+## So entstehen Instanzen
+
+Eine Serverinstanz ist ein laufender Minecraft-Server oder Proxy. Jede Instanz stammt aus einer [Servergruppe](/de/manual/setup/server-groups) oder einem [persistenten Server](/de/manual/setup/persistent-servers):
 
 - Eine Servergruppe kann mehrere austauschbare Instanzen wie `lobby-1` und `lobby-2` ausführen.
 - Ein persistenter Server läuft als einzelne Instanz und behält seine Dateien zwischen Starts.
 
-Öffne **Servers** im Dashboard, um die aktuellen Instanzen in deinem Netzwerk anzuzeigen.
-
 ## Server finden
 
-Auf der Seite **Servers** siehst du den Namen, Status, die Spieler, Arbeitsspeichernutzung und den Serverhost jeder Instanz. Wähle eine Instanz aus, um ihre Konsole zu öffnen, ihre Dateien anzuzeigen oder die Ressourcennutzung zu prüfen.
+Öffne **Servers** im Dashboard. Die Seite zeigt den Namen, Status, die Spieler, Arbeitsspeichernutzung und den Serverhost jeder Instanz.
+
+Wähle eine Instanz aus, um ihre Konsole zu öffnen, ihre Dateien anzuzeigen oder die Ressourcennutzung zu prüfen.
 
 Der Status zeigt, wo sich die Instanz in ihrem Lebenszyklus befindet:
 
@@ -38,7 +40,9 @@ sc server stop lobby 1
 ```
 
 <Warning>
-  Wenn du eine Instanz stoppst, ändert sich die Konfiguration ihrer Gruppe oder ihres persistenten Servers nicht. Eine aktive Gruppe kann einen Ersatz starten, um ihre Skalierungseinstellungen zu erfüllen. Ein aktivierter persistenter Server startet erneut. Deaktiviere die Gruppe oder den persistenten Server, wenn er offline bleiben soll.
+  Wenn du eine Instanz stoppst, ändert sich die Konfiguration ihrer Gruppe oder ihres persistenten Servers nicht. Eine aktive Gruppe kann einen Ersatz starten, um ihre Skalierungseinstellungen zu erfüllen.
+
+  Ein aktivierter persistenter Server startet erneut. Deaktiviere die Gruppe oder den persistenten Server, wenn er offline bleiben soll.
 </Warning>
 
 Verwende zum Neustarten einer Gruppe ihre Rolling-Restart-Aktion. SimpleCloud ersetzt ihre Instanzen nacheinander, sodass die Gruppe verfügbar bleiben kann. Öffne zum Neustarten eines persistenten Servers den persistenten Server und wähle in seinem Aktionsmenü **Restart**.

@@ -3,13 +3,11 @@ title: 'API für Gruppen'
 description: 'Erstelle, suche, aktualisiere und lösche Servergruppen'
 ---
 
-Eine Gruppe beschreibt mehrere Server, die dieselbe Software, dieselben Ressourcen und dasselbe Skalierungsverhalten verwenden. Mit `api.group()` kannst du Gruppen verwalten oder einen weiteren Server für eine Gruppe anfordern.
-
-<Note>
-  Die Ausschnitte auf dieser Referenzseite zeigen einzelne API-Aufrufe. Sie verwenden `api` für den unter [Installation](/de/developer/installation) erzeugten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
-</Note>
-
 ## Gruppe erstellen
+
+Eine Gruppe verwendet für jeden erstellten Server dieselbe Software, dieselben Ressourcen und dasselbe Skalierungsverhalten.
+
+Die Beispiele verwenden den unter [Installation](/de/developer/installation) erstellten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
 
 Dieses Beispiel erstellt eine Paper-Lobby-Gruppe und ihren Blueprint. SimpleCloud hält eine Lobby in Betrieb und kann die Gruppe auf bis zu drei Server skalieren. Dabei werden 20 verfügbare Spielerplätze vorgehalten.
 
@@ -52,7 +50,11 @@ Lege nicht gleichzeitig `createBlueprint` und einen vorhandenen Blueprint oder e
 
 <Accordion title="Felder von CreateGroupRequest">
   <ParamField body="name" type="string" required>
-    Gruppenname mit bis zu 100 ASCII-Buchstaben, Ziffern, Unterstrichen oder Bindestrichen (`[A-Za-z0-9_-]`). Namen sind innerhalb des Netzwerks eindeutig; Groß- und Kleinschreibung werden nicht berücksichtigt. `Lobby` und `lobby` bezeichnen daher dieselbe Gruppe. Eine Gruppe und ein persistenter Server dürfen denselben Namen haben. Beim Erstellen oder Umbenennen auf eine reine Variante der Groß- und Kleinschreibung gibt die API `409 Conflict` zurück.
+    Verwende bis zu 100 ASCII-Buchstaben, Ziffern, Unterstriche oder Bindestriche (`[A-Za-z0-9_-]`). Gruppennamen sind innerhalb des Netzwerks eindeutig.
+
+    Beim Abgleich wird die Groß- und Kleinschreibung nicht berücksichtigt, sodass `Lobby` und `lobby` dieselbe Gruppe bezeichnen. Beim Erstellen oder Umbenennen auf eine reine Variante der Groß- und Kleinschreibung gibt die API `409 Conflict` zurück.
+
+    Eine Gruppe und ein persistenter Server dürfen denselben Namen haben.
   </ParamField>
 
   <ParamField body="type" type="GroupServerType">

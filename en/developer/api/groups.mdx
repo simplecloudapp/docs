@@ -3,13 +3,11 @@ title: 'Groups API'
 description: 'Create, query, update, and delete server groups'
 ---
 
-A group describes a set of servers that share the same software, resources, and scaling behavior. Use `api.group()` to manage groups or request another server for a group.
-
-<Note>
-  The snippets on this reference page show focused API calls. They use `api` for the shared `CloudApi` client created in [Installation](/en/developer/installation) and belong inside your plugin's methods.
-</Note>
-
 ## Create a group
+
+A group applies the same software, resources, and scaling behavior to each server it creates.
+
+The examples use the shared `CloudApi` client created in [Installation](/en/developer/installation) and belong inside your plugin's methods.
 
 This example creates a Paper lobby group and its blueprint. SimpleCloud keeps one lobby running and can scale the group up to three servers while maintaining 20 available player slots.
 
@@ -52,7 +50,11 @@ Do not set both `createBlueprint` and an existing blueprint or image source.
 
 <Accordion title="CreateGroupRequest fields">
   <ParamField body="name" type="string" required>
-    Group name. Use up to 100 ASCII letters, digits, underscores, or hyphens (`[A-Za-z0-9_-]`). Names are unique within the network and case-insensitive, so `Lobby` and `lobby` identify the same group. A group and a persistent server may share a name. Creating or renaming a group to a case-only variation of an existing name returns `409 Conflict`.
+    Use up to 100 ASCII letters, digits, underscores, or hyphens (`[A-Za-z0-9_-]`). Group names are unique within the network.
+
+    Name matching is case-insensitive, so `Lobby` and `lobby` identify the same group. Creating or renaming a group to a case-only variation of an existing name returns `409 Conflict`.
+
+    A group and a persistent server may share a name.
   </ParamField>
 
   <ParamField body="type" type="GroupServerType">

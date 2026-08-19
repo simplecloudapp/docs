@@ -3,13 +3,11 @@ title: "Players API"
 description: "Look up players, inspect presence, transfer or kick them, and manage player data"
 ---
 
-Use `api.player()` to find players and inspect their network presence. Prefer UUID lookup when you already know the player's UUID because usernames can change.
-
-<Note>
-  The snippets on this reference page show focused API calls. They use `api` for the shared `CloudApi` client created in [Installation](/en/developer/installation) and belong inside your plugin's methods.
-</Note>
-
 ## Look up a player
+
+The examples use the shared `CloudApi` client created in [Installation](/en/developer/installation) and belong inside your plugin's methods.
+
+Prefer a player's UUID when you know it because usernames can change.
 
 Look up a player by UUID and check whether they are online before using their current server:
 

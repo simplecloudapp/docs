@@ -4,10 +4,6 @@ description: 'Create or link NPCs that display SimpleCloud status and send playe
 tag: 'Server'
 ---
 
-The NPCs plugin connects an NPC from a supported provider to a SimpleCloud server group or persistent server. It can create the NPC for you, display live status in a hologram, and send players to an available target when they click.
-
-The normal workflow uses `/scnpcs create`. Use `/scnpcs link` when the NPC already exists in Citizens, FancyNpcs, MythicMobs, or ZNPCsPlus.
-
 ## Supported software
 
 | Server software | Support |
@@ -24,10 +20,14 @@ The normal workflow uses `/scnpcs create`. Use `/scnpcs link` when the NPC alrea
 | ZNPCsPlus | Yes | Yes |
 | MythicMobs | No | Yes |
 
+Use `/scnpcs create` for a new NPC. Use `/scnpcs link` when the NPC already exists in Citizens, FancyNpcs, MythicMobs, or ZNPCsPlus.
+
 You need at least one supported provider. The NPCs plugin disables itself if it cannot find one during startup.
 
 <Warning>
-  NPC definitions, provider data, and world entities must stay together. A persistent hub is the simplest place to run this plugin. To prepare a temporary group server, configure the NPCs on a persistent staging server, stop it cleanly, and then copy the world, `plugins/simplecloud-npc/`, and the provider's data into the group template. Do not copy a live world into the template.
+  NPC definitions, provider data, and world entities must stay together. A persistent hub is the simplest place to run this plugin.
+
+  To prepare a temporary group server, configure the NPCs on a persistent staging server, stop it cleanly, and then copy the world, `plugins/simplecloud-npc/`, and the provider's data into the group template. Do not copy a live world into the template.
 </Warning>
 
 ## Install the plugin

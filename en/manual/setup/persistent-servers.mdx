@@ -3,13 +3,9 @@ title: 'Persistent Servers'
 description: 'Create and manage a server that keeps its worlds, configuration, and plugins'
 ---
 
-A persistent server is a Minecraft server or proxy that runs on one serverhost and keeps its files when it restarts or is disabled. Use one for a survival world, build server, or anything else that must keep its local data.
-
-<Info>
-  If you want multiple interchangeable servers or automatic scaling, use [Server Groups](/en/manual/setup/server-groups) instead.
-</Info>
-
 ## Before you start
+
+If you want multiple interchangeable servers or automatic scaling, use [Server Groups](/en/manual/setup/server-groups) instead.
 
 Connect at least one serverhost and make sure it has enough memory for your server.
 
@@ -25,7 +21,9 @@ Connect at least one serverhost and make sure it has enough memory for your serv
   </Step>
 
   <Step title="Choose the server">
-    Enter a name, choose **Server** or **Proxy**, and select the serverhost that will run it. Names may contain up to 100 ASCII letters, digits, underscores, and hyphens (`[A-Za-z0-9_-]`). Names are unique within the network regardless of capitalization, so `Survival-1` and `survival-1` count as the same name.
+    Enter a name, choose **Server** or **Proxy**, and select the serverhost that will run it.
+
+    Names may contain up to 100 ASCII letters, digits, underscores, and hyphens (`[A-Za-z0-9_-]`). They are unique within the network regardless of capitalization, so `Survival-1` and `survival-1` count as the same name.
   </Step>
 
   <Step title="Choose the software">
@@ -42,7 +40,7 @@ Connect at least one serverhost and make sure it has enough memory for your serv
     Review the configuration and click **Create Server**. SimpleCloud starts it automatically unless you disabled **Activate on creation**.
 
     <Check>
-      Open the server and follow its first startup in the console.
+      With **Activate on creation** enabled, the server reaches **Available** and its console shows the startup logs.
     </Check>
   </Step>
 </Steps>

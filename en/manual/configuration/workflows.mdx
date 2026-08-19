@@ -3,10 +3,6 @@ title: "Workflows"
 description: "Run file operations when a server starts, stops, or on demand"
 ---
 
-Workflows run a sequence of file operations on a serverhost. You can run them manually or whenever a server starts or stops.
-
-Create a backup workflow, run it from the dashboard, and then adapt it to your files.
-
 ## Run the backup workflow
 
 <Steps>
@@ -53,7 +49,9 @@ Create a backup workflow, run it from the dashboard, and then adapt it to your f
   A workflow is available only on serverhosts that contain its file. If the affected servers can run on multiple serverhosts, add the same file to each one and restart them.
 </Note>
 
-The manual action copies files while the Minecraft server is running. Files that change during the copy, such as worlds and plugin data, may not form a consistent backup. For those files, add `default/backup` under **On Stop Workflows** and stop the server normally. Stop workflows run after the server process exits.
+The manual action copies files while the Minecraft server is running. Files that change during the copy, such as worlds and plugin data, may not form a consistent backup.
+
+For those files, add `default/backup` under **On Stop Workflows** and stop the server normally. Stop workflows run after the server process exits.
 
 Place `default/backup` before `internal/cleanup`.
 

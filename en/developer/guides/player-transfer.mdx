@@ -3,11 +3,11 @@ title: "Transfer a player to another server"
 description: "Connect an online player to a known server and handle the result"
 ---
 
-Use `CloudPlayer.connect(...)` when you already know which server the player should join. The method expects the name registered on the player's proxy, such as `lobby-1`. Do not pass the server UUID returned by `Server.getServerId()`.
+## Transfer the player
 
 Before you begin, [install the Cloud API](/en/developer/installation), require the `simplecloud-api` platform plugin, and create one shared `CloudApi` client. Install `simplecloud-api` on every proxy that may handle the player because that proxy performs the transfer.
 
-## Transfer the player
+Pass the registered server name, such as `lobby-1`, rather than the UUID returned by `Server.getServerId()`.
 
 Look up the player by UUID, confirm they are online, and connect them to the registered server name:
 

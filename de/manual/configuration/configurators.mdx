@@ -3,15 +3,15 @@ title: 'Configurators'
 description: 'Passe Software-Konfigurationsdateien an, bevor ein Server startet'
 ---
 
-Vor jedem Serverstart schreibt ein Configurator Werte wie den zugewiesenen Port und das Spielerlimit in die Konfigurationsdateien der Serversoftware. Wenn du eine Gruppe oder einen persistenten Server erstellst, wählt das Dashboard einen eingebauten Configurator aus. Für die Standardkonfiguration musst du nichts weiter einrichten.
+## Eigenen Configurator erstellen
 
-Erstelle einen eigenen Configurator, wenn du Einstellungen hinzufügen möchtest, die der eingebaute Configurator nicht verwaltet. Verwende stattdessen [Templates](/de/manual/setup/templates), wenn du nur dieselben Dateien auf deine Server kopieren möchtest.
+Wenn du eine Gruppe oder einen persistenten Server erstellst, wählt das Dashboard einen eingebauten Configurator aus. Für die Standardkonfiguration musst du nichts weiter einrichten.
+
+Erstelle einen eigenen Configurator für Einstellungen, die der eingebaute Configurator nicht verwaltet. Verwende [Templates](/de/manual/setup/templates), wenn du nur dieselben Dateien auf deine Server kopieren möchtest.
 
 <Warning>
   Ein eigener Configurator ersetzt den ausgewählten eingebauten Configurator. Übernimm daraus alle Einstellungen, die dein Server benötigt. Dazu gehören insbesondere der Port und die Proxy-Einstellungen.
 </Warning>
-
-## Eigenen Configurator erstellen
 
 Dieses Beispiel erweitert den Configurator **Paper/Spigot Standalone** um den Schwierigkeitsgrad und die Sichtweite. Wenn dein Server über einen Proxy verbunden wird, beginne stattdessen mit dem passenden Proxy-Configurator.
 

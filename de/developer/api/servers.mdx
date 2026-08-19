@@ -3,13 +3,9 @@ title: 'API für Serverinstanzen'
 description: 'Finde, untersuche, aktualisiere und stoppe laufende Serverinstanzen'
 ---
 
-Ein Server ist eine einzelne laufende Instanz, die aus einer Gruppe oder einem persistenten Server erstellt wurde. Mit `api.server()` kannst du diese Instanz untersuchen und verwalten. Um zu ändern, wie Server erstellt werden, aktualisiere stattdessen die zugehörige [Gruppe](/de/developer/api/groups) oder den zugehörigen [persistenten Server](/de/developer/api/persistent-servers).
-
-<Note>
-  Die Ausschnitte auf dieser Referenzseite zeigen einzelne API-Aufrufe. Sie verwenden `api` für den unter [Installation](/de/developer/installation) erzeugten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
-</Note>
-
 ## Verfügbare Kapazität finden
+
+Die Beispiele verwenden den unter [Installation](/de/developer/installation) erstellten gemeinsamen `CloudApi`-Client und gehören in die Methoden deines Plugins.
 
 Mit `ServerQuery` kannst du Instanzen nach Quelle, Zustand, Host oder numerischer ID suchen. Dieses Beispiel berechnet die gemeldeten freien Plätze aller spielbereiten Lobby-Server:
 
@@ -107,6 +103,8 @@ api.server().getCurrentServer()
 
 Jede Instanz gehört entweder zu einer Gruppe oder zu einem persistenten Server. `getServerBase()` stellt deren gemeinsame Konfiguration bereit; `getGroup()` und `getPersistentServer()` geben Zugriff auf quellenspezifische Felder.
 
+Um zu ändern, wie Instanzen erstellt werden, aktualisiere stattdessen die zugehörige [Gruppe](/de/developer/api/groups) oder den zugehörigen [persistenten Server](/de/developer/api/persistent-servers).
+
 ```java
 api.server().getServerById("server-uuid")
     .thenAccept(server -> {
@@ -142,7 +140,11 @@ api.server().updateServer("server-uuid", update)
         System.out.println("Aktualisierte Plätze: " + server.getMaxPlayers()));
 ```
 
-Der Builder unterstützt `state`, `properties`, `minMemory`, `maxMemory` und `maxPlayers`. Änderungen gelten für diese Instanz, nicht für ihre zugehörige Konfiguration. `playerCount` ist eine Laufzeit-Beobachtung, die vom Serverhost gemeldet wird, und ist über die HTTP-API schreibgeschützt; wird das Feld in einer Update-Anfrage gesendet, weist die API es als unbekanntes Feld ab. Die Plattform meldet normalerweise `state`; lege diesen Wert nur fest, wenn deine Integration für diese Meldung zuständig ist.
+Der Builder unterstützt `state`, `properties`, `minMemory`, `maxMemory` und `maxPlayers`. Änderungen gelten für diese Instanz, nicht für ihre zugehörige Konfiguration.
+
+`playerCount` ist eine vom Serverhost gemeldete Laufzeit-Beobachtung. Die HTTP-API behandelt das Feld als schreibgeschützt und weist es in Update-Anfragen als unbekannt zurück.
+
+Die Plattform meldet normalerweise `state`. Lege diesen Wert nur fest, wenn deine Integration für diese Meldung zuständig ist.
 
 ## Instanzeigenschaften verwalten
 

@@ -14,6 +14,12 @@ npm i -g mint
 
 # Start local development server (runs at http://localhost:3000)
 mint dev
+
+# Run documentation style checks
+node scripts/lint-docs.mjs
+
+# Enable the repository's pre-commit hook once per clone
+./scripts/install-git-hooks.sh
 ```
 
 ## Architecture

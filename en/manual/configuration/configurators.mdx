@@ -3,15 +3,15 @@ title: 'Configurators'
 description: 'Customize software configuration files before a server starts'
 ---
 
-Before a server starts, SimpleCloud uses a configurator to write values such as the assigned port and player limit to the server software's configuration files. The dashboard selects a built-in configurator when you create a group or persistent server, so a standard setup needs no extra work.
+## Create a custom configurator
 
-Create a custom configurator when you need to add settings that the built-in configurator does not manage. Use [templates](/en/manual/setup/templates) instead when you only need to copy the same files to your servers.
+The dashboard selects a built-in configurator when you create a group or persistent server. A standard setup needs no extra work.
+
+Create a custom configurator when the built-in one does not manage a setting you need. Use [templates](/en/manual/setup/templates) when you only need to copy the same files to your servers.
 
 <Warning>
   A custom configurator replaces the selected built-in configurator. Keep the built-in settings that your server needs, especially its port and proxy settings.
 </Warning>
-
-## Create a custom configurator
 
 This example extends the **Paper/Spigot Standalone** configurator with a difficulty and view distance. If your server connects through a proxy, start with the matching proxy configurator instead.
 

@@ -4,15 +4,6 @@ description: 'Send server and group state notifications to staff across your pro
 tag: 'Proxy'
 ---
 
-Notify sends MiniMessage-formatted chat notifications to permitted staff when server and group state changes happen in your SimpleCloud network.
-
-<Note>
-  This plugin depends on the `simplecloud-api` platform plugin and uses MiniMessage
-  for text formatting. See the [MiniMessage
-  documentation](https://docs.papermc.io/adventure/minimessage/) for formatting
-  syntax.
-</Note>
-
 ## Supported software
 
 | Software   | Plugin Support |
@@ -61,7 +52,7 @@ Staff can also disable notifications for themselves with `/scnotify disable` and
 
 ## Configuration
 
-The generated `messages.yml` contains message text, reusable variables, and formatting options:
+The generated `messages.yml` contains message text, reusable variables, and formatting options. Notify uses [MiniMessage syntax](https://docs.papermc.io/adventure/minimessage/) for text formatting.
 
 ```yaml
 version: "1"

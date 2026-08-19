@@ -3,15 +3,11 @@ title: 'Persistent servers API'
 description: 'Create, query, update, and delete persistent servers'
 ---
 
-A persistent server is one long-lived server configuration, such as a survival server. Unlike a group, it does not scale into multiple instances.
-
-Use `api.persistentServer()` to create and manage persistent servers.
-
-<Note>
-  The snippets on this reference page show focused API calls. They use `api` for the shared `CloudApi` client created in [Installation](/en/developer/installation) and belong inside your plugin's methods.
-</Note>
-
 ## Create a persistent server
+
+A persistent server keeps one server configuration and does not scale to multiple instances like a group.
+
+The examples use the shared `CloudApi` client created in [Installation](/en/developer/installation) and belong inside your plugin's methods.
 
 This example creates `survival-1` with a new Paper blueprint. Because the persistent server is active, SimpleCloud starts its instance and replaces it after a stop.
 
@@ -50,7 +46,11 @@ Set either `source` or `createBlueprint`, not both.
 
 <Accordion title="CreatePersistentServerRequest fields">
   <ParamField body="name" type="string" required>
-    Persistent server name. Use up to 100 ASCII letters, digits, underscores, or hyphens (`[A-Za-z0-9_-]`). Names are unique within the network and case-insensitive, so `Survival-1` and `survival-1` identify the same persistent server. A persistent server and a group may share a name. Creating or renaming a persistent server to a case-only variation of an existing name returns `409 Conflict`.
+    Use up to 100 ASCII letters, digits, underscores, or hyphens (`[A-Za-z0-9_-]`). Persistent server names are unique within the network.
+
+    Name matching is case-insensitive, so `Survival-1` and `survival-1` identify the same persistent server. Creating or renaming a persistent server to a case-only variation of an existing name returns `409 Conflict`.
+
+    A persistent server and a group may share a name.
   </ParamField>
 
   <ParamField body="type" type="GroupServerType | null">

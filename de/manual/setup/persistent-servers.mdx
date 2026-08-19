@@ -3,13 +3,9 @@ title: 'Persistente Server'
 description: 'Erstelle und verwalte einen Server, der seine Welten, Konfiguration und Plugins behält'
 ---
 
-Ein persistenter Server ist ein Minecraft-Server oder Proxy, der auf einem Serverhost läuft und seine Dateien behält, wenn er neu gestartet oder deaktiviert wird. Verwende einen persistenten Server für eine Survival-Welt, einen Build-Server oder alles andere, dessen lokale Daten erhalten bleiben müssen.
-
-<Info>
-  Wenn du mehrere austauschbare Server oder automatische Skalierung benötigst, verwende stattdessen [Servergruppen](/de/manual/setup/server-groups).
-</Info>
-
 ## Voraussetzungen
+
+Wenn du mehrere austauschbare Server oder automatische Skalierung benötigst, verwende stattdessen [Servergruppen](/de/manual/setup/server-groups).
 
 Verbinde mindestens einen Serverhost und stelle sicher, dass er genügend Arbeitsspeicher für deinen Server hat.
 
@@ -25,7 +21,9 @@ Verbinde mindestens einen Serverhost und stelle sicher, dass er genügend Arbeit
   </Step>
 
   <Step title="Server auswählen">
-    Gib einen Namen ein, wähle **Server** oder **Proxy** aus und bestimme den Serverhost, der ihn ausführen soll. Namen dürfen bis zu 100 ASCII-Buchstaben, Ziffern, Unterstriche und Bindestriche (`[A-Za-z0-9_-]`) enthalten. SimpleCloud unterscheidet bei Namen nicht zwischen Groß- und Kleinschreibung. `Survival-1` und `survival-1` gelten deshalb als derselbe Name.
+    Gib einen Namen ein, wähle **Server** oder **Proxy** aus und bestimme den Serverhost, der ihn ausführen soll.
+
+    Namen dürfen bis zu 100 ASCII-Buchstaben, Ziffern, Unterstriche und Bindestriche (`[A-Za-z0-9_-]`) enthalten. Sie sind im Netzwerk unabhängig von Groß- und Kleinschreibung eindeutig, daher gelten `Survival-1` und `survival-1` als derselbe Name.
   </Step>
 
   <Step title="Software auswählen">
@@ -42,7 +40,7 @@ Verbinde mindestens einen Serverhost und stelle sicher, dass er genügend Arbeit
     Prüfe die Konfiguration und klicke auf **Create Server**. SimpleCloud startet den Server automatisch, sofern du **Activate on creation** nicht deaktiviert hast.
 
     <Check>
-      Öffne den Server und verfolge seinen ersten Start in der Konsole.
+      Wenn **Activate on creation** aktiviert ist, erreicht der Server den Status **Available** und seine Konsole zeigt die Start-Logs.
     </Check>
   </Step>
 </Steps>

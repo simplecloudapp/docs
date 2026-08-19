@@ -50,6 +50,18 @@ Task-complete does not mean exhaustive. Do not copy every option, implementation
 
 Use second person, active voice, present tense, sentence-case headings, and short paragraphs. Name the actor when it matters. Repeat the same product term instead of cycling through synonyms.
 
+### Start with useful content
+
+After the title and description, start with the first useful heading or component instead of adding another introduction.
+
+### Keep text easy to scan
+
+Give each paragraph one idea and keep most paragraphs to one or two short sentences. When a paragraph becomes a block of text, remove anything the reader does not need, simplify the remaining explanation, and split distinct ideas where the reader needs them.
+
+Treat three sentences or 350 characters as a hard ceiling for a paragraph or list item, not a target.
+
+Write the simplest accurate version of a point. Do not pack several clauses into one sentence, preserve background that does not change the reader's understanding or action, or turn dense prose into a list without improving the structure.
+
 Prefer a visible result to implementation narration:
 
 - Write "The dashboard detects the serverhost automatically," not "The dashboard checks every few seconds."

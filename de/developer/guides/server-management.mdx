@@ -3,13 +3,9 @@ title: 'Spieler mit Autoscaling weiterleiten'
 description: 'Sende einen Spieler auf einen verfügbaren Server, ohne die Gruppenkapazität selbst zu verwalten'
 ---
 
-Wenn ein Spieler einen Server benötigt, frage die spielbereiten Server der Gruppe ab und verbinde ihn mit der am wenigsten ausgelasteten Instanz.
-
-<Note>
-  Lass SimpleCloud die Anzahl der Server in einer Gruppe verwalten. Dieser Ablauf wählt nur aus den Instanzen aus, die jetzt bereit sind.
-</Note>
-
 ## Spieler zu einer Gruppe weiterleiten
+
+Lass SimpleCloud die Anzahl der Server in einer Gruppe verwalten. Dieser Ablauf wählt nur aus den Instanzen aus, die jetzt bereit sind.
 
 Der folgende Router sucht spielbereite Server in einer Gruppe, ignoriert volle Instanzen und versucht, eine Verbindung herzustellen. Er gibt `NoCapacity` zurück, wenn kein geeigneter Server verfügbar ist, und andernfalls `ConnectionAttempted` mit dem Ergebnis von `CloudPlayer.connect`.
 

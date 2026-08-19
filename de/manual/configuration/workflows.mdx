@@ -3,10 +3,6 @@ title: "Workflows"
 description: "Führe Dateioperationen beim Starten und Stoppen eines Servers oder bei Bedarf aus"
 ---
 
-Workflows führen eine oder mehrere Dateioperationen auf einem Serverhost aus. Du kannst sie manuell oder bei jedem Start und Stopp eines Servers ausführen.
-
-Erstelle einen Backup-Workflow, führe ihn im Dashboard aus und passe ihn anschließend an deine Dateien an.
-
 ## Backup-Workflow ausführen
 
 <Steps>
@@ -53,7 +49,9 @@ Erstelle einen Backup-Workflow, führe ihn im Dashboard aus und passe ihn anschl
   Ein Workflow ist nur auf Serverhosts verfügbar, auf denen seine Datei vorhanden ist. Wenn die betroffenen Server auf mehreren Serverhosts ausgeführt werden können, füge jedem von ihnen dieselbe Datei hinzu und starte die Serverhosts neu.
 </Note>
 
-Bei der manuellen Aktion werden die Dateien kopiert, während der Minecraft-Server läuft. Ändern sich dabei Welten oder Plugin-Daten, kann die Kopie inkonsistent sein. Füge für solche Dateien `default/backup` unter **On Stop Workflows** hinzu und stoppe den Server normal. Stop-Workflows werden ausgeführt, nachdem der Serverprozess beendet wurde.
+Bei der manuellen Aktion werden die Dateien kopiert, während der Minecraft-Server läuft. Ändern sich dabei Welten oder Plugin-Daten, kann die Kopie inkonsistent sein.
+
+Füge für solche Dateien `default/backup` unter **On Stop Workflows** hinzu und stoppe den Server normal. Stop-Workflows werden ausgeführt, nachdem der Serverprozess beendet wurde.
 
 Platziere `default/backup` vor `internal/cleanup`.
 

@@ -3,10 +3,6 @@ title: "Controller"
 description: "How SimpleCloud coordinates your network in the background"
 ---
 
-The controller coordinates your SimpleCloud network in the background. You use the dashboard or [CLI](/en/manual/introduction/architecture/cli) to describe what you want, and the controller works with your serverhosts to make it happen.
-
-It keeps track of your server groups, persistent servers, and connected [serverhosts](/en/manual/introduction/architecture/serverhost). It also keeps the dashboard and CLI updated with their current state.
-
 ## From configuration to running servers
 
 When you activate a group, change its scaling settings, or start a persistent server:
@@ -15,6 +11,10 @@ When you activate a group, change its scaling settings, or start a persistent se
 2. It chooses an eligible serverhost with enough resources.
 3. The serverhost prepares and runs the Minecraft server.
 4. Its status, logs, and resource usage become available in the dashboard and CLI.
+
+You use the dashboard or CLI to configure what should run. The controller tracks your server groups, persistent servers, and connected [serverhosts](/en/manual/introduction/architecture/serverhost).
+
+It keeps the dashboard and CLI updated with their current state.
 
 The controller continues to maintain the result you configured. For example, it can start another group server when players need more capacity, or replace a group server that you stopped while the group still requires it.
 
