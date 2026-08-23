@@ -50,7 +50,7 @@ tag: 'Proxy'
 
 | Datei | Zweck |
 | ----- | ----- |
-| `config.yml` | Joinstates, Kick-Verhalten, Spielerzahl und Tablist |
+| `config.yml` | Joinstates, domänenbasierte MOTD-Routen, Kick-Verhalten, Spielerzahl und Tablist |
 | `layout/*.yml` | Serverlisten-MOTD, Icon, Hovertext, Version und Slot-Layouts |
 | `layout/server-icons/*` | Serverlisten-Icons für die Layouts |
 | `placeholder.yml` | Farbschwellen für den Ping |
@@ -209,6 +209,47 @@ version:
 `RANDOM` wählt bei jedem Serverlisten-Ping einen zufälligen MOTD-Eintrag. `QUEUE` durchläuft die konfigurierten Einträge nacheinander. Lege Icon-Dateien in `layout/server-icons/` ab.
 
 Verwende `/scproxy layout set <gruppe> <layout>` nur, wenn du ein Layout unabhängig von Joinstate-Wechseln festlegen möchtest.
+
+## MOTD nach Domain
+
+Zeige Spielern ein anderes Serverlisten-Layout, abhängig vom Hostnamen, mit dem sie sich verbinden, etwa wenn mehrere Domains auf denselben Proxy zeigen.
+
+Füge Routen zur Liste `domains` in der `config.yml` hinzu:
+
+```yaml config.yml
+domains:
+  - domain: play.example.com
+    target: Lobby
+    rules:
+      - state: public
+        layout: lobby-public
+      - state: maintenance
+        layout: lobby-maintenance
+
+  - domain: citybuild.example.com
+    target: Citybuild
+    rules:
+      - state: public
+        layout: citybuild
+```
+
+Spieler, die über `play.example.com` verbinden, sehen das Layout, das der Joinstate der skalierbaren Gruppe `Lobby` bestimmt; Spieler, die über `citybuild.example.com` verbinden, sehen das Layout, das der Joinstate des persistenten Servers `Citybuild` bestimmt.
+
+| Einstellung | Verhalten |
+| ----------- | --------- |
+| `domain` | Vollständiger Hostname, mit dem sich ein Client verbinden muss; Groß-/Kleinschreibung wird ignoriert |
+| `target` | Gruppe oder persistenter Server, dessen Joinstate das Layout für diese Domain bestimmt |
+| `rules` | Liste, die einen Joinstate von `target` auf einen [Layoutnamen](#serverlisten-layouts) in `layout/` abbildet |
+
+- **Exakter Abgleich:** `domain` muss der vollständige Hostname sein, etwa `play.example.com`. Wildcards und Subdomains wie `*.example.com` werden nicht unterstützt.
+- **Umfang von `target`:** `target` benennt eine Gruppe oder einen persistenten Server, keine einzelne Serverinstanz wie `Lobby-1`.
+- **Layout-Auflösung:** Für eine passende `domain` verwendet der Proxy den Eintrag in `rules`, dessen `state` dem aktuellen Joinstate von `target` entspricht. Existiert dessen `layout` nicht, greift stattdessen das globale `forced-motd-layout` dieses Joinstates, danach `initial-layout`.
+- **Standardziel:** Ein Hostname ohne passende `domain`, oder eine Route, bei der nichts davon greift, verwendet die oben beschriebene **Priorität der MOTD-Layouts**.
+- **Automatische Aktualisierung:** Routen werden neu berechnet, sobald sich der Joinstate von `target` ändert. Führe nach dem Hinzufügen oder Ändern von Einträgen in `domains` `/scproxy reload` aus, damit die neuen Routen wirksam werden.
+
+<Info>
+  Dies ändert nur die Serverlisten-MOTD. Um Spieler, die über eine Domain verbinden, auch auf einen bestimmten Server zu schicken, kombiniere die Funktion mit dem [Subdomain-Routing von Server Connection](/de/manual/plugin/server-connection#subdomain-routen).
+</Info>
 
 ## Tablist
 
@@ -431,6 +472,10 @@ Entferne die Proxy-Essentials-JAR aus allen passenden Proxy-Templates und starte
 
   <Accordion title="Wartung ist aktiv, aber die öffentliche MOTD ändert sich nicht">
     Prüfe, ob du die Proxy-Gruppe und nicht nur eine Backend-Gruppe geändert hast. `forced-motd-layout` muss eine vorhandene Datei mit `motd.enabled: true` benennen. Prüfe danach `/scproxy layout info <proxy-gruppe>`: Ein mit `/scproxy layout set` gespeichertes Layout hat Vorrang vor dem Joinstate-Layout.
+  </Accordion>
+
+  <Accordion title="Eine Domain zeigt immer die Standard-MOTD statt ihrer Route">
+    Prüfe, ob sich der Spieler mit genau dem in `domain` hinterlegten Hostnamen verbunden hat. Der Vergleich ignoriert Groß-/Kleinschreibung, unterstützt aber keine Wildcards oder Subdomains. Prüfe, ob `target` eine Gruppe oder ein persistenter Server ist, keine einzelne Serverinstanz. Prüfe, ob der aktuelle Joinstate von `target` einen passenden Eintrag in `rules` hat und dessen `layout` existiert. Führe nach dem Bearbeiten von `domains` `/scproxy reload` aus.
   </Accordion>
 
   <Accordion title="Proxy Essentials kontrolliert die MOTD weiterhin">
