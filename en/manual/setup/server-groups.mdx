@@ -105,7 +105,11 @@ If you disable every serverhost, SimpleCloud cannot start a new server for the g
 
 Changes to software, plugins, or server files apply when new servers start. After saving a change, open the group's action menu and use **Hold to rolling restart** to apply it to running servers.
 
-A rolling restart replaces the group's servers one at a time so capacity remains available during the change. **Restart all** stops the current servers together, and deactivating the group stops them without starting replacements.
+A rolling restart replaces the group's servers one at a time so capacity remains available during the change. Once started, the rolling restart stays active until every old server is replaced or you cancel it. **Restart all** stops the current servers together, and deactivating the group stops them without starting replacements.
+
+<Note>
+  Rolling restarts require **Slots** scaling mode. SimpleCloud rejects a rolling restart for a group that uses **Servers** mode. Use **Restart all** for those groups instead.
+</Note>
 
 <Warning>
   Files stored only inside a group server are temporary. Use a persistent server for data that must survive replacement.
