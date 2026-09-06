@@ -1,0 +1,118 @@
+---
+title: "Environment variables"
+description: "Store readable network environment variables that the controller encrypts at rest"
+---
+
+Environment variables are network-scoped key-value pairs that you manage through the controller REST API at `https://controller.simplecloud.app`. The controller encrypts each value with AES-256-GCM before storing it and decrypts it again when you list the variables.
+
+Environment variables differ from [Secrets](/en/manual/configuration/secrets). A secret is encrypted in your browser and can never be read back through the API. An environment variable is encrypted by the controller, so authorized API clients can read and edit its plaintext value at any time.
+
+## Prerequisites
+
+Every request needs these two headers:
+
+- `X-Network-ID`: your network ID.
+- `X-Network-Credential`: a network password or JWT.
+
+The credential must carry the `environment_variables` permission resource: `read` for listing, `write` for creating and updating, and `delete` for deleting.
+
+## Create an environment variable
+
+Send a `POST` request with the key and the plaintext value:
+
+```bash
+curl -X POST "https://controller.simplecloud.app/v0/environment-variables" \
+  -H "X-Network-ID: $NETWORK_ID" \
+  -H "X-Network-Credential: $NETWORK_CREDENTIAL" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "JAVA_TOOL_OPTIONS", "value": "-Xmx2G"}'
+```
+
+The controller encrypts the value and returns `201 Created`:
+
+```json
+{
+  "environment_variable_id": "123e4567-e89b-12d3-a456-426614174000",
+  "key": "JAVA_TOOL_OPTIONS",
+  "value": "-Xmx2G",
+  "message": "Environment variable created successfully"
+}
+```
+
+Creating a key that already exists in the network returns `409 Conflict`. Use `PUT` to change an existing value instead.
+
+## List environment variables
+
+Send a `GET` request to read every variable in the network:
+
+```bash
+curl "https://controller.simplecloud.app/v0/environment-variables" \
+  -H "X-Network-ID: $NETWORK_ID" \
+  -H "X-Network-Credential: $NETWORK_CREDENTIAL"
+```
+
+The controller decrypts the stored values and returns them as plaintext:
+
+```json
+{
+  "environment_variables": [
+    {
+      "environment_variable_id": "123e4567-e89b-12d3-a456-426614174000",
+      "key": "JAVA_TOOL_OPTIONS",
+      "value": "-Xmx2G",
+      "created_at": "2023-01-01T12:00:00Z",
+      "updated_at": "2023-01-01T12:00:00Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+## Update an environment variable
+
+Send a `PUT` request with the key and the new value:
+
+```bash
+curl -X PUT "https://controller.simplecloud.app/v0/environment-variables" \
+  -H "X-Network-ID: $NETWORK_ID" \
+  -H "X-Network-Credential: $NETWORK_CREDENTIAL" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "JAVA_TOOL_OPTIONS", "value": "-Xmx4G"}'
+```
+
+The response returns `200 OK` with the same fields as the create response. Updating a key that does not exist returns `404 Not Found`.
+
+## Delete an environment variable
+
+Send a `DELETE` request with the key as a query parameter:
+
+```bash
+curl -X DELETE "https://controller.simplecloud.app/v0/environment-variables?key=JAVA_TOOL_OPTIONS" \
+  -H "X-Network-ID: $NETWORK_ID" \
+  -H "X-Network-Credential: $NETWORK_CREDENTIAL"
+```
+
+The response returns `200 OK`:
+
+```json
+{
+  "key": "JAVA_TOOL_OPTIONS",
+  "message": "Environment variable deleted successfully"
+}
+```
+
+Deleting a key that does not exist returns `404 Not Found`. Deleting the network also deletes all of its environment variables.
+
+## Keys and values
+
+Keys and values have these limits. A request that violates them returns `400 Bad Request`:
+
+- A key starts with a letter or underscore and contains up to 64 letters, digits, or underscores. It must match `^[A-Za-z_][A-Za-z0-9_]{0,63}$`.
+- A value is required and can contain up to 16 KiB (16384 bytes).
+- Each key exists once per network. Keys are case-sensitive.
+
+## How environment variables are protected
+
+The controller encrypts each value with AES-256-GCM and a fresh random nonce before writing it to the database. The ciphertext is bound to the network ID and the variable key, so a stored value cannot be moved to another network or another key. The database and its backups only contain ciphertext.
+
+Unlike secrets, the controller can decrypt these values. Use a [Secret](/en/manual/configuration/secrets) instead when the value must stay unreadable to the controller.

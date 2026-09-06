@@ -59,6 +59,7 @@
                 "group": "Configuration",
                 "pages": [
                   "en/manual/configuration/secrets",
+                  "en/manual/configuration/environment-variables",
                   "en/manual/configuration/configurators",
                   "en/manual/configuration/workflows"
                 ]
@@ -157,6 +158,7 @@
                 "group": "Configuration",
                 "pages": [
                   "de/manual/configuration/secrets",
+                  "de/manual/configuration/environment-variables",
                   "de/manual/configuration/configurators",
                   "de/manual/configuration/workflows"
                 ]
