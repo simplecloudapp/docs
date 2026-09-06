@@ -1,0 +1,118 @@
+---
+title: "Umgebungsvariablen"
+description: "Lesbare Netzwerk-Umgebungsvariablen speichern, die der Controller verschlüsselt ablegt"
+---
+
+Umgebungsvariablen sind netzwerkweite Schlüssel-Wert-Paare, die du über die Controller-REST-API unter `https://controller.simplecloud.app` verwaltest. Der Controller verschlüsselt jeden Wert mit AES-256-GCM, bevor er ihn speichert, und entschlüsselt ihn wieder, wenn du die Variablen auflistest.
+
+Umgebungsvariablen unterscheiden sich von [Secrets](/de/manual/configuration/secrets). Ein Secret wird in deinem Browser verschlüsselt und kann über die API nie wieder ausgelesen werden. Eine Umgebungsvariable verschlüsselt der Controller, sodass autorisierte API-Clients ihren Klartextwert jederzeit lesen und bearbeiten können.
+
+## Voraussetzungen
+
+Jede Anfrage benötigt diese beiden Header:
+
+- `X-Network-ID`: deine Netzwerk-ID.
+- `X-Network-Credential`: ein Netzwerkpasswort oder JWT.
+
+Der Zugang benötigt die Berechtigungsressource `environment_variables`: `read` zum Auflisten, `write` zum Erstellen und Aktualisieren und `delete` zum Löschen.
+
+## Umgebungsvariable erstellen
+
+Sende eine `POST`-Anfrage mit dem Key und dem Klartextwert:
+
+```bash
+curl -X POST "https://controller.simplecloud.app/v0/environment-variables" \
+  -H "X-Network-ID: $NETWORK_ID" \
+  -H "X-Network-Credential: $NETWORK_CREDENTIAL" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "JAVA_TOOL_OPTIONS", "value": "-Xmx2G"}'
+```
+
+Der Controller verschlüsselt den Wert und antwortet mit `201 Created`:
+
+```json
+{
+  "environment_variable_id": "123e4567-e89b-12d3-a456-426614174000",
+  "key": "JAVA_TOOL_OPTIONS",
+  "value": "-Xmx2G",
+  "message": "Environment variable created successfully"
+}
+```
+
+Das Erstellen eines Keys, der im Netzwerk bereits existiert, liefert `409 Conflict`. Verwende stattdessen `PUT`, um einen bestehenden Wert zu ändern.
+
+## Umgebungsvariablen auflisten
+
+Sende eine `GET`-Anfrage, um alle Variablen des Netzwerks zu lesen:
+
+```bash
+curl "https://controller.simplecloud.app/v0/environment-variables" \
+  -H "X-Network-ID: $NETWORK_ID" \
+  -H "X-Network-Credential: $NETWORK_CREDENTIAL"
+```
+
+Der Controller entschlüsselt die gespeicherten Werte und liefert sie als Klartext zurück:
+
+```json
+{
+  "environment_variables": [
+    {
+      "environment_variable_id": "123e4567-e89b-12d3-a456-426614174000",
+      "key": "JAVA_TOOL_OPTIONS",
+      "value": "-Xmx2G",
+      "created_at": "2023-01-01T12:00:00Z",
+      "updated_at": "2023-01-01T12:00:00Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+## Umgebungsvariable aktualisieren
+
+Sende eine `PUT`-Anfrage mit dem Key und dem neuen Wert:
+
+```bash
+curl -X PUT "https://controller.simplecloud.app/v0/environment-variables" \
+  -H "X-Network-ID: $NETWORK_ID" \
+  -H "X-Network-Credential: $NETWORK_CREDENTIAL" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "JAVA_TOOL_OPTIONS", "value": "-Xmx4G"}'
+```
+
+Die Antwort liefert `200 OK` mit denselben Feldern wie die Antwort beim Erstellen. Das Aktualisieren eines nicht vorhandenen Keys liefert `404 Not Found`.
+
+## Umgebungsvariable löschen
+
+Sende eine `DELETE`-Anfrage mit dem Key als Query-Parameter:
+
+```bash
+curl -X DELETE "https://controller.simplecloud.app/v0/environment-variables?key=JAVA_TOOL_OPTIONS" \
+  -H "X-Network-ID: $NETWORK_ID" \
+  -H "X-Network-Credential: $NETWORK_CREDENTIAL"
+```
+
+Die Antwort liefert `200 OK`:
+
+```json
+{
+  "key": "JAVA_TOOL_OPTIONS",
+  "message": "Environment variable deleted successfully"
+}
+```
+
+Das Löschen eines nicht vorhandenen Keys liefert `404 Not Found`. Beim Löschen des Netzwerks werden auch alle seine Umgebungsvariablen gelöscht.
+
+## Keys und Werte
+
+Für Keys und Werte gelten diese Grenzen. Eine Anfrage, die sie verletzt, liefert `400 Bad Request`:
+
+- Ein Key beginnt mit einem Buchstaben oder Unterstrich und enthält bis zu 64 Buchstaben, Ziffern oder Unterstriche. Er muss `^[A-Za-z_][A-Za-z0-9_]{0,63}$` entsprechen.
+- Ein Wert ist erforderlich und kann bis zu 16 KiB (16384 Bytes) enthalten.
+- Jeder Key existiert einmal pro Netzwerk. Keys sind case-sensitiv.
+
+## Wie Umgebungsvariablen geschützt werden
+
+Der Controller verschlüsselt jeden Wert mit AES-256-GCM und einer frischen zufälligen Nonce, bevor er ihn in die Datenbank schreibt. Der Ciphertext ist an die Netzwerk-ID und den Variablen-Key gebunden. Ein gespeicherter Wert lässt sich daher nicht in ein anderes Netzwerk oder auf einen anderen Key übertragen. Die Datenbank und ihre Backups enthalten nur Ciphertext.
+
+Anders als bei Secrets kann der Controller diese Werte entschlüsseln. Verwende stattdessen ein [Secret](/de/manual/configuration/secrets), wenn der Wert für den Controller unlesbar bleiben muss.
