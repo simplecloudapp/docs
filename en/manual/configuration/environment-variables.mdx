@@ -9,10 +9,12 @@ Environment variables differ from [Secrets](/en/manual/configuration/secrets). A
 
 ## Prerequisites
 
-Every request needs these two headers:
+Authenticate every request with one of these schemes:
 
-- `X-Network-ID`: your network ID.
-- `X-Network-Credential`: a network password or JWT.
+- `Authorization: Bearer <JWT>` — a signed JWT. Access is limited to the token's network membership and permissions.
+- `X-Network-Credential: <network password or JWT>` combined with `X-Network-ID: <network ID>`. A network password grants full access to that network; a JWT still applies its permissions.
+
+If both headers are supplied, `Authorization: Bearer` takes precedence.
 
 The credential must carry the `environment_variables` permission resource: `read` for listing, `write` for creating and updating, and `delete` for deleting.
 
