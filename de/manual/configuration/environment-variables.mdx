@@ -9,10 +9,12 @@ Umgebungsvariablen unterscheiden sich von [Secrets](/de/manual/configuration/sec
 
 ## Voraussetzungen
 
-Jede Anfrage benötigt diese beiden Header:
+Authentifiziere jede Anfrage mit einem dieser Schemas:
 
-- `X-Network-ID`: deine Netzwerk-ID.
-- `X-Network-Credential`: ein Netzwerkpasswort oder JWT.
+- `Authorization: Bearer <JWT>` — ein signiertes JWT. Der Zugriff ist auf die Netzwerkmitgliedschaft und Berechtigungen des Tokens beschränkt.
+- `X-Network-Credential: <Netzwerkpasswort oder JWT>` zusammen mit `X-Network-ID: <Netzwerk-ID>`. Ein Netzwerkpasswort gewährt vollen Zugriff auf dieses Netzwerk; bei einem JWT gelten weiterhin dessen Berechtigungen.
+
+Werden beide Header gesendet, hat `Authorization: Bearer` Vorrang.
 
 Der Zugang benötigt die Berechtigungsressource `environment_variables`: `read` zum Auflisten, `write` zum Erstellen und Aktualisieren und `delete` zum Löschen.
 
