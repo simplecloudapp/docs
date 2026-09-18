@@ -89,7 +89,7 @@ Jeder Eintrag unter `paths` gibt eine Konfigurationsdatei, ihr Format und die an
 
     Eigene Properties der Gruppe oder des persistenten Servers stehen ebenfalls als Platzhalter zur Verfügung. Eine Property namens `motd` kannst du beispielsweise als `%motd%` verwenden.
 
-    Verwende eine [Secret-Referenz](/de/manual/configuration/secrets) als Configurator-Wert, um ein Passwort, Token oder einen anderen vertraulichen Wert einzusetzen:
+    Verwende eine [Secret-Referenz](/de/manual/configuration/environment-variables-and-secrets) als Configurator-Wert, um ein Passwort, Token oder einen anderen vertraulichen Wert einzusetzen:
 
     ```yaml
     password: "{{ secrets.DATABASE_PASSWORD }}"

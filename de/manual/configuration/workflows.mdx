@@ -151,7 +151,7 @@ Muster unter `exclude` sind relativ zu `from`.
   <Accordion title="Datei hochladen">
     `simplecloud/upload` sendet die Datei unter `from` an die URL unter `to`. Die Aktion lädt Dateien hoch, keine Verzeichnisse. Du kannst außerdem die HTTP-`method` und einen Wert für `authorization-bearer` festlegen.
 
-    Speichere langlebige Zugriffstokens unter **Settings > Secrets** und setze `authorization-bearer` auf eine [Secret-Referenz](/de/manual/configuration/secrets), zum Beispiel `"{{ secrets.BACKUP_TOKEN }}"`.
+    Speichere langlebige Zugriffstokens unter **Settings > Variables & Secrets** und setze `authorization-bearer` auf eine [Secret-Referenz](/de/manual/configuration/environment-variables-and-secrets), zum Beispiel `"{{ secrets.BACKUP_TOKEN }}"`.
   </Accordion>
 
   <Accordion title="Dateien löschen">

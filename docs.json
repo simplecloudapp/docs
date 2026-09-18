@@ -58,8 +58,7 @@
               {
                 "group": "Configuration",
                 "pages": [
-                  "en/manual/configuration/secrets",
-                  "en/manual/configuration/environment-variables",
+                  "en/manual/configuration/environment-variables-and-secrets",
                   "en/manual/configuration/configurators",
                   "en/manual/configuration/workflows"
                 ]
@@ -157,8 +156,7 @@
               {
                 "group": "Configuration",
                 "pages": [
-                  "de/manual/configuration/secrets",
-                  "de/manual/configuration/environment-variables",
+                  "de/manual/configuration/environment-variables-and-secrets",
                   "de/manual/configuration/configurators",
                   "de/manual/configuration/workflows"
                 ]
@@ -302,6 +300,22 @@
     {
       "source": "/en/developer/getting-started/velocity",
       "destination": "/en/developer/installation"
+    },
+    {
+      "source": "/en/manual/configuration/secrets",
+      "destination": "/en/manual/configuration/environment-variables-and-secrets"
+    },
+    {
+      "source": "/en/manual/configuration/environment-variables",
+      "destination": "/en/manual/configuration/environment-variables-and-secrets"
+    },
+    {
+      "source": "/de/manual/configuration/secrets",
+      "destination": "/de/manual/configuration/environment-variables-and-secrets"
+    },
+    {
+      "source": "/de/manual/configuration/environment-variables",
+      "destination": "/de/manual/configuration/environment-variables-and-secrets"
     }
   ]
 }

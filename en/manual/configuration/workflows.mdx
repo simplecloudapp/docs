@@ -151,7 +151,7 @@ Patterns in `exclude` are relative to `from`.
   <Accordion title="Upload a file">
     `simplecloud/upload` sends the file in `from` to the URL in `to`. It uploads files, not directories. You can also set the HTTP `method` and an `authorization-bearer` value.
 
-    Store long-lived access tokens under **Settings > Secrets** and set `authorization-bearer` to a [secret reference](/en/manual/configuration/secrets), such as `"{{ secrets.BACKUP_TOKEN }}"`.
+    Store long-lived access tokens under **Settings > Variables & Secrets** and set `authorization-bearer` to a [secret reference](/en/manual/configuration/environment-variables-and-secrets), such as `"{{ secrets.BACKUP_TOKEN }}"`.
   </Accordion>
 
   <Accordion title="Delete files">
