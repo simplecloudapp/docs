@@ -1,130 +1,121 @@
 ---
 title: 'NPCs'
-description: 'Create or link NPCs that display SimpleCloud status and send players to server groups or persistent servers'
+description: 'Place NPCs that show live SimpleCloud status and send players to server groups or persistent servers'
 tag: 'Server'
 ---
+
+The NPCs plugin places clickable NPCs in your lobby. Each NPC points at a server group or persistent server, shows its live status in a hologram, and sends players there when they click it. You set everything up in an in-game editor, without touching a config file.
 
 ## Supported software
 
 | Server software | Support |
 | --------------- | ------- |
-| Paper and forks | Yes |
+| Paper and forks, 1.20.6 or newer (Java 21+) | Yes |
 | Spigot | No |
 
-## Supported NPC providers
+The plugin draws its NPCs itself, so you don't need another NPC plugin. From Minecraft 1.21.9 on, NPCs are native Mannequin entities. On older versions they are packet-based player NPCs.
 
-| Provider | Create with `/scnpcs create` | Link an existing NPC |
-| -------- | ---------------------------- | -------------------- |
-| Citizens | Yes | Yes |
-| FancyNpcs | Yes | Yes |
-| ZNPCsPlus | Yes | Yes |
-| MythicMobs | No | Yes |
+You can still attach NPCs from these plugins:
 
-Use `/scnpcs create` for a new NPC. Use `/scnpcs link` when the NPC already exists in Citizens, FancyNpcs, MythicMobs, or ZNPCsPlus.
+| Provider | Attach an existing NPC with `/scnpcs link` |
+| -------- | ------------------------------------------ |
+| Citizens | Yes |
+| FancyNpcs | Yes |
+| ZNPCsPlus | Yes |
+| MythicMobs | Yes |
 
-You need at least one supported provider. The NPCs plugin disables itself if it cannot find one during startup.
+`/scnpcs create` always creates the plugin's own NPC, even when one of these plugins is installed. Only own NPCs get every editor feature, such as equipment, pose, size, and click animations, and an NPC never changes its plugin because you install or remove another one. To use an NPC from one of these plugins, for example a villager, create it there and attach it with [`/scnpcs link`](#link-an-existing-npc).
 
 <Warning>
-  NPC definitions, provider data, and world entities must stay together. A persistent hub is the simplest place to run this plugin.
+  The editor saves to the files of the server you are on. On a temporary group server, those changes are lost when the server stops.
 
-  To prepare a temporary group server, configure the NPCs on a persistent staging server, stop it cleanly, and then copy the world, `plugins/simplecloud-npc/`, and the provider's data into the group template. Do not copy a live world into the template.
+  Set up your NPCs on a persistent server, then copy `plugins/simplecloud-npc/` into the group template. Every server started from the template places the same NPCs and holograms. The world only needs to exist under the same name; NPC entities left in a copied world are reused or removed. For linked NPCs, also copy the provider plugin's data.
 </Warning>
 
 ## Install the plugin
 
 <Steps>
-  <Step title="Install the plugins">
-    Download the NPCs plugin from [GitHub](https://github.com/simplecloudapp/npc-plugin/releases) and install one supported NPC provider. Place both JARs in the Paper server template's `plugins/` folder. Standard SimpleCloud templates already include `simplecloud-api`; add it through the target's **Plugins** setting or the CLI if you use a custom template.
+  <Step title="Install the plugin">
+    Download the NPCs plugin from [GitHub](https://github.com/simplecloudapp/npc-plugin/releases) or [Modrinth](https://modrinth.com/plugin/npcs-plugin) and place the JAR in the Paper server template's `plugins/` folder. Standard SimpleCloud templates already include `simplecloud-api`. If you use a custom template, add it through the target's **Plugins** setting or the CLI.
   </Step>
 
-  <Step title="Create an NPC for a target">
-    Start the server, stand where the NPC should appear, and choose a unique ID and an existing SimpleCloud group or persistent-server name. For a group named `Lobby`, run:
+  <Step title="Create an NPC">
+    Start the server, stand where the NPC should appear, and run:
 
     ```text
-    /scnpcs create lobby-selector Lobby
+    /scnpcs create lobby Lobby
     ```
 
-    If more than one installed provider can create NPCs, add the provider name:
-
-    ```text
-    /scnpcs create lobby-selector Lobby citizens
-    ```
+    `lobby` is the NPC's ID, and `Lobby` is the group or persistent server it sends players to. The NPC spawns wearing your skin and gets a status hologram. The editor opens right away.
   </Step>
 
-  <Step title="Verify the result">
-    Run `/scnpcs info lobby-selector`. Its status should be `complete`, and the NPC should have a two-line hologram. Right-click it to join the available `Lobby` server with the fewest players.
+  <Step title="Test it">
+    Close the editor and right-click the NPC. You join the `Lobby` server with the fewest players. If no server of the group is running, the hologram switches to **Offline** after a few seconds.
   </Step>
 </Steps>
 
-## Link an existing NPC
+## The in-game editor
 
-Use the provider's native reference when an NPC already exists:
+Open the editor with `/scnpcs edit` while looking at an NPC, or with `/scnpcs edit <id>`. The hub shows a preview of the NPC and these sections:
 
-```text
-/scnpcs link lobby-selector citizens 12 Lobby
-```
+| Section | What you change there |
+| ------- | --------------------- |
+| Appearance | Skin, display name, glow and glow color, equipment, pose, and size |
+| Behavior | Whether the NPC looks at players, how far away it is visible, and pushback |
+| Hologram | The lines above the NPC for each join state, and their height |
+| Actions | What happens on each click type, per join state |
+| Targets | The groups or servers the NPC sends players to, and how it picks a server |
 
-This creates the SimpleCloud ID `lobby-selector`, links Citizens NPC `12`, and targets `Lobby`. Provider references differ by plugin, so use command suggestions to select the installed provider and NPC.
+From the hub you can also summon the NPC to your position, duplicate it, or delete it. The editor saves every change and shows it at once.
 
-Linked NPCs remain owned by their provider. `/scnpcs unlink lobby-selector` removes only the SimpleCloud configuration and hologram.
+### Enter text and numbers
 
-## Default behavior
+When the editor needs text, it closes the menu and shows an input card in chat:
 
-A newly created or linked NPC starts with:
+- The card shows the current value. Click it to put it into your chat bar and change it.
+- It lists the placeholders that work in this field. Click one to copy it.
+- For formatted text, you first see a preview with **Apply**, **Edit**, and **Cancel** buttons.
+- Type `cancel` or click **Cancel** to go back without changes.
 
-- A `default` hologram that shows the target name and player count
-- A `maintenance` hologram that shows the target as unavailable
-- A right-click action that joins the target in the `default` state
-- A right-click message in the `maintenance` state
+Number fields change with clicks: left-click raises the value, right-click lowers it, and holding Shift takes bigger steps. Hover a number field and press **F** to type an exact value, or **Q** to reset it.
 
-For a group target, the join action selects an `AVAILABLE` server with the fewest players. For a persistent-server target, it uses that persistent server's proxy registration name.
+## Join states
 
-## Commands
+An NPC is always in one join state. Holograms and click actions can differ per state, so an NPC can show a maintenance notice instead of a player count.
 
-The root command is available as `/simplecloudnpcs`, `/scnpcs`, and `/scnpc`.
+| Join state | When it applies |
+| ---------- | --------------- |
+| `public` | The normal state |
+| `offline` | No server of any target can be joined, including while servers start. It takes effect after 5 seconds, so a quick restart does not flicker. |
+| A custom state, such as `maintenance` | A target has the property `join-state` set to that value |
 
-| Command | Description |
-| ------- | ----------- |
-| `/scnpcs help [topic]` | Show the main help or the `create`, `link`, `edit`, `target`, `hologram`, `action`, `pushback`, or `admin` page |
-| `/scnpcs create <id> <target> [provider]` | Create a provider NPC at your position and configure it |
-| `/scnpcs link <id> <provider> <reference> <target>` | Link an existing provider NPC |
-| `/scnpcs list` | List configured NPCs |
-| `/scnpcs info <id>` | Show provider, target, hologram, action count, and configuration status |
-| `/scnpcs edit <id>` | Show the editable sections |
-| `/scnpcs unlink <id>` | Remove the SimpleCloud configuration but keep the provider NPC |
-| `/scnpcs delete <id>` | Delete the configuration and, for a managed NPC, its provider NPC |
-| `/scnpcs placeholders` | List target placeholders |
-| `/scnpcs reload` | Reload NPC definitions and `messages.yml` |
+A layout or action for `public` is the fallback for every state that has none of its own. To use a custom state, set the `join-state` property on a group or persistent server, for example to `maintenance`.
 
-<Warning>
-  `/scnpcs delete` also deletes the provider NPC when SimpleCloud created it. Use `/scnpcs unlink` when you want to keep that NPC in the provider.
-</Warning>
+A new NPC starts with holograms for `public`, `maintenance`, and `offline`, a right-click that joins the target, and right-click messages for `maintenance` and `offline`.
 
-## Change targets
+## Targets and join strategy
 
-An NPC can try more than one target. It checks them in their configured order and uses the first target with an available destination.
+An NPC can have up to 8 targets. It checks them in order and uses the first one that has a server to join. Group and persistent-server names are not case-sensitive. A name that belongs to both a group and a persistent server is rejected.
 
-```text
-/scnpcs edit lobby-selector target list
-/scnpcs edit lobby-selector target add BackupLobby
-/scnpcs edit lobby-selector target remove Lobby
-```
+For a group, the **join strategy** picks the server:
 
-An NPC must keep at least one target. Group and persistent-server names are matched without case sensitivity, but a name is rejected if it identifies both resource types.
+| Strategy | Picks |
+| -------- | ----- |
+| `LEAST_PLAYERS` (default) | The emptiest server |
+| `MOST_PLAYERS` | The fullest server, to fill servers one by one |
+| `RANDOM` | Any server |
 
-## Edit the hologram
+Servers that are not full come first. When all servers are full, the player is sent anyway, and your proxy decides what happens, for example by showing its full message. When no server is online at all, nobody is sent. Give the `offline` state its own action, for example a message, to tell players.
 
-Hologram layouts are selected by join state. Use `default` for normal operation and `maintenance` for a target whose `joinstate` property is `maintenance`.
+## Holograms
 
-```text
-/scnpcs edit lobby-selector hologram line set default 1 <#38bdf8><bold><target_name>
-/scnpcs edit lobby-selector hologram line add maintenance <#dc2626>Come back later
-/scnpcs edit lobby-selector hologram height 2.5
-```
+Each join state has its own hologram layout. In the editor, open **Hologram**, pick a state, and edit its lines:
 
-Line numbers start at `1`. Run `/scnpcs help hologram` for the enable, disable, add, set, and remove forms.
+- Left-click a line to edit it.
+- Shift-click a line to move it up or down.
+- Press Q on a line to delete it.
 
-### Target placeholders
+Lines support [MiniMessage](https://docs.advntr.dev/minimessage/format.html) formatting and these target placeholders:
 
 | Placeholder | Description |
 | ----------- | ----------- |
@@ -139,45 +130,323 @@ Line numbers start at `1`. Run `/scnpcs help hologram` for the enable, disable, 
 | `<target_pretty_name>` | Persistent-server display name |
 | `<target_motd>` | Persistent-server MOTD |
 
-## Configure click actions
+Run `/scnpcs placeholders` in-game for the current list. Holograms look the same for every player, so player placeholders and PlaceholderAPI do not work in them.
 
-Actions are scoped to an interaction and join state. Supported interactions are `RIGHT_CLICK`, `LEFT_CLICK`, `SHIFT_RIGHT_CLICK`, and `SHIFT_LEFT_CLICK`.
+### Rotating lines
 
-For example, these commands keep the default join action and add feedback when a player clicks:
+A line can rotate through several texts:
 
-```text
-/scnpcs edit lobby-selector action join-target RIGHT_CLICK default true
-/scnpcs edit lobby-selector action play-sound RIGHT_CLICK default block.note_block.pling
-/scnpcs edit lobby-selector action send-message RIGHT_CLICK maintenance <#dc2626>The lobby is under maintenance.
+- While you type a line, click **Apply + add rotating text** in the preview to add the next text right away.
+- To change the texts later, right-click the line. There you also set how long each text stays, from 0.5 to 60 seconds.
+
+Rotating lines switch at the same moment for every player. In the NPC file, a rotating line looks like this:
+
+```yaml
+lines:
+  - frames:
+      - "<gold>Play now!"
+      - "<gray><target_online_players> players online"
+    frame-interval: 3.0
 ```
 
-The plugin can also execute a player command, teleport the player, show a title, send the player to a proxy-registered server, or transfer the player to an external address. Run `/scnpcs help action` for the exact command forms.
+## Click actions
 
-`execute-command` supports `<playername>` and `<playeruuid>` in the configured command.
+You set actions per click type and join state. The click types are right-click, left-click, Shift+right-click, and Shift+left-click. In the editor, **Actions** shows them as a grid. Click a cell to edit it. One click can trigger several actions at once:
+
+| Action | Effect |
+| ------ | ------ |
+| Join target | Sends the player to a server of the NPC's targets |
+| Send to server | Sends the player to one server registered on the proxy |
+| Transfer to host | Transfers the player to another address with Minecraft's transfer packet |
+| Open menu | Opens a [menu](#menus) |
+| Chat message | Sends a message; `<newline>` starts a new line |
+| Title | Shows a title and subtitle with custom timing |
+| Action bar | Shows text above the hotbar |
+| Sound | Plays a sound with custom volume and pitch |
+| Command | Makes the player run a command |
+| Teleport | Teleports the player to a saved position |
+| Animation | Makes the NPC swing an arm or crouch |
+| Speech bubble | Shows a short text above the NPC's head for that player |
+
+Every action can also have:
+
+- A **permission** the player needs, and a **deny message** for players without it
+- A **cooldown** against click spam, 1 second by default
+
+Texts in actions support `<playername>` and `<playeruuid>`. If you install [PlaceholderAPI](https://modrinth.com/plugin/placeholderapi), `%placeholders%` also work.
+
+## Menus
+
+Menus are inventories that open when a player clicks an NPC or a menu item, or when you run a command. A menu can show fixed items and **live slots** that fill themselves with running servers, groups, or persistent servers and update while the menu is open.
+
+### Create a menu
+
+<Steps>
+  <Step title="Start from a template">
+    Run `/scnpcs inventory create` in-game and pick a template:
+
+    | Template | Content |
+    | -------- | ------- |
+    | Blank | Three empty rows |
+    | Server Selector | The running servers of a group, with page arrows |
+    | Group Overview | One slot per group, with its player count |
+    | Persistent Servers | One slot per persistent server |
+    | Navigation | Three buttons that each send players to a server |
+
+    From the console, use `/scnpcs inventory create <id> <rows>` instead.
+  </Step>
+
+  <Step title="Design it">
+    The menu opens in the canvas editor. Change items, add live groups, and switch to the live preview to see it with real servers.
+  </Step>
+
+  <Step title="Open it from an NPC">
+    In the NPC editor, open **Actions**, click a cell, and choose **Open Menu**. You can also open a menu with `/scnpcs inventory open <id>`, for example from a compass item of another plugin.
+  </Step>
+</Steps>
+
+### The canvas editor
+
+Open a menu with `/scnpcs inventory edit <id>`. The menu itself is the canvas, and your own inventory turns into a toolbox while you edit. Your real items come back when you close the editor.
+
+| Input | Effect |
+| ----- | ------ |
+| Left-click an item | Lift it; click again to drop it somewhere else |
+| Right-click while carrying | Place a copy |
+| Drag while carrying | Paint every slot you drag over |
+| Right-click an item | Open the Item Studio |
+| Shift+left-click / Shift+right-click | Select an item / select all items that look alike |
+| Q | Delete the item or the selection |
+| F | Copy the hovered item, or put a lifted item back |
+| 1–6 | Stamp, erase, copy, add a live slot, place a decor pane, open the Item Studio |
+| 7–9 | Place an item you bound to that key |
+| Click outside the window | Throw away what you carry |
+
+The toolbox below the menu has undo and redo, the title and row count, fill and border tools, recently used materials, a material search, and your live groups. Use **From Your Inventory** to copy the look of any item you own, including items styled by other plugins. Every change is saved at once.
+
+#### Item Studio
+
+Right-click an item to open the Item Studio. It has three tabs:
+
+- **Look:** material, name, lore, amount, glint, custom model data, tooltip, and player head
+- **Click:** actions for each click type, the same as for [NPC actions](#click-actions), plus **Close menu** and **Back to the previous menu**
+- **Live:** the live group this slot belongs to
+
+With several items selected, changes in the Item Studio apply to all of them.
+
+#### Player heads
+
+A player head can show:
+
+- **The viewer:** every player sees their own head
+- **A player:** type a username or UUID; the skin is looked up and cached
+- **A texture:** paste a texture value, for example from a head database
+
+In the Item Studio, left-click **Head Texture** and type a username, UUID, or texture. The editor detects which one it is. Right-click switches the head to the viewer's own head, or back.
+
+### Live groups
+
+A live group is a set of slots that fills itself from a source. When there are more entries than slots, page arrows turn the pages.
+
+| Source | Entries |
+| ------ | ------- |
+| `group-servers` | Every running server of one group, such as `Lobby-1` and `Lobby-2` |
+| `persistent-servers` | Every persistent server |
+| `groups` | One entry per server group |
+| `static` | Entries you write by hand in the menu file |
+
+To create one, click **New Live Group** in the toolbox, pick a source, and drag the swatch across the slots it should fill. Right-click the swatch for its settings:
+
+- **Group:** which group `group-servers` lists. By default it uses the target of the NPC that opened the menu.
+- **States and sorting:** which server states to show, sorted by number or player count
+- **Empty slots:** what a slot shows while no entry fills it
+- **State looks:** a different material, name, lore, or glint while a server is full, starting, in game, or offline
+
+Clicking an entry joins it, unless you set your own actions on the slot. For a `groups` entry, the player joins that group's server using the opening NPC's [join strategy](#targets-and-join-strategy).
+
+#### Entry placeholders
+
+Slots of a live group can use these placeholders for the entry they show:
+
+| Placeholder | Description |
+| ----------- | ----------- |
+| `<entry_name>` | Server or group name |
+| `<entry_group_name>` | The server's group |
+| `<entry_numerical_id>` | The server's number, e.g. `2` |
+| `<entry_online_players>` | Players online |
+| `<entry_max_players>` | Player slots |
+| `<entry_state>` | Server state, e.g. `AVAILABLE` |
+| `<entry_motd>` | Message of the day |
+| `<entry_server>` | What joining connects to |
+| `<entry_property:key>` | Custom property named `key` |
+
+### Menu placeholders
+
+Titles, item names, and lore in any menu can use:
+
+| Placeholder | Description |
+| ----------- | ----------- |
+| `<playername>`, `<playeruuid>` | The player viewing the menu |
+| `<page>`, `<max_page>` | Current page and page count of the first live group |
+| `<target_name>`, `<target_online_players>`, ... | The target of the NPC that opened the menu |
+
+With [PlaceholderAPI](https://modrinth.com/plugin/placeholderapi) installed, `%placeholders%` also work. The title updates when the page changes.
+
+### Permissions and sounds
+
+| Setting | Where | Effect |
+| ------- | ----- | ------ |
+| `open-permission` | Menu | Only players with this permission can open the menu |
+| `open-sound` | Menu | A sound that plays when the menu opens |
+| `view-permission` | Item | Only players with this permission see the item |
+| `permission` | Action | Only players with this permission trigger the action |
+
+### Menu file
+
+Every menu is saved as `plugins/simplecloud-npc/inventories/<id>.yml`. The plugin writes `example.yml` on its first start; it documents every option with comments. A shortened example:
+
+```yaml
+id: servers
+title: "<#0ea5e9><bold>Servers <gray>(<page>/<max_page>)"
+rows: 4
+open-sound: UI_BUTTON_CLICK
+items:
+  - slot: 4
+    material: PLAYER_HEAD
+    head:
+      viewer: true
+    name: "<#f8fafc>Hey <playername>"
+  - slot: 10
+    live-group: servers
+    live:
+      type: group-servers
+      group: "<target>"
+      states: [AVAILABLE, INGAME]
+    material: GRASS_BLOCK
+    name: "<#a3e635><entry_name>"
+    lore:
+      - "<#94a3b8><entry_online_players>/<entry_max_players> players"
+  - { slot: 11, live-group: servers, material: GRASS_BLOCK }
+  - { slot: 12, live-group: servers, material: GRASS_BLOCK }
+  - slot: 31
+    material: BARRIER
+    name: "<#dc2626>Close"
+    actions:
+      - close-menu: true
+```
+
+## NPC looks
+
+These options are available for NPCs the plugin draws itself. Linked NPCs keep the look their own plugin gives them.
+
+- **Skin:** pick an online player, or type a username, a UUID, or a texture value with its signature.
+- **Equipment:** the equipment screen shows the NPC's slots above your own inventory. Pick up any of your items and drop it on a slot, Shift-click an item to put it where it fits, or copy the armor you are wearing. Dyed leather, armor trims, and custom model data are kept. Your own items never move.
+- **Pose and size:** standing, sneaking, swimming, or sleeping, and a size from 0.25 to 4. The hitbox and hologram adjust to both.
+- **Name and glow:** a display name above the NPC and a glow outline in any team color.
+
+## Link an existing NPC
+
+To use an NPC from another plugin, link it with its provider reference:
+
+```text
+/scnpcs link lobby citizens 12 Lobby
+```
+
+This creates the SimpleCloud ID `lobby`, links Citizens NPC `12`, and sets `Lobby` as the target. References differ by plugin, so use the command suggestions to pick the provider and NPC.
+
+The linked NPC stays owned by its plugin, and SimpleCloud adds click handling. The SimpleCloud hologram starts turned off, so it doesn't overlap a name or hologram the NPC already has. Turn it on under **Hologram** in the editor, and turn off the NPC's own name or hologram in its plugin. `/scnpcs unlink lobby` removes only the SimpleCloud part.
+
+## Commands
+
+The root command is available as `/simplecloudnpcs`, `/scnpcs`, and `/scnpc`.
+
+| Command | Description |
+| ------- | ----------- |
+| `/scnpcs create <id> <target>` | Create an NPC at your position and open the editor |
+| `/scnpcs edit [id]` | Open the editor for an NPC by ID, or for the NPC you are looking at |
+| `/scnpcs link <id> <provider> <reference> <target>` | Link an NPC from another plugin |
+| `/scnpcs unlink <id>` | Remove the SimpleCloud configuration but keep the provider NPC |
+| `/scnpcs duplicate <id> <new-id>` | Copy an NPC to your position |
+| `/scnpcs tp <id>` | Teleport to an NPC |
+| `/scnpcs list` | List all NPCs |
+| `/scnpcs info [id]` | Show an NPC's provider, targets, hologram, and actions |
+| `/scnpcs delete [id]` | Delete an NPC by ID, or the NPC you are looking at |
+| `/scnpcs inventory create` | Create a menu from a template (in-game) |
+| `/scnpcs inventory create <id> <rows>` | Create an empty menu |
+| `/scnpcs inventory edit <id>` | Open the canvas editor |
+| `/scnpcs inventory open <id> [player]` | Open a menu for yourself or another player |
+| `/scnpcs inventory info <id>` | Show a menu's rows, item count, and live groups |
+| `/scnpcs inventory list` | List all menus |
+| `/scnpcs inventory delete <id>` | Delete a menu |
+| `/scnpcs placeholders [topic]` | List placeholders |
+| `/scnpcs reload` | Reload NPC files and `messages.yml` |
+| `/scnpcs help [topic]` | Show help for `create`, `link`, `edit`, `target`, `hologram`, `action`, `pushback`, `admin`, or `inventory` |
+
+Everything the editor does is also available under `/scnpcs edit <id> ...` for scripts and the console. Run `/scnpcs help edit` for the full list.
+
+<Note>
+  For a linked NPC, `/scnpcs delete` works like `/scnpcs unlink`: the NPC stays in its plugin.
+</Note>
 
 ## Permissions
 
-| Permission | Description |
-| ---------- | ----------- |
-| `simplecloud.npcs.command` | Use all NPC management commands; granted to operators by default |
+| Permission | Description | Default |
+| ---------- | ----------- | ------- |
+| `simplecloud.npcs.command` | Use all NPC commands and the editor | Operators |
+| `simplecloud.npcs.inventory.open` | Open menus with `/scnpcs inventory open` | Everyone |
+| `simplecloud.npcs.inventory.open.others` | Open menus for other players | Operators |
+
+## Configuration files
+
+The plugin stores everything in `plugins/simplecloud-npc/`:
+
+| Path | Content |
+| ---- | ------- |
+| `npcs/<id>.yml` | One file per NPC |
+| `inventories/<id>.yml` | One file per menu; `example.yml` documents every option |
+| `messages.yml` | Command and player messages in MiniMessage |
+
+The plugin watches these folders, so changes you save by hand take effect while the server runs. If the plugin does not understand a value, it logs a console warning and uses the default for that value. The rest of the file still loads.
+
+### Upgrade from an older version
+
+Replace the old JAR with the new one. The plugin migrates NPC files on the first start and keeps a backup of every old file next to it. The old `default` join state is now called `public`.
+
+NPCs that the old version created in Citizens, FancyNpcs, or ZNPCsPlus become own NPCs at the same position, with the same skin and name. The old NPC is removed from that plugin. Linked NPCs stay with their plugin.
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="The NPCs plugin disables itself during startup">
-    Install and enable Citizens, FancyNpcs, MythicMobs, or ZNPCsPlus on the same Paper server. Then restart the server and check the console for the list of available providers.
+  <Accordion title="The NPC does not send me anywhere">
+    Run `/scnpcs info <id>` and check the targets. For a group, at least one server must be `AVAILABLE`. A persistent server must be running and registered on the proxy. If the hologram shows **Offline**, no target server can be joined.
   </Accordion>
 
-  <Accordion title="Create asks for a provider">
-    More than one installed provider supports NPC creation. Add `citizens`, `fancynpcs`, or `znpcsplus` to the end of the create command.
+  <Accordion title="Nothing happens when I click while the target is offline">
+    A join state without its own action uses the `public` one, and joining does nothing while no server is online. In the editor, open **Actions**, add the `offline` join state, and give it a message.
   </Accordion>
 
   <Accordion title="The target is missing or ambiguous">
-    Confirm that the group or persistent server exists. If both resource types use the same name, rename one of them before creating or linking the NPC.
+    Confirm that the group or persistent server exists. If a group and a persistent server use the same name, rename one of them.
   </Accordion>
 
-  <Accordion title="The NPC exists but does not join a server">
-    Run `/scnpcs info <id>` and resolve any incomplete status. For a group target, confirm that at least one server is in the `AVAILABLE` state. For a persistent server, confirm that it is active and registered on the proxy.
+  <Accordion title="Equipment, pose, or size options are unavailable">
+    These options only exist for NPCs the plugin draws itself. A linked NPC keeps the look its own plugin gives it, so change it there.
+  </Accordion>
+
+  <Accordion title="A linked NPC is missing after a restart">
+    Install and enable the provider plugin. The NPCs plugin waits for it during startup and logs which providers it found.
+  </Accordion>
+
+  <Accordion title="A live group stays empty">
+    Check the group in the live group's settings and the server states it shows. A `group-servers` source without a group uses the opening NPC's target, so it shows nothing when you open the menu with a command. Set an explicit group in that case.
+  </Accordion>
+
+  <Accordion title="Page arrows do not appear">
+    Arrows only show when there are more entries than slots in the live group. The swatch in the toolbox warns you when a live group has no arrows at all.
+  </Accordion>
+
+  <Accordion title="A player head shows the default skin">
+    A head with a username or UUID looks the skin up on first use. Open menus refresh on their own once the lookup is done. If it stays default, check that the name or UUID exists.
   </Accordion>
 </AccordionGroup>
 
