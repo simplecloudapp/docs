@@ -14,7 +14,7 @@ import { DependencySnippet } from "/snippets/DependencySnippet.jsx";
 | Minestom              | Full, as a library     |
 | Fabric                | Planned                |
 
-Prefixes runs inside and outside a SimpleCloud network. Without SimpleCloud, chat, tab list, and name tag formatting work as usual. Only [cross-server sync](#cross-server-sync) requires a SimpleCloud network.
+Prefixes works with or without SimpleCloud. Only [cross-server sync](#cross-server-sync) needs a SimpleCloud network.
 
 ## Install the plugin
 
@@ -131,7 +131,7 @@ On Minestom, Prefixes is a library that you bundle with your server and start fr
 
 ## Configuration
 
-Every player belongs to a group whose settings define these displays. Prefixes reads groups from its own configuration, from LuckPerms, or from a [custom group provider](#custom-group-providers).
+Every player belongs to a group whose settings define these displays. Prefixes reads groups from its own configuration, from LuckPerms, or from a [custom group provider](#create-a-group-provider).
 
 ### config.yml
 
@@ -257,7 +257,7 @@ groups:
 | ----------------- | ----------- |
 | `config`          | Uses the groups defined under `groups`. |
 | `luckperms`       | Uses LuckPerms groups. Requires LuckPerms on the server. |
-| Custom name       | Uses a group provider that another plugin registers through the [API](#custom-group-providers). |
+| Custom name       | Uses a group provider that another plugin registers through the [API](#create-a-group-provider). |
 
 **LuckPerms mapping**
 
@@ -399,146 +399,229 @@ PrefixesApi api = registration.getProvider();
 
 <CodeGroup>
 ```kotlin Kotlin
-val api = prefixes.getApi()
+val api = PrefixesMinestom.getApi()
 ```
 
 ```java Java
-PrefixesApi api = prefixes.getApi();
+PrefixesApi api = PrefixesMinestom.getApi();
 ```
 </CodeGroup>
-
-`prefixes` is the `PrefixesMinestom` instance returned by `enable()`.
 
 </Tab>
 </Tabs>
 
-### Player management
+On every platform, you can also use `PrefixesApiProvider.get()`, which throws an `IllegalStateException` if Prefixes is not running.
 
-Read a player's group and prefix, or change how they appear in chat, the tab list, and the name tag.
+### Look up a player
+
+The examples use the `api` instance from above and a Paper or Minestom `Player`.
+
+Get the group a player belongs to. The result is `null` if no group matches:
 
 <CodeGroup>
 ```kotlin Kotlin
-val id = player.uniqueId
-
-// Get the player's group, or null if they have none
-val group = api.getPrimaryGroup(id).await()
+val group = api.getPrimaryGroup(player.uniqueId).await()
 player.sendMessage(Component.text("Your group: ${group?.name ?: "none"}"))
-
-// Get what is currently shown for the player:
-// prefix, suffix, color, displayName, chatFormat and priority
-val data = api.getPrefixData(id).await()
-player.sendMessage(data.prefix.append(data.displayName).append(data.suffix))
-
-// Change single parts
-api.setPrefix(id, Component.text("[Builder] ", NamedTextColor.GOLD))
-api.setSuffix(id, Component.text(" ✦", NamedTextColor.YELLOW))
-api.setColor(id, NamedTextColor.GOLD)
-api.setPriority(id, 75) // Higher is listed further up in the tab list
-
-// Show the player with another group, returns false if the group does not exist
-val found = api.setGroup(id, "admin").await()
-if (!found) println("The group admin does not exist")
-
-// Undo all changes
-api.reset(id)
-
-// Mainly for custom group providers
-// todo
-api.refreshPlayer(id)
-api.refreshAll()
 ```
 
 ```java Java
-UUID id = player.getUniqueId();
-
-// Get the player's group, or null if they have none
-api.getPrimaryGroup(id).thenAccept(group -> {
+api.getPrimaryGroup(player.getUniqueId()).thenAccept(group -> {
     String name = group != null ? group.getName() : "none";
     player.sendMessage(Component.text("Your group: " + name));
 });
-
-// Get what is currently shown for the player:
-// prefix, suffix, color, displayName, chatFormat and priority
-api.getPrefixData(id).thenAccept(data ->
-    player.sendMessage(data.getPrefix().append(data.getDisplayName()).append(data.getSuffix())));
-
-// Change single parts
-api.setPrefix(id, Component.text("[Builder] ", NamedTextColor.GOLD));
-api.setSuffix(id, Component.text(" ✦", NamedTextColor.YELLOW));
-api.setColor(id, NamedTextColor.GOLD);
-api.setPriority(id, 75); // Higher is listed further up in the tab list
-
-// Show the player with another group, completes with false if the group does not exist
-api.setGroup(id, "admin").thenAccept(found -> {
-    if (!found) System.out.println("The group admin does not exist");
-});
-
-// Undo all changes
-api.reset(id);
-
-// Mainly for custom providers
-// todo
-api.refreshPlayer(id);
-api.refreshAll();
 ```
 </CodeGroup>
 
-<Info>
-  Changes only work for online players and are removed when they leave the server.
-</Info>
-
-### Per-viewer display
-
-Every `set` method also takes a `viewers` argument. Only those players see the change, everyone else sees the player as usual. Pass a single player, or several with `Audience.audience(players)`.
+Get what is currently shown for a player. The result includes every change made through the API:
 
 <CodeGroup>
 ```kotlin Kotlin
-// Only the player sees their friend with a [Friend] prefix
-api.setPrefix(friend.uniqueId, Component.text("[Friend] ", NamedTextColor.GREEN), player)
-
-// All party members see this player with a [Party] prefix
-api.setPrefix(player.uniqueId, Component.text("[Party] ", NamedTextColor.LIGHT_PURPLE), Audience.audience(partyMembers))
-
-// Remove the [Friend] prefix again, only for the player
-api.reset(friend, player)
+val data = api.getPrefixData(player.uniqueId).await()
+player.sendMessage(data.prefix.append(data.displayName).append(data.suffix))
 ```
 
 ```java Java
-// Only the player sees their friend with a [Friend] prefix
-api.setPrefix(friend.getUniqueId(), Component.text("[Friend] ", NamedTextColor.GREEN), player);
-
-// All party members see this player with a [Party] prefix
-api.setPrefix(player.getUniqueId(), Component.text("[Party] ", NamedTextColor.LIGHT_PURPLE), Audience.audience(partyMembers));
-
-// Remove the [Friend] prefix again, only for the player
-api.reset(friend, player);
+api.getPrefixData(player.getUniqueId()).thenAccept(data ->
+    player.sendMessage(data.getPrefix().append(data.getDisplayName()).append(data.getSuffix())));
 ```
 </CodeGroup>
 
-A change for a specific viewer wins over a change for everyone, which wins over the player's group.
+| Method | Value |
+| --- | --- |
+| `getPrefix()` | Prefix |
+| `getSuffix()` | Suffix |
+| `getColor()` | Name color |
+| `getDisplayName()` | Rendered name tag |
+| `getChatFormat()` | Raw MiniMessage chat format |
+| `getPriority()` | Tab list priority, higher is listed further up |
 
-### Group management
+### Change how a player is shown
+
+Change a player's prefix, suffix, color, or tab list position for everyone. The changes apply to chat, the tab list, and the name tag.
 
 <CodeGroup>
 ```kotlin Kotlin
-// List all groups, highest priority first
+api.setPrefix(player.uniqueId, Component.text("[Builder] ", NamedTextColor.GOLD))
+api.setColor(player.uniqueId, NamedTextColor.GOLD)
+```
+
+```java Java
+api.setPrefix(player.getUniqueId(), Component.text("[Builder] ", NamedTextColor.GOLD));
+api.setColor(player.getUniqueId(), NamedTextColor.GOLD);
+```
+</CodeGroup>
+
+| Description | Method |
+| --- | --- |
+| Set the prefix | `setPrefix(id, prefix)` |
+| Set the suffix | `setSuffix(id, suffix)` |
+| Set the name color | `setColor(id, color)` |
+| Set the tab list position | `setPriority(id, priority)` |
+| Show the player with another group | `setGroup(id, group)` |
+| Undo all changes | `reset(id)` |
+
+`setGroup` takes a `PrefixesGroup` or a group name. With a name, it completes with `false` if no group with that name exists:
+
+<CodeGroup>
+```kotlin Kotlin
+val found = api.setGroup(player.uniqueId, "admin").await()
+if (!found) println("The group admin does not exist")
+```
+
+```java Java
+api.setGroup(player.getUniqueId(), "admin").thenAccept(found -> {
+    if (!found) System.out.println("The group admin does not exist");
+});
+```
+</CodeGroup>
+
+Changes only work for online players and are removed when the player leaves the server. Set them again on join if they should stay.
+
+### Show a player differently to certain players
+
+Per-viewer changes let different players see the same player differently. Use them for anything that depends on the relationship between two players:
+
+- **Friends**: a player sees their friends with a `[Friend]` prefix
+- **Parties**: party members see each other with a party prefix at the top of the tab list
+- **Teams**: in a minigame, each team sees its own members in green and enemies in red
+
+Every `set` method and `setGroup` takes an optional `viewers` argument. Only those players see the change; everyone else keeps seeing the normal prefix. `viewers` is an Adventure `Audience`, so you can pass one player or several with `Audience.audience(players)`.
+
+Show a friend with a `[Friend]` prefix, only to the player:
+
+<CodeGroup>
+```kotlin Kotlin
+api.setPrefix(friend.uniqueId, Component.text("[Friend] ", NamedTextColor.GREEN), player)
+```
+
+```java Java
+api.setPrefix(friend.getUniqueId(), Component.text("[Friend] ", NamedTextColor.GREEN), player);
+```
+</CodeGroup>
+
+Show party members with a `[Party]` prefix at the top of the tab list, only to the party:
+
+<CodeGroup>
+```kotlin Kotlin
+val party = Audience.audience(partyMembers)
+
+partyMembers.forEach { member ->
+    api.setPrefix(member.uniqueId, Component.text("[Party] ", NamedTextColor.LIGHT_PURPLE), party)
+    api.setPriority(member.uniqueId, 1000, party)
+}
+```
+
+```java Java
+Audience party = Audience.audience(partyMembers);
+
+for (Player member : partyMembers) {
+    api.setPrefix(member.getUniqueId(), Component.text("[Party] ", NamedTextColor.LIGHT_PURPLE), party);
+    api.setPriority(member.getUniqueId(), 1000, party);
+}
+```
+</CodeGroup>
+
+`setGroup` also accepts several targets at once. In a minigame, each team sees its own members with one group and the other team with another:
+
+<CodeGroup>
+```kotlin Kotlin
+val red = Audience.audience(redTeam)
+val blue = Audience.audience(blueTeam)
+
+api.setGroup(red, "teammate", red)
+api.setGroup(red, "enemy", blue)
+api.setGroup(blue, "teammate", blue)
+api.setGroup(blue, "enemy", red)
+```
+
+```java Java
+Audience red = Audience.audience(redTeam);
+Audience blue = Audience.audience(blueTeam);
+
+api.setGroup(red, "teammate", red);
+api.setGroup(red, "enemy", blue);
+api.setGroup(blue, "teammate", blue);
+api.setGroup(blue, "enemy", red);
+```
+</CodeGroup>
+
+The groups `teammate` and `enemy` must exist in your group source.
+
+Use `reset(targets, viewers)` to remove only the changes that certain players see, for example when a friendship ends or a player leaves a party:
+
+<CodeGroup>
+```kotlin Kotlin
+// The player no longer sees the [Friend] prefix
+api.reset(friend, player)
+
+// The party no longer sees the player as a member, and the other way around
+api.reset(player, party)
+api.reset(party, player)
+```
+
+```java Java
+// The player no longer sees the [Friend] prefix
+api.reset(friend, player);
+
+// The party no longer sees the player as a member, and the other way around
+api.reset(player, party);
+api.reset(party, player);
+```
+</CodeGroup>
+
+To check what one player sees, pass them as the viewer: `api.getPrefixData(friend.uniqueId, player)`.
+
+If several changes apply, the change for a specific viewer wins over the change for everyone, which wins over the player's group. Per-viewer changes are removed when either player leaves the server.
+
+### List and add groups
+
+List all groups of the current group source, highest priority first:
+
+<CodeGroup>
+```kotlin Kotlin
 api.getGroups().await().forEach { group ->
     println("${group.priority} - ${group.name}")
 }
-
-// Add a group: saved to config.yml, or created in LuckPerms with source luckperms.
-// Returns false if the group already exists.
-val created = api.addGroup(VipGroup()).await()
 ```
 
 ```java Java
-// List all groups, highest priority first
 api.getGroups().thenAccept(groups ->
     groups.forEach(group -> System.out.println(group.getPriority() + " - " + group.getName())));
+```
+</CodeGroup>
 
-// Add a group: saved to config.yml, or created in LuckPerms with source luckperms.
-// Completes with false if the group already exists.
-api.addGroup(new VipGroup()).thenAccept(created -> { /* ... */ });
+Add a group with `addGroup`. With `config`, the group is saved to `config.yml`. With `luckperms`, it is created in LuckPerms. The future completes with `false` if a group with the same name already exists.
+
+<CodeGroup>
+```kotlin Kotlin
+val created = api.addGroup(VipGroup()).await()
+if (!created) println("A group named vip already exists")
+```
+
+```java Java
+api.addGroup(new VipGroup()).thenAccept(created -> {
+    if (!created) System.out.println("A group named vip already exists");
+});
 ```
 </CodeGroup>
 
@@ -562,7 +645,7 @@ class VipGroup : PrefixesGroup {
     override val permission = "simplecloud.prefix.group.vip"
     override val prefix = MiniMessage.miniMessage().deserialize("<#A3E635>VIP <#475569>| ")
     override val suffix = Component.empty()
-    override val color = TextColor.fromHexString("#A3E635")!!
+    override val color = TextColor.color(0xA3E635)
     override val displayName = "<color><playername>"
     override val chatFormat = "<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>"
 
@@ -610,7 +693,7 @@ public final class VipGroup implements PrefixesGroup {
 
     @Override
     public TextColor getColor() {
-        return TextColor.fromHexString("#A3E635");
+        return TextColor.color(0xA3E635);
     }
 
     @Override
@@ -635,9 +718,130 @@ public final class VipGroup implements PrefixesGroup {
 </Accordion>
 </AccordionGroup>
 
-### Custom group providers
+### Create a group provider
 
-todo
+A group provider decides which groups exist and which group a player belongs to. Prefixes includes the `config` and `luckperms` providers. Create your own provider to take groups from your plugin, for example from your own role system.
+
+Implement `GroupProvider`. This example keeps its groups and the team of each player in memory:
+
+<CodeGroup>
+```kotlin Kotlin
+import app.simplecloud.prefixes.api.group.GroupProvider
+import app.simplecloud.prefixes.api.group.PrefixesGroup
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+
+class TeamGroupProvider : GroupProvider {
+    private val groups = ConcurrentHashMap<String, PrefixesGroup>()
+    private val teams = ConcurrentHashMap<UUID, String>()
+
+    fun setTeam(id: UUID, team: String) {
+        teams[id] = team
+    }
+
+    // Name used in general.source
+    override fun getName() = "teams"
+
+    override fun getGroups(): CompletableFuture<Collection<PrefixesGroup>> =
+        CompletableFuture.completedFuture(groups.values.sortedByDescending { it.priority })
+
+    override fun getGroup(id: UUID): CompletableFuture<PrefixesGroup?> {
+        val team = teams[id] ?: return CompletableFuture.completedFuture(null)
+        return CompletableFuture.completedFuture(groups[team])
+    }
+
+    override fun addGroup(group: PrefixesGroup): CompletableFuture<Boolean> =
+        CompletableFuture.completedFuture(groups.putIfAbsent(group.name, group) == null)
+}
+```
+
+```java Java
+import app.simplecloud.prefixes.api.group.GroupProvider;
+import app.simplecloud.prefixes.api.group.PrefixesGroup;
+
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+
+public final class TeamGroupProvider implements GroupProvider {
+    private final Map<String, PrefixesGroup> groups = new ConcurrentHashMap<>();
+    private final Map<UUID, String> teams = new ConcurrentHashMap<>();
+
+    public void setTeam(UUID id, String team) {
+        teams.put(id, team);
+    }
+
+    // Name used in general.source
+    @Override
+    public String getName() {
+        return "teams";
+    }
+
+    @Override
+    public CompletableFuture<Collection<PrefixesGroup>> getGroups() {
+        return CompletableFuture.completedFuture(groups.values().stream()
+            .sorted(Comparator.comparingInt(PrefixesGroup::getPriority).reversed())
+            .toList());
+    }
+
+    @Override
+    public CompletableFuture<PrefixesGroup> getGroup(UUID id) {
+        String team = teams.get(id);
+        return CompletableFuture.completedFuture(team == null ? null : groups.get(team));
+    }
+
+    @Override
+    public CompletableFuture<Boolean> addGroup(PrefixesGroup group) {
+        return CompletableFuture.completedFuture(groups.putIfAbsent(group.getName(), group) == null);
+    }
+}
+```
+</CodeGroup>
+
+Register the provider and set `general.source` in `config.yml` to its name:
+
+```yaml config.yml
+general:
+  source: teams
+```
+
+<CodeGroup>
+```kotlin Kotlin
+val teams = TeamGroupProvider()
+api.registerGroupProvider(teams)
+
+// Load the groups of players who are already online from the new provider
+api.refreshAll()
+```
+
+```java Java
+TeamGroupProvider teams = new TeamGroupProvider();
+api.registerGroupProvider(teams);
+
+// Load the groups of players who are already online from the new provider
+api.refreshAll();
+```
+</CodeGroup>
+
+Prefixes does not know when your plugin changes a player's group. Call `refreshPlayer` afterwards so the new group is shown. Changes made through the API stay in place.
+
+<CodeGroup>
+```kotlin Kotlin
+teams.setTeam(player.uniqueId, "red")
+api.refreshPlayer(player.uniqueId)
+```
+
+```java Java
+teams.setTeam(player.getUniqueId(), "red");
+api.refreshPlayer(player.getUniqueId());
+```
+</CodeGroup>
+
+See the [built-in providers on GitHub](https://github.com/simplecloudapp/prefixes-plugin/tree/main/prefixes-shared/src/main/kotlin/app/simplecloud/prefixes/shared/group) for complete implementations, including the LuckPerms provider.
 
 ## Best practices
 
