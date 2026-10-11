@@ -1,6 +1,6 @@
 ---
 title: 'Prefixes'
-description: 'Konfiguriere Ranggruppen, Chat, Tablist, Namensanzeigen und serverübergreifende Synchronisierung'
+description: 'Ränge, Chat, Tablist, Nametags und Sync über das ganze Netzwerk konfigurieren'
 tag: 'Server'
 ---
 
@@ -8,19 +8,24 @@ import { DependencySnippet } from "/snippets/DependencySnippet.jsx";
 
 ## Unterstützte Software
 
-| Software      | Unterstützung  |
-| ------------- | -------------- |
-| Paper und Forks | Vollständig |
-| Minestom | Geplant |
-| Fabric | Geplant |
+| Software              | Unterstützung              |
+| --------------------- | -------------------------- |
+| Paper und Forks       | Vollständig, inkl. Folia   |
+| Minestom              | Vollständig, als Library   |
+| Fabric                | Geplant                    |
+
+Prefixes funktioniert mit und ohne SimpleCloud. Nur der [Netzwerk-Sync](#netzwerk-sync) braucht ein SimpleCloud-Netzwerk.
 
 ## Plugin installieren
 
-<Steps>
-  <Step title="Server-Plugins installieren">
-    Lade Prefixes von [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases) herunter und lege die JAR-Datei im Ordner `plugins/` des Paper-Server-Templates ab. Die Standard-Templates enthalten `simplecloud-api` bereits. Füge es bei einem eigenen Template über die Einstellung **Plugins** des Ziels oder über die CLI hinzu.
+<Tabs>
+<Tab title="Paper">
 
-    Installiere zusätzlich LuckPerms, wenn du `general.source: LUCKPERMS` verwenden möchtest.
+<Steps>
+  <Step title="Plugin installieren">
+    Lade Prefixes von [GitHub](https://github.com/simplecloudapp/prefixes-plugin/releases) oder [Modrinth](https://modrinth.com/organization/simplecloud) herunter und leg die JAR in den `plugins/` Ordner deines Server-Templates.
+
+    Wenn du `general.source: luckperms` nutzen willst, installiere zusätzlich LuckPerms.
   </Step>
 
   <Step title="Konfiguration erzeugen">
@@ -28,111 +33,201 @@ import { DependencySnippet } from "/snippets/DependencySnippet.jsx";
   </Step>
 
   <Step title="Konfiguration ins Template übernehmen">
-    Kopiere bei einem Gruppenserver `plugins/simplecloud-prefixes/` vor dem Stoppen an denselben Pfad im Template. Bearbeite anschließend die Kopie im Template.
+    Bei einem Gruppenserver kopierst du `plugins/simplecloud-prefixes/` vom laufenden Server an denselben Pfad im Template, bevor der Server stoppt. Bearbeite danach die Kopie im Template.
 
-    Unter [Templates](/de/manual/setup/templates) findest du den vollständigen Ablauf.
+    Wie das genau funktioniert, steht unter [Templates](/de/manual/setup/templates).
   </Step>
 
   <Step title="Konfiguration anwenden und prüfen">
-    Führe nach Änderungen an Dateien eines laufenden Servers `/scprefix reload` aus. Starte stattdessen einen neuen Server, wenn du das Template bearbeitet hast.
+    Hast du die Dateien auf einem laufenden Server geändert, führ `/scprefix reload` aus. Hast du das Template bearbeitet, starte einfach einen neuen Server.
 
     <Check>
-      Betritt den Server und prüfe für jede aktivierte Funktion, ob dein Gruppenpräfix im Chat, in der Tablist und im Anzeigenamen erscheint.
+      Join auf den Server und prüf, ob dein Gruppen-Prefix im Chat, in der Tablist und über deinem Kopf angezeigt wird.
     </Check>
   </Step>
 </Steps>
 
+</Tab>
+<Tab title="Minestom">
+
+Auf Minestom ist Prefixes eine Library, die du mit deinem Server auslieferst und im Code startest.
+
+<Steps>
+  <Step title="Dependency hinzufügen">
+    <DependencySnippet
+      language="de"
+      dependencies={[
+        {
+          groupId: "app.simplecloud.plugin",
+          artifactId: "prefixes-minestom",
+          type: "implementation",
+        },
+      ]}
+      repositories={[
+        { id: "simplecloud", url: "https://repo.simplecloud.app/snapshots" },
+      ]}
+    />
+  </Step>
+
+  <Step title="Prefixes starten">
+    Starte Prefixes nach `MinecraftServer.init()`.
+
+    <CodeGroup>
+    ```kotlin Kotlin
+    import app.simplecloud.prefixes.minestom.PrefixesMinestom
+    import net.minestom.server.MinecraftServer
+    import java.nio.file.Path
+
+    fun main() {
+        val server = MinecraftServer.init()
+
+        val prefixes = PrefixesMinestom.builder(Path.of("prefixes"))
+            .permission { player, _ -> player.permissionLevel >= 4 }
+            .enable()
+
+        MinecraftServer.getSchedulerManager().buildShutdownTask { prefixes.shutdown() }
+        server.start("0.0.0.0", 25565)
+    }
+    ```
+
+    ```java Java
+    import app.simplecloud.prefixes.minestom.PrefixesMinestom;
+    import net.minestom.server.MinecraftServer;
+
+    import java.nio.file.Path;
+
+    public final class Server {
+        public static void main(String[] args) {
+            MinecraftServer server = MinecraftServer.init();
+
+            PrefixesMinestom prefixes = PrefixesMinestom.builder(Path.of("prefixes"))
+                .permission((player, permission) -> player.getPermissionLevel() >= 4)
+                .enable();
+
+            MinecraftServer.getSchedulerManager().buildShutdownTask(prefixes::shutdown);
+            server.start("0.0.0.0", 25565);
+        }
+    }
+    ```
+    </CodeGroup>
+
+    Ersetz den Permission-Check durch dein eigenes Permission-System. Der Builder hat diese Optionen:
+
+    | Option                   | Standard                        | Beschreibung |
+    | ------------------------ | ------------------------------- | ------------ |
+    | `permission(check)`      | Keiner                          | Entscheidet, welche Gruppe aus der Config ein Spieler bekommt und wer `/scprefix` nutzen darf. |
+    | `registerCommands(bool)` | `true`                          | Registriert den Befehl `/scprefix`. |
+    | `luckPerms(instance)`    | `LuckPermsProvider.get()`       | Setzt die LuckPerms-Instanz, falls sie nicht über den LuckPerms-Provider verfügbar ist. |
+  </Step>
+
+  <Step title="Setup prüfen">
+    <Check>
+      Starte den Server und join. Dein Gruppen-Prefix wird im Chat, in der Tablist und über deinem Kopf angezeigt.
+    </Check>
+  </Step>
+</Steps>
+
+</Tab>
+</Tabs>
+
 ## Konfiguration
 
-Prefixes ordnet jeden Spieler einer Gruppe zu. Die Gruppen stammen entweder aus der Plugin-Konfiguration oder aus LuckPerms.
+Jeder Spieler gehört zu einer Gruppe, und die Gruppe bestimmt, wie er angezeigt wird. Prefixes holt sich die Gruppen aus der eigenen Config, aus LuckPerms oder von einem [eigenen Group Provider](#eigenen-group-provider-erstellen).
 
 ### config.yml
 
-Die Hauptkonfigurationsdatei steuert die Gruppenquelle, Gruppendefinitionen, einzelne Funktionen und die Synchronisierung zwischen Servern.
+In der `config.yml` legst du fest, woher die Gruppen kommen, welche Gruppen es gibt, welche Features aktiv sind und wie der Sync zwischen Servern läuft.
 
 ```yaml
-# Version des Konfigurationsformats. Ändere diesen Wert nicht.
+# The config format version. Do not change this value.
 version: 1
 
 # ─────────────────────────────────────────────────────────────────────────────
 # General
-# Legt fest, wie Spielergruppen ermittelt werden.
+# Controls how player groups are resolved.
 # ─────────────────────────────────────────────────────────────────────────────
 general:
-  # Quelle, aus der die Gruppen gelesen werden.
-  # Verfügbar: CONFIG, LUCKPERMS
-  source: CONFIG
+  # Where groups are loaded from.
+  # Available: config, luckperms, or the name of a custom provider.
+  source: config
 
-  # Gruppe für Spieler, die zu keiner anderen Gruppe passen.
-  # Muss bei source: CONFIG auf eine unten definierte Gruppe verweisen.
+  # Group used when a player matches no other group.
+  # Must reference a group defined below when source is config.
   default-group: default
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Features
-# Jede Funktion des Plugins kann unabhängig aktiviert werden.
+# Each part of the plugin can be enabled independently.
 # ─────────────────────────────────────────────────────────────────────────────
 features:
-  # Formatiert Chat-Nachrichten mit dem chat-format der Gruppe.
+  # Format chat messages using the group's chat-format.
   chat: true
 
-  # Wendet Prefix, Suffix, Farbe und Sortierung auf die Tablist an.
+  # Show the prefix, the colored player name and the suffix in the tab list,
+  # sorted by group priority.
   tablist: true
 
-  # Wendet den konfigurierten display-name der Gruppe an.
-  # Bei false wird der normale Minecraft-Name des Spielers verwendet.
+  # Show the group's display-name above the player's head.
+  # When disabled, the normal Minecraft name tag is shown instead.
   display-name: true
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Sync
-# Teilt Chat-Nachrichten und Tablist-Einträge im SimpleCloud-Netzwerk.
-# Das Deaktivieren von Sync schaltet die lokale Formatierung nicht aus.
+# Shares chat messages and tab list entries across the SimpleCloud network.
 # ─────────────────────────────────────────────────────────────────────────────
 sync:
-  # Hauptschalter für die gesamte Kommunikation zwischen Servern.
-  enabled: true
+  # Master switch for all cross-server communication.
+  enabled: false
 
-  # Legt fest, welche Funktionen synchronisiert werden.
-  # Die zugehörige Funktion unter features muss ebenfalls aktiviert sein.
+  # Select which features are synchronized.
+  # The corresponding feature above must also be enabled.
   channels:
     chat: true
     tablist: true
 
-  # Gruppen und persistente Server, von denen Aktualisierungen empfangen werden.
+  # Groups and persistent servers from which updates are received.
   #
-  # Besondere Werte:
-  #   CURRENT - Aktuelle Servergruppe oder dieser persistente Server.
-  #   ALL     - Jeder Server im Netzwerk. Muss allein verwendet werden.
+  # Special values:
+  #   CURRENT - Current server group, or this persistent server.
+  #   ALL     - Every server in the network. Must be used alone.
   #
-  # Du kannst auch SimpleCloud-Gruppennamen und persistente Server-IDs verwenden.
-  # Mehrere Quellen lassen sich kombinieren, außer bei ALL.
+  # Literal SimpleCloud group names and persistent server IDs can also be used.
+  # Multiple sources can be combined, except when using ALL.
   sources:
   - CURRENT
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Groups
-# Wird nur genutzt, wenn general.source auf CONFIG steht.
+# Only used when general.source is config.
 #
-# Unterstützte Platzhalter:
-#   <prefix>       Gruppen-Prefix
-#   <suffix>       Gruppen-Suffix
-#   <color>        Gruppenfarbe
-#   <playername>   Normaler Minecraft-Spielername
-#   <displayname>  Formatierter Anzeigename
-#   <message>      Chat-Nachricht
+# Placeholders in display-name:
+#   <prefix>       Group prefix
+#   <suffix>       Group suffix
+#   <color>        Group color
+#   <playername>   Normal Minecraft player name
+#
+# Placeholders in chat-format:
+#   <prefix>       Group prefix
+#   <suffix>       Group suffix
+#   <color>        Group color
+#   <playername>   Normal Minecraft player name (alias: <name>)
+#   <displayname>  Formatted display name
+#   <message>      Chat message
+#
 # ─────────────────────────────────────────────────────────────────────────────
 groups:
 - name: owner
-  # Höhere Prioritäten werden zuerst gewählt und in der Tablist weiter oben einsortiert.
+  # Higher priorities are selected first and sorted higher in the tab list.
   priority: 100
-  # Permission, die ein Spieler für diese Gruppe benötigt.
+  # Permission required to use this group.
   permission: 'simplecloud.prefix.group.owner'
   prefix: '<#DC2626><bold>Owner</bold> <#475569>| '
   suffix: ''
-  # Wird vom <color>-Platzhalter und für die Spielerfarbe verwendet.
+  # Used by the <color> placeholder and player name coloring.
   color: '<#DC2626>'
-  # Formatierter Spielername.
+  # Name shown above the player's head, e.g. '<prefix><color><playername>'.
   display-name: '<color><playername>'
-  # Format, das bei aktiviertem features.chat verwendet wird.
+  # Format used when features.chat is enabled.
   chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
 
 - name: admin
@@ -146,7 +241,7 @@ groups:
 
 - name: default
   priority: 0
-  # Eine leere Permission trifft auf jeden Spieler zu.
+  # An empty permission matches every player.
   permission: ''
   prefix: '<#94A3B8>Player <#475569>| '
   suffix: ''
@@ -155,85 +250,99 @@ groups:
   chat-format: '<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>'
 ```
 
-**LuckPerms-Zuordnung**
+#### Gruppenquellen
 
-Wenn `source` auf `LUCKPERMS` steht, kommt jeder Wert aus der LuckPerms-Gruppe:
+Mit `general.source` legst du fest, woher die Gruppen kommen.
 
-| LuckPerms-Wert      | Prefixes-Wert  | Standard, wenn nicht gesetzt                                        |
-| ------------------- | -------------- | ------------------------------------------------------------------- |
-| Gruppenname         | `name`         | Nicht verfügbar                                                     |
-| Gruppengewicht      | `priority`     | `0`                                                                 |
-| Gruppen-Prefix      | `prefix`       | leer                                                                |
-| Gruppen-Suffix      | `suffix`       | leer                                                                |
-| Meta `color`        | `color`        | `#FFFFFF`                                                           |
-| Meta `display-name` | `display-name` | `<color><playername>`                                               |
-| Meta `chat-format`  | `chat-format`  | `<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>` |
+| Source            | Beschreibung |
+| ----------------- | ------------ |
+| `config`          | Nutzt die Gruppen unter `groups`. |
+| `luckperms`       | Nutzt die Gruppen aus LuckPerms. LuckPerms muss auf dem Server installiert sein. |
+| Eigener Name      | Nutzt einen Group Provider, den ein anderes Plugin über die [API](#eigenen-group-provider-erstellen) registriert. |
+
+**LuckPerms-Mapping**
+
+Mit `source: luckperms` liest Prefixes alles aus der LuckPerms-Gruppe. Von der Primärgruppe und den geerbten Gruppen eines Spielers gewinnt die mit dem höchsten Weight.
+
+| LuckPerms              | Prefixes       | Standard, wenn nicht gesetzt                                  |
+| ---------------------- | -------------- | ------------------------------------------------------------- |
+| Gruppenname            | `name`         | —                                                             |
+| Weight                 | `priority`     | `0`                                                           |
+| Prefix                 | `prefix`       | Leer                                                          |
+| Suffix                 | `suffix`       | Leer                                                          |
+| Meta `color`           | `color`        | Weiß                                                          |
+| Meta `display-name`    | `display-name` | `<color><playername>`                                         |
+| Meta `chat-format`     | `chat-format`  | `<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>` |
 
 ```bash
 /lp group admin setweight 90
 /lp group admin meta addprefix 90 "<#F59E0B><bold>Admin</bold> <#475569>| "
 /lp group admin meta set color "<#F59E0B>"
-/lp group admin meta set display-name "<color><playername>"
+/lp group admin meta set display-name "<prefix><color><playername>"
 /lp group admin meta set chat-format "<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>"
 ```
 
+Ändern sich die LuckPerms-Gruppen eines Spielers oder die Daten einer Gruppe, aktualisiert Prefixes den Spieler automatisch.
+
 #### Platzhalter
 
-Hier findest du alle verfügbaren Platzhalter.
-
-| Platzhalter     | Verfügbar in                  | Beschreibung                                       |
-| --------------- | ----------------------------- | -------------------------------------------------- |
-| `<prefix>`      | `chat-format`                 | Präfix der Gruppe des Spielers                     |
-| `<suffix>`      | `chat-format`                 | Suffix der Gruppe des Spielers                     |
-| `<color>`       | `chat-format`, `display-name` | Teamfarbe der Gruppe, wird als Formatierung gesetzt |
-| `<playername>`  | `chat-format`, `display-name` | Reiner Spielername                                 |
-| `<name>`        | `chat-format`                 | Alias für `<playername>`                           |
-| `<displayname>` | `chat-format`                 | Fertig gerenderter Anzeigename des Spielers        |
-| `<message>`     | `chat-format`                 | Inhalt der Chat-Nachricht                          |
+| Platzhalter     | Verfügbar in                  | Beschreibung                                   |
+| --------------- | ----------------------------- | ---------------------------------------------- |
+| `<prefix>`      | `chat-format`, `display-name` | Prefix der Gruppe                              |
+| `<suffix>`      | `chat-format`, `display-name` | Suffix der Gruppe                              |
+| `<color>`       | `chat-format`, `display-name` | Farbe der Gruppe, wird als Style angewendet    |
+| `<playername>`  | `chat-format`, `display-name` | Normaler Spielername                           |
+| `<name>`        | `chat-format`                 | Alias für `<playername>`                       |
+| `<displayname>` | `chat-format`                 | Gerenderter Anzeigename des Spielers           |
+| `<message>`     | `chat-format`                 | Die Chatnachricht                              |
 
 <Tip>
-  Verwende `<color>`, anstatt denselben Hex-Code in jeden Wert zu schreiben. Die Farbe wird als
-  Formatierung angewendet, sodass alle folgenden Inhalte die Gruppenfarbe übernehmen.
+  Nutz `<color>`, statt überall denselben Hex-Code zu schreiben. Der Platzhalter wird als Style angewendet,
+  also übernimmt alles danach die Gruppenfarbe.
 </Tip>
 
-#### Funktionsschalter
+#### Features
 
-Unter `features` aktivierst oder deaktivierst du die lokalen Funktionen des Plugins:
+Unter `features` schaltest du die einzelnen Teile des Plugins an oder aus:
 
-- `chat` formatiert lokale Chat-Nachrichten mit dem `chat-format` der Gruppe
-- `tablist` wendet Prefix, Suffix, Farbe und Priorität der Gruppe auf die Tablist an
-- `display-name` wendet den konfigurierten `display-name` an; bei deaktivierter Funktion wird der normale Minecraft-Name verwendet
+- `chat` formatiert Chatnachrichten mit dem `chat-format` der Gruppe
+- `tablist` zeigt Prefix, Spielernamen in der Gruppenfarbe und Suffix in der Tablist an, sortiert nach Priorität
+- `display-name` zeigt den `display-name` der Gruppe über dem Kopf des Spielers an. Ist es aus, siehst du den normalen Minecraft-Nametag
 
-#### Synchronisierung zwischen Servern
+#### Netzwerk-Sync
 
-Über das SimpleCloud-Netzwerk können zwei Dinge geteilt werden:
+Über das SimpleCloud-Netzwerk kann Prefixes zwei Dinge teilen:
 
-- **Chat**: formatierte Chat-Nachrichten von Spielern auf anderen Servern
+- **Chat**: Chatnachrichten von Spielern auf anderen Servern
 - **Tablist**: Tablist-Einträge von Spielern auf anderen Servern
 
-Mit `sync.enabled: false` deaktivierst du die gesamte Kommunikation zwischen Servern, ohne die lokale Formatierung auszuschalten. Unter `channels` wählst du, ob Chat, Tablist-Einträge oder beides synchronisiert werden. Ein Kanal funktioniert nur, wenn die zugehörige Option unter `features` ebenfalls aktiviert ist.
+Der Sync ist standardmäßig aus. Mit `sync.enabled: true` schaltest du ihn ein. Unter `channels` wählst du, ob Chat, Tablist oder beides geteilt wird. Ein Channel funktioniert nur, wenn das passende Feature unter `features` auch an ist.
 
-Die Liste `sources` legt fest, von welchen Servern dieser Server Aktualisierungen empfängt:
+Über `sources` legst du fest, von welchen Servern dieser Server Updates bekommt:
 
-- `CURRENT` empfängt Aktualisierungen aus der aktuellen Servergruppe oder, bei einem persistenten Server, nur von diesem Server
-- `ALL` empfängt Aktualisierungen von jedem Server im Netzwerk und muss der einzige Listeneintrag sein
-- Ein Servergruppenname oder eine persistente Server-ID empfängt Aktualisierungen aus genau dieser Quelle
+- `CURRENT`: von der eigenen Servergruppe bzw. bei einem Persistent Server nur von diesem Server
+- `ALL`: von allen Servern im Netzwerk. Muss der einzige Eintrag in der Liste sein
+- Name einer Servergruppe oder ID eines Persistent Servers: genau von dieser Quelle
 
-Du kannst mehrere Gruppennamen und persistente Server-IDs kombinieren. Damit zwei Server Aktualisierungen in beide Richtungen austauschen, muss jeder beteiligte Server Aktualisierungen aus der Gruppe oder von der ID des jeweils anderen empfangen.
+Du kannst mehrere Gruppennamen und Server-IDs kombinieren. Sollen zwei Server sich gegenseitig Updates schicken, trag bei beiden jeweils die Gruppe oder ID des anderen ein.
+
+<Note>
+  Den Sync einschalten oder `sync.sources` ändern greift erst nach einem Neustart des Servers.
+</Note>
 
 ## Befehle
 
-| Befehl             | Permission                            | Beschreibung                |
-| ------------------ | ------------------------------------- | --------------------------- |
-| `/scprefix`        | `simplecloud.prefixes.command`        | Zeigt die Befehlsübersicht. |
-| `/scprefix help`   | `simplecloud.prefixes.command`        | Zeigt die Befehlsübersicht. |
-| `/scprefix reload` | `simplecloud.prefixes.command.reload` | Lädt die Konfiguration neu. |
+| Befehl             | Permission                             | Beschreibung                                   |
+| ------------------ | -------------------------------------- | ---------------------------------------------- |
+| `/scprefix`        | `simplecloud.prefixes.command`         | Zeigt die Befehlsübersicht.                    |
+| `/scprefix help`   | `simplecloud.prefixes.command`         | Zeigt die Befehlsübersicht.                    |
+| `/scprefix reload` | `simplecloud.prefixes.command.reload`  | Lädt `config.yml` und `messages.yml` neu.      |
 
 ## API
 
-Mit der API liest du die Präfixdaten eines Spielers aus und registrierst eigene Gruppen.
+Mit der API liest und änderst du, wie Spieler angezeigt werden, und fügst eigene Gruppen hinzu.
 
-### Abhängigkeit hinzufügen
+### Dependency hinzufügen
 
 <DependencySnippet
   language="de"
@@ -243,13 +352,19 @@ Mit der API liest du die Präfixdaten eines Spielers aus und registrierst eigene
       artifactId: "prefixes-api",
       type: "compileOnly",
     },
+    {
+      groupId: "org.jetbrains.kotlinx",
+      artifactId: "kotlinx-coroutines-core",
+      version: "1.11.0",
+      comment: "Coroutines für die Kotlin-Beispiele",
+    },
   ]}
   repositories={[
     { id: "simplecloud", url: "https://repo.simplecloud.app/snapshots" },
   ]}
 />
 
-### Zugriff auf die API
+### Auf die API zugreifen
 
 <Tabs>
 <Tab title="Paper">
@@ -280,99 +395,243 @@ PrefixesApi api = registration.getProvider();
 </CodeGroup>
 
 </Tab>
-</Tabs>
-
-<Note>
-  Die folgenden kurzen Beispiele setzen die oben erzeugte Instanz `api` und einen Plattformspieler namens `player` voraus. Füge sie in die Methoden deines Plugins ein. Das Beispiel für eine eigene Gruppe zeigt eine vollständige Klasse.
-</Note>
-
-### Spieler verwalten
-
-Die Gruppe eines Spielers holen:
+<Tab title="Minestom">
 
 <CodeGroup>
 ```kotlin Kotlin
-api.getPrimaryGroup(player.uniqueId).thenAccept { group ->
-    player.sendMessage(Component.text("Deine Gruppe: ${group?.name ?: "keine"}"))
-}
+val api = PrefixesMinestom.getApi()
+```
+
+```java Java
+PrefixesApi api = PrefixesMinestom.getApi();
+```
+</CodeGroup>
+
+</Tab>
+</Tabs>
+
+Auf jeder Plattform geht auch `PrefixesApiProvider.get()`. Läuft Prefixes nicht, wirft das eine `IllegalStateException`.
+
+### Spieler abfragen
+
+Die Beispiele nutzen die `api` von oben und einen `Player` von Paper oder Minestom.
+
+Die Gruppe eines Spielers abfragen. Passt keine Gruppe, ist das Ergebnis `null`:
+
+<CodeGroup>
+```kotlin Kotlin
+val group = api.getPrimaryGroup(player.uniqueId).await()
+player.sendMessage(Component.text("Your group: ${group?.name ?: "none"}"))
 ```
 
 ```java Java
 api.getPrimaryGroup(player.getUniqueId()).thenAccept(group -> {
-    String name = group != null ? group.getName() : "keine";
-
-    player.sendMessage(Component.text("Deine Gruppe: " + name));
+    String name = group != null ? group.getName() : "none";
+    player.sendMessage(Component.text("Your group: " + name));
 });
 ```
 </CodeGroup>
 
-Die Anzeigewerte eines Spielers holen:
+Abfragen, was gerade für einen Spieler angezeigt wird. Alle Änderungen über die API sind schon mit drin:
 
 <CodeGroup>
 ```kotlin Kotlin
-api.getPrefixData(player.uniqueId).thenAccept { data ->
-    player.sendMessage(data.prefix.append(data.displayName).append(data.suffix))
+val data = api.getPrefixData(player.uniqueId).await()
+player.sendMessage(data.prefix.append(data.displayName).append(data.suffix))
+```
+
+```java Java
+api.getPrefixData(player.getUniqueId()).thenAccept(data ->
+    player.sendMessage(data.getPrefix().append(data.getDisplayName()).append(data.getSuffix())));
+```
+</CodeGroup>
+
+| Methode | Wert |
+| --- | --- |
+| `getPrefix()` | Prefix |
+| `getSuffix()` | Suffix |
+| `getColor()` | Namensfarbe |
+| `getDisplayName()` | Gerenderter Nametag |
+| `getChatFormat()` | Chat-Format als MiniMessage-String |
+| `getPriority()` | Position in der Tablist, höher steht weiter oben |
+
+### Anzeige eines Spielers ändern
+
+Ändere Prefix, Suffix, Farbe oder die Position in der Tablist eines Spielers für alle. Die Änderung gilt für Chat, Tablist und Nametag.
+
+<CodeGroup>
+```kotlin Kotlin
+api.setPrefix(player.uniqueId, Component.text("[Builder] ", NamedTextColor.GOLD))
+api.setColor(player.uniqueId, NamedTextColor.GOLD)
+```
+
+```java Java
+api.setPrefix(player.getUniqueId(), Component.text("[Builder] ", NamedTextColor.GOLD));
+api.setColor(player.getUniqueId(), NamedTextColor.GOLD);
+```
+</CodeGroup>
+
+| Beschreibung | Methode |
+| --- | --- |
+| Prefix setzen | `setPrefix(id, prefix)` |
+| Suffix setzen | `setSuffix(id, suffix)` |
+| Namensfarbe setzen | `setColor(id, color)` |
+| Position in der Tablist setzen | `setPriority(id, priority)` |
+| Spieler mit einer anderen Gruppe anzeigen | `setGroup(id, group)` |
+| Alle Änderungen zurücksetzen | `reset(id)` |
+
+`setGroup` nimmt eine `PrefixesGroup` oder einen Gruppennamen. Gibt es keine Gruppe mit dem Namen, kommt `false` zurück:
+
+<CodeGroup>
+```kotlin Kotlin
+val found = api.setGroup(player.uniqueId, "admin").await()
+if (!found) println("The group admin does not exist")
+```
+
+```java Java
+api.setGroup(player.getUniqueId(), "admin").thenAccept(found -> {
+    if (!found) System.out.println("The group admin does not exist");
+});
+```
+</CodeGroup>
+
+Änderungen funktionieren nur bei Spielern, die online sind, und sind weg, sobald der Spieler den Server verlässt. Sollen sie bleiben, setz sie beim Join einfach neu.
+
+### Spieler für bestimmte Spieler anders anzeigen
+
+Mit Per-Viewer-Änderungen sehen verschiedene Spieler denselben Spieler unterschiedlich. Das ist praktisch für alles, was von der Beziehung zwischen zwei Spielern abhängt:
+
+- **Freunde**: Ein Spieler sieht seine Freunde mit einem `[Friend]`-Prefix
+- **Partys**: Party-Mitglieder sehen sich gegenseitig mit Party-Prefix ganz oben in der Tablist
+- **Teams**: In einem Minigame sieht jedes Team die eigenen Leute grün und die Gegner rot
+
+Jede `set`-Methode und `setGroup` haben ein optionales `viewers`-Argument. Nur diese Spieler sehen die Änderung, alle anderen sehen weiter den normalen Prefix. `viewers` ist eine Adventure-`Audience`, du kannst also einen Spieler übergeben oder mehrere mit `Audience.audience(players)`.
+
+Einen Freund mit `[Friend]`-Prefix anzeigen, nur für den Spieler:
+
+<CodeGroup>
+```kotlin Kotlin
+api.setPrefix(friend.uniqueId, Component.text("[Friend] ", NamedTextColor.GREEN), player)
+```
+
+```java Java
+api.setPrefix(friend.getUniqueId(), Component.text("[Friend] ", NamedTextColor.GREEN), player);
+```
+</CodeGroup>
+
+Party-Mitglieder mit `[Party]`-Prefix ganz oben in der Tablist anzeigen, nur für die Party:
+
+<CodeGroup>
+```kotlin Kotlin
+val party = Audience.audience(partyMembers)
+
+partyMembers.forEach { member ->
+    api.setPrefix(member.uniqueId, Component.text("[Party] ", NamedTextColor.LIGHT_PURPLE), party)
+    api.setPriority(member.uniqueId, 1000, party)
 }
 ```
 
 ```java Java
-api.getPrefixData(player.getUniqueId()).thenAccept(data -> {
-    player.sendMessage(data.getPrefix().append(data.getDisplayName()).append(data.getSuffix()));
-});
+Audience party = Audience.audience(partyMembers);
+
+for (Player member : partyMembers) {
+    api.setPrefix(member.getUniqueId(), Component.text("[Party] ", NamedTextColor.LIGHT_PURPLE), party);
+    api.setPriority(member.getUniqueId(), 1000, party);
+}
 ```
 </CodeGroup>
 
-Prüfen, ob ein Spieler in einer bestimmten Gruppe ist:
+`setGroup` geht auch für mehrere Spieler auf einmal. In einem Minigame sieht so jedes Team die eigenen Leute mit der einen Gruppe und das andere Team mit einer anderen:
 
 <CodeGroup>
 ```kotlin Kotlin
-val vip = api.getGroups().find { it.name == "vip" }
+val red = Audience.audience(redTeam)
+val blue = Audience.audience(blueTeam)
 
-vip?.containsPlayerAsync(player.uniqueId)?.thenAccept { isVip ->
-    if (isVip) {
-        player.sendMessage(Component.text("Willkommen zurück!"))
-    }
-}
+api.setGroup(red, "teammate", red)
+api.setGroup(red, "enemy", blue)
+api.setGroup(blue, "teammate", blue)
+api.setGroup(blue, "enemy", red)
 ```
 
 ```java Java
-PrefixesGroup vip = api.getGroups().stream()
-    .filter(group -> group.getName().equals("vip"))
-    .findFirst()
-    .orElse(null);
+Audience red = Audience.audience(redTeam);
+Audience blue = Audience.audience(blueTeam);
 
-if (vip == null) return;
-
-vip.containsPlayerAsync(player.getUniqueId()).thenAccept(isVip -> {
-    if (isVip) {
-        player.sendMessage(Component.text("Willkommen zurück!"));
-    }
-});
+api.setGroup(red, "teammate", red);
+api.setGroup(red, "enemy", blue);
+api.setGroup(blue, "teammate", blue);
+api.setGroup(blue, "enemy", red);
 ```
 </CodeGroup>
 
-### Gruppen verwalten
+Die Gruppen `teammate` und `enemy` müssen in deiner Gruppenquelle existieren.
 
-Alle Gruppen auflisten, höchste Priorität zuerst:
+Mit `reset(targets, viewers)` entfernst du nur die Änderungen, die bestimmte Spieler sehen, zum Beispiel wenn eine Freundschaft endet oder jemand die Party verlässt:
 
 <CodeGroup>
 ```kotlin Kotlin
-api.getGroups().forEach { group ->
+// Der Spieler sieht den [Friend]-Prefix nicht mehr
+api.reset(friend, player)
+
+// Die Party sieht den Spieler nicht mehr als Mitglied und umgekehrt
+api.reset(player, party)
+api.reset(party, player)
+```
+
+```java Java
+// Der Spieler sieht den [Friend]-Prefix nicht mehr
+api.reset(friend, player);
+
+// Die Party sieht den Spieler nicht mehr als Mitglied und umgekehrt
+api.reset(player, party);
+api.reset(party, player);
+```
+</CodeGroup>
+
+Was ein bestimmter Spieler sieht, bekommst du, wenn du ihn als Viewer übergibst: `api.getPrefixData(friend.uniqueId, player)`.
+
+Greifen mehrere Änderungen, gewinnt die für einen bestimmten Viewer vor der für alle, und die wiederum vor der Gruppe des Spielers. Per-Viewer-Änderungen sind weg, sobald einer der beiden Spieler den Server verlässt.
+
+### Gruppen auflisten und hinzufügen
+
+Alle Gruppen der aktuellen Gruppenquelle auflisten, höchste Priorität zuerst:
+
+<CodeGroup>
+```kotlin Kotlin
+api.getGroups().await().forEach { group ->
     println("${group.priority} - ${group.name}")
 }
 ```
 
 ```java Java
-api.getGroups().forEach(group ->
-    System.out.println(group.getPriority() + " - " + group.getName()));
+api.getGroups().thenAccept(groups ->
+    groups.forEach(group -> System.out.println(group.getPriority() + " - " + group.getName())));
 ```
 </CodeGroup>
 
-Eigene Gruppe registrieren:
+Mit `addGroup` fügst du eine Gruppe hinzu. Bei `config` wird sie in der `config.yml` gespeichert, bei `luckperms` in LuckPerms angelegt. Gibt es schon eine Gruppe mit dem Namen, kommt `false` zurück.
 
 <CodeGroup>
 ```kotlin Kotlin
-import app.simplecloud.prefixes.api.PrefixesApi
+val created = api.addGroup(VipGroup()).await()
+if (!created) println("A group named vip already exists")
+```
+
+```java Java
+api.addGroup(new VipGroup()).thenAccept(created -> {
+    if (!created) System.out.println("A group named vip already exists");
+});
+```
+</CodeGroup>
+
+Spieler bekommen eine neue Gruppe wie jede andere auch, bei `config` also zum Beispiel über ihre `permission`. Eine Gruppe implementiert `PrefixesGroup`:
+
+<AccordionGroup>
+<Accordion title="Beispiel: VipGroup">
+
+<CodeGroup>
+```kotlin Kotlin
 import app.simplecloud.prefixes.api.group.PrefixesGroup
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -380,49 +639,32 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 
-class VipGroup(private val members: Set<UUID>) : PrefixesGroup {
-    private val miniMessage = MiniMessage.miniMessage()
-
+class VipGroup : PrefixesGroup {
     override val name = "vip"
     override val priority = 50
     override val permission = "simplecloud.prefix.group.vip"
-    override val prefix = miniMessage.deserialize("<#A3E635>VIP <#475569>| ")
+    override val prefix = MiniMessage.miniMessage().deserialize("<#A3E635>VIP <#475569>| ")
     override val suffix = Component.empty()
-    override val color = TextColor.fromHexString("#A3E635")
+    override val color = TextColor.color(0xA3E635)
     override val displayName = "<color><playername>"
     override val chatFormat = "<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>"
 
-    override fun containsPlayer(id: UUID) = id in members
-
-    override fun containsPlayerAsync(id: UUID) =
-        CompletableFuture.completedFuture(containsPlayer(id))
+    // Wird nur genutzt, wenn die Gruppe zu einem eigenen Group Provider gehört
+    override fun containsPlayer(id: UUID): CompletableFuture<Boolean> =
+        CompletableFuture.completedFuture(false)
 }
-
-fun registerVipGroup(api: PrefixesApi, members: Set<UUID>): CompletableFuture<Void> =
-    api.addGroup(VipGroup(members)).thenAccept { created ->
-        if (!created) {
-            println("Es gibt bereits eine Gruppe namens vip")
-        }
-    }
 ```
 
 ```java Java
-import app.simplecloud.prefixes.api.PrefixesApi;
 import app.simplecloud.prefixes.api.group.PrefixesGroup;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public final class VipGroup implements PrefixesGroup {
-    private final Set<UUID> members;
-
-    public VipGroup(Set<UUID> members) {
-        this.members = Set.copyOf(members);
-    }
 
     @Override
     public String getName() {
@@ -451,7 +693,7 @@ public final class VipGroup implements PrefixesGroup {
 
     @Override
     public TextColor getColor() {
-        return TextColor.fromHexString("#A3E635");
+        return TextColor.color(0xA3E635);
     }
 
     @Override
@@ -464,35 +706,147 @@ public final class VipGroup implements PrefixesGroup {
         return "<prefix><color><playername><suffix> <#475569>» <#F8FAFC><message>";
     }
 
+    // Wird nur genutzt, wenn die Gruppe zu einem eigenen Group Provider gehört
     @Override
-    public boolean containsPlayer(UUID id) {
-        return members.contains(id);
-    }
-
-    @Override
-    public CompletableFuture<Boolean> containsPlayerAsync(UUID id) {
-        return CompletableFuture.completedFuture(containsPlayer(id));
-    }
-
-    public static CompletableFuture<Void> register(
-        PrefixesApi api,
-        Set<UUID> members
-    ) {
-        return api.addGroup(new VipGroup(members)).thenAccept(created -> {
-            if (!created) {
-                System.out.println("Es gibt bereits eine Gruppe namens vip");
-            }
-        });
+    public CompletableFuture<Boolean> containsPlayer(UUID id) {
+        return CompletableFuture.completedFuture(false);
     }
 }
 ```
 </CodeGroup>
 
-Übergib beim Registrieren die UUIDs der Gruppenmitglieder. Wenn sich die Mitgliedschaft zur Laufzeit ändert, ersetze das kopierte Set durch den threadsicheren Mitgliederspeicher deines Plugins.
+</Accordion>
+</AccordionGroup>
 
-## Bewährte Vorgehensweisen
+### Eigenen Group Provider erstellen
 
-- Vergib eindeutige Prioritäten, damit die Reihenfolge in der Tablist vorhersehbar bleibt
-- Nutze für alle Gruppen dasselbe `chat-format`, außer ein Rang soll im Chat bewusst auffallen
-- Verwende `<color>` in `display-name` und `chat-format`, anstatt Hex-Codes zu wiederholen
-- Lass `default-group` auf eine Gruppe mit leerer `permission` zeigen, damit jeder Spieler eine Gruppe bekommt
+Ein Group Provider legt fest, welche Gruppen es gibt und in welcher Gruppe ein Spieler ist. Prefixes bringt die Provider `config` und `luckperms` mit. Mit einem eigenen Provider kommen die Gruppen direkt aus deinem Plugin, zum Beispiel aus deinem eigenen Rangsystem.
+
+Implementiere dafür `GroupProvider`. Dieses Beispiel hält die Gruppen und das Team jedes Spielers im Speicher:
+
+<CodeGroup>
+```kotlin Kotlin
+import app.simplecloud.prefixes.api.group.GroupProvider
+import app.simplecloud.prefixes.api.group.PrefixesGroup
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+
+class TeamGroupProvider : GroupProvider {
+    private val groups = ConcurrentHashMap<String, PrefixesGroup>()
+    private val teams = ConcurrentHashMap<UUID, String>()
+
+    fun setTeam(id: UUID, team: String) {
+        teams[id] = team
+    }
+
+    // Name für general.source
+    override fun getName() = "teams"
+
+    override fun getGroups(): CompletableFuture<Collection<PrefixesGroup>> =
+        CompletableFuture.completedFuture(groups.values.sortedByDescending { it.priority })
+
+    override fun getGroup(id: UUID): CompletableFuture<PrefixesGroup?> {
+        val team = teams[id] ?: return CompletableFuture.completedFuture(null)
+        return CompletableFuture.completedFuture(groups[team])
+    }
+
+    override fun addGroup(group: PrefixesGroup): CompletableFuture<Boolean> =
+        CompletableFuture.completedFuture(groups.putIfAbsent(group.name, group) == null)
+}
+```
+
+```java Java
+import app.simplecloud.prefixes.api.group.GroupProvider;
+import app.simplecloud.prefixes.api.group.PrefixesGroup;
+
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+
+public final class TeamGroupProvider implements GroupProvider {
+    private final Map<String, PrefixesGroup> groups = new ConcurrentHashMap<>();
+    private final Map<UUID, String> teams = new ConcurrentHashMap<>();
+
+    public void setTeam(UUID id, String team) {
+        teams.put(id, team);
+    }
+
+    // Name für general.source
+    @Override
+    public String getName() {
+        return "teams";
+    }
+
+    @Override
+    public CompletableFuture<Collection<PrefixesGroup>> getGroups() {
+        return CompletableFuture.completedFuture(groups.values().stream()
+            .sorted(Comparator.comparingInt(PrefixesGroup::getPriority).reversed())
+            .toList());
+    }
+
+    @Override
+    public CompletableFuture<PrefixesGroup> getGroup(UUID id) {
+        String team = teams.get(id);
+        return CompletableFuture.completedFuture(team == null ? null : groups.get(team));
+    }
+
+    @Override
+    public CompletableFuture<Boolean> addGroup(PrefixesGroup group) {
+        return CompletableFuture.completedFuture(groups.putIfAbsent(group.getName(), group) == null);
+    }
+}
+```
+</CodeGroup>
+
+Registriere den Provider und trag seinen Namen in der `config.yml` bei `general.source` ein:
+
+```yaml config.yml
+general:
+  source: teams
+```
+
+<CodeGroup>
+```kotlin Kotlin
+val teams = TeamGroupProvider()
+api.registerGroupProvider(teams)
+
+// Spieler, die schon online sind, bekommen ihre Gruppe vom neuen Provider
+api.refreshAll()
+```
+
+```java Java
+TeamGroupProvider teams = new TeamGroupProvider();
+api.registerGroupProvider(teams);
+
+// Spieler, die schon online sind, bekommen ihre Gruppe vom neuen Provider
+api.refreshAll();
+```
+</CodeGroup>
+
+Prefixes bekommt nicht mit, wenn dein Plugin die Gruppe eines Spielers ändert. Ruf danach `refreshPlayer` auf, damit die neue Gruppe angezeigt wird. Änderungen über die API bleiben dabei erhalten.
+
+<CodeGroup>
+```kotlin Kotlin
+teams.setTeam(player.uniqueId, "red")
+api.refreshPlayer(player.uniqueId)
+```
+
+```java Java
+teams.setTeam(player.getUniqueId(), "red");
+api.refreshPlayer(player.getUniqueId());
+```
+</CodeGroup>
+
+Wie die eingebauten Provider umgesetzt sind, inklusive LuckPerms, siehst du [auf GitHub](https://github.com/simplecloudapp/prefixes-plugin/tree/main/prefixes-shared/src/main/kotlin/app/simplecloud/prefixes/shared/group).
+
+## Best Practices
+
+- Vergib jede Priorität nur einmal, damit die Reihenfolge in der Tablist klar ist
+- Nutz für alle Gruppen dasselbe `chat-format`, außer ein Rang soll im Chat bewusst auffallen
+- Nutz `<color>` in `display-name` und `chat-format`, statt Hex-Codes zu wiederholen
+- Lass `default-group` auf eine Gruppe mit leerer `permission` zeigen, damit jeder Spieler eine Gruppe hat
+- Nutz das `viewers`-Argument für Freunde, Partys und Teams, statt für jedes eine eigene Gruppe anzulegen

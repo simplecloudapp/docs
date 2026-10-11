@@ -94,7 +94,8 @@ export const DependencySnippet = ({
     const depLines = dependencies
       .map((dep) => {
         const depType = dep.type || "implementation";
-        return `    ${depType}("${dep.groupId}:${dep.artifactId}:${getVersion(dep, "gradle")}")`;
+        const comment = dep.comment ? `    // ${dep.comment}\n` : "";
+        return `${comment}    ${depType}("${dep.groupId}:${dep.artifactId}:${getVersion(dep, "gradle")}")`;
       })
       .join("\n");
 
@@ -106,7 +107,8 @@ export const DependencySnippet = ({
     const depLines = dependencies
       .map((dep) => {
         const depType = dep.type || "implementation";
-        return `    ${depType} '${dep.groupId}:${dep.artifactId}:${getVersion(dep, "gradle")}'`;
+        const comment = dep.comment ? `    // ${dep.comment}\n` : "";
+        return `${comment}    ${depType} '${dep.groupId}:${dep.artifactId}:${getVersion(dep, "gradle")}'`;
       })
       .join("\n");
 
@@ -125,7 +127,8 @@ export const DependencySnippet = ({
     const depLines = dependencies
       .map((dep) => {
         const scope = dep.type === "compileOnly" ? "provided" : "compile";
-        return `    <dependency>
+        const comment = dep.comment ? `    <!-- ${dep.comment} -->\n` : "";
+        return `${comment}    <dependency>
       <groupId>${dep.groupId}</groupId>
       <artifactId>${dep.artifactId}</artifactId>
       <version>${getVersion(dep, "maven")}</version>
