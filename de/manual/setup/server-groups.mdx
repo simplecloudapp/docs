@@ -38,7 +38,7 @@ Wenn die rechte Spalte zu deinem Vorhaben passt, lies den Abschnitt [Persistente
   <Step title="Software auswählen">
     Wähle die Serversoftware und die verfügbaren Versionsoptionen aus.
 
-    Wenn die Software nicht aufgeführt ist, wähle **Custom** und fülle die erforderlichen Felder aus.
+    Wenn die Software nicht aufgeführt ist, wähle **Custom** und fülle die erforderlichen Felder aus. Siehe [Custom-Serversoftware](#custom-serversoftware).
   </Step>
 
   <Step title="Ressourcen festlegen">
@@ -51,6 +51,26 @@ Wenn die rechte Spalte zu deinem Vorhaben passt, lies den Abschnitt [Persistente
     Prüfe die Konfiguration, füge benötigte Plugins hinzu und klicke auf **Create Group**.
   </Step>
 </Steps>
+
+## Custom-Serversoftware
+
+SimpleCloud betreibt Minecraft-Server und -Proxys der Java Edition. Bedrock wird nicht unterstützt. In der [Liste der unterstützten Software](https://simplecloud.app/supported-software) siehst du, welche Software du direkt auswählen kannst.
+
+Wähle **Custom**, um eine andere Server-JAR in einer Gruppe oder einem persistenten Server auszuführen. Fülle diese Felder aus:
+
+| Feld | Was du eingibst |
+| --- | --- |
+| **Source** | Lade eine `.jar`-Datei hoch, gib eine Download-URL ein oder gib den Pfad der JAR auf dem Serverhost ein. |
+| **Software name** | Der Name der Software. SimpleCloud wählt damit die Plugins aus. |
+| **Software version** | Die Version der Software. |
+| **Game version** | Die Minecraft-Version. Nur beim Typ **Server** sichtbar. |
+
+Für Custom-Software gelten diese Grenzen:
+
+- **Nur Java.** SimpleCloud startet die JAR mit Java. Nach dem Erstellen änderst du Java-Version, JVM-Optionen und Startargumente unter **Settings > Blueprint**.
+- **Configurator.** Ein [Configurator](/de/manual/configuration/configurators) setzt Port und Proxy-Einstellungen des Servers. Prüfe, ob der ausgewählte Configurator zu deiner Software passt, oder erstelle einen eigenen.
+- **Port.** Der Server muss auf seinem zugewiesenen Port lauschen, der als `%port%` in Configurators und als Umgebungsvariable `SIMPLECLOUD_PORT` verfügbar ist. SimpleCloud zeigt den Server als verfügbar an, sobald er auf diesem Port auf einen Minecraft-Status-Ping antwortet.
+- **Plugins.** SimpleCloud-Plugins, einschließlich `simplecloud-api`, werden nur installiert, wenn der Softwarename eine unterstützte Plugin-Plattform ist, zum Beispiel `paper` oder `velocity`. Andernfalls überspringt SimpleCloud sie.
 
 ## Gruppe aktivieren oder deaktivieren
 

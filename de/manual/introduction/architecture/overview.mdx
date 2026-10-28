@@ -31,6 +31,35 @@ Ein Serverhost ersetzt keine der beiden Oberflächen. Er führt die Minecraft-Se
 
 Wenn du eine weitere Maschine hinzufügst, installiere dort einen weiteren Serverhost. SimpleCloud kann dann beide Maschinen für dein Netzwerk verwenden.
 
+## Was passiert, wenn der Controller nicht erreichbar ist?
+
+Der Controller und sein Messaging-Dienst laufen auf der Infrastruktur von SimpleCloud. Dieser Abschnitt beschreibt, was passiert, wenn deine Maschinen diese gehosteten Dienste nicht erreichen, zum Beispiel bei einem Netzwerkausfall.
+
+### Was weiter funktioniert
+
+- Laufende Minecraft-Server und Proxys laufen weiter. Der Serverhost stoppt keine Server, weil die Verbindung verloren geht, und versucht weiter, sich neu zu verbinden.
+- Spieler können über einen laufenden Proxy beitreten und zwischen den Servern wechseln, die dieser Proxy bereits kennt. Der Proxy leitet Spieler selbstständig weiter.
+- Spieler-Logins werden nicht blockiert. Das Plugin `simplecloud-api` auf dem Proxy wartet höchstens 5 Sekunden auf SimpleCloud und lässt den Spieler dann herein.
+
+### Was nicht mehr funktioniert
+
+- SimpleCloud startet, stoppt und skaliert keine Server und ersetzt keine abgestürzten Server. Diese Entscheidungen trifft der Controller.
+- Dashboard und CLI können dein Netzwerk weder anzeigen noch ändern, und du kannst keine Serverdateien öffnen.
+- Proxys erfahren nichts von neuen Servern.
+- Konsolenausgaben und Metriken aus der Zeit des Ausfalls können verloren gehen.
+- Ein Serverhost, der während des Ausfalls neu startet, kann erst starten, wenn SimpleCloud wieder erreichbar ist. Seine Minecraft-Server laufen weiter.
+- Ein Proxy, der während des Ausfalls startet, hat keine SimpleCloud-Server, zu denen er Spieler schicken kann.
+
+### Wenn die Verbindung zurückkehrt
+
+- Der Controller macht mit seinem gespeicherten Zustand weiter und startet Server, die noch auf ihren Start warten.
+- Der Serverhost stoppt Server, die der Controller nicht mehr aufführt.
+- Laufende Proxys laden ihre Serverliste nicht neu. Ein Server, der während des Ausfalls gestoppt wurde, kann weiter aufgeführt sein, sodass Spieler, die ihn wählen, keine Verbindung bekommen.
+
+<Warning>
+Starte deine Proxys nach einem Ausfall neu, damit sie die aktuelle Serverliste laden. Starte auch jeden Proxy neu, der während des Ausfalls gestartet ist. `/connection reload` lädt nur die Konfiguration von Server Connection neu, nicht die Serverliste.
+</Warning>
+
 ## Nächste Schritte
 
 <Columns cols={2}>

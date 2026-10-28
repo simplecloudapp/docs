@@ -41,11 +41,22 @@ description: "Answers to common questions about setting up and using SimpleCloud
   </Accordion>
 
   <Accordion title="Which Minecraft server software can I use?">
-    Choose one of the software options offered by the dashboard. If it is not listed,
-    choose **Custom** and fill in the required fields.
+    SimpleCloud runs Minecraft Java Edition servers and proxies. Bedrock is not
+    supported. Choose one of the options from the
+    [supported software list](https://simplecloud.app/supported-software), or
+    choose **Custom** to run another server JAR.
 
-    Follow the creation steps for a [server group](/en/manual/setup/server-groups#create-a-server-group)
-    or a [persistent server](/en/manual/setup/persistent-servers#create-a-persistent-server).
+    Read [Custom server software](/en/manual/setup/server-groups#custom-server-software)
+    for the fields and limits of the **Custom** option.
+  </Accordion>
+
+  <Accordion title="What happens if SimpleCloud's controller is unreachable?">
+    Running servers and proxies keep running, and players can still move between
+    the servers your proxies already know. SimpleCloud cannot start, stop, or
+    scale servers until the connection returns.
+
+    Read [What happens if the controller is unreachable?](/en/manual/introduction/architecture/overview#what-happens-if-the-controller-is-unreachable)
+    for details and what to do afterwards.
   </Accordion>
 
   <Accordion title="Do I need advanced technical knowledge?">

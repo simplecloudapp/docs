@@ -29,6 +29,35 @@ The dashboard and CLI change the same network, so choose whichever interface fit
 
 When you add another machine, install another serverhost. SimpleCloud can then use both machines to run your network.
 
+## What happens if the controller is unreachable?
+
+The controller and its messaging service run on SimpleCloud's infrastructure. This section describes what happens when your machines can't reach these hosted services, for example during a network outage.
+
+### What keeps working
+
+- Running Minecraft servers and proxies keep running. The serverhost never stops servers because the connection is lost, and it keeps trying to reconnect.
+- Players can join through a running proxy and switch between the servers that proxy already knows. The proxy routes players on its own.
+- Player logins are not blocked. The `simplecloud-api` plugin on the proxy waits at most 5 seconds for SimpleCloud, then lets the player in.
+
+### What stops working
+
+- SimpleCloud does not start, stop, or scale servers, and it does not replace servers that crash. The controller makes these decisions.
+- The dashboard and CLI cannot show or change your network, and you cannot open server files.
+- Proxies do not learn about new servers.
+- Console output and metrics from the outage can be lost.
+- A serverhost that restarts during the outage cannot start until SimpleCloud is reachable again. Its Minecraft servers keep running.
+- A proxy that starts during the outage has no SimpleCloud servers to send players to.
+
+### When the connection returns
+
+- The controller continues from its stored state and starts servers that are still waiting to start.
+- The serverhost stops servers that the controller no longer lists.
+- Running proxies do not reload their server list. A server that stopped during the outage can stay listed, so players who pick it fail to connect.
+
+<Warning>
+After an outage, restart your proxies so they load the current server list. Also restart any proxy that started during the outage. `/connection reload` only reloads the Server Connection configuration and does not reload the server list.
+</Warning>
+
 ## Next steps
 
 <Columns cols={2}>

@@ -38,7 +38,7 @@ See [Persistent Servers](/en/manual/setup/persistent-servers) if the right-hand 
   <Step title="Choose the software">
     Select the server software and the available version options.
 
-    If the software is not listed, choose **Custom** and fill in the required fields.
+    If the software is not listed, choose **Custom** and fill in the required fields. See [Custom server software](#custom-server-software).
   </Step>
 
   <Step title="Set the resources">
@@ -51,6 +51,26 @@ See [Persistent Servers](/en/manual/setup/persistent-servers) if the right-hand 
     Review the configuration, add any plugins you need, and click **Create Group**.
   </Step>
 </Steps>
+
+## Custom server software
+
+SimpleCloud runs Minecraft Java Edition servers and proxies. Bedrock is not supported. See the [supported software list](https://simplecloud.app/supported-software) for the software you can select directly.
+
+Choose **Custom** to run another server JAR in a group or persistent server. Enter these fields:
+
+| Field | What to enter |
+| --- | --- |
+| **Source** | Upload a `.jar` file, enter a download URL, or enter the JAR's path on the serverhost. |
+| **Software name** | The software's name. SimpleCloud uses it to select plugins. |
+| **Software version** | The software's version. |
+| **Game version** | The Minecraft version. Only shown for the **Server** type. |
+
+Custom software has these limits:
+
+- **Java only.** SimpleCloud starts the JAR with Java. After creation, change the Java version, JVM options, and start arguments under **Settings > Blueprint**.
+- **Configurator.** A [configurator](/en/manual/configuration/configurators) sets the server's port and proxy settings. Check that the selected configurator fits your software, or create your own.
+- **Port.** The server must listen on its assigned port, available as `%port%` in configurators and as the `SIMPLECLOUD_PORT` environment variable. SimpleCloud shows the server as available once it answers a Minecraft status ping on that port.
+- **Plugins.** SimpleCloud plugins, including `simplecloud-api`, are installed only when the software name is a supported plugin platform, such as `paper` or `velocity`. Otherwise SimpleCloud skips them.
 
 ## Activate or deactivate a group
 
