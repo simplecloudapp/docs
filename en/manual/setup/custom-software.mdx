@@ -3,40 +3,31 @@ title: "Custom Software"
 description: "Run server software that SimpleCloud does not list, including Bedrock servers"
 ---
 
-## When to use Custom
-
-SimpleCloud lists Minecraft Java Edition servers and proxies that you can select directly. See the [supported software list](https://simplecloud.app/supported-software). For other software, choose **Custom** when you create a [server group](/en/manual/setup/server-groups) or a [persistent server](/en/manual/setup/persistent-servers).
-
 ## Add custom software
 
-In the **Software** step, choose **Custom** and enter these fields:
+Use **Custom** for software that is not in the [supported software list](https://simplecloud.app/supported-software). When you create a [server group](/en/manual/setup/server-groups) or [persistent server](/en/manual/setup/persistent-servers), choose **Custom** in the **Software** step and fill in these fields:
 
 | Field | What to enter |
 | --- | --- |
-| **Source** | Under **Upload**, upload a `.jar` file. Under **Link**, enter a **Download URL**. Under **Path**, enter the **File path** of the JAR on the serverhost. |
+| **Source** | Upload a `.jar` file, or enter its download URL or file path on the serverhost. |
 | **Software name** | The software's name. SimpleCloud uses it to select plugins. |
 | **Software version** | The software's version. |
 | **Game version** | The Minecraft version. Only shown for the **Server** type. |
 
-Then open **Advanced** and choose a **Configurator**. The **Server** type requires one.
+Then choose a **Configurator** under **Advanced**. To change these settings later, go to **Settings > Software**.
 
-To change these settings later, open the group or persistent server and go to **Settings > Software**. The **Server software** card contains the **Custom source** and the **Configurator**.
+## Requirements
 
-## Limits
-
-- **Java only.** SimpleCloud starts the JAR with Java 21. Change the **Java version**, **JVM options**, and **Runtime arguments** in the **Java** card under **Settings > Software**.
-- **Configurator.** A [configurator](/en/manual/configuration/configurators) sets the server's port and proxy settings. Choose a preset that fits your software, or set **Configurator** to **Custom** and enter your own configurator under **Handler**.
-- **Port.** The server must listen on its assigned port, available as `%port%` in configurators and as the `SIMPLECLOUD_PORT` environment variable. SimpleCloud shows the server as available once it answers a Minecraft status ping on that port.
-- **Plugins.** SimpleCloud plugins, including `simplecloud-api`, are installed only when the software name is a supported plugin platform, such as `paper` or `velocity`. Otherwise SimpleCloud skips them.
+- **JAR file.** SimpleCloud starts the JAR with Java 21. Change the Java version, JVM options, and runtime arguments in the **Java** card under **Settings > Software**.
+- **Port.** The server must listen on its assigned port, available as `%port%` in configurators and as the `SIMPLECLOUD_PORT` environment variable. SimpleCloud shows the server as available once it answers a status ping on that port.
+- **Configurator.** The [configurator](/en/manual/configuration/configurators) writes the port and proxy settings. Choose a preset that fits your software, or create your own.
+- **Plugins.** SimpleCloud plugins are installed only when the software name is a supported plugin platform, such as `paper` or `velocity`.
 
 ## Bedrock servers
 
-You can run a Bedrock server that starts from a JAR file as custom software. SimpleCloud shows it as available once it answers a Bedrock status ping and reads its player count from that ping.
+Bedrock servers that start from a JAR run through **Custom**:
 
-- **Proxy registration.** SimpleCloud's proxy plugins do not connect Bedrock players to the server. Register it on your Bedrock proxy yourself.
-- **Server Connection.** Server Connection registers every available server on Velocity and BungeeCord, including Bedrock servers. Add the group or persistent server to `registration.ignore-server-groups-and-persistent-servers` so Java players are not sent there.
-- **Configurator.** The presets write Java Edition settings. Create a [custom configurator](/en/manual/configuration/configurators) that writes `%port%` to your Bedrock software's configuration.
-- **UDP.** Bedrock players connect over UDP. A serverhost started with `DEPLOYMENT_TYPE=docker` publishes the server port over TCP only, so use the default deployment type.
-- **No API plugin.** The `simplecloud-api` plugin is not available for Bedrock servers.
-
-Custom software must be a JAR file. Bedrock software that ships as a native program, such as Bedrock Dedicated Server, cannot be added through the dashboard or CLI.
+- Register the server on your Bedrock proxy yourself. SimpleCloud's proxy plugins do not do this.
+- Add it to Server Connection's `registration.ignore-server-groups-and-persistent-servers` so Velocity and BungeeCord do not send Java players there.
+- Use a [custom configurator](/en/manual/configuration/configurators) that writes `%port%` to your server's configuration.
+- To use the [Cloud API](/en/developer/installation), shade it into your own plugin.

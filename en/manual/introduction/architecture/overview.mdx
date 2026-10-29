@@ -31,27 +31,21 @@ When you add another machine, install another serverhost. SimpleCloud can then u
 
 ## What happens if the controller is unreachable?
 
-The controller and its messaging service run on SimpleCloud's infrastructure. This section describes what happens when your machines can't reach these hosted services, for example during a network outage.
+The controller runs on SimpleCloud's infrastructure. This section describes what happens when your machines cannot reach SimpleCloud's hosted services, for example during a network outage.
 
 ### What keeps working
 
-- Running Minecraft servers and proxies keep running. The serverhost never stops servers because the connection is lost, and it keeps trying to reconnect.
-- Players can join through a running proxy and switch between the servers that proxy already knows. The proxy routes players on its own.
-- Player logins are not blocked. The `simplecloud-api` plugin on the proxy waits at most 5 seconds for SimpleCloud, then lets the player in.
+- Running servers and proxies keep running. The serverhost reconnects automatically.
+- Players can join through a running proxy and switch between the servers it already knows.
 
-### What stops working
+### What stops until the connection returns
 
-- SimpleCloud does not start, stop, or scale servers, and it does not replace servers that crash. The controller makes these decisions.
-- The dashboard and CLI cannot show or change your network, and you cannot open server files.
-- Proxies do not learn about new servers.
-- Console output and metrics from the outage can be lost.
-- A serverhost that restarts during the outage cannot start until SimpleCloud is reachable again. Its Minecraft servers keep running.
-- A proxy that starts during the outage has no SimpleCloud servers to send players to.
+- Starting, stopping, and scaling servers, including replacing crashed servers.
+- The dashboard and CLI.
+- Proxies learning about new servers. A proxy that starts during the outage has no servers to send players to.
+- Restarting a serverhost. It cannot start again until SimpleCloud is reachable.
 
-### When the connection returns
-
-- The controller continues from its stored state and starts servers that are still waiting to start.
-- The serverhost stops servers that the controller no longer lists.
+When the connection returns, SimpleCloud continues from its stored state and starts any servers that are still queued.
 
 ## Next steps
 
