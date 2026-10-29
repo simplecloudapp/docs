@@ -54,11 +54,6 @@ Der Controller und sein Messaging-Dienst laufen auf der Infrastruktur von Simple
 
 - Der Controller macht mit seinem gespeicherten Zustand weiter und startet Server, die noch auf ihren Start warten.
 - Der Serverhost stoppt Server, die der Controller nicht mehr aufführt.
-- Laufende Proxys laden ihre Serverliste nicht neu. Ein Server, der während des Ausfalls gestoppt wurde, kann weiter aufgeführt sein, sodass Spieler, die ihn wählen, keine Verbindung bekommen.
-
-<Warning>
-Starte deine Proxys nach einem Ausfall neu, damit sie die aktuelle Serverliste laden. Starte auch jeden Proxy neu, der während des Ausfalls gestartet ist. `/connection reload` lädt nur die Konfiguration von Server Connection neu, nicht die Serverliste.
-</Warning>
 
 ## Nächste Schritte
 

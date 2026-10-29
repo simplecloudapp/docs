@@ -52,11 +52,6 @@ The controller and its messaging service run on SimpleCloud's infrastructure. Th
 
 - The controller continues from its stored state and starts servers that are still waiting to start.
 - The serverhost stops servers that the controller no longer lists.
-- Running proxies do not reload their server list. A server that stopped during the outage can stay listed, so players who pick it fail to connect.
-
-<Warning>
-After an outage, restart your proxies so they load the current server list. Also restart any proxy that started during the outage. `/connection reload` only reloads the Server Connection configuration and does not reload the server list.
-</Warning>
 
 ## Next steps
 
