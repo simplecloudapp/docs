@@ -1,8 +1,117 @@
 ---
 title: "Self-hosting"
-description: "Status der Anleitung, SimpleCloud selbst zu hosten"
+description: "Betreibe die SimpleCloud-Plattform mit Docker Compose auf deinem eigenen Server"
 ---
 
-## Status
+## Bevor du beginnst
 
-Eine Anleitung, SimpleCloud selbst zu hosten, ist geplant. Bis sie verfügbar ist, verbindest du deine Serverhosts über die [Installationsanleitung](/de/manual/setup/installation).
+Du brauchst:
+
+- Einen Linux-Server mit Docker und Docker Compose 2.23.1 oder neuer. Die Ports 80 und 443 müssen aus dem Internet erreichbar sein.
+- Eine Domain. Richte diese Subdomains auf den Server: `dash`, `auth`, `controller`, `nats` und `serverhosts`.
+
+Die Beispiele verwenden `example.com`. Ersetze es durch deine Domain.
+
+## Plattform starten
+
+<Steps>
+  <Step title="Konfiguration erstellen">
+    Erstelle ein Verzeichnis für SimpleCloud und führe darin das Setup-Skript aus:
+
+    ```bash
+    mkdir simplecloud && cd simplecloud
+    curl -fsSL https://raw.githubusercontent.com/simplecloudapp/simplecloud-manifest/main/self-hosting/setup.sh | bash -s -- example.com
+    ```
+
+    Das Skript lädt `compose.yaml` herunter und erstellt eine `.env`-Datei mit generierten Secrets. Halte `.env` privat.
+  </Step>
+
+  <Step title="Login-Anbieter hinzufügen">
+    Nutzer melden sich mit Google, GitHub oder Discord an. Richte mindestens einen Anbieter ein und trage seine Zugangsdaten in `.env` ein. Die Login-Seite zeigt nur die Anbieter, die du eingerichtet hast.
+
+    <Tabs>
+      <Tab title="Google">
+        Erstelle in der [Google Cloud Console](https://console.cloud.google.com/apis/credentials) eine OAuth-Client-ID vom Typ **Webanwendung** mit dieser Weiterleitungs-URI:
+
+        ```text
+        https://auth.example.com/api/auth/callback/google
+        ```
+
+        Trage Client-ID und Secret in `.env` ein:
+
+        ```bash .env
+        GOOGLE_CLIENT_ID=...
+        GOOGLE_CLIENT_SECRET=...
+        ```
+      </Tab>
+      <Tab title="GitHub">
+        Erstelle in deinen [GitHub-Entwicklereinstellungen](https://github.com/settings/developers) eine OAuth-App mit dieser Callback-URL:
+
+        ```text
+        https://auth.example.com/api/auth/callback/github
+        ```
+
+        Trage Client-ID und Secret in `.env` ein:
+
+        ```bash .env
+        GITHUB_CLIENT_ID=...
+        GITHUB_CLIENT_SECRET=...
+        ```
+      </Tab>
+      <Tab title="Discord">
+        Erstelle im [Discord-Entwicklerportal](https://discord.com/developers/applications) eine Anwendung und füge unter **OAuth2** diese Weiterleitung hinzu:
+
+        ```text
+        https://auth.example.com/api/auth/callback/discord
+        ```
+
+        Trage Client-ID und Secret in `.env` ein:
+
+        ```bash .env
+        DISCORD_CLIENT_ID=...
+        DISCORD_CLIENT_SECRET=...
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Stack starten">
+    ```bash
+    docker compose up -d
+    ```
+
+    Caddy fordert die HTTPS-Zertifikate für deine Subdomains automatisch an. Öffne `https://dash.example.com`, melde dich an und erstelle ein Netzwerk.
+  </Step>
+</Steps>
+
+## Serverhost verbinden
+
+Führe diese Befehle auf jeder Maschine aus, auf der Minecraft-Server laufen sollen. Sie richten CLI und Serverhost vor dem Setup auf deinen Server aus.
+
+```bash
+curl -fsSL https://get.simplecloud.app | bash
+
+sc config controller-url set https://controller.example.com
+sc config auth-url set https://auth.example.com
+sc config dashboard-url set https://dash.example.com
+
+mkdir -p ~/simplecloud
+cat > ~/simplecloud/serverhost.properties <<'EOF'
+CONTROLLER_URL=https://controller.example.com
+NATS_URL=wss://nats.example.com:443
+SERVERHOST_GATEWAY_URL=https://serverhosts.example.com
+EOF
+
+SIMPLECLOUD_NATS_URL=wss://nats.example.com:443 sc setup --install-dir ~/simplecloud
+```
+
+Das Setup öffnet dein Dashboard, damit du dich anmeldest und das Netzwerk auswählst.
+
+## Aktualisieren
+
+Lade die neuesten Images und starte den Stack neu:
+
+```bash
+docker compose pull
+docker compose up -d
+```

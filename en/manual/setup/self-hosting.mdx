@@ -1,8 +1,117 @@
 ---
 title: "Self-hosting"
-description: "Status of the guide for hosting SimpleCloud yourself"
+description: "Run the SimpleCloud platform on your own server with Docker Compose"
 ---
 
-## Status
+## Before you begin
 
-A guide for hosting SimpleCloud yourself is planned. Until it is available, follow the [installation guide](/en/manual/setup/installation) to connect your serverhosts.
+You need:
+
+- A Linux server with Docker and Docker Compose 2.23.1 or newer. Ports 80 and 443 must be reachable from the internet.
+- A domain. Point these subdomains to the server: `dash`, `auth`, `controller`, `nats`, and `serverhosts`.
+
+The examples use `example.com`. Replace it with your domain.
+
+## Start the platform
+
+<Steps>
+  <Step title="Create the configuration">
+    Create a directory for SimpleCloud and run the setup script in it:
+
+    ```bash
+    mkdir simplecloud && cd simplecloud
+    curl -fsSL https://raw.githubusercontent.com/simplecloudapp/simplecloud-manifest/main/self-hosting/setup.sh | bash -s -- example.com
+    ```
+
+    The script downloads `compose.yaml` and creates a `.env` file with generated secrets. Keep `.env` private.
+  </Step>
+
+  <Step title="Add a login provider">
+    Users sign in with Google, GitHub, or Discord. Set up at least one provider and add its credentials to `.env`. The login page only shows the providers you set up.
+
+    <Tabs>
+      <Tab title="Google">
+        In the [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create an OAuth client ID of type **Web application** with this redirect URI:
+
+        ```text
+        https://auth.example.com/api/auth/callback/google
+        ```
+
+        Add the client ID and secret to `.env`:
+
+        ```bash .env
+        GOOGLE_CLIENT_ID=...
+        GOOGLE_CLIENT_SECRET=...
+        ```
+      </Tab>
+      <Tab title="GitHub">
+        In your [GitHub developer settings](https://github.com/settings/developers), create an OAuth app with this callback URL:
+
+        ```text
+        https://auth.example.com/api/auth/callback/github
+        ```
+
+        Add the client ID and secret to `.env`:
+
+        ```bash .env
+        GITHUB_CLIENT_ID=...
+        GITHUB_CLIENT_SECRET=...
+        ```
+      </Tab>
+      <Tab title="Discord">
+        In the [Discord developer portal](https://discord.com/developers/applications), create an application and add this redirect under **OAuth2**:
+
+        ```text
+        https://auth.example.com/api/auth/callback/discord
+        ```
+
+        Add the client ID and secret to `.env`:
+
+        ```bash .env
+        DISCORD_CLIENT_ID=...
+        DISCORD_CLIENT_SECRET=...
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Start the stack">
+    ```bash
+    docker compose up -d
+    ```
+
+    Caddy requests HTTPS certificates for your subdomains automatically. Open `https://dash.example.com`, sign in, and create a network.
+  </Step>
+</Steps>
+
+## Connect a serverhost
+
+Run these commands on every machine that should run Minecraft servers. They point the CLI and the serverhost at your server before setup starts.
+
+```bash
+curl -fsSL https://get.simplecloud.app | bash
+
+sc config controller-url set https://controller.example.com
+sc config auth-url set https://auth.example.com
+sc config dashboard-url set https://dash.example.com
+
+mkdir -p ~/simplecloud
+cat > ~/simplecloud/serverhost.properties <<'EOF'
+CONTROLLER_URL=https://controller.example.com
+NATS_URL=wss://nats.example.com:443
+SERVERHOST_GATEWAY_URL=https://serverhosts.example.com
+EOF
+
+SIMPLECLOUD_NATS_URL=wss://nats.example.com:443 sc setup --install-dir ~/simplecloud
+```
+
+Setup opens your dashboard to sign in and select the network.
+
+## Update
+
+Pull the latest images and restart the stack:
+
+```bash
+docker compose pull
+docker compose up -d
+```
