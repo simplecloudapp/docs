@@ -157,6 +157,10 @@ Du kannst `name`, `type`, `minMemory`, `maxMemory`, `maxPlayers`, `active`, `pri
 
 Gib beim Aktualisieren eines verschachtelten Objekts wie `ScalingConfig` alle Werte an, die es enthalten soll. Verwende die folgenden Methoden für Eigenschaften, wenn du nur einzelne Eigenschaften zusammenführen möchtest.
 
+<Warning>
+  Der Controller prüft die Skalierung der Gruppe bei jeder Aktualisierung, auch wenn deine Anfrage `scaling` nicht ändert. Überschreitet eine gespeicherte Gruppe die [Skalierungsgrenzen](#referenz-zum-gruppenmodell), schlägt jede Aktualisierung mit `400 Bad Request` fehl, bis du `scaling` innerhalb der Grenzen setzt. Du kannst die korrigierte `scaling` in derselben Anfrage mitsenden.
+</Warning>
+
 ## Gruppeneigenschaften verwalten
 
 Gruppeneigenschaften speichern benutzerdefinierte Daten für deine Plugins. Aktualisierungen werden mit der vorhandenen Map zusammengeführt.
@@ -322,11 +326,11 @@ Die folgenden Felder sind über die Getter von `Group` verfügbar.
 
 <Accordion title="Felder von ScalingConfig">
   <ResponseField name="minServers" type="integer" required>
-    Mindestanzahl der vorzuhaltenden Server.
+    Mindestanzahl der vorzuhaltenden Server. Darf `maxServers` nicht überschreiten.
   </ResponseField>
 
   <ResponseField name="maxServers" type="integer" required>
-    Maximale Anzahl der Server, die die Gruppe erstellen darf.
+    Maximale Anzahl der Server, die die Gruppe erstellen darf. Muss mindestens `minServers` und höchstens `1000` betragen.
   </ResponseField>
 
   <ResponseField name="scalingMode" type="ScalingMode | null">
@@ -334,7 +338,7 @@ Die folgenden Felder sind über die Getter von `Group` verfügbar.
   </ResponseField>
 
   <ResponseField name="availableSlots" type="integer" required>
-    Anzahl der im Modus `SLOTS` vorzuhaltenden freien Spielerplätze.
+    Anzahl der im Modus `SLOTS` vorzuhaltenden freien Spielerplätze. Höchstens `1000000`.
   </ResponseField>
 
   <ResponseField name="playerThreshold" type="number" required>
@@ -348,6 +352,8 @@ Die folgenden Felder sind über die Getter von `Group` verfügbar.
   <Note>
     `SLOTS` kann Server starten und stoppen. `PLAYERS` startet Server nur; zusätzliche Instanzen werden nicht automatisch gestoppt.
   </Note>
+
+  Der Controller lehnt eine Anfrage zum Erstellen oder Aktualisieren mit `400 Bad Request` ab, wenn `maxServers` größer als `1000`, `availableSlots` größer als `1000000` oder `minServers` größer als `maxServers` ist. Im Modus `SLOTS` skaliert eine Gruppe mit `maxPlayers` gleich `0` nur bis `minServers`.
 </Accordion>
 
 ## Gruppenservertypen

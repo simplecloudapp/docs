@@ -157,6 +157,10 @@ You can update `name`, `type`, `minMemory`, `maxMemory`, `maxPlayers`, `active`,
 
 When updating a nested object such as `ScalingConfig`, provide all values you want it to contain. Use the property methods below when you only want to merge individual properties.
 
+<Warning>
+  The controller validates the group's scaling on every update, even when your request does not change `scaling`. If a stored group exceeds the [scaling limits](#group-model-reference), every update fails with `400 Bad Request` until you bring `scaling` within the limits. You can include the corrected `scaling` in the same request.
+</Warning>
+
 ## Manage group properties
 
 Group properties store custom data for your plugins. Updates merge with the existing map.
@@ -322,11 +326,11 @@ The following fields are available through `Group` getters.
 
 <Accordion title="ScalingConfig fields">
   <ResponseField name="minServers" type="integer" required>
-    Minimum number of servers to maintain.
+    Minimum number of servers to maintain. Must not exceed `maxServers`.
   </ResponseField>
 
   <ResponseField name="maxServers" type="integer" required>
-    Maximum number of servers the group may create.
+    Maximum number of servers the group may create. Must be at least `minServers` and at most `1000`.
   </ResponseField>
 
   <ResponseField name="scalingMode" type="ScalingMode | null">
@@ -334,7 +338,7 @@ The following fields are available through `Group` getters.
   </ResponseField>
 
   <ResponseField name="availableSlots" type="integer" required>
-    Free player slots to maintain in `SLOTS` mode.
+    Free player slots to maintain in `SLOTS` mode. At most `1000000`.
   </ResponseField>
 
   <ResponseField name="playerThreshold" type="number" required>
@@ -348,6 +352,8 @@ The following fields are available through `Group` getters.
   <Note>
     `SLOTS` can start and stop servers. `PLAYERS` only starts servers; it does not stop extra instances automatically.
   </Note>
+
+  The controller rejects a create or update request with `400 Bad Request` when `maxServers` exceeds `1000`, `availableSlots` exceeds `1000000`, or `minServers` exceeds `maxServers`. In `SLOTS` mode, a group with `maxPlayers` set to `0` only scales to `minServers`.
 </Accordion>
 
 ## Group server types
