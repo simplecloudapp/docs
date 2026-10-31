@@ -10,7 +10,7 @@ Du brauchst:
 - Einen Linux-Server mit Docker und Docker Compose 2.23.1 oder neuer. Die Ports 80 und 443 müssen aus dem Internet erreichbar sein.
 - Eine Domain. Richte diese Subdomains auf den Server: `dash`, `auth`, `controller`, `nats` und `serverhosts`.
 
-Die Beispiele verwenden `example.com`. Ersetze es durch deine Domain.
+Die Beispiele verwenden `example.com`. In den Befehlen ersetzt du es nur einmal: im Setup-Befehl und in der `DOMAIN`-Zeile.
 
 ## Plattform starten
 
@@ -23,7 +23,7 @@ Die Beispiele verwenden `example.com`. Ersetze es durch deine Domain.
     curl -fsSL https://raw.githubusercontent.com/simplecloudapp/simplecloud-manifest/main/self-hosting/setup.sh | bash -s -- example.com
     ```
 
-    Das Skript lädt `compose.yaml` herunter und erstellt eine `.env`-Datei mit generierten Secrets. Halte `.env` privat.
+    Das Skript lädt `compose.yaml` herunter, erstellt eine `.env`-Datei mit generierten Secrets und gibt die Callback-URLs für deine Domain aus. Halte `.env` privat.
   </Step>
 
   <Step title="Login-Anbieter hinzufügen">
@@ -96,23 +96,25 @@ Die Beispiele verwenden `example.com`. Ersetze es durch deine Domain.
 
 ## Serverhost verbinden
 
-Führe diese Befehle auf jeder Maschine aus, auf der Minecraft-Server laufen sollen. Sie richten CLI und Serverhost vor dem Setup auf deinen Server aus.
+Führe diese Befehle auf jeder Maschine aus, auf der Minecraft-Server laufen sollen. Setze `DOMAIN` in der ersten Zeile. Die Befehle richten CLI und Serverhost vor dem Setup auf deinen Server aus.
 
 ```bash
+DOMAIN=example.com
+
 curl -fsSL https://get.simplecloud.app | bash
 
-sc config controller-url set https://controller.example.com
-sc config auth-url set https://auth.example.com
-sc config dashboard-url set https://dash.example.com
+sc config controller-url set "https://controller.$DOMAIN"
+sc config auth-url set "https://auth.$DOMAIN"
+sc config dashboard-url set "https://dash.$DOMAIN"
 
 mkdir -p ~/simplecloud
-cat > ~/simplecloud/serverhost.properties <<'EOF'
-CONTROLLER_URL=https://controller.example.com
-NATS_URL=wss://nats.example.com:443
-SERVERHOST_GATEWAY_URL=https://serverhosts.example.com
+cat > ~/simplecloud/serverhost.properties <<EOF
+CONTROLLER_URL=https://controller.$DOMAIN
+NATS_URL=wss://nats.$DOMAIN:443
+SERVERHOST_GATEWAY_URL=https://serverhosts.$DOMAIN
 EOF
 
-SIMPLECLOUD_NATS_URL=wss://nats.example.com:443 sc setup --install-dir ~/simplecloud
+SIMPLECLOUD_NATS_URL="wss://nats.$DOMAIN:443" sc setup --install-dir ~/simplecloud
 ```
 
 Das Setup öffnet dein Dashboard, damit du dich anmeldest und das Netzwerk auswählst.
