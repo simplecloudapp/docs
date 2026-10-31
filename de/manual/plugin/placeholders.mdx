@@ -1,60 +1,65 @@
 ---
 title: 'Placeholders'
-description: 'Stelle SimpleCloud-Daten zu Servern, persistenten Servern und Gruppen über PlaceholderAPI bereit'
+description: 'Zeige SimpleCloud-Daten zu Servern, Gruppen, Spielern und dem Netzwerk über PlaceholderAPI oder MiniPlaceholders an'
 tag: 'Server'
 ---
 
 ## Unterstützte Software
 
-| Servertyp      | PlaceholderAPI | Dieses Plugin |
-| -------------- | -------------- | ------------- |
-| Paper und Forks | Ja            | Ja            |
-| Purpur         | Ja             | Ja            |
-| Folia          | Ja             | Ja            |
-| Spigot         | Ja             | Nein          |
-| Andere         | Nein           | Nein          |
+| Servertyp       | Unterstützung |
+| --------------- | ------------- |
+| Paper und Forks | Ja            |
+
+Placeholders benötigt mindestens eines dieser Plugins auf demselben Server:
+
+| Plugin | Format |
+| ------ | ------ |
+| [PlaceholderAPI](https://dash.simplecloud.app/plugin/install/placeholderapi) | `%simplecloud_server_player_count%` |
+| [MiniPlaceholders](https://dash.simplecloud.app/plugin/install/miniplaceholders) | `<simplecloud_server_player_count>` |
 
 ## Plugin installieren
 
 <Steps>
-  <Step title="Benötigte Plugins installieren">
-    Lade Placeholders von [GitHub](https://github.com/simplecloudapp/placeholder-plugin/releases) und [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/) herunter. Folia benötigt PlaceholderAPI 2.11.7 oder neuer.
+  <Step title="Plugins installieren">
+    Lade Placeholders von [GitHub](https://github.com/simplecloudapp/simplecloud-plugins/releases) oder [Modrinth](https://modrinth.com/organization/simplecloud) herunter und installiere PlaceholderAPI, MiniPlaceholders oder beide. Lege die JAR-Dateien im Ordner `plugins/` des Server-Templates ab.
 
-    Lege beide JAR-Dateien im Ordner `plugins/` des Server-Templates ab. Die Standard-Templates enthalten `simplecloud-api` bereits.
-
-    Füge `simplecloud-api` bei einem eigenen Template über die Einstellung **Plugins** des Ziels oder über die CLI hinzu.
+    Placeholders registriert die Expansion `simplecloud` automatisch; du musst keine separate Expansion herunterladen.
   </Step>
 
-  <Step title="Passenden Server starten">
-    Starte einen Server aus dem Template. Das Plugin registriert die Expansion `simplecloud` direkt bei PlaceholderAPI; du musst keine separate Expansion herunterladen.
-  </Step>
-
-  <Step title="Platzhalter testen">
-    Betritt den Server und führe diesen Befehl aus:
-
-    ```text
-    /papi parse me %simplecloud_server_id%
-    ```
+  <Step title="Platzhalter prüfen">
+    Starte einen Server aus dem Template und verwende einen Platzhalter wie `%simplecloud_server_name%` in einem Plugin, das PlaceholderAPI oder MiniPlaceholders unterstützt, zum Beispiel in deinem Scoreboard.
 
     <Check>
-      Ein Gruppenserver gibt seine SimpleCloud-Server-UUID zurück. Verwende auf einem persistenten Server stattdessen einen Platzhalter mit `persistent_server_*`.
+      Der Platzhalter zeigt den Namen des aktuellen Servers an, zum Beispiel `Lobby-1`.
     </Check>
   </Step>
 </Steps>
 
-<Note>
-  Die Expansion-ID ist `simplecloud`; alle Platzhalter beginnen deshalb mit
-  `%simplecloud_...%`.
-</Note>
+## Aufbau der Platzhalter
+
+Jeder Platzhalter besteht aus der Expansion `simplecloud`, einem Typ, einem optionalen Ziel und einer Eigenschaft:
+
+```text
+%simplecloud_<typ>_<eigenschaft>%
+%simplecloud_<typ>_<ziel>_<eigenschaft>%
+```
+
+| Typ | Ohne Ziel | Mit Ziel |
+| --- | --------- | -------- |
+| `server` | Aktueller Server | Laufender Server über Gruppe und numerische ID oder UUID |
+| `group` | Gruppe des aktuellen Servers | Gruppe über ihren Namen |
+| `persistent_server` | Aktueller persistenter Server | Persistenter Server über seinen Namen |
+| `player` | Spieler, für den der Platzhalter aufgelöst wird | Spieler über Name oder UUID |
+| `network` | Gesamtes Netzwerk | Nicht unterstützt |
 
 ## Server-Platzhalter
-
-Diese Platzhalter werden über `SIMPLECLOUD_UNIQUE_ID` für den aktuellen SimpleCloud-Server aufgelöst.
 
 | Platzhalter | Beschreibung |
 | ----------- | ------------ |
 | `%simplecloud_server_id%` | Server-UUID |
-| `%simplecloud_server_type%` | Servergruppentyp |
+| `%simplecloud_server_name%` | Servername, zum Beispiel `Lobby-1`, oder Name des persistenten Servers |
+| `%simplecloud_server_group%` | Name der Gruppe oder des persistenten Servers |
+| `%simplecloud_server_type%` | Servertyp: `SERVER` oder `PROXY` |
 | `%simplecloud_server_host%` | Serverhost-ID |
 | `%simplecloud_server_numerical_id%` | Numerische ID innerhalb der Gruppe |
 | `%simplecloud_server_ip%` | Server-IP-Adresse |
@@ -63,106 +68,126 @@ Diese Platzhalter werden über `SIMPLECLOUD_UNIQUE_ID` für den aktuellen Simple
 | `%simplecloud_server_min_memory%` | Minimaler Arbeitsspeicher in MB |
 | `%simplecloud_server_max_memory%` | Maximaler Arbeitsspeicher in MB |
 | `%simplecloud_server_player_count%` | Aktuelle Spielerzahl |
-| `%simplecloud_server_state%` | Aktueller Serverstatus |
+| `%simplecloud_server_state%` | Aktueller Serverstatus, zum Beispiel `AVAILABLE` oder `INGAME` |
 
 ## Gruppen-Platzhalter
-
-Diese Platzhalter werden über `SIMPLECLOUD_GROUP` für die aktuelle SimpleCloud-Gruppe aufgelöst.
 
 | Platzhalter | Beschreibung |
 | ----------- | ------------ |
 | `%simplecloud_group_name%` | Gruppenname |
-| `%simplecloud_group_type%` | Servergruppentyp |
-| `%simplecloud_group_min_memory%` | Minimaler Speicher in MB |
-| `%simplecloud_group_max_memory%` | Maximaler Speicher in MB |
+| `%simplecloud_group_type%` | Servertyp der Gruppe: `SERVER` oder `PROXY` |
+| `%simplecloud_group_min_memory%` | Minimaler Arbeitsspeicher in MB |
+| `%simplecloud_group_max_memory%` | Maximaler Arbeitsspeicher in MB |
 | `%simplecloud_group_max_players%` | Maximale Spielerzahl pro Server |
-| `%simplecloud_group_player_count%` | Gesamtzahl der Spieler auf allen Gruppenservern |
+| `%simplecloud_group_player_count%` | Gesamtzahl der Spieler auf allen nicht gestoppten Servern der Gruppe |
 
 ## Persistent-Server-Platzhalter
-
-Diese Platzhalter werden über `SIMPLECLOUD_UNIQUE_ID` für den aktuellen persistenten Server aufgelöst.
 
 | Platzhalter | Beschreibung |
 | ----------- | ------------ |
 | `%simplecloud_persistent_server_id%` | Persistent-Server-UUID |
 | `%simplecloud_persistent_server_name%` | Name des persistenten Servers |
-| `%simplecloud_persistent_server_type%` | Servertyp |
+| `%simplecloud_persistent_server_type%` | Servertyp: `SERVER` oder `PROXY` |
 | `%simplecloud_persistent_server_host%` | Zugewiesene Serverhost-ID |
 | `%simplecloud_persistent_server_max_players%` | Maximale Spielerzahl |
-| `%simplecloud_persistent_server_min_memory%` | Minimaler Speicher in MB |
-| `%simplecloud_persistent_server_max_memory%` | Maximaler Speicher in MB |
-| `%simplecloud_persistent_server_player_count%` | Aktuelle Spieleranzahl oder `0`, wenn keine Instanz läuft |
-| `%simplecloud_persistent_server_is_active%` | Ob der persistente Server aktiv ist |
+| `%simplecloud_persistent_server_min_memory%` | Minimaler Arbeitsspeicher in MB |
+| `%simplecloud_persistent_server_max_memory%` | Maximaler Arbeitsspeicher in MB |
+| `%simplecloud_persistent_server_player_count%` | Aktuelle Spielerzahl |
+| `%simplecloud_persistent_server_is_active%` | `true`, wenn der persistente Server aktiv ist, sonst `false` |
+
+## Spieler-Platzhalter
+
+Ohne Ziel zeigen Spieler-Platzhalter Daten des Spielers, für den der Text aufgelöst wird, etwa im Scoreboard oder in der Tablist dieses Spielers. Die Daten stammen aus SimpleCloud und gelten deshalb netzwerkweit, nicht nur für den aktuellen Server.
+
+| Platzhalter | Beschreibung |
+| ----------- | ------------ |
+| `%simplecloud_player_uuid%` | Spieler-UUID |
+| `%simplecloud_player_name%` | Spielername |
+| `%simplecloud_player_display_name%` | Anzeigename |
+| `%simplecloud_player_server%` | Server, auf dem sich der Spieler befindet |
+| `%simplecloud_player_proxy%` | Proxy, mit dem der Spieler verbunden ist |
+| `%simplecloud_player_online%` | `true`, wenn der Spieler online ist, sonst `false` |
+| `%simplecloud_player_online_time%` | Gesamte Spielzeit, zum Beispiel `12h 34m` |
+| `%simplecloud_player_online_time_seconds%` | Gesamte Spielzeit in Sekunden |
+| `%simplecloud_player_first_seen%` | Zeitpunkt des ersten Beitritts zum Netzwerk |
+| `%simplecloud_player_last_seen%` | Zeitpunkt des letzten Beitritts zum Netzwerk |
+
+## Netzwerk-Platzhalter
+
+| Platzhalter | Beschreibung |
+| ----------- | ------------ |
+| `%simplecloud_network_online_players%` | Online-Spieler im gesamten Netzwerk |
+| `%simplecloud_network_online_servers%` | Server im Status `AVAILABLE` oder `INGAME` |
 
 ## Andere Ressource auswählen
 
-Standardmäßig liefern die oben aufgeführten Platzhalter Informationen über den Server, auf dem das Plugin läuft. Für eine andere Ressource fügst du deren Selektor vor der Eigenschaft ein.
+Standardmäßig beziehen sich die Platzhalter auf den Server, auf dem das Plugin läuft, oder auf den aktuellen Spieler. Für eine andere Ressource fügst du ihr Ziel zwischen Typ und Eigenschaft ein.
 
 | Ressource | Format |
 | --------- | ------ |
-| Gruppe | `%simplecloud_group_<group-name>_<property>%` |
-| Persistenter Server | `%simplecloud_persistent_server_<persistent-server-name>_<property>%` |
-| Laufender Server über Gruppe und numerische ID | `%simplecloud_server_<group-name>:<numerical-id>_<property>%` |
-| Laufender Server über UUID | `%simplecloud_server_id:<server-id>_<property>%` |
+| Gruppe | `%simplecloud_group_<gruppenname>_<eigenschaft>%` |
+| Persistenter Server | `%simplecloud_persistent_server_<servername>_<eigenschaft>%` |
+| Laufender Server über Gruppe und numerische ID | `%simplecloud_server_<gruppenname>:<numerische-id>_<eigenschaft>%` |
+| Laufender Server über UUID | `%simplecloud_server_id:<server-uuid>_<eigenschaft>%` |
+| Spieler über Name | `%simplecloud_player_<spielername>_<eigenschaft>%` |
+| Spieler über UUID | `%simplecloud_player_<spieler-uuid>_<eigenschaft>%` |
 
 Zum Beispiel:
 
 ```text
 %simplecloud_group_Lobby_player_count%
-%simplecloud_persistent_server_MainLobby_is_active%
+%simplecloud_persistent_server_Citybuild_is_active%
 %simplecloud_server_Lobby:1_state%
 %simplecloud_server_id:550e8400-e29b-41d4-a716-446655440000_player_count%
+%simplecloud_player_Notch_server%
 ```
 
-Verwende dieselben Eigenschaften, die in den Tabellen oben nach dem Ressourcenpräfix stehen. Aus `server_player_count` wird beispielsweise `server_Lobby:1_player_count` und aus `group_max_players` wird `group_Lobby_max_players`.
+Du kannst dieselben Eigenschaften wie in den Tabellen oben verwenden. Aus `server_player_count` wird beispielsweise `server_Lobby:1_player_count`.
 
-<Note>
-  Gruppen- und Persistent-Server-Namen dürfen Unterstriche enthalten. Der
-  Doppelpunkt in einem Selektor für laufende Server trennt den Gruppennamen von
-  der numerischen Server-ID.
-</Note>
+## MiniPlaceholders
 
-<Warning>
-  Ein Platzhalter mit explizitem Ziel kann nicht aufgelöst werden, wenn die
-  ausgewählte Ressource nicht existiert, der laufende Server offline oder der
-  Selektor ungültig ist.
-</Warning>
+Mit MiniPlaceholders verwendest du dieselben Namen als MiniMessage-Tags. Ein Ziel übergibst du als Argument nach einem Doppelpunkt:
+
+| PlaceholderAPI | MiniPlaceholders |
+| -------------- | ---------------- |
+| `%simplecloud_server_player_count%` | `<simplecloud_server_player_count>` |
+| `%simplecloud_group_Lobby_player_count%` | `<simplecloud_group_player_count:Lobby>` |
+| `%simplecloud_server_Lobby:1_state%` | `<simplecloud_server_state:Lobby:1>` |
+| `%simplecloud_server_id:<uuid>_state%` | `<simplecloud_server_state:id:<uuid>>` |
+| `%simplecloud_player_online_time%` | `<simplecloud_player_online_time>` |
+| `%simplecloud_player_Notch_server%` | `<simplecloud_player_server:Notch>` |
 
 ## Beispiel
 
 ```yaml
 scoreboard:
-  title: "&bServerstatus"
+  title: "&bSimpleCloud"
   lines:
-    - "&7Server: &f%simplecloud_server_id%"
+    - "&7Server: &f%simplecloud_server_name%"
     - "&7Spieler: &f%simplecloud_server_player_count%/%simplecloud_server_max_players%"
-    - "&7Status: &f%simplecloud_server_state%"
     - ""
-    - "&7Gruppe: &f%simplecloud_group_name%"
-    - "&7Spieler gesamt: &f%simplecloud_group_player_count%"
+    - "&7Lobby gesamt: &f%simplecloud_group_Lobby_player_count%"
+    - "&7Netzwerk: &f%simplecloud_network_online_players% Spieler"
     - ""
-    - "&7Lobby-1: &f%simplecloud_server_Lobby:1_player_count% Spieler"
+    - "&7Deine Spielzeit: &f%simplecloud_player_online_time%"
 ```
-
-<Tip>
-  Wenn ein Platzhalter für die aktuelle Ressource keinen Wert liefert, prüfe,
-  ob der Server über SimpleCloud läuft und die passende Umgebungsvariable
-  verfügbar ist. Kontrolliere bei einem expliziten Ziel außerdem den
-  Ressourcennamen, die UUID oder die numerische ID.
-</Tip>
 
 ## Fehlerbehebung
 
 <AccordionGroup>
-  <Accordion title="PlaceholderAPI lässt den Platzhalter unverändert">
-    Prüfe, ob PlaceholderAPI, `simplecloud-api` und `simplecloud-placeholder` auf demselben Paper-Server aktiviert sind. Suche danach im Serverprotokoll nach Fehlern beim Laden der Abhängigkeiten oder beim Registrieren der Expansion.
+  <Accordion title="Der Platzhalter wird unverändert angezeigt">
+    Prüfe, ob PlaceholderAPI oder MiniPlaceholders, `simplecloud-api` und Placeholders auf demselben Server aktiviert sind. Suche im Serverprotokoll nach Fehlern beim Laden der Abhängigkeiten. Prüfe außerdem die Schreibweise: Ein unbekannter Typ oder eine unbekannte Eigenschaft wird von PlaceholderAPI nicht ersetzt.
   </Accordion>
 
-  <Accordion title="Ein Platzhalter für den aktuellen Server bleibt leer">
-    Starte den Server über SimpleCloud. Diese Platzhalter benötigen die Umgebungsvariable `SIMPLECLOUD_UNIQUE_ID` oder `SIMPLECLOUD_GROUP`, die SimpleCloud beim Start setzt.
+  <Accordion title="Der Platzhalter zeigt dauerhaft `...`">
+    Placeholders erreicht die Cloud API nicht. Prüfe, ob der Server über SimpleCloud gestartet wurde und `simplecloud-api` ohne Fehler geladen ist. Fehler beim Laden schreibt das Plugin mit `Failed to load ... placeholder` ins Serverprotokoll.
   </Accordion>
 
-  <Accordion title="Ein Platzhalter mit explizitem Ziel bleibt leer">
-    Prüfe Ressourcenname, UUID oder numerische ID. Das Ziel muss existieren; ein gezielt ausgewählter laufender Server muss außerdem online sein.
+  <Accordion title="Ein Platzhalter ohne Ziel bleibt leer">
+    Starte den Server über SimpleCloud. Gruppen-Platzhalter bleiben auf persistenten Servern leer, Persistent-Server-Platzhalter auf Gruppenservern. Spieler-Platzhalter ohne Ziel benötigen einen Spielerkontext.
+  </Accordion>
+
+  <Accordion title="Ein Platzhalter mit Ziel bleibt leer">
+    Prüfe Name, UUID oder numerische ID des Ziels. Das Ziel muss existieren; ein ausgewählter laufender Server muss außerdem online sein. Ein Spieler muss das Netzwerk bereits mindestens einmal betreten haben.
   </Accordion>
 </AccordionGroup>

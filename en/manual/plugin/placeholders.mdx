@@ -1,58 +1,65 @@
 ---
 title: 'Placeholders'
-description: 'Expose SimpleCloud server, persistent-server, and group data through PlaceholderAPI'
+description: 'Display SimpleCloud server, group, player, and network data through PlaceholderAPI or MiniPlaceholders'
 tag: 'Server'
 ---
 
 ## Supported software
 
-| Server Type   | PlaceholderAPI | This Plugin |
-| ------------- | -------------- | ----------- |
-| Paper & Forks | Yes            | Yes         |
-| Purpur        | Yes            | Yes         |
-| Folia         | Yes            | Yes         |
-| Spigot        | Yes            | No          |
-| Other         | No             | No          |
+| Server Type   | Supported |
+| ------------- | --------- |
+| Paper & Forks | Yes       |
+
+Placeholders requires at least one of these plugins on the same server:
+
+| Plugin | Format |
+| ------ | ------ |
+| [PlaceholderAPI](https://dash.simplecloud.app/plugin/install/placeholderapi) | `%simplecloud_server_player_count%` |
+| [MiniPlaceholders](https://dash.simplecloud.app/plugin/install/miniplaceholders) | `<simplecloud_server_player_count>` |
 
 ## Install the plugin
 
 <Steps>
-  <Step title="Install the required plugins">
-    Download Placeholders from [GitHub](https://github.com/simplecloudapp/placeholder-plugin/releases) and [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/). Folia requires PlaceholderAPI 2.11.7 or newer.
+  <Step title="Install the plugins">
+    Download Placeholders from [GitHub](https://github.com/simplecloudapp/simplecloud-plugins/releases) or [Modrinth](https://modrinth.com/organization/simplecloud) and install PlaceholderAPI, MiniPlaceholders, or both. Place the JARs in the server template's `plugins/` folder.
 
-    Place both JARs in the server template's `plugins/` folder. Standard SimpleCloud templates already include `simplecloud-api`; add it through the target's **Plugins** setting or the CLI if you use a custom template.
+    Placeholders registers the `simplecloud` expansion automatically, so you do not need to download a separate expansion.
   </Step>
 
-  <Step title="Start a matching server">
-    Start a server from the template. The plugin registers the `simplecloud` expansion with PlaceholderAPI; it does not require a separate expansion download.
-  </Step>
-
-  <Step title="Test a placeholder">
-    Join the server and run:
-
-    ```text
-    /papi parse me %simplecloud_server_id%
-    ```
+  <Step title="Verify the placeholders">
+    Start a server from the template and use a placeholder such as `%simplecloud_server_name%` in a plugin that supports PlaceholderAPI or MiniPlaceholders, for example your scoreboard.
 
     <Check>
-      A group server returns its SimpleCloud server UUID. A persistent server returns a value when you use a `persistent_server_*` placeholder instead.
+      The placeholder shows the name of the current server, for example `Lobby-1`.
     </Check>
   </Step>
 </Steps>
 
-<Note>
-  The expansion identifier is `simplecloud`, so every placeholder starts with
-  `%simplecloud_...%`.
-</Note>
+## Placeholder format
+
+Every placeholder consists of the `simplecloud` expansion, a type, an optional target, and a property:
+
+```text
+%simplecloud_<type>_<property>%
+%simplecloud_<type>_<target>_<property>%
+```
+
+| Type | Without target | With target |
+| ---- | -------------- | ----------- |
+| `server` | Current server | Running server by group and numerical ID, or by UUID |
+| `group` | Group of the current server | Group by name |
+| `persistent_server` | Current persistent server | Persistent server by name |
+| `player` | Player the placeholder is resolved for | Player by name or UUID |
+| `network` | Entire network | Not supported |
 
 ## Server placeholders
-
-These placeholders resolve from the current SimpleCloud server using `SIMPLECLOUD_UNIQUE_ID`.
 
 | Placeholder | Description |
 | ----------- | ----------- |
 | `%simplecloud_server_id%` | Server UUID |
-| `%simplecloud_server_type%` | Server group type |
+| `%simplecloud_server_name%` | Server name, for example `Lobby-1`, or the persistent-server name |
+| `%simplecloud_server_group%` | Group or persistent-server name |
+| `%simplecloud_server_type%` | Server type: `SERVER` or `PROXY` |
 | `%simplecloud_server_host%` | Serverhost ID |
 | `%simplecloud_server_numerical_id%` | Numerical ID within the group |
 | `%simplecloud_server_ip%` | Server IP address |
@@ -61,105 +68,126 @@ These placeholders resolve from the current SimpleCloud server using `SIMPLECLOU
 | `%simplecloud_server_min_memory%` | Minimum memory in MB |
 | `%simplecloud_server_max_memory%` | Maximum memory in MB |
 | `%simplecloud_server_player_count%` | Current player count |
-| `%simplecloud_server_state%` | Current server state |
+| `%simplecloud_server_state%` | Current server state, for example `AVAILABLE` or `INGAME` |
 
 ## Group placeholders
-
-These placeholders resolve from the current SimpleCloud group using `SIMPLECLOUD_GROUP`.
 
 | Placeholder | Description |
 | ----------- | ----------- |
 | `%simplecloud_group_name%` | Group name |
-| `%simplecloud_group_type%` | Group server type |
+| `%simplecloud_group_type%` | Group server type: `SERVER` or `PROXY` |
 | `%simplecloud_group_min_memory%` | Minimum memory in MB |
 | `%simplecloud_group_max_memory%` | Maximum memory in MB |
 | `%simplecloud_group_max_players%` | Maximum players per server |
-| `%simplecloud_group_player_count%` | Summed player count across group servers |
+| `%simplecloud_group_player_count%` | Summed player count across all non-stopped group servers |
 
 ## Persistent-server placeholders
-
-These placeholders resolve from the current persistent server using `SIMPLECLOUD_UNIQUE_ID`.
 
 | Placeholder | Description |
 | ----------- | ----------- |
 | `%simplecloud_persistent_server_id%` | Persistent-server UUID |
 | `%simplecloud_persistent_server_name%` | Persistent-server name |
-| `%simplecloud_persistent_server_type%` | Server type |
+| `%simplecloud_persistent_server_type%` | Server type: `SERVER` or `PROXY` |
 | `%simplecloud_persistent_server_host%` | Assigned serverhost ID |
 | `%simplecloud_persistent_server_max_players%` | Maximum players |
 | `%simplecloud_persistent_server_min_memory%` | Minimum memory in MB |
 | `%simplecloud_persistent_server_max_memory%` | Maximum memory in MB |
-| `%simplecloud_persistent_server_player_count%` | Current player count, or `0` when no instance is running |
-| `%simplecloud_persistent_server_is_active%` | Whether the persistent server is active |
+| `%simplecloud_persistent_server_player_count%` | Current player count |
+| `%simplecloud_persistent_server_is_active%` | `true` if the persistent server is active, otherwise `false` |
+
+## Player placeholders
+
+Without a target, player placeholders show data for the player the text is resolved for, such as that player's scoreboard or tablist. The data comes from SimpleCloud, so it applies network-wide rather than only to the current server.
+
+| Placeholder | Description |
+| ----------- | ----------- |
+| `%simplecloud_player_uuid%` | Player UUID |
+| `%simplecloud_player_name%` | Player name |
+| `%simplecloud_player_display_name%` | Display name |
+| `%simplecloud_player_server%` | Server the player is connected to |
+| `%simplecloud_player_proxy%` | Proxy the player is connected to |
+| `%simplecloud_player_online%` | `true` if the player is online, otherwise `false` |
+| `%simplecloud_player_online_time%` | Total playtime, for example `12h 34m` |
+| `%simplecloud_player_online_time_seconds%` | Total playtime in seconds |
+| `%simplecloud_player_first_seen%` | Time the player first joined the network |
+| `%simplecloud_player_last_seen%` | Time the player last joined the network |
+
+## Network placeholders
+
+| Placeholder | Description |
+| ----------- | ----------- |
+| `%simplecloud_network_online_players%` | Online players across the entire network |
+| `%simplecloud_network_online_servers%` | Servers in the `AVAILABLE` or `INGAME` state |
 
 ## Target another resource
 
-By default, the placeholders above return information about the server on which the plugin is running. To display information about another resource, add its selector before the property.
+By default, placeholders refer to the server the plugin runs on or to the current player. To display information about another resource, insert its target between the type and the property.
 
 | Resource | Format |
 | -------- | ------ |
 | Group | `%simplecloud_group_<group-name>_<property>%` |
-| Persistent server | `%simplecloud_persistent_server_<persistent-server-name>_<property>%` |
+| Persistent server | `%simplecloud_persistent_server_<server-name>_<property>%` |
 | Running server by group and numerical ID | `%simplecloud_server_<group-name>:<numerical-id>_<property>%` |
-| Running server by UUID | `%simplecloud_server_id:<server-id>_<property>%` |
+| Running server by UUID | `%simplecloud_server_id:<server-uuid>_<property>%` |
+| Player by name | `%simplecloud_player_<player-name>_<property>%` |
+| Player by UUID | `%simplecloud_player_<player-uuid>_<property>%` |
 
 For example:
 
 ```text
 %simplecloud_group_Lobby_player_count%
-%simplecloud_persistent_server_MainLobby_is_active%
+%simplecloud_persistent_server_Citybuild_is_active%
 %simplecloud_server_Lobby:1_state%
 %simplecloud_server_id:550e8400-e29b-41d4-a716-446655440000_player_count%
+%simplecloud_player_Notch_server%
 ```
 
-Use the same properties that appear after the resource prefix in the tables above. For example, `server_player_count` becomes `server_Lobby:1_player_count`, and `group_max_players` becomes `group_Lobby_max_players`.
+Use the same properties as in the tables above. For example, `server_player_count` becomes `server_Lobby:1_player_count`.
 
-<Note>
-  Group and persistent-server names may contain underscores. The colon in a
-  running-server selector separates the group name from its numerical server
-  ID.
-</Note>
+## MiniPlaceholders
 
-<Warning>
-  A targeted placeholder cannot be resolved if the selected resource does not
-  exist, the running server is offline, or the selector is invalid.
-</Warning>
+With MiniPlaceholders, you use the same names as MiniMessage tags. Pass a target as an argument after a colon:
+
+| PlaceholderAPI | MiniPlaceholders |
+| -------------- | ---------------- |
+| `%simplecloud_server_player_count%` | `<simplecloud_server_player_count>` |
+| `%simplecloud_group_Lobby_player_count%` | `<simplecloud_group_player_count:Lobby>` |
+| `%simplecloud_server_Lobby:1_state%` | `<simplecloud_server_state:Lobby:1>` |
+| `%simplecloud_server_id:<uuid>_state%` | `<simplecloud_server_state:id:<uuid>>` |
+| `%simplecloud_player_online_time%` | `<simplecloud_player_online_time>` |
+| `%simplecloud_player_Notch_server%` | `<simplecloud_player_server:Notch>` |
 
 ## Example usage
 
 ```yaml
 scoreboard:
-  title: "&bServer Status"
+  title: "&bSimpleCloud"
   lines:
-    - "&7Server: &f%simplecloud_server_id%"
+    - "&7Server: &f%simplecloud_server_name%"
     - "&7Players: &f%simplecloud_server_player_count%/%simplecloud_server_max_players%"
-    - "&7State: &f%simplecloud_server_state%"
     - ""
-    - "&7Group: &f%simplecloud_group_name%"
-    - "&7Total Players: &f%simplecloud_group_player_count%"
+    - "&7Lobby total: &f%simplecloud_group_Lobby_player_count%"
+    - "&7Network: &f%simplecloud_network_online_players% players"
     - ""
-    - "&7Lobby-1: &f%simplecloud_server_Lobby:1_player_count% players"
+    - "&7Your playtime: &f%simplecloud_player_online_time%"
 ```
-
-<Tip>
-  If a current-resource placeholder returns no value, confirm that the server
-  is running inside SimpleCloud and that the matching environment variable is
-  available. For a targeted placeholder, verify the resource name, UUID, or
-  numerical ID.
-</Tip>
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="PlaceholderAPI leaves the placeholder unchanged">
-    Confirm that PlaceholderAPI, `simplecloud-api`, and `simplecloud-placeholder` are enabled on the same Paper server. Then check the server log for dependency or expansion registration errors.
+  <Accordion title="The placeholder is shown unchanged">
+    Confirm that PlaceholderAPI or MiniPlaceholders, `simplecloud-api`, and Placeholders are enabled on the same server. Check the server log for dependency loading errors. Also check the spelling: PlaceholderAPI does not replace an unknown type or property.
   </Accordion>
 
-  <Accordion title="A current-server placeholder returns no value">
-    Run the server through SimpleCloud. Current-resource placeholders depend on the `SIMPLECLOUD_UNIQUE_ID` or `SIMPLECLOUD_GROUP` environment variable set by SimpleCloud.
+  <Accordion title="The placeholder keeps showing `...`">
+    Placeholders cannot reach the Cloud API. Confirm that the server was started through SimpleCloud and that `simplecloud-api` loaded without errors. The plugin logs loading errors as `Failed to load ... placeholder`.
+  </Accordion>
+
+  <Accordion title="A placeholder without a target returns no value">
+    Run the server through SimpleCloud. Group placeholders return no value on persistent servers, and persistent-server placeholders return no value on group servers. Player placeholders without a target need a player context.
   </Accordion>
 
   <Accordion title="A targeted placeholder returns no value">
-    Check the resource name, UUID, or numerical ID. The target must exist, and a targeted running server must be online.
+    Check the target's name, UUID, or numerical ID. The target must exist, and a targeted running server must be online. A player must have joined the network at least once.
   </Accordion>
 </AccordionGroup>
