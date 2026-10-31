@@ -27,7 +27,7 @@ The examples use `example.com`. Replace it with your domain.
   </Step>
 
   <Step title="Add a login provider">
-    Users sign in with Google, GitHub, or Discord. Set up at least one provider and add its credentials to `.env`. The login page only shows the providers you set up.
+    Users sign in with Google, GitHub, Discord, or an email link. Set up at least one and add its credentials to `.env`. The login page only shows the methods you set up.
 
     <Tabs>
       <Tab title="Google">
@@ -71,6 +71,16 @@ The examples use `example.com`. Replace it with your domain.
         DISCORD_CLIENT_ID=...
         DISCORD_CLIENT_SECRET=...
         ```
+      </Tab>
+      <Tab title="Email">
+        Create an API key in [Resend](https://resend.com/api-keys) and [verify your domain](https://resend.com/domains). Add the key and a sender address on that domain to `.env`:
+
+        ```bash .env
+        RESEND_API_KEY=...
+        EMAIL_FROM=noreply@example.com
+        ```
+
+        Team invites are also sent by email, so set this up if you want to invite members.
       </Tab>
     </Tabs>
   </Step>

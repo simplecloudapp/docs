@@ -27,7 +27,7 @@ Die Beispiele verwenden `example.com`. Ersetze es durch deine Domain.
   </Step>
 
   <Step title="Login-Anbieter hinzufügen">
-    Nutzer melden sich mit Google, GitHub oder Discord an. Richte mindestens einen Anbieter ein und trage seine Zugangsdaten in `.env` ein. Die Login-Seite zeigt nur die Anbieter, die du eingerichtet hast.
+    Nutzer melden sich mit Google, GitHub, Discord oder einem Link per E-Mail an. Richte mindestens eine Methode ein und trage ihre Zugangsdaten in `.env` ein. Die Login-Seite zeigt nur die Methoden, die du eingerichtet hast.
 
     <Tabs>
       <Tab title="Google">
@@ -71,6 +71,16 @@ Die Beispiele verwenden `example.com`. Ersetze es durch deine Domain.
         DISCORD_CLIENT_ID=...
         DISCORD_CLIENT_SECRET=...
         ```
+      </Tab>
+      <Tab title="E-Mail">
+        Erstelle bei [Resend](https://resend.com/api-keys) einen API-Schlüssel und [verifiziere deine Domain](https://resend.com/domains). Trage den Schlüssel und eine Absenderadresse auf dieser Domain in `.env` ein:
+
+        ```bash .env
+        RESEND_API_KEY=...
+        EMAIL_FROM=noreply@example.com
+        ```
+
+        Team-Einladungen werden ebenfalls per E-Mail verschickt. Richte das also ein, wenn du Mitglieder einladen willst.
       </Tab>
     </Tabs>
   </Step>
