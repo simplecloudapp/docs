@@ -1,91 +1,83 @@
 ---
 title: 'Cloud Command'
-description: 'Verwalte Gruppen, Server und Spieler mit Proxy-Befehlen von SimpleCloud'
+description: 'Verwalte Gruppen, Server und Spieler mit Befehlen direkt im Spiel'
 tag: 'Proxy'
 ---
 
 ## Unterstützte Software
 
-| Software | Unterstützung |
-| -------- | ------------- |
-| Velocity | Ja |
-| BungeeCord | Ja |
-| Gate | Geplant |
+| Software   | Unterstützt |
+| ---------- | ----------- |
+| Velocity   | Ja          |
+| BungeeCord | Ja          |
+| Gate       | Geplant     |
 
 ## Plugin installieren
 
 <Steps>
-  <Step title="Cloud Command auf dem Proxy installieren">
-    Lade Cloud Command von [GitHub](https://github.com/simplecloudapp/command-plugin/releases) herunter und lege die JAR-Datei im Ordner `plugins/` des Proxy-Templates ab. Die Standard-Templates enthalten `simplecloud-api` bereits. Füge es bei einem eigenen Template über die Einstellung **Plugins** des Ziels oder über die CLI hinzu.
-  </Step>
-
-  <Step title="Nachrichtendatei erzeugen">
-    Starte einmal einen passenden Proxy. Cloud Command legt `plugins/simplecloud-command/messages.yml` im Verzeichnis des laufenden Proxys an.
-  </Step>
-
-  <Step title="Nachrichtendatei ins Template übernehmen">
-    Kopiere bei einem Gruppen-Proxy `plugins/simplecloud-command/messages.yml` vor dem Stoppen an denselben Pfad im Template. Dateien, die nur im temporären Proxy-Verzeichnis liegen, gehen beim Stoppen verloren.
-
-    Unter [Templates](/de/manual/setup/templates) findest du den vollständigen Ablauf.
+  <Step title="Plugin installieren">
+    Lade Cloud Command von [GitHub](https://github.com/simplecloudapp/simplecloud-plugins/releases) oder [Modrinth](https://modrinth.com/organization/simplecloud) herunter und lege die JAR in den Ordner `plugins/` des Proxy Templates.
   </Step>
 
   <Step title="Befehle prüfen">
-    Weise dir `simplecloud.command.use` zu, verbinde dich über den Proxy und führe `/cloud` aus.
+    Starte einen Proxy, gib dir die Berechtigung `simplecloud.command.use` und führe `/cloud` aus.
 
     <Check>
-      Das Hilfemenü zeigt alle Unterbefehle, für die du eine Berechtigung hast.
+      Das Hilfemenü zeigt alle Befehle, für die du eine Berechtigung hast.
     </Check>
   </Step>
 </Steps>
 
+Alle Nachrichten kannst du in `plugins/simplecloud-command/messages.yml` ändern.
+
 ## Befehle
 
-Der Hauptbefehl ist als `/cloud`, `/sc` und `/simplecloud` verfügbar.
+Du kannst `/cloud`, `/sc` oder `/simplecloud` verwenden.
 
 ### Gruppen
 
 | Befehl | Beschreibung |
 | ------ | ------------ |
-| `/cloud group list` | Alle Gruppen auflisten |
-| `/cloud group info <group>` | Gruppentyp, Arbeitsspeicher, Spielerlimit und Anzahl laufender Server anzeigen |
-| `/cloud group start <group> [count]` | Einen oder mehrere neue Server der Gruppe anfordern |
-| `/cloud group stop <group> [id]` | Alle laufenden Server einer Gruppe oder eine numerische ID stoppen |
+| `/cloud group list` | Zeigt alle Gruppen mit ihren Servern |
+| `/cloud group info <group>` | Zeigt Typ, Arbeitsspeicher, maximale Spieler und laufende Server einer Gruppe |
+| `/cloud group start <group> [count]` | Startet einen oder mehrere Server, maximal 50 auf einmal |
+| `/cloud group stop <group> [id]` | Stoppt alle Server einer Gruppe oder nur den Server mit dieser numerischen ID |
 
 ### Server
 
 | Befehl | Beschreibung |
 | ------ | ------------ |
-| `/cloud server list [group]` | Laufende Server auflisten, optional nach Gruppe gefiltert |
-| `/cloud server info <group> <id>` | Status, Arbeitsspeicher und Spieler eines Servers anzeigen |
-| `/cloud server start <group>` | Einen neuen Server der Gruppe anfordern |
-| `/cloud server stop <group> <id>` | Einen laufenden Server stoppen |
+| `/cloud server list [group]` | Zeigt alle laufenden Server, optional nur von einer Gruppe |
+| `/cloud server info <group> <id>` | Zeigt Status, Arbeitsspeicher und Spieler eines Servers |
+| `/cloud server start <group>` | Startet einen neuen Server |
+| `/cloud server stop <group> <id>` | Stoppt einen Server |
 
 ### Spieler
 
-Verwende `group` für eine Servergruppe und `ps` für einen persistenten Server.
+Als Ziel verwendest du `group` für eine Gruppe oder `ps` für einen persistenten Server.
 
 | Befehl | Beschreibung |
 | ------ | ------------ |
-| `/cloud player list <group\|ps> <target>` | Spieler einer Gruppe oder eines persistenten Servers auflisten |
-| `/cloud player info <player>` | Verbindungsdaten eines Spielers anzeigen |
-| `/cloud player send <player> <group\|ps> <target>` | Einen Spieler zum Ziel senden |
-| `/cloud player sendall <group\|ps> <target>` | Alle Online-Spieler zum Ziel senden |
-| `/cloud player sendfrom <source> <group\|ps> <target>` | Spieler eines Quellservers zum Ziel senden |
-| `/cloud player message <player> <message>` | Einem Spieler eine unformatierte Nachricht senden |
+| `/cloud player list <group\|ps> <target>` | Zeigt die Spieler auf einem Ziel |
+| `/cloud player info <player>` | Zeigt Server, Proxy, Spielzeit, ersten und letzten Join eines Spielers |
+| `/cloud player send <player> <group\|ps> <target>` | Sendet einen Spieler zu einem Ziel |
+| `/cloud player sendall <group\|ps> <target>` | Sendet alle Spieler zu einem Ziel |
+| `/cloud player sendfrom <source> <group\|ps> <target>` | Sendet alle Spieler von einer Quelle zu einem Ziel |
+| `/cloud player message <player> <message>` | Sendet einem Spieler eine Nachricht |
 
-### Konfiguration neu laden
+Die `<source>` bei `sendfrom` kann eine Gruppe, ein Server wie `Lobby-1` oder ein persistenter Server sein.
+
+### Sonstiges
 
 | Befehl | Beschreibung |
 | ------ | ------------ |
-| `/cloud reload` | `plugins/simplecloud-command/messages.yml` neu laden |
-
-Starte den Proxy neu, wenn du stattdessen die Datei im Template bearbeitet hast.
+| `/cloud reload` | Lädt das Plugin neu |
 
 ## Berechtigungen
 
 | Berechtigung | Beschreibung |
 | ------------ | ------------ |
-| `simplecloud.command.use` | Hauptbefehl verwenden und verfügbare Unterbefehle anzeigen |
+| `simplecloud.command.use` | `/cloud` verwenden und das Hilfemenü sehen |
 | `simplecloud.command.group.list` | `/cloud group list` verwenden |
 | `simplecloud.command.group.info` | `/cloud group info` verwenden |
 | `simplecloud.command.group.start` | `/cloud group start` verwenden |
@@ -96,13 +88,11 @@ Starte den Proxy neu, wenn du stattdessen die Datei im Template bearbeitet hast.
 | `simplecloud.command.server.stop` | `/cloud server stop` verwenden |
 | `simplecloud.command.player.list` | `/cloud player list` verwenden |
 | `simplecloud.command.player.info` | `/cloud player info` verwenden |
-| `simplecloud.command.player.send` | Befehle zum Verschieben von Spielern verwenden |
+| `simplecloud.command.player.send` | `send`, `sendall` und `sendfrom` verwenden |
 | `simplecloud.command.player.message` | `/cloud player message` verwenden |
 | `simplecloud.command.reload` | `/cloud reload` verwenden |
 
-<Note>
-  Das Hilfemenü zeigt nur Befehle, für die der Absender eine Berechtigung hat.
-</Note>
+Das Hilfemenü zeigt nur die Befehle, für die du eine Berechtigung hast.
 
 <Frame>
   <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/cloud-command/help.png?raw=true" alt="Hilfemenü von Cloud Command" />
@@ -111,15 +101,12 @@ Starte den Proxy neu, wenn du stattdessen die Datei im Template bearbeitet hast.
 ## Fehlerbehebung
 
 <AccordionGroup>
-  <Accordion title="Der Proxy kann Cloud Command nicht laden">
-    Prüfe, ob `simplecloud-api` auf demselben Proxy installiert und aktiviert ist. Cloud Command benötigt dieses Plugin zwingend.
+  <Accordion title="Der Proxy lädt Cloud Command nicht">
+    Prüfe, ob `simplecloud-api` auf demselben Proxy installiert ist. Ohne die API startet Cloud Command nicht.
   </Accordion>
 
   <Accordion title="Ein Befehl fehlt im Hilfemenü">
-    Weise die passende Berechtigung zu. Das Hilfemenü blendet Unterbefehle aus, die der Absender nicht verwenden darf.
+    Gib dir die passende Berechtigung. Das Hilfemenü blendet Befehle aus, die du nicht verwenden darfst.
   </Accordion>
 
-  <Accordion title="Nachrichtenänderungen verschwinden nach einem Neustart">
-    Bearbeite `plugins/simplecloud-command/messages.yml` im Proxy-Template oder kopiere die getestete Datei dorthin, bevor ein temporärer Gruppen-Proxy stoppt.
-  </Accordion>
 </AccordionGroup>

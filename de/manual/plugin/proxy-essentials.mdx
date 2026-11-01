@@ -1,89 +1,52 @@
 ---
 title: 'Proxy Essentials'
-description: 'Konfiguriere SimpleCloud-MOTDs, Tablists, Joinstates, Spielerzahlen und Proxy-Layouts'
+description: 'Richte MOTD, Tablist, Join States, Wartungsmodus und Spielerzahl deines Proxys ein'
 tag: 'Proxy'
 ---
 
 ## Unterstützte Software
 
-| Software   | Plugin-Unterstützung |
-| ---------- | --------------------- |
-| Velocity   | Ja                    |
-| BungeeCord | Ja                    |
+| Software   | Unterstützt |
+| ---------- | ----------- |
+| Velocity   | Ja          |
+| BungeeCord | Ja          |
 
 ## Plugin installieren
 
 <Steps>
-  <Step title="Proxy-Plugins installieren">
-    Lade Proxy Essentials von [GitHub](https://github.com/simplecloudapp/proxy-essentials-plugin/releases) herunter und lege es im `plugins/`-Ordner des Proxy-Templates ab. Die Standard-Templates enthalten `simplecloud-api` bereits. Füge es bei einem eigenen Template über die Einstellung **Plugins** des Ziels oder über die CLI hinzu.
+  <Step title="Plugin installieren">
+    Lade Proxy Essentials von [GitHub](https://github.com/simplecloudapp/simplecloud-plugins/releases) oder [Modrinth](https://modrinth.com/organization/simplecloud) herunter und lege die JAR in den Ordner `plugins/` des Proxy Templates.
   </Step>
 
-  <Step title="Konfiguration erzeugen">
-    Starte einmal einen Proxy. Proxy Essentials erstellt sein Datenverzeichnis an einer dieser Stellen:
-
-    | Software | Verzeichnis |
-    | -------- | ----------- |
-    | Velocity | `plugins/proxy-essentials-velocity/` |
-    | BungeeCord | `plugins/proxy-essentials-bungeecord/` |
+  <Step title="Proxy starten">
+    Starte einen Proxy. Proxy Essentials erstellt seine Dateien in `plugins/simplecloud-proxy-essentials/`.
   </Step>
 
-  <Step title="Erzeugte Dateien im Template sichern">
-    Kopiere bei einem Gruppen-Proxy das erzeugte Plugin-Verzeichnis vom laufenden Proxy an denselben Pfad in seinem Proxy-Template. Änderungen nur im temporären `running`-Verzeichnis verschwinden sonst, sobald der Proxy stoppt.
-
-    Unter [Templates](/de/manual/setup/templates) erfährst du, wie du die erzeugten Dateien in ein Template übernimmst. Template-Änderungen gelten beim nächsten Start des Proxys.
-  </Step>
-
-  <Step title="Änderungen anwenden und prüfen">
-    Führe `/scproxy reload` aus, wenn du Dateien eines laufenden Proxys bearbeitet hast. Hast du stattdessen das Template geändert, starte den Proxy neu, damit er die geänderten Dateien erhält.
+  <Step title="Plugin prüfen">
+    Füge den Proxy zu deiner Minecraft Serverliste hinzu.
 
     <Check>
-      In der Proxy-Konsole sollte Proxy Essentials ohne Konfigurations- oder Cloud-API-Fehler starten.
+      Die Serverliste zeigt die MOTD und das Icon von SimpleCloud.
     </Check>
   </Step>
 </Steps>
 
-<Note>
-  `/tab reload` gehört zu einem anderen Tablist-Plugin und lädt Proxy Essentials nicht neu. Verwende `/scproxy reload` auf dem Proxy.
-</Note>
+Damit deine Änderungen erhalten bleiben, kopiere den Ordner `plugins/simplecloud-proxy-essentials/` ins Proxy Template. Dateien, die nur auf einem laufenden Proxy einer Gruppe liegen, werden beim Stoppen gelöscht. Mehr dazu unter [Templates](/de/manual/setup/templates).
 
-## Erzeugte Dateien
+## Dateien
 
-| Datei | Zweck |
-| ----- | ----- |
-| `config.yml` | Joinstates, domänenbasierte MOTD-Routen, Kick-Verhalten, Spielerzahl und Tablist |
-| `layout/*.yml` | Serverlisten-MOTD, Icon, Hovertext, Version und Slot-Layouts |
-| `layout/server-icons/*` | Serverlisten-Icons für die Layouts |
-| `placeholder.yml` | Farbschwellen für den Ping |
-| `messages.yml` | Kick- und Befehlsnachrichten |
+| Datei | Beschreibung |
+| ----- | ------------ |
+| `config.yml` | Join States, Domains, Whitelist, Spielerzahl, Tablist und Kick Verhalten |
+| `messages.yml` | Nachrichten, Datumsformate und Ping Farben |
+| `layout/*.yml` | Layouts für die Serverliste mit MOTD, Icon, Hover Text, Version und Slots |
+| `layout/server-icons/` | Server Icons für die Layouts |
 
-## Joinstates
+## Join States
 
-Ein Joinstate ist eine benannte Zugriffsregel. Die Liste `joinstates` in der `config.yml` definiert die verfügbaren Regeln. Der aktive Status wird auf der ausgewählten SimpleCloud-Gruppe oder Serverinstanz gespeichert.
-
-Joinstates können:
-
-- Eine Berechtigung für das Betreten des Proxys oder eines Backend-Servers verlangen
-- Eine separate Berechtigung für den Beitritt zu einem vollen Proxy-Netzwerk verlangen
-- Ein Wartungs-MOTD-Layout für den Proxy auswählen
-- Für eine vollständige Gruppe oder eine einzelne laufende Serverinstanz gelten
-
-### Proxy- und Backend-Gruppen verhalten sich unterschiedlich
-
-| Ziel | Auswirkung |
-| ---- | ---------- |
-| Proxy-Gruppe | Steuert den Beitritt zum Netzwerk, prüft die Berechtigung für ein volles Netzwerk und kann ein Serverlisten-Layout erzwingen |
-| Backend-Gruppe wie `Lobby` | Steuert, ob Spieler diese Backend-Serverinstanzen betreten oder zu ihnen wechseln dürfen |
-| Einzelne Serverinstanz wie `Lobby-1` | Überschreibt den Zugriff nur für diese laufende Instanz |
-
-<Info>
-  Wenn du nur die Gruppe `Lobby` auf Wartung setzt, ändert sich die öffentliche Netzwerk-MOTD nicht. Setze die **Proxy-Gruppe** auf Wartung, wenn du das gesamte Netzwerk sperren und das Wartungs-Layout anzeigen möchtest.
-</Info>
-
-### Joinstates definieren
+Ein Join State legt fest, wer joinen darf. Du definierst Join States in der `config.yml` und setzt sie auf eine Gruppe, einen einzelnen Server oder einen persistenten Server.
 
 ```yaml config.yml
-version: '2'
-
 initial-state: public
 initial-layout: public
 
@@ -93,7 +56,6 @@ joinstates:
       join: ''
       full: 'simplecloud.proxy-essentials.join.full.public'
     forced-motd-layout: null
-
   - name: maintenance
     permission:
       join: 'simplecloud.proxy-essentials.join.maintenance'
@@ -101,77 +63,94 @@ joinstates:
     forced-motd-layout: maintenance
 ```
 
-| Einstellung | Verhalten |
-| ----------- | --------- |
-| `name` | Name für die `/scproxy joinstate`-Befehle |
-| `permission.join` | Benötigte Beitrittsberechtigung; ein leerer Wert erlaubt allen den Zutritt |
-| `permission.full` | Benötigte Berechtigung, wenn die Proxy-Gruppe ihr Spielerlimit erreicht hat |
-| `forced-motd-layout` | Fallback-MOTD-Layout, solange dieser Status auf dem Proxy aktiv ist; `null` erzwingt kein Layout |
-| `initial-state` | Fallback für Gruppen oder Serverinstanzen ohne gespeicherten Status; eine Änderung schaltet bestehende Gruppen nicht um |
-| `initial-layout` | Fallback-MOTD-Layout, wenn kein gespeichertes oder erzwungenes Layout greift |
+| Einstellung | Beschreibung |
+| ----------- | ------------ |
+| `name` | Name des Join States |
+| `permission.join` | Berechtigung zum Joinen. Leer lassen, damit alle joinen dürfen |
+| `permission.full` | Berechtigung zum Joinen, wenn die Proxygruppe voll ist |
+| `forced-motd-layout` | Layout, das angezeigt wird, solange der Join State auf dem Proxy aktiv ist. `null` zeigt das normale Layout |
+| `initial-state` | Join State für Ziele, die noch keinen haben |
+| `initial-layout` | Layout, wenn kein anderes Layout passt |
 
-Führe `/scproxy reload` aus, nachdem du Statusdefinitionen hinzugefügt oder geändert hast. Das Neuladen einer Definition aktiviert sie nicht.
+### Proxy und Backend Server
 
-### Wartung für das Netzwerk aktivieren
+Wo du einen Join State setzt, ändert seine Wirkung:
 
-Im folgenden Beispiel heißt die Proxy-Gruppe `Proxy`:
+| Ziel | Wirkung |
+| ---- | ------- |
+| Proxygruppe, zum Beispiel `Proxy` | Legt fest, wer das Netzwerk betreten darf, und kann die MOTD ändern |
+| Backend Gruppe, zum Beispiel `Lobby` | Legt fest, wer auf die Server dieser Gruppe darf |
+| Einzelner Server, zum Beispiel `Lobby-1` | Gilt nur für diesen Server |
+| Persistenter Server, zum Beispiel `Citybuild` | Gilt nur für diesen persistenten Server |
+
+<Info>
+  Wenn du `Lobby` in den Wartungsmodus setzt, ändert sich die MOTD nicht. Um das ganze Netzwerk in den Wartungsmodus zu setzen, ändere den Join State der **Proxygruppe**.
+</Info>
+
+### Wartungsmodus aktivieren
+
+Wenn deine Proxygruppe `Proxy` heißt:
 
 <Steps>
-  <Step title="Wartungsstatus konfigurieren">
-    Setze beim Status `forced-motd-layout: maintenance` und stelle sicher, dass `layout/maintenance.yml` mit `motd.enabled: true` existiert.
-  </Step>
-
-  <Step title="Dateien neu laden">
-    Führe `/scproxy reload` auf dem Proxy aus.
-  </Step>
-
-  <Step title="Status auf der Proxy-Gruppe setzen">
+  <Step title="Join State setzen">
     ```text
-    /scproxy joinstate set Proxy maintenance
+    /scproxy joinstate set group Proxy maintenance
     ```
 
-    Der Gruppenbefehl speichert den Status auf der Gruppe und ihren aktuell laufenden Serverinstanzen. Instanzen ohne eigenen Status verwenden den Gruppenstatus.
+    Der Join State wird auf der Gruppe und allen laufenden Servern gespeichert. Neue Server der Gruppe starten ebenfalls damit.
   </Step>
 
-  <Step title="Aktiven Status prüfen">
+  <Step title="Join State prüfen">
     ```text
-    /scproxy joinstate info Proxy
+    /scproxy joinstate info group Proxy
     ```
 
-    Spieler benötigen jetzt `simplecloud.proxy-essentials.join.maintenance`, um beizutreten. Aktualisiere die Minecraft-Mehrspielerliste, um die Wartungs-MOTD zu sehen.
+    Spieler brauchen jetzt `simplecloud.proxy-essentials.join.maintenance`, um zu joinen. Aktualisiere deine Serverliste, um die MOTD für den Wartungsmodus zu sehen.
   </Step>
 
   <Step title="Netzwerk wieder öffnen">
     ```text
-    /scproxy joinstate set Proxy public
+    /scproxy joinstate set group Proxy public
     ```
   </Step>
 </Steps>
 
-Um nur eine Backend-Gruppe oder eine einzelne Serverinstanz zu sperren, verwende zum Beispiel:
+Weitere Beispiele:
 
 ```text
-/scproxy joinstate set Lobby maintenance
-/scproxy joinstate set Lobby 1 maintenance
+/scproxy joinstate set group Lobby maintenance
+/scproxy joinstate set group Lobby maintenance 1
+/scproxy joinstate set ps Citybuild maintenance
 ```
 
-Der erste Befehl ändert die vollständige `Lobby`-Gruppe und ihre laufenden Serverinstanzen. Der zweite ändert nur `Lobby-1`.
+Der erste Befehl ändert die ganze Gruppe `Lobby`. Der zweite ändert nur `Lobby-1`. Der dritte ändert den persistenten Server `Citybuild`.
 
-### Priorität der MOTD-Layouts
+### Server außerhalb von SimpleCloud
 
-Der Proxy bestimmt sein Serverlisten-Layout in dieser Reihenfolge:
+Server, die nicht von SimpleCloud verwaltet werden, verwenden `initial-state`. Um ihnen einen anderen Join State zu geben, trage sie mit ihrem Namen ein:
 
-1. Ein gültiges Layout, das mit `/scproxy layout set` auf der Proxy-Instanz oder der Gruppe gespeichert wurde
-2. `forced-motd-layout` des aktiven Joinstates
-3. `initial-layout`
+```yaml config.yml
+external-server-joinstates:
+  queue-limbo: public
+```
 
-Ein mit `/scproxy layout set` gespeichertes Layout hat Vorrang vor `forced-motd-layout`. Ist Wartung aktiv, aber die MOTD bleibt öffentlich, prüfe `/scproxy layout info <proxy-gruppe>`. Verwalte das Layout beim Wechsel des Joinstates entweder ebenfalls ausdrücklich mit `/scproxy layout set`, oder lege kein festes Layout fest, wenn Joinstates automatisch umschalten sollen.
+### Whitelist
 
-Der derzeit in der erzeugten `config.yml` vorhandene `whitelist`-Abschnitt wird bei den Beitrittsprüfungen nicht ausgewertet. Verwende `permission.join` für Administrator- oder Wartungszugriff.
+Spieler auf der Whitelist können immer joinen, auch im Wartungsmodus oder wenn das Netzwerk voll ist.
 
-## Serverlisten-Layouts
+```yaml config.yml
+whitelist:
+  enabled: true
+  players:
+    - Notch
+    - 069a79f4-44e9-4726-a5be-fca90e38aaf5
+```
 
-Jede Datei in `layout/` ist ein auswählbares Serverlisten-Layout. Der Dateiname ist gleichzeitig der Layoutname. `layout/maintenance.yml` wird daher als `maintenance` referenziert.
+Du kannst Spielernamen oder UUIDs verwenden. Nutze die Whitelist nur für Admins oder im Notfall. Für alle anderen solltest du Berechtigungen verwenden.
+
+## Layouts für die Serverliste
+
+Jede Datei in `layout/` ist ein Layout. Der Dateiname ist der Name des Layouts, `layout/maintenance.yml` ist also das Layout `maintenance`.
 
 ```yaml layout/public.yml
 config-version: '2'
@@ -179,9 +158,10 @@ config-version: '2'
 motd:
   enabled: true
   update-type: RANDOM # RANDOM oder QUEUE
+  # update-time: 100
   layouts:
     - name: public
-      line1: '<color:#0ea5e9>Ein SimpleCloud-Netzwerk'
+      line1: '<center><color:#0ea5e9>A simplecloud.app network</center>'
       line2: ' '
 
 server-icon:
@@ -198,7 +178,7 @@ player-list:
 version:
   name:
     enabled: false
-    text: Beispiel
+    text: Example
   slots:
     enabled: true
     type: REAL # REAL, FAKE oder DYNAMIC
@@ -206,15 +186,35 @@ version:
     dynamic-player-range: 5
 ```
 
-`RANDOM` wählt bei jedem Serverlisten-Ping einen zufälligen MOTD-Eintrag. `QUEUE` durchläuft die konfigurierten Einträge nacheinander. Lege Icon-Dateien in `layout/server-icons/` ab.
+| Einstellung | Beschreibung |
+| ----------- | ------------ |
+| `motd.layouts` | MOTD Einträge mit jeweils zwei Zeilen |
+| `motd.update-type` | `RANDOM` wählt einen zufälligen Eintrag, `QUEUE` zeigt die Einträge nacheinander |
+| `motd.update-time` | Zeit in Ticks bis zum nächsten Eintrag. Ohne diese Einstellung wechselt der Eintrag bei jedem Ping. `0` zeigt immer den ersten Eintrag |
+| `<center>` | Zentriert eine Zeile in der Serverliste |
+| `server-icon.file` | Icon aus `layout/server-icons/` |
+| `player-list` | Text, der beim Hovern über die Spielerzahl angezeigt wird |
+| `version.name` | Text, der statt der Spielerzahl angezeigt wird |
+| `version.slots.type` | `REAL` zeigt die echten maximalen Spieler, `FAKE` zeigt `fake-slots`, `DYNAMIC` zeigt die Online Spieler plus `dynamic-player-range` |
 
-Verwende `/scproxy layout set <gruppe> <layout>` nur, wenn du ein Layout unabhängig von Joinstate-Wechseln festlegen möchtest.
+### Welches Layout angezeigt wird
+
+Der Proxy verwendet das erste Layout, das existiert:
+
+1. Das Layout einer passenden [Domain](#motd-nach-domain)
+2. Das `forced-motd-layout` des aktiven Join States auf dem Proxy
+3. Das Layout, das mit `/scproxy layout set` gesetzt wurde
+4. `initial-layout`
+
+Um ein Layout auf einer Gruppe zu setzen, verwende:
+
+```text
+/scproxy layout set Proxy public
+```
 
 ## MOTD nach Domain
 
-Zeige Spielern ein anderes Serverlisten-Layout, abhängig vom Hostnamen, mit dem sie sich verbinden, etwa wenn mehrere Domains auf denselben Proxy zeigen.
-
-Füge Routen zur Liste `domains` in der `config.yml` hinzu:
+Zeige ein anderes Layout je nachdem, mit welcher Domain Spieler joinen, zum Beispiel wenn mehrere Domains auf denselben Proxy zeigen.
 
 ```yaml config.yml
 domains:
@@ -233,44 +233,31 @@ domains:
         layout: citybuild
 ```
 
-Spieler, die über `play.example.com` verbinden, sehen das Layout, das der Joinstate der skalierbaren Gruppe `Lobby` bestimmt; Spieler, die über `citybuild.example.com` verbinden, sehen das Layout, das der Joinstate des persistenten Servers `Citybuild` bestimmt.
+| Einstellung | Beschreibung |
+| ----------- | ------------ |
+| `domain` | Vollständige Domain, zum Beispiel `play.example.com`. Wildcards werden nicht unterstützt |
+| `target` | Gruppe oder persistenter Server, dessen Join State das Layout bestimmt |
+| `rules` | Layout für jeden Join State des Ziels |
 
-| Einstellung | Verhalten |
-| ----------- | --------- |
-| `domain` | Vollständiger Hostname, mit dem sich ein Client verbinden muss; Groß-/Kleinschreibung wird ignoriert |
-| `target` | Gruppe oder persistenter Server, dessen Joinstate das Layout für diese Domain bestimmt |
-| `rules` | Liste, die einen Joinstate von `target` auf einen [Layoutnamen](#serverlisten-layouts) in `layout/` abbildet |
-
-- **Exakter Abgleich:** `domain` muss der vollständige Hostname sein, etwa `play.example.com`. Wildcards und Subdomains wie `*.example.com` werden nicht unterstützt.
-- **Umfang von `target`:** `target` benennt eine Gruppe oder einen persistenten Server, keine einzelne Serverinstanz wie `Lobby-1`.
-- **Layout-Auflösung:** Für eine passende `domain` verwendet der Proxy den Eintrag in `rules`, dessen `state` dem aktuellen Joinstate von `target` entspricht. Existiert dessen `layout` nicht, greift stattdessen das globale `forced-motd-layout` dieses Joinstates, danach `initial-layout`.
-- **Standardziel:** Ein Hostname ohne passende `domain`, oder eine Route, bei der nichts davon greift, verwendet die oben beschriebene **Priorität der MOTD-Layouts**.
-- **Automatische Aktualisierung:** Routen werden neu berechnet, sobald sich der Joinstate von `target` ändert. Führe nach dem Hinzufügen oder Ändern von Einträgen in `domains` `/scproxy reload` aus, damit die neuen Routen wirksam werden.
+Wenn keine Regel zum Join State des Ziels passt, verwendet der Proxy dessen `forced-motd-layout` und danach `initial-layout`. Wenn keine Domain passt, gilt die normale [Reihenfolge](#welches-layout-angezeigt-wird).
 
 <Info>
-  Dies ändert nur die Serverlisten-MOTD. Um Spieler, die über eine Domain verbinden, auch auf einen bestimmten Server zu schicken, kombiniere die Funktion mit dem [Subdomain-Routing von Server Connection](/de/manual/plugin/server-connection#subdomain-routen).
+  Das ändert nur die MOTD. Um Spieler einer Domain auch auf einen bestimmten Server zu schicken, verwende die [Subdomain Routen](/de/manual/plugin/server-connection#subdomain-routen) von Server Connection.
 </Info>
 
 ## Tablist
 
-Tablist-Einträge befinden sich in der `config.yml`. Ihr `name` wird mit dem Backend-Server abgeglichen, auf dem sich der jeweilige Spieler gerade befindet.
-
-Die erste passende Regel wird in dieser Reihenfolge verwendet:
-
-1. Exakter Servername, unabhängig von Groß- und Kleinschreibung
-2. Erstes konfiguriertes Präfix, beispielsweise `Lobby` für `Lobby-1`
-3. `*`
-4. `global`
+Die Einträge für die Tablist stehen in der `config.yml`. Der `name` wird mit dem Server verglichen, auf dem der Spieler ist.
 
 ```yaml config.yml
 tablist:
   - name: Lobby
     layout:
       - header: '<green>Lobby'
-        footer: '<gray>Du bist mit <server_name> verbunden'
+        footer: '<gray>Du bist auf <server_name>'
       - header: '<yellow>SimpleCloud'
         footer: '<gray><online_players> Spieler online'
-    update-time: 20
+    update-time: 100
 
   - name: global
     layout:
@@ -279,214 +266,140 @@ tablist:
     update-time: 20
 ```
 
-Mehrere `layout`-Einträge unter demselben Namen wechseln automatisch. Derzeit wird der kleinste `update-time`-Wert aller Tablist-Einträge als ein globales Intervall für alle Einträge verwendet. Verwende denselben Wert für alle Einträge und starte den Proxy nach einer Änderung neu, da `/scproxy reload` den geplanten Task nicht neu erstellt.
+Der Proxy verwendet den ersten passenden Eintrag:
+
+1. Genauer Servername, zum Beispiel `Lobby-1`
+2. Anfang des Servernamens, zum Beispiel `Lobby` für `Lobby-1`
+3. `*`
+4. `global`
+
+Hat ein Eintrag mehrere Layouts, wechseln sie alle `update-time` Ticks. Mit `update-time: 0` wird immer das erste Layout angezeigt.
 
 ## Spielerzahl
 
-Die angezeigte Zahl umfasst alle Proxys der aktuellen Proxy-Gruppe. Du kannst weitere Gruppen und persistente Server hinzufügen.
+Die Spielerzahl enthält alle Proxys der aktuellen Proxygruppe. Du kannst weitere Gruppen und persistente Server hinzufügen oder alle Spieler im Netzwerk anzeigen.
 
 ```yaml config.yml
 player-count:
   enabled: true
+  network: false
   additional-groups:
-    - ExternalProxyGroup
+    - BedrockProxy
   additional-persistent-servers:
     - EventProxy
   update-time: 20
 ```
 
-Das Aktualisierungsintervall wird in Ticks angegeben.
+| Einstellung | Beschreibung |
+| ----------- | ------------ |
+| `network` | `true` zeigt alle Online Spieler im Netzwerk |
+| `additional-groups` | Gruppen, deren Spieler dazugezählt werden |
+| `additional-persistent-servers` | Persistente Server, deren Spieler dazugezählt werden |
+| `update-time` | Intervall in Ticks. `0` zählt nur einmal beim Start |
 
-## Kick-Verhalten von Backends
+<Note>
+  Pings von dem Rechner, auf dem der Proxy läuft, zeigen die echte Spielerzahl und keinen Hover Text. Teste die Spielerzahl deshalb von einem anderen Rechner.
+</Note>
+
+## Kick Verhalten
 
 ```yaml config.yml
 show-kick-reason: false
 ```
 
-- `false` behält das normale Fallback-Verhalten des Proxys nach einem Backend-Kick bei.
-- `true` trennt den Spieler mit dem Kick-Grund des Backends vom Proxy, anstatt ihn auf einen Fallback-Server zu schicken.
+Mit `true` wird ein Spieler, der von einem Backend Server gekickt wird, mit dem Kick Grund vom Netzwerk getrennt, statt auf einen Fallback Server geschickt zu werden.
 
-## Textformatierung
+## Platzhalter
 
-Proxy Essentials verwendet [MiniMessage](https://docs.papermc.io/adventure/minimessage/) für MOTDs, Tablists und Nachrichten. Verwende Tags wie `<red>`, `<color:#0ea5e9>`, `<bold>` und `<br>`.
+| Platzhalter | Wo | Beschreibung |
+| ----------- | -- | ------------ |
+| `<online_players>` | Überall | Online Spieler |
+| `<max_players>` | Überall | Maximale Spieler nach dem gewählten Slot Typ |
+| `<date>` | Überall | Aktuelles Datum |
+| `<time>` | Überall | Aktuelle Uhrzeit |
+| `<date:'pattern'>` | Überall | Datum und Uhrzeit in deinem eigenen Format, zum Beispiel `<date:'HH:mm'>` |
+| `<env:NAME>` | Überall | Wert einer Umgebungsvariable |
+| `<env:NAME:default>` | Überall | Wert einer Umgebungsvariable mit Fallback |
+| `<server_name>` | Tablist | Server, auf dem der Spieler ist |
+| `<ping>` | Tablist | Ping des Spielers in der passenden Farbe |
 
-Veraltete `&`- und `§`-Farbcodes werden nicht unterstützt.
+<Warning>
+  Zeige mit `<env:NAME>` keine Passwörter, Tokens oder andere geheime Daten an. Die MOTD kann jeder sehen.
+</Warning>
+
+Die Datumsformate und Ping Farben kannst du in der `messages.yml` ändern.
+
+Alle Texte verwenden [MiniMessage](https://docs.papermc.io/adventure/minimessage/). Alte Farbcodes wie `&a` werden nicht unterstützt.
 
 ## Befehle
 
 | Befehl | Beschreibung |
 | ------ | ------------ |
-| `/scproxy` | Verfügbare Proxy-Essentials-Befehle anzeigen |
-| `/scproxy help` | Befehlshilfe anzeigen |
-| `/scproxy reload` | `config.yml`, `placeholder.yml`, `messages.yml` und alle MOTD-Layouts neu laden |
-| `/scproxy joinstate help` | Joinstate-Befehle anzeigen |
-| `/scproxy joinstate info <group>` | Gespeicherten Status einer Gruppe anzeigen |
-| `/scproxy joinstate info <group> <id>` | Effektiven Status einer Serverinstanz anzeigen |
-| `/scproxy joinstate set <group> <joinstate>` | Status auf einer Gruppe und ihren laufenden Serverinstanzen setzen |
-| `/scproxy joinstate set <group> <id> <joinstate>` | Status auf einer Serverinstanz setzen |
-| `/scproxy layout help` | Layout-Befehle anzeigen |
-| `/scproxy layout info` | `initial-layout` anzeigen |
-| `/scproxy layout info <group>` | Gespeichertes oder ermitteltes Layout einer Gruppe anzeigen |
-| `/scproxy layout set <group> <layout>` | Layout auf einer Gruppe und ihren laufenden Serverinstanzen speichern |
-
-## Platzhalter
-
-| Platzhalter | Kontext | Beschreibung |
-| ----------- | ------- | ------------ |
-| `<online_players>` | MOTD, Tablist | Zusammengefasste Online-Spielerzahl |
-| `<max_players>` | MOTD, Tablist | Maximale Spielerzahl aus dem ausgewählten Slot-Modus |
-| `<date:FORMAT>` | MOTD, Tablist | Aktuelles Datum und aktuelle Uhrzeit mit einem MiniMessage-Datumsmuster |
-| `<env:NAME>` | MOTD, Tablist | Wert einer Umgebungsvariable |
-| `<env:NAME:default>` | MOTD, Tablist | Wert einer Umgebungsvariable mit Fallback |
-| `<server_name>` | Tablist | Aktueller Backend-Server des Spielers |
-| `<ping>` | Tablist | Ping des Spielers mit der Farbe der passenden Schwelle |
-
-<Warning>
-  Gib über `<env:NAME>` keine Tokens, Passwörter oder anderen Geheimnisse aus. MOTDs sind öffentlich und Tablist-Inhalte für verbundene Spieler sichtbar.
-</Warning>
-
-Konfiguriere die Farben für `<ping>` in der `placeholder.yml`:
-
-```yaml placeholder.yml
-pingColors:
-  - ping: 0
-    color: '<green>'
-  - ping: 100
-    color: '<gold>'
-  - ping: 200
-    color: '<dark_red>'
-```
+| `/scproxy` oder `/scproxy help` | Zeigt die Befehle, die du verwenden kannst |
+| `/scproxy reload` | Lädt das Plugin neu |
+| `/scproxy joinstate help` | Zeigt die Join State Befehle |
+| `/scproxy joinstate list` | Zeigt alle Join States aus der `config.yml` |
+| `/scproxy joinstate info` | Zeigt den Join State aller Gruppen und persistenten Server |
+| `/scproxy joinstate info <group\|ps> <target> [id]` | Zeigt den Join State einer Gruppe, eines Servers oder eines persistenten Servers |
+| `/scproxy joinstate set <group\|ps> <target> <joinstate> [id]` | Setzt den Join State einer Gruppe, eines Servers oder eines persistenten Servers |
+| `/scproxy layout help` | Zeigt die Layout Befehle |
+| `/scproxy layout info [group]` | Zeigt das Layout einer Gruppe, ohne Gruppe das `initial-layout` |
+| `/scproxy layout set <group> <layout>` | Setzt das Layout einer Gruppe |
 
 ## Berechtigungen
 
 | Berechtigung | Beschreibung |
 | ------------ | ------------ |
-| `simplecloud.proxy-essentials.command.help` | `/scproxy`, `/scproxy help` und `/scproxy reload` verwenden |
-| `simplecloud.proxy-essentials.command.joinstate.help` | Joinstate-Hilfe anzeigen |
-| `simplecloud.proxy-essentials.command.joinstate.info` | Joinstates anzeigen |
-| `simplecloud.proxy-essentials.command.joinstate.set` | Joinstates ändern |
-| `simplecloud.proxy-essentials.command.layout.help` | Layout-Hilfe anzeigen |
-| `simplecloud.proxy-essentials.command.layout.info` | Layout-Zuweisungen anzeigen |
-| `simplecloud.proxy-essentials.command.layout.set` | MOTD-Layout einer Gruppe ändern |
-| `simplecloud.proxy-essentials.join.maintenance` | Standardberechtigung für den Beitritt während Wartungsarbeiten |
-| `simplecloud.proxy-essentials.join.full.public` | Standardberechtigung für den Beitritt zu einem vollen öffentlichen Netzwerk |
+| `simplecloud.proxy-essentials.command.help` | `/scproxy` und `/scproxy help` verwenden |
+| `simplecloud.proxy-essentials.command.reload` | `/scproxy reload` verwenden |
+| `simplecloud.proxy-essentials.command.joinstate.help` | `/scproxy joinstate help` verwenden |
+| `simplecloud.proxy-essentials.command.joinstate.info` | `/scproxy joinstate list` und `info` verwenden |
+| `simplecloud.proxy-essentials.command.joinstate.set` | `/scproxy joinstate set` verwenden |
+| `simplecloud.proxy-essentials.command.layout.help` | `/scproxy layout help` verwenden |
+| `simplecloud.proxy-essentials.command.layout.info` | `/scproxy layout info` verwenden |
+| `simplecloud.proxy-essentials.command.layout.set` | `/scproxy layout set` verwenden |
+| `simplecloud.proxy-essentials.join.maintenance` | Im Wartungsmodus joinen (Standard) |
+| `simplecloud.proxy-essentials.join.full.public` | Joinen, wenn das Netzwerk voll ist (Standard) |
 
-Die letzten beiden Berechtigungen sind Standardwerte aus der `config.yml`. Du kannst sie durch Berechtigungen aus deinem eigenen Berechtigungsschema ersetzen.
+Die letzten beiden Berechtigungen kannst du in der `config.yml` ändern.
 
-## Festlegen, welche Funktionen Proxy Essentials verwaltet
+## Andere Plugins verwenden
 
-Proxy Essentials muss nicht alle Funktionen gleichzeitig verwalten. Du kannst beispielsweise seine Joinstates verwenden, während ein anderes Proxy-Plugin die MOTD oder Tablist bereitstellt. Konfiguriere für jede Funktion nur einen Anbieter, damit Plugins ihre Ausgaben nicht gegenseitig überschreiben.
+Du musst nicht alle Funktionen nutzen. Schalte die aus, die ein anderes Plugin übernimmt:
 
-| Funktion | Steuerung in Proxy Essentials |
-| -------- | ----------------------------- |
-| Beitrittsbeschränkungen | Aktiver Joinstate jeder Proxy- oder Backend-Gruppe |
-| Serverlisten-Antwort | `motd.enabled` in den ausgewählten `layout/*.yml`-Dateien |
-| Tablist-Header und -Footer | Liste `tablist` in der `config.yml` |
-| Zusammengefasste Spielerzahl | `player-count.enabled` in der `config.yml` |
-| Überschreiben von Backend-Kicks | `show-kick-reason` in der `config.yml` |
+| Funktion | So schaltest du sie aus |
+| -------- | ----------------------- |
+| MOTD | Setze `motd.enabled: false` in jedem Layout |
+| Tablist | Setze `tablist: []` in der `config.yml` |
+| Spielerzahl | Setze `player-count.enabled: false` in der `config.yml` |
+| Join Beschränkungen | Setze alle Gruppen auf einen Join State mit leerem `permission.join`, zum Beispiel `public` |
 
-### Anderes MOTD-Plugin verwenden
-
-Setze `motd.enabled` in jedem Layout, das der Proxy auswählen kann, auf `false`:
-
-```yaml layout/public.yml
-motd:
-  enabled: false
-```
-
-Wiederhole die Einstellung in Layouts wie `maintenance.yml` und führe anschließend `/scproxy reload` aus. Proxy Essentials verändert die gesamte Ping-Antwort dann nicht mehr. Das betrifft die Beschreibung, das Icon, die Hover-Liste, die angezeigte Version und die Slots.
-
-Das neue MOTD-Plugin muss auf dem Proxy laufen. Ein Plugin, das nur auf einer Lobby oder einem anderen Backend installiert ist, erhält den öffentlichen Serverlisten-Ping des Netzwerks nicht.
-
-### Anderes Tablist-Plugin verwenden
-
-Verwende in der `config.yml` eine leere Liste:
-
-```yaml config.yml
-tablist: []
-```
-
-Führe `/scproxy reload` aus. Proxy Essentials sendet danach keine Tablist-Header und -Footer mehr. Spieler müssen sich möglicherweise neu verbinden, bevor zuvor gesendete Inhalte verschwinden oder vom anderen Plugin ersetzt werden.
-
-`update-time: 0` deaktiviert nur geplante Tablist-Aktualisierungen beim Start des Proxys. Die Funktion wird dadurch nicht zuverlässig an ein anderes Plugin übergeben. Verwende stattdessen `tablist: []`.
-
-### Beitrittsbeschränkungen aufheben
-
-Joinstates besitzen keinen globalen `enabled`-Schalter. Setze alle betroffenen Proxy- und Backend-Gruppen auf einen offenen Status wie `public` zurück:
-
-```text
-/scproxy joinstate set Proxy public
-/scproxy joinstate set Lobby public
-```
-
-Lass `permission.join` dieses Status leer:
-
-```yaml config.yml
-- name: public
-  permission:
-    join: ''
-    full: 'simplecloud.proxy-essentials.join.full.public'
-  forced-motd-layout: null
-```
-
-### Zusammenfassung der Spielerzahlen deaktivieren
-
-```yaml config.yml
-player-count:
-  enabled: false
-  additional-groups: []
-  additional-persistent-servers: []
-  update-time: 20
-```
-
-Führe `/scproxy reload` aus. Die lokale Spielerzahl des Proxys bleibt verfügbar, aber Proxy Essentials addiert keine Spieler aus der restlichen Proxy-Gruppe oder zusätzlichen Zielen mehr.
-
-### Standard-Fallback-Verhalten beibehalten
-
-```yaml config.yml
-show-kick-reason: false
-```
-
-Führe `/scproxy reload` aus. Der Proxy kann Backend-Kicks dann wieder mit seinem normalen Fallback-Verhalten behandeln.
-
-### Proxy Essentials nicht mehr verwenden
-
-Entferne die Proxy-Essentials-JAR aus allen passenden Proxy-Templates und starte die Proxys neu. Lass `simplecloud-api` installiert, wenn ein anderes Plugin davon abhängt.
+Ein MOTD Plugin muss auf dem Proxy laufen, nicht auf einem Lobby Server.
 
 ## Fehlerbehebung
 
 <AccordionGroup>
-  <Accordion title="Das Plugin oder seine Konfiguration erscheint nicht">
-    Prüfe, ob Proxy Essentials und `simplecloud-api` im **Proxy-Template** liegen, und starte anschließend einen passenden Proxy neu. Prüfe die Proxy-Konsole und das plattformspezifische Datenverzeichnis aus dem Abschnitt **Plugin installieren**. Eine Installation auf einer Lobby lädt das Proxy-Plugin nicht.
+  <Accordion title="Das Plugin oder seine Dateien fehlen">
+    Prüfe, ob Proxy Essentials und `simplecloud-api` im **Proxy** Template liegen und nicht in einem Lobby Template. Starte den Proxy danach neu und prüfe die Konsole.
   </Accordion>
 
-  <Accordion title="Ein Reload-Befehl ändert nichts">
-    Verwende `/scproxy reload` und nicht `/tab reload`. Prüfe, ob du die Dateien des laufenden Proxys bearbeitet hast.
-
-    Änderungen nur im Template benötigen einen Proxy-Neustart. Änderungen nur in einer temporären laufenden Gruppeninstanz verschwinden beim Stoppen.
+  <Accordion title="Der Wartungsmodus ist aktiv, aber die MOTD ändert sich nicht">
+    Prüfe, ob du den Join State auf der Proxygruppe gesetzt hast und nicht nur auf einer Backend Gruppe. Prüfe außerdem, ob das `forced-motd-layout` in `layout/` existiert und `motd.enabled: true` hat.
   </Accordion>
 
-  <Accordion title="Die Tablist eines anderen Plugins wird weiterhin überschrieben">
-    Folge dem Abschnitt **Anderes Tablist-Plugin verwenden** weiter oben. Prüfe danach, ob ein weiteres Proxy- oder Backend-Plugin Tablist-Header und -Footer sendet.
+  <Accordion title="Eine Domain zeigt die normale MOTD">
+    Prüfe, ob der Spieler genau die Domain aus `domain` verwendet, ob `target` eine Gruppe oder ein persistenter Server ist und ob das Layout aus `rules` existiert.
   </Accordion>
 
-  <Accordion title="Wartung ist aktiv, aber die öffentliche MOTD ändert sich nicht">
-    Prüfe, ob du die Proxy-Gruppe und nicht nur eine Backend-Gruppe geändert hast. `forced-motd-layout` muss eine vorhandene Datei mit `motd.enabled: true` benennen. Prüfe danach `/scproxy layout info <proxy-gruppe>`: Ein mit `/scproxy layout set` gespeichertes Layout hat Vorrang vor dem Joinstate-Layout.
+  <Accordion title="Niemand kann joinen">
+    Prüfe die Konsole. Wenn eine Gruppe einen Join State verwendet, der nicht in der `config.yml` steht, kann niemand joinen. Füge den Join State hinzu oder setze die Gruppe auf einen vorhandenen.
   </Accordion>
 
-  <Accordion title="Eine Domain zeigt immer die Standard-MOTD statt ihrer Route">
-    Prüfe, ob sich der Spieler mit genau dem in `domain` hinterlegten Hostnamen verbunden hat. Der Vergleich ignoriert Groß-/Kleinschreibung, unterstützt aber keine Wildcards oder Subdomains. Prüfe, ob `target` eine Gruppe oder ein persistenter Server ist, keine einzelne Serverinstanz. Prüfe, ob der aktuelle Joinstate von `target` einen passenden Eintrag in `rules` hat und dessen `layout` existiert. Führe nach dem Bearbeiten von `domains` `/scproxy reload` aus.
-  </Accordion>
-
-  <Accordion title="Proxy Essentials kontrolliert die MOTD weiterhin">
-    Folge dem Abschnitt **Anderes MOTD-Plugin verwenden** weiter oben und prüfe, ob jedes auswählbare Layout angepasst wurde. Ein Lobby-Plugin auf einem Backend kann den öffentlichen Proxy-Ping nicht verwalten. Verwende dafür ein kompatibles Proxy-MOTD-Plugin.
-  </Accordion>
-
-  <Accordion title="Farben erscheinen als normale Zeichen">
-    Ersetze veraltete `&`- oder `§`-Codes durch MiniMessage-Tags wie `<green>` oder `<color:#22c55e>` und lade die Konfiguration anschließend neu.
+  <Accordion title="Farben werden als Text angezeigt">
+    Ersetze alte Farbcodes wie `&a` durch MiniMessage Tags wie `<green>`.
   </Accordion>
 </AccordionGroup>
 
 <Frame>
-  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/proxy-essentials/server-info.png?raw=true" alt="Beispiel einer Serverlisten-MOTD von Proxy Essentials" />
+  <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/proxy-essentials/server-info.png?raw=true" alt="Beispiel einer MOTD von Proxy Essentials" />
 </Frame>

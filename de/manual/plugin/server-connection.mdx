@@ -1,284 +1,292 @@
 ---
 title: 'Server Connection'
-description: 'Registriere SimpleCloud-Server auf einem Proxy und steuere Beitritte, Fallbacks und Navigationsbefehle'
+description: 'Registriere SimpleCloud Server auf deinem Proxy und lege fest, wohin Spieler beim Join, beim Fallback und per Befehl gesendet werden'
 tag: 'Proxy'
 ---
 
 ## Unterstützte Software
 
-| Software   | Unterstützung  |
-| ----------- | -------------- |
-| Velocity | Vollständig |
-| BungeeCord | Vollständig |
-| Waterdog PE | Vollständig |
-| Gate | Vollständig |
+| Software    | Unterstützt |
+| ----------- | ----------- |
+| Velocity    | Ja          |
+| BungeeCord  | Ja          |
+| Waterdog PE | Ja          |
+| Gate        | Ja          |
 
 ## Plugin installieren
 
 <Steps>
-  <Step title="Proxy-Plugins installieren">
-    Lade Server Connection von [GitHub](https://github.com/simplecloudapp/server-connection-plugin/releases) herunter und lege die JAR-Datei im Ordner `plugins/` des Proxy-Templates ab. Die Standard-Templates enthalten `simplecloud-api` bereits. Füge es bei einem eigenen Template über die Einstellung **Plugins** des Ziels oder über die CLI hinzu.
+  <Step title="Plugin installieren">
+    Lade Server Connection von [GitHub](https://github.com/simplecloudapp/simplecloud-plugins/releases) oder [Modrinth](https://modrinth.com/organization/simplecloud) herunter und lege die JAR in den Ordner `plugins/` des Proxy Templates.
   </Step>
 
-  <Step title="Konfiguration erzeugen">
-    Starte einen passenden Proxy. Das Plugin legt `config.yml`, `commands.yml` und `messages.yml` unter `plugins/simplecloud-connection/` an.
+  <Step title="Lobby Server anpassen">
+    Standardmäßig werden Spieler auf Server geschickt, deren Name mit `lobby` beginnt. Wenn deine Lobby Gruppe anders heißt, passe die Connection `lobby` in der `config.yml` an.
   </Step>
 
-  <Step title="Lobby-Server abgleichen">
-    Die Standardverbindung wählt Proxy-Registrierungsnamen aus, die mit `lobby` beginnen. Verwendet deine Lobby-Gruppe einen anderen Namen, ändere die Verbindung `lobby` und verwende denselben Namen unter `network-join-targets`, `fallback` und in `commands.yml`.
-  </Step>
+  <Step title="Plugin prüfen">
+    Starte einen Proxy und joine. Wechsle danach auf einen anderen Server und führe `/lobby` aus.
 
-  <Step title="Konfiguration ins Template übernehmen">
-    Kopiere bei einem Gruppen-Proxy `plugins/simplecloud-connection/` vor dem Stoppen an denselben Pfad im Template. Unter [Templates](/de/manual/setup/templates) findest du den vollständigen Ablauf.
-  </Step>
-
-  <Step title="Proxy neu starten und testen">
-    Starte den Proxy nach Änderungen an der Registrierung oder an Spielerbefehlen neu. Betritt das Netzwerk, um das erste Ziel zu testen, und führe anschließend von einem anderen Backend `/lobby` aus. Für Fallbacks verwendet der Proxy dieselbe Verbindung.
+    <Check>
+      Du landest auf einem Lobby Server, und `/lobby` bringt dich zurück in eine Lobby.
+    </Check>
   </Step>
 </Steps>
 
+Beim ersten Start erstellt Server Connection die Dateien `config.yml`, `commands.yml` und `messages.yml` in `plugins/simplecloud-connection/`. Damit deine Änderungen erhalten bleiben, kopiere den Ordner ins Proxy Template. Mehr dazu unter [Templates](/de/manual/setup/templates).
+
 <Warning>
-  Mit `registration.enabled: true` ersetzt Server Connection die Liste der registrierten Proxy-Server durch die SimpleCloud-Server. Trage jedes externe Backend unter `registration.additional-servers` ein oder setze die Registrierung auf `false`, wenn ein anderes Plugin die Liste verwaltet.
+  Mit `registration.enabled: true` ersetzt Server Connection die Serverliste des Proxys durch deine SimpleCloud Server. Trage Server außerhalb von SimpleCloud in `registration.additional-servers` ein oder setze `registration.enabled` auf `false`, wenn ein anderes Plugin die Serverliste verwaltet.
 </Warning>
 
-## Konfiguration
+## So funktioniert es
 
-### config.yml
+Alles basiert auf **Connections**. Eine Connection ist eine benannte Auswahl an Servern, zum Beispiel alle Server, die mit `lobby` beginnen. Connections verwendest du an vier Stellen:
 
-Die Hauptkonfigurationsdatei steuert die Serverregistrierung, Verbindungen, das Routing beim Netzwerkbeitritt und das Fallback-Verhalten.
+| Stelle | Beschreibung |
+| ------ | ------------ |
+| `network-join-targets` | Wohin Spieler beim Betreten des Netzwerks kommen |
+| `fallback` | Wohin Spieler kommen, wenn ihr Server stoppt oder sie kickt |
+| `address.routes` | Wohin Spieler kommen, wenn sie mit einer bestimmten Domain joinen |
+| `commands.yml` | Wohin Befehle wie `/lobby` Spieler schicken |
 
-```yaml
+Innerhalb einer Connection kommt der Spieler auf den Server mit den wenigsten Spielern. Server, die gerade stoppen, werden übersprungen.
+
+## config.yml
+
+```yaml config.yml
 version: 2
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Server Registration
-# Hält die registrierten Unterserver deines Proxys mit SimpleCloud synchron.
-# ─────────────────────────────────────────────────────────────────────────────
 registration:
-    # Bei "false" werden keine SimpleCloud-Server auf dem Proxy registriert.
-    enabled: true
+  enabled: true
+  server-name-pattern: '<group>-<numerical_id>'
+  persistent-server-name-pattern: '<name>'
+  ignore-server-groups-and-persistent-servers: []
+  additional-servers: []
 
-    # Namensmuster für dynamisch gestartete Server auf dem Proxy.
-    # Verfügbare Platzhalter: <group>, <numerical_id>, <id>, <name>
-    server-name-pattern: '<group>-<numerical_id>'
-
-    # Namensmuster für persistente Server.
-    persistent-server-name-pattern: '<name>'
-
-    # Servergruppen und persistente Server, die nicht auf dem Proxy registriert werden sollen.
-    ignore-server-groups-and-persistent-servers: []
-
-    # Externe Server (nicht über SimpleCloud), die manuell registriert werden sollen.
-    additional-servers: []
-    #   - name: 'build'
-    #     address: '127.0.0.1'
-    #     port: 25565
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Subdomain Routing
-# Leitet Spieler anhand des Hostnamens weiter, über den sie eine Verbindung herstellen.
-# ─────────────────────────────────────────────────────────────────────────────
 address:
-    routes:
-      - subdomain: 'play.example.com'
-        target-connection: lobby
+  routes: []
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Connections
-# Benannte Gruppen, die über einen Namensabgleich auf bestimmte Server verweisen.
-# Diese werden bei network-join-targets, fallback und in der commands.yml genutzt.
-# ─────────────────────────────────────────────────────────────────────────────
 connections:
   - name: lobby
     server-name-matcher:
-        # Operation für den Namensabgleich.
-        # Verfügbar: STARTS_WITH, ENDS_WITH, CONTAINS, EQUALS, REGEX, PATTERN, GREATER_THAN
-        operation: STARTS_WITH
-        value: lobby
-        # Bei "true" wird das Ergebnis des Abgleichs umgekehrt (invertiert).
-        negate: false
-    # Bedingungen, die erfüllt sein müssen, bevor ein Spieler diese Verbindung nutzen darf.
-    # Details dazu findest du unten im Abschnitt "Verbindungsregeln".
+      operation: STARTS_WITH
+      value: lobby
+      negate: false
     rules: []
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Network Join Targets
-# Bestimmt, wohin Spieler geschickt werden, wenn sie das Netzwerk betreten.
-# ─────────────────────────────────────────────────────────────────────────────
 network-join-targets:
-    enabled: true
-    target-connections:
-      - name: lobby      # Muss mit einem oben definierten Verbindungsnamen übereinstimmen
-        priority: 0      # Höhere Zahl = wird zuerst versucht.
+  enabled: true
+  target-connections:
+    - name: lobby
+      priority: 0
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Fallback
-# Bestimmt, wohin Spieler geschickt werden, wenn ihr aktueller Server unerreichbar wird.
-# ─────────────────────────────────────────────────────────────────────────────
 fallback:
   enabled: true
   target-connections:
     - name: lobby
       priority: 0
-      # Optional: Nutze dieses Fallback nur, wenn der Spieler von einem dieser Server kommt.
       from: []
 ```
 
-#### Subdomain-Routen
+### Server registrieren
 
-Der Abschnitt `address.routes` wählt anhand des Hostnamens, mit dem ein Spieler dem Proxy beitritt, eine Verbindung aus. Jede Angabe unter `subdomain` muss der vollständige, exakte Hostname sein. Verwende zum Beispiel `new.example.com` und nicht nur `new`.
+| Einstellung | Beschreibung |
+| ----------- | ------------ |
+| `enabled` | Registriert SimpleCloud Server auf dem Proxy |
+| `server-name-pattern` | Name von Gruppenservern auf dem Proxy. Platzhalter: `<group>`, `<numerical_id>`, `<id>`, `<name>` |
+| `persistent-server-name-pattern` | Name von persistenten Servern auf dem Proxy |
+| `ignore-server-groups-and-persistent-servers` | Gruppen und persistente Server, die nicht registriert werden |
+| `additional-servers` | Server außerhalb von SimpleCloud |
 
-Der Wert `target-connection` verweist auf einen Namen aus der Liste `connections`. Er verweist nicht direkt auf einen Server. Der `server-name-matcher` der Verbindung wählt anschließend einen verfügbaren Server aus.
+In den Namen kannst du auch Server Properties verwenden. Aus einer Property wie `display-name` wird `<display_name>`.
 
-```yaml
+```yaml config.yml
+registration:
+  additional-servers:
+    - name: build
+      address: 127.0.0.1
+      port: 25565
+```
+
+### Connections
+
+```yaml config.yml
+connections:
+  - name: lobby
+    server-name-matcher:
+      operation: STARTS_WITH
+      value: lobby
+      negate: false
+    rules: []
+```
+
+| Operation | Passt, wenn der Servername | Beispiel |
+| --------- | -------------------------- | -------- |
+| `STARTS_WITH` | mit dem Wert beginnt | `lobby` |
+| `ENDS_WITH` | mit dem Wert endet | `-1` |
+| `CONTAINS` | den Wert enthält | `hub` |
+| `EQUALS` | genau dem Wert entspricht | `lobby-1` |
+| `REGEX` | komplett zu einer Java Regex passt | `lobby-\d+` |
+| `PATTERN` | komplett zu einer Java Regex passt, wie `REGEX` | `lobby-\d+` |
+| `GREATER_THAN` | eine Zahl größer als der Wert ist | `5` |
+
+`STARTS_WITH`, `ENDS_WITH`, `CONTAINS` und `EQUALS` ignorieren Groß und Kleinschreibung. Mit `negate: true` drehst du das Ergebnis um, zum Beispiel für alle Server, die **nicht** mit `lobby` beginnen.
+
+### Regeln
+
+Regeln legen fest, ob ein Spieler eine Connection verwenden darf. Wenn eine Regel nicht erfüllt ist, wird die Connection übersprungen und die nächste versucht.
+
+**Berechtigung**
+
+```yaml config.yml
+rules:
+  - type: PERMISSION
+    name: server.join.vip
+    value: 'true'
+    bypass-permission: rank.admin
+```
+
+Mit `value: 'true'` braucht der Spieler die Berechtigung. Mit `value: 'false'` darf er sie nicht haben.
+
+**Umgebungsvariable**
+
+```yaml config.yml
+rules:
+  - type: ENV
+    name: SERVER_STATE
+    value: maintenance
+    operation: EQUALS
+    negate: true
+    bypass-permission: rank.admin
+```
+
+Vergleicht eine Umgebungsvariable des Proxys mit `value`. Du kannst jede Operation aus der Tabelle oben verwenden.
+
+Spieler mit der `bypass-permission` überspringen die Regel. Regeln gelten überall: beim Join, beim Fallback, bei Subdomain Routen und bei Befehlen.
+
+### Join und Fallback
+
+`network-join-targets` legt fest, wohin Spieler beim Join kommen. `fallback` legt fest, wohin sie kommen, wenn ihr Server stoppt oder sie kickt.
+
+```yaml config.yml
+network-join-targets:
+  enabled: true
+  target-connections:
+    - name: vip-lobby
+      priority: 10
+    - name: lobby
+      priority: 0
+
+fallback:
+  enabled: true
+  target-connections:
+    - name: lobby
+      priority: 0
+      from: []
+```
+
+- Die Connection mit der höchsten `priority` wird zuerst versucht.
+- Hat sie keinen freien Server oder ist eine Regel nicht erfüllt, wird die nächste Connection versucht.
+- `from` verwendet den Fallback nur, wenn der Spieler von einer dieser **Connections** kommt. Lass die Liste leer, um alle Server zu erlauben.
+- Wird kein Server gefunden, wird der Spieler vom Netzwerk getrennt.
+
+### Subdomain Routen
+
+Schicke Spieler je nach Domain, mit der sie joinen, zu einer Connection:
+
+```yaml config.yml
 address:
-    routes:
-      - subdomain: 'play.example.com'
-        target-connection: lobby
-      - subdomain: 'new.example.com'
-        target-connection: smp-2026
+  routes:
+    - subdomain: 'play.example.com'
+      target-connection: lobby
+    - subdomain: 'smp.example.com'
+      target-connection: smp
 
 connections:
   - name: lobby
     server-name-matcher:
-        operation: STARTS_WITH
-        value: lobby
-        negate: false
+      operation: STARTS_WITH
+      value: lobby
+      negate: false
     rules: []
 
-  # Persistenter Server, der auf dem Proxy exakt als "smp-2026" registriert ist.
-  - name: smp-2026
+  - name: smp
     server-name-matcher:
-        operation: EQUALS
-        value: smp-2026
-        negate: false
+      operation: EQUALS
+      value: smp
+      negate: false
     rules: []
 ```
 
-Mit dieser Konfiguration werden Spieler über `play.example.com` auf einen verfügbaren Lobby-Server geleitet. Spieler über `new.example.com` werden auf den persistenten Server geleitet, der als `smp-2026` registriert ist.
+Spieler, die mit `smp.example.com` joinen, kommen auf den Server `smp`. Alle anderen verwenden `network-join-targets`.
 
-Lass jeden verwendeten Hostnamen über einen `A`-, `AAAA`- oder `CNAME`-DNS-Eintrag auf den Proxy zeigen. Verwendet der Proxy nicht den Minecraft-Standardport, musst du zusätzlich einen passenden Minecraft-`SRV`-Eintrag konfigurieren.
+- Verwende die vollständige Domain, zum Beispiel `smp.example.com`. Wildcards wie `*.example.com` werden nicht unterstützt.
+- `target-connection` ist der Name einer Connection, nicht eines Servers.
+- Hat die Route keinen freien Server oder ist eine Regel nicht erfüllt, wird `network-join-targets` verwendet.
+- Lass jede Domain mit einem `A`, `AAAA` oder `CNAME` Eintrag auf deinen Proxy zeigen. Wenn der Proxy nicht den Port `25565` verwendet, brauchst du zusätzlich einen `SRV` Eintrag.
 
-##### Routing-Verhalten
+## commands.yml
 
-- **Konfigurationsversion:** Subdomain-Routing benötigt Version 2. Lass das Plugin eine bestehende Version-1-Datei migrieren, bevor du Routen hinzufügst, da diese bei der Migration nicht übernommen werden.
-- **Exakter Abgleich:** Gib den vollständigen Hostnamen an. Wildcard-Routen wie `*.example.com` werden nicht unterstützt.
-- **Standardziel:** Wenn keine Route passt, die Zielverbindung nicht existiert oder kein passender Server verfügbar ist, verwendet das Plugin anschließend die `network-join-targets`.
-- **Verbindungsregeln:** Subdomain-Routen werten Verbindungsregeln nicht aus. Eine Permission-Regel auf der Zielverbindung schränkt Spieler, die über diesen Hostnamen beitreten, nicht ein. Verwende priorisierte `network-join-targets`, wenn das Routing von einer Permission abhängen soll.
+Erstelle Befehle, die Spieler zu einer Connection schicken:
 
-#### Abgleichsoperationen
-
-Der `server-name-matcher` unterstützt folgende Operationen:
-
-| Operation | Beschreibung | Beispielwert |
-| ------------ | ------------------------------------------------ | ------------- |
-| `STARTS_WITH` | Servername beginnt mit dem Wert | `lobby` |
-| `ENDS_WITH` | Servername endet mit dem Wert | `-1` |
-| `CONTAINS` | Servername enthält den Wert | `hub` |
-| `EQUALS` | Exakte Übereinstimmung | `lobby-1` |
-| `REGEX` | Voller Java-Regex-Abgleich | `lobby-\d+` |
-| `PATTERN` | Abgleich mit einem Glob-Muster | `lobby-*` |
-| `GREATER_THAN` | Numerischer Vergleich (Größer als) | `5` |
-
-Setze `negate: true`, um eine Operation umzukehren. So stimmen beispielsweise alle Server überein, die **nicht** mit `lobby` beginnen.
-
-#### Verbindungsregeln
-
-Verbindungen können Regeln enthalten, die ein Spieler erfüllen muss. Schlägt eine Regel fehl, wird die Verbindung übersprungen und die nächste Priorität geprüft. Es gibt zwei Regeltypen:
-
-**Berechtigungsregel**
-
-Prüft, ob ein Spieler eine bestimmte Permission besitzt.
-
-```yaml
-rules:
-  - type: PERMISSION
-    name: server.join.vip        # Zu prüfende Permission
-    value: 'true'                # Erwartetes Ergebnis (true oder false)
-    bypass-permission: rank.admin # Optional: Überspringt diese Regel, wenn der Spieler diese Admin-Permission hat
-```
-
-**Umgebungsvariablenregel**
-
-Gleicht eine System-Umgebungsvariable über eine Filter-Operation mit einem Wert ab.
-
-```yaml
-rules:
-  - type: ENV
-    name: SERVER_STATE           # Name der Umgebungsvariable
-    value: maintenance           # Wert für den Vergleich
-    operation: EQUALS            # Jede beliebige Filter-Operation (EQUALS, STARTS_WITH, etc.)
-    negate: true                 # Bei "true" wird das Ergebnis umgekehrt
-    bypass-permission: rank.admin # Optional: Überspringt diese Regel, wenn der Spieler diese Admin-Permission hat
-```
-
-Regeln werden der Reihe nach abgearbeitet. Wenn eine Regel fehlschlägt und keine `bypass-permission` greift, wird die komplette Verbindung übersprungen.
-
-#### Prioritäten und Fallback-Auflösung
-
-Sowohl `network-join-targets` als auch `fallback` unterstützen mehrere Zielverbindungen mit Prioritäten:
-
-- Zielverbindungen werden von der **höchsten zur niedrigsten Priorität** abgearbeitet
-- Haben mehrere Ziele die gleiche Priorität, wird eines davon **zufällig** ausgewählt
-- Hat ein Ziel keinen verfügbaren Server, wird automatisch die nächstniedrigere Priorität versucht
-- Die optionale `from`-Liste beschränkt einen Fallback auf Spieler, die von bestimmten Servern kommen
-
-### commands.yml
-
-Konfiguriert die Navigationsbefehle für Spieler.
-
-```yaml
+```yaml commands.yml
 version: 2
 
 commands:
   - name: lobby
     aliases:
-      - hub
       - l
-    permission: ''   # Leer lassen, damit jeder den Befehl nutzen darf
-    messages:
-        already-connected: '<color:#dc2626>Du bist bereits auf dieser Lobby!'
-        no-target-connection-found: '<color:#dc2626>Es konnte kein Zielserver gefunden werden!</color>'
+      - hub
+      - quit
+      - leave
+    permission: ''
     target-connections:
       - name: lobby
         priority: 0
-        # Optional: Erlaube dieses Ziel nur, wenn der Spieler aktuell auf einem dieser Server ist
         from: []
+    messages:
+      already-connected: '<color:#dc2626>You are already connected to this lobby!'
+      no-target-connection-found: "<color:#dc2626>Couldn't find a target server!"
 ```
 
-Befehle folgen derselben Logik wie `network-join-targets` und `fallback`.
+| Einstellung | Beschreibung |
+| ----------- | ------------ |
+| `name` | Name des Befehls |
+| `aliases` | Weitere Namen für den Befehl |
+| `permission` | Berechtigung für den Befehl. Leer lassen, damit alle ihn verwenden dürfen |
+| `target-connections` | Connections, zu denen der Befehl schickt, mit `priority` und `from` wie bei `fallback` |
+| `messages` | Nachricht, wenn der Spieler schon auf dem Ziel ist oder kein Server gefunden wird |
 
-Änderungen an Verbindungsabgleichen, Regeln, Beitrittszielen, Fallbacks und Nachrichten kannst du mit diesem Befehl laden:
+## Befehle
 
-```text
-/connection reload
-```
-
-Starte den Proxy nach jeder Änderung an `commands.yml` neu. Der Reload liest die Datei zwar ein, bereits registrierte Proxy-Befehle behalten aber ihre bisherigen Einstellungen. Starte ebenfalls nach Änderungen an `registration.additional-servers` oder den Registrierungsmustern neu, damit der Proxy seine Serverliste neu aufbaut.
+| Befehl | Beschreibung |
+| ------ | ------------ |
+| `/connection reload` | Lädt das Plugin neu |
 
 ## Berechtigungen
 
 | Berechtigung | Beschreibung |
 | ------------ | ------------ |
 | `simplecloud.connection.reload` | `/connection reload` verwenden |
-| Wert aus `commands.yml` | Den jeweiligen Navigationsbefehl verwenden; ein leerer Wert erlaubt ihn allen Spielern |
+| `permission` aus der `commands.yml` | Diesen Befehl verwenden |
 
 ## Fehlerbehebung
 
 <AccordionGroup>
-  <Accordion title="Spieler betreten den Proxy, erhalten aber keinen Server">
-    Prüfe, ob `network-join-targets.enabled` auf `true` steht, die genannten Verbindungen existieren und jeder Matcher mindestens einen registrierten Server auswählt. Der Standard-Matcher erwartet Registrierungsnamen, die mit `lobby` beginnen.
+  <Accordion title="Spieler kommen auf keinen Server">
+    Prüfe, ob `network-join-targets.enabled` auf `true` steht und die Connection zu mindestens einem laufenden Server passt. Standardmäßig muss der Name mit `lobby` beginnen. Die Konsole warnt dich, wenn eine Connection verwendet, aber nicht definiert wird.
   </Accordion>
 
-  <Accordion title="Ein neuer Navigationsbefehl existiert nicht">
-    Starte den Proxy nach jeder Änderung an `commands.yml` neu. `/connection reload` liest die Datei, aktualisiert oder registriert aber keine bereits laufenden Proxy-Befehle.
+  <Accordion title="Ein Server außerhalb von SimpleCloud fehlt">
+    Trage ihn in `registration.additional-servers` ein.
   </Accordion>
 
-  <Accordion title="Ein externes Backend ist vom Proxy verschwunden">
-    Trage es unter `registration.additional-servers` ein und starte den Proxy neu. Bei aktivierter Registrierung baut Server Connection die Liste der Proxy-Server beim Start neu auf.
+  <Accordion title="Eine Subdomain Route funktioniert nicht">
+    Verwende die vollständige Domain in `subdomain`, lass die Domain auf den Proxy zeigen und prüfe, ob `target-connection` eine vorhandene Connection mit einem laufenden Server ist. Prüfe auch die Regeln der Connection.
   </Accordion>
 
-  <Accordion title="Eine Subdomain-Route verwendet immer das normale Beitrittsziel">
-    Verwende den vollständigen Hostnamen in `address.routes`, richte dessen DNS auf den Proxy und prüfe, ob `target-connection` eine vorhandene Verbindung mit einem verfügbaren Server bezeichnet. Wildcards und Verbindungsregeln gelten nicht für Subdomain-Routen.
+  <Accordion title="Nach einem Neustart von SimpleCloud fehlen Server">
+    Server Connection lädt alle Server neu, sobald SimpleCloud wieder erreichbar ist. Wenn danach noch Server fehlen, prüfe die Konsole des Proxys.
   </Accordion>
 </AccordionGroup>
