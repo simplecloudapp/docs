@@ -1,91 +1,83 @@
 ---
 title: 'Cloud Command'
-description: "Use SimpleCloud's in-game proxy commands for groups, servers, and players"
+description: 'Manage groups, servers, and players with in-game commands on your proxy'
 tag: 'Proxy'
 ---
 
 ## Supported software
 
-| Software   | Plugin Support |
-| ---------- | -------------- |
-| Velocity   | Yes            |
-| BungeeCord | Yes            |
-| Gate       | Planned        |
+| Software   | Supported |
+| ---------- | --------- |
+| Velocity   | Yes       |
+| BungeeCord | Yes       |
+| Gate       | Planned   |
 
 ## Install the plugin
 
 <Steps>
-  <Step title="Install Cloud Command on the proxy">
-    Download Cloud Command from [GitHub](https://github.com/simplecloudapp/command-plugin/releases) and place it in the proxy template's `plugins/` folder. Standard SimpleCloud templates already include `simplecloud-api`; add it through the target's **Plugins** setting or the CLI if you use a custom template.
-  </Step>
-
-  <Step title="Generate the message file">
-    Start a matching proxy once. Cloud Command creates `plugins/simplecloud-command/messages.yml` in the running proxy directory.
-  </Step>
-
-  <Step title="Keep the message file in the template">
-    For a group proxy, copy `plugins/simplecloud-command/messages.yml` from the running proxy to the same path in its template before stopping it. Files left only in a temporary proxy directory disappear when that proxy stops.
-
-    See [Templates](/en/manual/setup/templates) for the complete workflow.
+  <Step title="Install the plugin">
+    Download Cloud Command from [GitHub](https://github.com/simplecloudapp/simplecloud-plugins/releases) or [Modrinth](https://modrinth.com/organization/simplecloud) and place the JAR in the proxy template's `plugins/` folder.
   </Step>
 
   <Step title="Verify the commands">
-    Give yourself `simplecloud.command.use`, join through the proxy, and run `/cloud`.
+    Start a proxy, give yourself `simplecloud.command.use`, and run `/cloud`.
 
     <Check>
-      The help menu lists the subcommands you have permission to use.
+      The help menu lists the commands you have permission to use.
     </Check>
   </Step>
 </Steps>
 
+You can change all messages in `plugins/simplecloud-command/messages.yml`.
+
 ## Commands
 
-The root command is available as `/cloud`, `/sc`, and `/simplecloud`.
+You can use `/cloud`, `/sc`, or `/simplecloud`.
 
 ### Groups
 
 | Command | Description |
 | ------- | ----------- |
-| `/cloud group list` | List all groups |
-| `/cloud group info <group>` | Show group type, memory, player limit, and running server count |
-| `/cloud group start <group> [count]` | Request one or more new servers for a group |
-| `/cloud group stop <group> [id]` | Stop all running servers in a group, or one numerical ID |
+| `/cloud group list` | List all groups with their online servers |
+| `/cloud group info <group>` | Show type, memory, max players, and running servers of a group |
+| `/cloud group start <group> [count]` | Start one or more servers, up to 50 at once |
+| `/cloud group stop <group> [id]` | Stop all servers of a group, or only the server with this numerical ID |
 
 ### Servers
 
 | Command | Description |
 | ------- | ----------- |
-| `/cloud server list [group]` | List running servers, optionally filtered by group |
-| `/cloud server info <group> <id>` | Show state, memory, and players for one server |
-| `/cloud server start <group>` | Request one new server for a group |
-| `/cloud server stop <group> <id>` | Stop one running server |
+| `/cloud server list [group]` | List running servers, optionally only of one group |
+| `/cloud server info <group> <id>` | Show state, memory, and players of a server |
+| `/cloud server start <group>` | Start one new server |
+| `/cloud server stop <group> <id>` | Stop one server |
 
 ### Players
 
-Use `group` for a server group target and `ps` for a persistent server target.
+For targets, use `group` for a group or `ps` for a persistent server.
 
 | Command | Description |
 | ------- | ----------- |
-| `/cloud player list <group\|ps> <target>` | List players on a group or persistent server |
-| `/cloud player info <player>` | Show player connection details |
-| `/cloud player send <player> <group\|ps> <target>` | Send one player to a target |
-| `/cloud player sendall <group\|ps> <target>` | Send every online player to a target |
-| `/cloud player sendfrom <source> <group\|ps> <target>` | Send players from one source server to a target |
+| `/cloud player list <group\|ps> <target>` | List the players on a target |
+| `/cloud player info <player>` | Show server, proxy, online time, first seen, and last seen of a player |
+| `/cloud player send <player> <group\|ps> <target>` | Send a player to a target |
+| `/cloud player sendall <group\|ps> <target>` | Send all online players to a target |
+| `/cloud player sendfrom <source> <group\|ps> <target>` | Send all players on a source to a target |
 | `/cloud player message <player> <message>` | Send a plain text message to a player |
 
-### Reload
+The `<source>` of `sendfrom` can be a group, a server such as `Lobby-1`, or a persistent server.
+
+### Other
 
 | Command | Description |
 | ------- | ----------- |
-| `/cloud reload` | Run the command plugin's reload command |
-
-`/cloud reload` rereads `plugins/simplecloud-command/messages.yml` from the running proxy. Restart the proxy if you edited the template copy instead.
+| `/cloud reload` | Reload the plugin |
 
 ## Permissions
 
 | Permission | Description |
 | ---------- | ----------- |
-| `simplecloud.command.use` | Use the root command and view available subcommands |
+| `simplecloud.command.use` | Use `/cloud` and see the help menu |
 | `simplecloud.command.group.list` | Use `/cloud group list` |
 | `simplecloud.command.group.info` | Use `/cloud group info` |
 | `simplecloud.command.group.start` | Use `/cloud group start` |
@@ -96,13 +88,11 @@ Use `group` for a server group target and `ps` for a persistent server target.
 | `simplecloud.command.server.stop` | Use `/cloud server stop` |
 | `simplecloud.command.player.list` | Use `/cloud player list` |
 | `simplecloud.command.player.info` | Use `/cloud player info` |
-| `simplecloud.command.player.send` | Use player transfer commands |
+| `simplecloud.command.player.send` | Use `send`, `sendall`, and `sendfrom` |
 | `simplecloud.command.player.message` | Use `/cloud player message` |
 | `simplecloud.command.reload` | Use `/cloud reload` |
 
-<Note>
-  The help menu only shows commands for permissions the sender has.
-</Note>
+The help menu only shows the commands you have permission for.
 
 <Frame>
   <img src="https://github.com/simplecloudapp/branding/blob/main/media/plugin/cloud-command/help.png?raw=true" alt="Cloud Command help menu" />
@@ -111,15 +101,12 @@ Use `group` for a server group target and `ps` for a persistent server target.
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="The proxy cannot load Cloud Command">
-    Confirm that `simplecloud-api` is installed and enabled on the same proxy. Cloud Command declares it as a required dependency.
+  <Accordion title="The proxy does not load Cloud Command">
+    Make sure `simplecloud-api` is installed on the same proxy. Cloud Command does not start without it.
   </Accordion>
 
   <Accordion title="A command is missing from the help menu">
-    Grant the matching permission. The help menu hides subcommands the sender cannot use.
+    Give yourself the matching permission. The help menu hides commands you cannot use.
   </Accordion>
 
-  <Accordion title="Message changes disappear after a restart">
-    Edit `plugins/simplecloud-command/messages.yml` in the proxy template, or copy the tested file back to the template before a temporary group proxy stops.
-  </Accordion>
 </AccordionGroup>

@@ -1,166 +1,102 @@
 ---
 title: 'Notify'
-description: 'Sende Statusmeldungen zu Servern und Gruppen an Teammitglieder im Proxy-Netzwerk'
+description: 'Benachrichtige dein Team im Spiel, wenn sich Server, Gruppen oder persistente Server ändern'
 tag: 'Proxy'
 ---
 
 ## Unterstützte Software
 
-| Software | Unterstützung |
-| -------- | ------------- |
-| Velocity | Ja |
-| BungeeCord | Ja |
+| Software   | Unterstützt |
+| ---------- | ----------- |
+| Velocity   | Ja          |
+| BungeeCord | Ja          |
 
 ## Plugin installieren
 
 <Steps>
-  <Step title="Notify auf dem Proxy installieren">
-    Lade Notify von [GitHub](https://github.com/simplecloudapp/notify-plugin/releases) herunter und lege die JAR-Datei im Ordner `plugins/` des Proxy-Templates ab. Die Standard-Templates enthalten `simplecloud-api` bereits. Füge es bei einem eigenen Template über die Einstellung **Plugins** des Ziels oder über die CLI hinzu.
+  <Step title="Plugin installieren">
+    Lade Notify von [GitHub](https://github.com/simplecloudapp/simplecloud-plugins/releases) oder [Modrinth](https://modrinth.com/organization/simplecloud) herunter und lege die JAR in den Ordner `plugins/` des Proxy Templates.
   </Step>
 
-  <Step title="Konfiguration erzeugen">
-    Starte einmal einen passenden Proxy. Notify legt `plugins/simplecloud-notify/messages.yml` im Verzeichnis des laufenden Proxys an.
+  <Step title="Berechtigungen vergeben">
+    Gib deinem Team die Berechtigungen für die Benachrichtigungen, die es bekommen soll, zum Beispiel `notify.state.server.available`. Mehr dazu unter [Berechtigungen](#berechtigungen).
   </Step>
 
-  <Step title="Konfiguration ins Template übernehmen">
-    Kopiere bei einem Gruppen-Proxy `plugins/simplecloud-notify/messages.yml` vor dem Stoppen an denselben Pfad im Template. Änderungen, die nur im temporären Proxy-Verzeichnis liegen, gehen beim Stoppen verloren.
-
-    Unter [Templates](/de/manual/setup/templates) findest du den vollständigen Ablauf.
-  </Step>
-
-  <Step title="Änderungen anwenden">
-    Führe nach Änderungen an der Datei eines laufenden Proxys `/scnotify reload config` aus. Starte den Proxy neu, wenn du stattdessen die Datei im Template bearbeitet hast.
+  <Step title="Benachrichtigungen prüfen">
+    Starte einen Proxy, betritt ihn und starte einen neuen Server.
 
     <Check>
-      Nach einem erfolgreichen Neuladen erscheint `Notify configuration was reloaded.`
+      Du bekommst eine Nachricht, wenn der Server startet und wenn er verfügbar ist.
     </Check>
   </Step>
 </Steps>
 
+Alle Nachrichten kannst du in `plugins/simplecloud-notify/messages.yml` ändern.
+
 ## Benachrichtigungen
 
-Notify empfängt Ereignisse über die Cloud API und kann Meldungen für diese Änderungen senden:
+| Typ | Wird gesendet, wenn |
+| --- | ------------------- |
+| `server.starting` | ein Server startet |
+| `server.available` | ein Server verfügbar ist |
+| `server.stopping` | ein Server stoppt |
+| `server.stopped` | ein Server gestoppt wurde |
+| `group.created` | eine Gruppe erstellt wurde |
+| `group.deleted` | eine Gruppe gelöscht wurde |
+| `persistent-server.created` | ein persistenter Server erstellt wurde |
+| `persistent-server.deleted` | ein persistenter Server gelöscht wurde |
 
-- Server wechselt zu `STARTING`, `AVAILABLE` oder `STOPPING`
-- Server wurde gestoppt
-- Gruppe wurde erstellt
-- Gruppe wurde gelöscht
+Ein Spieler bekommt eine Benachrichtigung, wenn er die passende Berechtigung hat und sie nicht ausgeschaltet hat.
 
-Setze eine einzelne Nachricht auf `null`, um sie zu deaktivieren. Mit `null` für den gesamten Abschnitt `notifications.server` oder `notifications.group` deaktivierst du die jeweilige Kategorie.
+## Benachrichtigungen ein- und ausschalten
 
-Teammitglieder können alle Meldungen für sich mit `/scnotify disable` ausschalten und mit `/scnotify enable` wieder einschalten. Notify speichert diese Einstellung in den SimpleCloud-Eigenschaften des Spielers, sodass sie proxyübergreifend gilt. Standardmäßig sind Benachrichtigungen aktiviert.
+Jeder Spieler kann alle Benachrichtigungen oder einzelne Typen ein- und ausschalten:
 
-## Konfiguration
-
-Notify verwendet MiniMessage für Textformatierungen. Die unterstützte Syntax findest du in der [MiniMessage-Dokumentation](https://docs.papermc.io/adventure/minimessage/).
-
-Die erzeugte `messages.yml` enthält Nachrichtentexte, wiederverwendbare Variablen und Formatoptionen:
-
-```yaml
-version: "1"
-
-format:
-  date: "dd.MM.yyyy HH:mm:ss"
-
-variables:
-  prefix: "<color:#0EA5E9><bold>⚡</bold></color>"
-
-notifications:
-  hover:
-    server: |-
-      <#E2E8F0>Server information
-      <br><#94A3B8>Time<#475569>: <#E2E8F0><time>
-      <br><#94A3B8>State<#475569>: <#E2E8F0><state>
-      <br><#94A3B8>Address<#475569>: <#E2E8F0><ip>:<port>
-      <br><#94A3B8>Players<#475569>: <#E2E8F0><players>/<max>
-    group: |-
-      <#E2E8F0>Group information
-      <br><#94A3B8>Time<#475569>: <#E2E8F0><time>
-
-  server:
-    starting: "<prefix> <#0EA5E9>Server <hover:show_text:'<notifications.hover.server>'><#F8FAFC><server></hover> is now starting."
-    available: "<prefix> <#A3E635>Server <hover:show_text:'<notifications.hover.server>'><#F8FAFC><server></hover> is now available."
-    stopping: "<prefix> <#F59E0B>Server <hover:show_text:'<notifications.hover.server>'><#F8FAFC><server></hover> is now stopping."
-    stopped: "<prefix> <#DC2626>Server <hover:show_text:'<notifications.hover.server>'><#F8FAFC><server></hover> is now stopped."
-
-  group:
-    created: "<prefix> <#0EA5E9>Group <hover:show_text:'<notifications.hover.group>'><#F8FAFC><group></hover> was created."
-    deleted: "<prefix> <#DC2626>Group <hover:show_text:'<notifications.hover.group>'><#F8FAFC><group></hover> was deleted."
+```text
+/scnotify disable
+/scnotify enable server.starting
 ```
 
-## Platzhalter
+`/scnotify list` zeigt alle Typen, die du bekommen kannst, und ob sie an sind. Klicke auf einen Eintrag, um ihn umzuschalten.
 
-### Serverbenachrichtigungen
-
-| Platzhalter | Beschreibung |
-| ----------- | ------------ |
-| `<server>` | Gruppen- oder Serverbasisname |
-| `<group>` | Gruppenname |
-| `<id>` | Numerische ID mit vorangestelltem Leerzeichen, falls vorhanden |
-| `<uuid>` | Server-UUID |
-| `<state>` | Aktueller Serverstatus |
-| `<ip>` | Server-IP-Adresse |
-| `<port>` | Server-Port |
-| `<players>` | Aktuelle Spielerzahl |
-| `<max>` | Maximale Spielerzahl |
-| `<time>` | Aktueller Zeitstempel im Format `format.date` |
-| `<updated>` | Zeitstempel der letzten Aktualisierung im Format `format.date` |
-| `<create_date>` | Erstellungszeitpunkt im Format `format.date` |
-
-### Gruppenbenachrichtigungen
-
-| Platzhalter | Beschreibung |
-| ----------- | ------------ |
-| `<group>` | Gruppenname |
-| `<time>` | Aktueller Zeitstempel im Format `format.date` |
+Notify speichert die Auswahl in den SimpleCloud Properties des Spielers. Sie gilt deshalb auf jedem Proxy. Standardmäßig sind alle Benachrichtigungen an.
 
 ## Befehle
 
 | Befehl | Beschreibung |
 | ------ | ------------ |
-| `/scnotify` oder `/scnotify help` | Verfügbare Befehle anzeigen |
-| `/scnotify enable` | Benachrichtigungen wieder empfangen |
-| `/scnotify disable` | Benachrichtigungen ausschalten, ohne Berechtigungen zu ändern |
-| `/scnotify set <player> <true\|false>` | Benachrichtigungen für einen Online-Spieler ein- oder ausschalten |
-| `/scnotify reload config` | `messages.yml` neu laden |
-
-Der persönliche Schalter gilt für alle Notify-Meldungen. Die Ereignisberechtigungen bestimmen weiterhin, welche Kategorien ein aktivierter Spieler erhält.
+| `/scnotify` oder `/scnotify help` | Zeigt die Befehle, die du verwenden kannst |
+| `/scnotify list` | Zeigt deine Typen und ob sie an sind |
+| `/scnotify enable [type]` | Schaltet alle Benachrichtigungen oder einen Typ ein |
+| `/scnotify disable [type]` | Schaltet alle Benachrichtigungen oder einen Typ aus |
+| `/scnotify set <player> <true\|false> [type]` | Schaltet Benachrichtigungen für einen anderen Spieler ein oder aus |
+| `/scnotify reload config` | Lädt das Plugin neu |
 
 ## Berechtigungen
 
 | Berechtigung | Beschreibung |
 | ------------ | ------------ |
-| `notify.state.server.starting` | Meldungen zu startenden Servern empfangen |
-| `notify.state.server.available` | Meldungen zu verfügbaren Servern empfangen |
-| `notify.state.server.stopping` | Meldungen zu stoppenden Servern empfangen |
-| `notify.state.server.stopped` | Meldungen zu gestoppten Servern empfangen |
-| `notify.state.group.created` | Meldungen zu erstellten Gruppen empfangen |
-| `notify.state.group.deleted` | Meldungen zu gelöschten Gruppen empfangen |
+| `notify.state.server.starting` | Benachrichtigung, wenn ein Server startet |
+| `notify.state.server.available` | Benachrichtigung, wenn ein Server verfügbar ist |
+| `notify.state.server.stopping` | Benachrichtigung, wenn ein Server stoppt |
+| `notify.state.server.stopped` | Benachrichtigung, wenn ein Server gestoppt wurde |
+| `notify.state.group.created` | Benachrichtigung, wenn eine Gruppe erstellt wurde |
+| `notify.state.group.deleted` | Benachrichtigung, wenn eine Gruppe gelöscht wurde |
+| `notify.state.persistent-server.created` | Benachrichtigung, wenn ein persistenter Server erstellt wurde |
+| `notify.state.persistent-server.deleted` | Benachrichtigung, wenn ein persistenter Server gelöscht wurde |
 | `simplecloud.command.notify.help` | `/scnotify` und `/scnotify help` verwenden |
-| `simplecloud.command.notify.reload.config` | `messages.yml` neu laden |
-| `simplecloud.command.notify.toggle.self` | Eigene Benachrichtigungen ein- oder ausschalten |
-| `simplecloud.command.notify.toggle.other` | Benachrichtigungen eines anderen Online-Spielers ändern |
-
-<Note>
-  Notify prüft die Berechtigung für jede Meldung einzeln. Weise Teammitgliedern nur die Ereigniskategorien zu, die sie erhalten sollen.
-</Note>
-
-<Note>
-  `notify.state.server.deleted` wird weiterhin als veralteter Alias für Meldungen zu gestoppten Servern akzeptiert.
-</Note>
+| `simplecloud.command.notify.reload.config` | `/scnotify reload config` verwenden |
+| `simplecloud.command.notify.toggle.self` | `list`, `enable` und `disable` verwenden |
+| `simplecloud.command.notify.toggle.other` | `/scnotify set` verwenden |
 
 ## Fehlerbehebung
 
 <AccordionGroup>
-  <Accordion title="Der Proxy kann Notify nicht laden">
-    Prüfe, ob `simplecloud-api` auf demselben Proxy installiert und aktiviert ist. Notify benötigt das Plugin für SimpleCloud-Ereignisse und Spielereigenschaften.
+  <Accordion title="Der Proxy lädt Notify nicht">
+    Prüfe, ob `simplecloud-api` auf demselben Proxy installiert ist. Ohne die API startet Notify nicht.
   </Accordion>
 
-  <Accordion title="Ein Teammitglied erhält keine Benachrichtigungen">
-    Führe als betroffener Spieler `/scnotify enable` aus und weise dann die Berechtigung für jede gewünschte Ereigniskategorie zu. Sowohl der persönliche Schalter als auch die Ereignisberechtigung müssen die Meldung erlauben.
-  </Accordion>
-
-  <Accordion title="Nachrichtenänderungen verschwinden nach einem Neustart">
-    Bearbeite `plugins/simplecloud-notify/messages.yml` im Proxy-Template oder kopiere die getestete Datei dorthin, bevor ein temporärer Gruppen-Proxy stoppt.
+  <Accordion title="Ein Spieler bekommt keine Benachrichtigungen">
+    Prüfe, ob der Spieler die Berechtigung für den Typ hat. Führe dann als dieser Spieler `/scnotify list` aus, um zu sehen, ob der Typ ausgeschaltet ist.
   </Accordion>
 </AccordionGroup>
