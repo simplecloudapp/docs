@@ -1,7 +1,21 @@
 ---
 title: "Run SimpleCloud on multiple machines"
-description: "Add serverhosts to one network and keep their shared files synchronized"
+description: "Add serverhosts to one network, make them reachable, and keep their shared files synchronized"
 ---
+
+## How a multi-machine network works
+
+Each machine in your network runs its own serverhost. Players join through your
+proxy, and the proxy forwards them to servers on any serverhost. To do that, the
+proxy connects to each server using the address its serverhost reports.
+
+To run servers on several machines, you complete four tasks:
+
+1. Install a serverhost on the new machine.
+2. Set the address of **every** serverhost so the proxy can reach its servers.
+3. Synchronize templates, workflows, and configurator settings between the
+   serverhosts.
+4. Choose which serverhosts may run each group and persistent server.
 
 ## Before you begin
 
@@ -9,30 +23,86 @@ You need:
 
 - A SimpleCloud network with one working serverhost
 - A supported Linux or macOS machine with root or sudo access
-- Network access between the serverhosts
+- The IP address of each machine, either public or private. Each address must be
+  reachable from the machine that runs your proxy.
+- Network access between the machines:
+  - TCP ports `50000-60000` on every serverhost, reachable from the proxy's
+    machine. Servers use ports from this range.
+  - TCP and UDP port `22000` between the serverhosts for file synchronization
 
 Choose the existing serverhost that contains the files you want to keep as the
-**primary sync host**. You will run the initialization and approval commands on
-this host.
+**primary sync host**. You run the synchronization setup and approval commands
+on this host.
 
 ## Add the serverhost
 
 <Steps>
   <Step title="Create an installation command">
     Open the [SimpleCloud dashboard](https://dash.simplecloud.app), select your
-    network, and go to **Settings > Server Hosts**. Select **Add Host**.
+    network, and go to **Settings > Server Hosts**. Select **Add host**.
+
+    The dialog shows an installation command that contains a pre-approved
+    sign-in code.
   </Step>
 
-  <Step title="Install SimpleCloud">
-    Copy the generated command and run it on the machine you want to add. The
-    command installs SimpleCloud, registers the serverhost, and starts it.
+  <Step title="Run the command on the new machine">
+    Copy the command and run it on the machine you want to add, not on an
+    existing serverhost. The command installs SimpleCloud, signs in, registers
+    the serverhost, and starts it. Do not share the command, because it signs
+    in to your account.
 
-    <Warning>
-      The command contains a temporary sign-in code. Treat the complete command
-      as sensitive and run it only on the intended machine.
-    </Warning>
+    When the terminal shows **Setup complete**, the new serverhost appears as
+    online in **Settings > Server Hosts**.
+  </Step>
+</Steps>
+
+## Set the address of each serverhost
+
+Each serverhost reports an address for its servers. The proxy uses this address
+to connect players to them. By default, the address is `0.0.0.0`. That works
+with one machine, but with several machines the proxy tries to connect to itself
+instead of the other serverhost. Players then see errors such as
+**Network Protocol Error** when they join a server on another host.
+
+Set the address on **every** serverhost, including your first one.
+
+<Steps>
+  <Step title="Find the machine's IP address">
+    Use an IP address of this machine that the proxy's machine can reach:
+
+    - Use the **private IP** if the machines share a private network, such as a
+      VPN or a data center network.
+    - Otherwise, use the machine's **public IP**.
+
+    Each serverhost uses its own IP address. Do not enter the first host's IP on
+    the second host.
   </Step>
 
+  <Step title="Edit serverhost.properties">
+    Open `serverhost.properties` in the SimpleCloud installation directory, for
+    example `~/simplecloud/serverhost.properties`. Change the `SERVER_HOST_IP`
+    line to this machine's IP address. Add the line if it does not exist.
+
+    ```properties serverhost.properties
+    SERVER_HOST_IP=203.0.113.20
+    ```
+  </Step>
+
+  <Step title="Restart the serverhost">
+    From the installation directory, run:
+
+    ```bash
+    sc restart serverhost
+    ```
+
+    When the CLI asks whether to stop the running Minecraft servers, choose
+    **Yes**. Servers keep the old address until they start again.
+  </Step>
+
+  <Step title="Repeat on every serverhost">
+    Repeat these steps on each other serverhost, using that machine's IP
+    address.
+  </Step>
 </Steps>
 
 ## Synchronize shared files
@@ -89,46 +159,133 @@ brew services start syncthing
   </Step>
 </Steps>
 
-To add another serverhost later, first install it with a new **Add Host** command
-from the dashboard. Then run the following command on the primary sync host and
-follow the generated join and approval commands:
+## Choose where servers run
 
-```bash
-sc sync add --join-name serverhost-3
-```
+The new serverhost does not take over existing servers automatically.
+
+- **Server groups** can run on any serverhost enabled in the group's
+  **Settings > Deployment** page. By default, every serverhost is enabled. See
+  [Choose where servers can run](/en/manual/setup/server-groups#choose-where-servers-can-run).
+- **Persistent servers**, including a persistent proxy, always run on the
+  serverhost assigned to them. They cannot start while that serverhost is
+  offline. To move one, follow
+  [Move the server to another serverhost](/en/manual/setup/persistent-servers#move-the-server-to-another-serverhost)
+  so you copy its files first.
 
 ## Verify the setup
 
-Run this command on both serverhosts:
+<Steps>
+  <Step title="Check the serverhosts">
+    In **Settings > Server Hosts**, every serverhost shows as online.
+  </Step>
 
-```bash
-sc sync status
-```
+  <Step title="Check synchronization">
+    Run this command on each serverhost:
 
-Under **Peers**, each other serverhost should show as `connected`. Under
-**Managed folders**, `templates`, `workflows`, and `options` should each show as
-`configured`.
+    ```bash
+    sc sync status
+    ```
+
+    Under **Peers**, each other serverhost shows as `connected`. Under
+    **Managed folders**, `templates`, `workflows`, and `options` each show as
+    `configured`.
+  </Step>
+
+  <Step title="Join a server on the new serverhost">
+    Start a server on the new serverhost, for example by enabling only that
+    serverhost for a test group. Join your network through the proxy and switch
+    to that server.
+  </Step>
+</Steps>
 
 <Tip>
   Make changes on one serverhost at a time to avoid synchronization conflicts.
 </Tip>
 
-## Fix an interrupted setup
+## Add more serverhosts later
 
-- If you lose the join command, run `sc sync add` again on the primary sync
-  host to generate a new one.
-- If joining or approval stops with an error, fix the reported problem and
-  rerun that command. The commands keep existing synchronization settings.
-- If a peer shows as `offline`, confirm both serverhosts are running and can
-  reach each other. If a firewall blocks direct connections, allow TCP and UDP
-  port `22000` between the hosts.
-- If you use `--as-root`, include it when running `sc sync status` or retrying a
-  setup command on that host.
+<Steps>
+  <Step title="Install the serverhost">
+    Follow [Add the serverhost](#add-the-serverhost) with a new **Add host**
+    command.
+  </Step>
 
-If an additional host has the wrong synchronization configuration, run
-`sc sync reset` on that host. This removes its synchronization settings but
-keeps the synchronized files. Then generate a new join command on the primary
-sync host and repeat the join and approval steps.
+  <Step title="Set its address">
+    Follow [Set the address of each serverhost](#set-the-address-of-each-serverhost) on
+    the new machine.
+  </Step>
+
+  <Step title="Add it to synchronization">
+    On the primary sync host, run the following command, then follow the
+    generated join and approval commands:
+
+    ```bash
+    sc sync add --join-name serverhost-3
+    ```
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Setup reports an invalid or expired code">
+    The sign-in code in the installation command expires after a few minutes
+    and works only once. This also means you cannot reuse a command for a
+    second serverhost. Close the dialog, open **Add host** again, and run the
+    new command right away.
+  </Accordion>
+
+  <Accordion title="The new serverhost does not appear in the dashboard">
+    Check that the terminal reached **Setup complete**. If it did, run these
+    commands in the installation directory on the new machine:
+
+    ```bash
+    sc status serverhost
+    sc logs serverhost --lines 200
+    ```
+
+    If setup did not finish, fix the error shown in the terminal and run a new
+    **Add host** command.
+  </Accordion>
+
+  <Accordion title="Players see Network Protocol Error on a server on another host">
+    The proxy cannot reach that server. Check that:
+
+    - `SERVER_HOST_IP` in each serverhost's `serverhost.properties` contains
+      that machine's own IP address, not `0.0.0.0`.
+    - You restarted the serverhost and the affected server after the change.
+    - A firewall allows TCP ports `50000-60000` on that serverhost from the
+      proxy's machine.
+  </Accordion>
+
+  <Accordion title="A persistent server shows Startup blocked: the serverhost is offline">
+    A persistent server runs only on its assigned serverhost. Start that
+    serverhost again, or select **Review deployment** to move the server to
+    another serverhost. Copy its files first, as described in
+    [Move the server to another serverhost](/en/manual/setup/persistent-servers#move-the-server-to-another-serverhost).
+  </Accordion>
+
+  <Accordion title="A synchronization command was interrupted">
+    - If you lose the join command, run `sc sync add` again on the primary
+      sync host to generate a new one.
+    - If joining or approval stops with an error, fix the reported problem and
+      rerun that command. The commands keep existing synchronization settings.
+    - If you use `--as-root`, include it when running `sc sync status` or
+      retrying a setup command on that host.
+  </Accordion>
+
+  <Accordion title="A synchronization peer shows as offline">
+    Confirm both serverhosts are running and can reach each other. If a
+    firewall blocks direct connections, allow TCP and UDP port `22000` between
+    the hosts.
+  </Accordion>
+
+  <Accordion title="An additional host has the wrong synchronization configuration">
+    Run `sc sync reset` on that host. This removes its synchronization settings
+    but keeps the synchronized files. Then generate a new join command on the
+    primary sync host and repeat the join and approval steps.
+  </Accordion>
+</AccordionGroup>
 
 ## Next steps
 

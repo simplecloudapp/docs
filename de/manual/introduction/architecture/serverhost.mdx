@@ -18,7 +18,7 @@ Ein Serverhost:
 
 ## Serverhost hinzufügen
 
-Öffne im Dashboard **Settings > Server Hosts** und wähle **Add Host**. Konfiguriere den Host und führe anschließend den generierten Einrichtungsbefehl auf der Maschine aus, die du hinzufügen möchtest.
+Öffne im Dashboard **Settings > Server Hosts** und wähle **Add host**. Führe den generierten Einrichtungsbefehl auf der Maschine aus, die du hinzufügen möchtest.
 
 Der Befehl installiert SimpleCloud, verbindet den Serverhost mit deinem Netzwerk und startet ihn. Die Voraussetzungen und den vollständigen Einrichtungsablauf findest du in der [Installationsanleitung](/de/manual/setup/installation).
 
@@ -71,11 +71,12 @@ Führe `sc logs serverhost --lines 200` aus, um weitere Informationen zu erhalte
 
 Mit mehreren Serverhosts kann SimpleCloud Server auf die Maschinen verteilen, die für die jeweilige Gruppe zugelassen sind. Das erhöht die Kapazität, aber die Maschinen teilen sich kein Dateisystem.
 
+- Setze `SERVER_HOST_IP` in der `serverhost.properties` jedes Serverhosts auf die IP-Adresse dieser Maschine. Der Proxy erreicht die Server auf diesem Host über diese Adresse.
 - Halte Templates, Workflows und Configurator-Dateien synchron, damit ein Server auf jedem zulässigen Host korrekt starten kann.
 - Solange ein Server läuft, befinden sich seine Dateien und Logs nur auf dem Serverhost, der ihn gestartet hat.
 - Die Dateien eines persistenten Servers bleiben auf dem ihm zugewiesenen Serverhost. Wenn du seinen Serverhost änderst, werden diese Dateien nicht verschoben.
 
-Folge der Anleitung [SimpleCloud auf mehreren Maschinen ausführen](/de/manual/setup/multi-root), um eine weitere Maschine hinzuzufügen und die gemeinsamen Dateien zu synchronisieren.
+Folge der Anleitung [SimpleCloud auf mehreren Maschinen ausführen](/de/manual/setup/multi-root), um eine weitere Maschine hinzuzufügen, ihre Adresse festzulegen und die gemeinsamen Dateien zu synchronisieren.
 
 ## Verwandte Seiten
 

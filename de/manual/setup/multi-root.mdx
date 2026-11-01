@@ -1,7 +1,24 @@
 ---
 title: "SimpleCloud auf mehreren Maschinen ausführen"
-description: "Füge einem Netzwerk Serverhosts hinzu und halte ihre gemeinsamen Dateien synchron"
+description: "Füge einem Netzwerk Serverhosts hinzu, mache sie erreichbar und halte ihre gemeinsamen Dateien synchron"
 ---
+
+## So funktioniert ein Netzwerk mit mehreren Maschinen
+
+Auf jeder Maschine in deinem Netzwerk läuft ein eigener Serverhost. Spieler
+verbinden sich über deinen Proxy, und der Proxy leitet sie an Server auf
+beliebigen Serverhosts weiter. Dazu verbindet sich der Proxy mit jedem Server
+über die Adresse, die dessen Serverhost meldet.
+
+Um Server auf mehreren Maschinen auszuführen, erledigst du vier Aufgaben:
+
+1. Installiere einen Serverhost auf der neuen Maschine.
+2. Lege die Adresse **jedes** Serverhosts fest, damit der Proxy dessen Server
+   erreicht.
+3. Synchronisiere Templates, Workflows und Configurator-Einstellungen zwischen
+   den Serverhosts.
+4. Lege fest, auf welchen Serverhosts jede Gruppe und jeder persistente Server
+   laufen darf.
 
 ## Voraussetzungen
 
@@ -9,31 +26,90 @@ Du benötigst:
 
 - Ein SimpleCloud-Netzwerk mit einem funktionierenden Serverhost
 - Eine unterstützte Linux- oder macOS-Maschine mit Root- oder `sudo`-Zugriff
-- Netzwerkzugriff zwischen den Serverhosts
+- Die IP-Adresse jeder Maschine, entweder öffentlich oder privat. Jede Adresse
+  muss von der Maschine erreichbar sein, auf der dein Proxy läuft.
+- Netzwerkzugriff zwischen den Maschinen:
+  - TCP-Ports `50000-60000` auf jedem Serverhost, erreichbar von der Maschine
+    des Proxys. Server verwenden Ports aus diesem Bereich.
+  - TCP- und UDP-Port `22000` zwischen den Serverhosts für die
+    Dateisynchronisierung
 
 Wähle den vorhandenen Serverhost mit den Dateien, die du behalten möchtest, als
 **primären Synchronisierungshost** aus. Auf diesem Host führst du die Befehle zur
-Initialisierung und Genehmigung aus.
+Einrichtung und Genehmigung der Synchronisierung aus.
 
 ## Serverhost hinzufügen
 
 <Steps>
   <Step title="Installationsbefehl erstellen">
     Öffne das [SimpleCloud Dashboard](https://dash.simplecloud.app), wähle dein
-    Netzwerk aus und gehe zu **Settings > Server Hosts**. Wähle **Add Host**.
+    Netzwerk aus und gehe zu **Settings > Server Hosts**. Wähle **Add host**.
+
+    Der Dialog zeigt einen Installationsbefehl mit einem vorab genehmigten
+    Anmeldecode.
   </Step>
 
-  <Step title="SimpleCloud installieren">
-    Kopiere den generierten Befehl und führe ihn auf der Maschine aus, die du
-    hinzufügen möchtest. Der Befehl installiert SimpleCloud, registriert den
-    Serverhost und startet ihn.
+  <Step title="Befehl auf der neuen Maschine ausführen">
+    Kopiere den Befehl und führe ihn auf der Maschine aus, die du hinzufügen
+    möchtest, nicht auf einem vorhandenen Serverhost. Der Befehl installiert
+    SimpleCloud, meldet dich an, registriert den Serverhost und startet ihn.
+    Teile den Befehl nicht, da er sich mit deinem Konto anmeldet.
 
-    <Warning>
-      Der Befehl enthält einen temporären Anmeldecode. Behandle den vollständigen
-      Befehl als vertraulich und führe ihn nur auf der vorgesehenen Maschine aus.
-    </Warning>
+    Sobald im Terminal **Setup complete** angezeigt wird, erscheint der neue
+    Serverhost unter **Settings > Server Hosts** als online.
+  </Step>
+</Steps>
+
+## Adresse jedes Serverhosts festlegen
+
+Jeder Serverhost meldet eine Adresse für seine Server. Der Proxy verbindet
+Spieler über diese Adresse mit ihnen. Standardmäßig lautet die Adresse
+`0.0.0.0`. Mit einer Maschine funktioniert das, aber mit mehreren Maschinen
+versucht der Proxy, sich mit sich selbst statt mit dem anderen Serverhost zu
+verbinden. Spieler sehen dann Fehler wie **Network Protocol Error**, wenn sie
+einen Server auf einem anderen Host betreten.
+
+Lege die Adresse auf **jedem** Serverhost fest, auch auf deinem ersten.
+
+<Steps>
+  <Step title="IP-Adresse der Maschine ermitteln">
+    Verwende eine IP-Adresse dieser Maschine, die von der Maschine des Proxys
+    erreichbar ist:
+
+    - Verwende die **private IP**, wenn sich die Maschinen ein privates Netzwerk
+      teilen, zum Beispiel ein VPN oder ein Rechenzentrumsnetzwerk.
+    - Verwende andernfalls die **öffentliche IP** der Maschine.
+
+    Jeder Serverhost verwendet seine eigene IP-Adresse. Trage auf dem zweiten
+    Host nicht die IP des ersten Hosts ein.
   </Step>
 
+  <Step title="serverhost.properties bearbeiten">
+    Öffne `serverhost.properties` im SimpleCloud-Installationsverzeichnis, zum
+    Beispiel `~/simplecloud/serverhost.properties`. Ändere die Zeile
+    `SERVER_HOST_IP` auf die IP-Adresse dieser Maschine. Füge die Zeile hinzu,
+    falls sie fehlt.
+
+    ```properties serverhost.properties
+    SERVER_HOST_IP=203.0.113.20
+    ```
+  </Step>
+
+  <Step title="Serverhost neu starten">
+    Führe im Installationsverzeichnis Folgendes aus:
+
+    ```bash
+    sc restart serverhost
+    ```
+
+    Wenn die CLI fragt, ob die laufenden Minecraft-Server gestoppt werden sollen,
+    wähle **Yes**. Server behalten die alte Adresse, bis sie neu starten.
+  </Step>
+
+  <Step title="Auf jedem Serverhost wiederholen">
+    Wiederhole diese Schritte auf jedem weiteren Serverhost mit der IP-Adresse
+    der jeweiligen Maschine.
+  </Step>
 </Steps>
 
 ## Gemeinsame Dateien synchronisieren
@@ -93,49 +169,139 @@ brew services start syncthing
   </Step>
 </Steps>
 
-Wenn du später einen weiteren Serverhost hinzufügst, installiere ihn zuerst mit
-einem neuen **Add Host**-Befehl aus dem Dashboard. Führe anschließend den folgenden
-Befehl auf dem primären Synchronisierungshost aus und folge den generierten
-Beitritts- und Genehmigungsbefehlen:
+## Festlegen, wo Server laufen
 
-```bash
-sc sync add --join-name serverhost-3
-```
+Der neue Serverhost übernimmt vorhandene Server nicht automatisch.
+
+- **Servergruppen** können auf jedem Serverhost laufen, der auf der Seite
+  **Settings > Deployment** der Gruppe aktiviert ist. Standardmäßig sind alle
+  Serverhosts aktiviert. Siehe
+  [Festlegen, wo Server laufen](/de/manual/setup/server-groups#festlegen-wo-server-laufen).
+- **Persistente Server**, auch ein persistenter Proxy, laufen immer auf dem
+  ihnen zugewiesenen Serverhost. Sie können nicht starten, solange dieser
+  Serverhost offline ist. Um einen persistenten Server zu verschieben, folge
+  [Server auf einen anderen Serverhost verschieben](/de/manual/setup/persistent-servers#server-auf-einen-anderen-serverhost-verschieben),
+  damit du zuerst seine Dateien kopierst.
 
 ## Einrichtung prüfen
 
-Führe diesen Befehl auf beiden Serverhosts aus:
+<Steps>
+  <Step title="Serverhosts prüfen">
+    Unter **Settings > Server Hosts** wird jeder Serverhost als online angezeigt.
+  </Step>
 
-```bash
-sc sync status
-```
+  <Step title="Synchronisierung prüfen">
+    Führe diesen Befehl auf jedem Serverhost aus:
 
-Unter **Peers** sollte jeder andere Serverhost als `connected` angezeigt werden.
-Unter **Managed folders** sollten `templates`, `workflows` und `options` jeweils
-als `configured` angezeigt werden.
+    ```bash
+    sc sync status
+    ```
+
+    Unter **Peers** wird jeder andere Serverhost als `connected` angezeigt. Unter
+    **Managed folders** werden `templates`, `workflows` und `options` jeweils
+    als `configured` angezeigt.
+  </Step>
+
+  <Step title="Server auf dem neuen Serverhost betreten">
+    Starte einen Server auf dem neuen Serverhost, zum Beispiel indem du für eine
+    Testgruppe nur diesen Serverhost aktivierst. Verbinde dich über den Proxy mit
+    deinem Netzwerk und wechsle auf diesen Server.
+  </Step>
+</Steps>
 
 <Tip>
   Ändere Dateien jeweils nur auf einem Serverhost, um Synchronisierungskonflikte zu vermeiden.
 </Tip>
 
-## Unterbrochene Einrichtung reparieren
+## Später weitere Serverhosts hinzufügen
 
-- Wenn du den Beitrittsbefehl verlierst, führe `sc sync add` erneut auf dem
-  primären Synchronisierungshost aus, um einen neuen zu generieren.
-- Wenn der Beitritt oder die Genehmigung mit einem Fehler abbricht, behebe das
-  gemeldete Problem und führe den Befehl erneut aus. Die Befehle behalten die
-  bestehenden Synchronisierungseinstellungen bei.
-- Wenn ein Peer als `offline` angezeigt wird, bestätige, dass beide Serverhosts
-  laufen und einander erreichen können. Falls eine Firewall direkte Verbindungen
-  blockiert, erlaube TCP- und UDP-Port `22000` zwischen den Hosts.
-- Wenn du `--as-root` verwendest, gib die Option auch bei `sc sync status` und
-  beim erneuten Ausführen eines Einrichtungsbefehls auf diesem Host an.
+<Steps>
+  <Step title="Serverhost installieren">
+    Folge dem Abschnitt **Serverhost hinzufügen** mit einem neuen
+    **Add host**-Befehl.
+  </Step>
 
-Wenn ein zusätzlicher Host eine falsche Synchronisierungskonfiguration hat, führe
-dort `sc sync reset` aus. Der Befehl entfernt die Synchronisierungseinstellungen,
-lässt die synchronisierten Dateien aber bestehen. Generiere danach auf dem
-primären Synchronisierungshost einen neuen Beitrittsbefehl und wiederhole die
-Schritte für Beitritt und Genehmigung.
+  <Step title="Adresse festlegen">
+    Folge auf der neuen Maschine dem Abschnitt **Adresse jedes Serverhosts
+    festlegen**.
+  </Step>
+
+  <Step title="Zur Synchronisierung hinzufügen">
+    Führe auf dem primären Synchronisierungshost den folgenden Befehl aus und
+    folge anschließend den generierten Beitritts- und Genehmigungsbefehlen:
+
+    ```bash
+    sc sync add --join-name serverhost-3
+    ```
+  </Step>
+</Steps>
+
+## Fehlerbehebung
+
+<AccordionGroup>
+  <Accordion title="Die Einrichtung meldet einen ungültigen oder abgelaufenen Code">
+    Der Anmeldecode im Installationsbefehl läuft nach einigen Minuten ab und
+    funktioniert nur einmal. Du kannst einen Befehl also auch nicht für einen
+    zweiten Serverhost wiederverwenden. Schließe den Dialog, öffne **Add host**
+    erneut und führe den neuen Befehl sofort aus.
+  </Accordion>
+
+  <Accordion title="Der neue Serverhost erscheint nicht im Dashboard">
+    Prüfe, ob im Terminal **Setup complete** angezeigt wurde. Falls ja, führe
+    diese Befehle im Installationsverzeichnis auf der neuen Maschine aus:
+
+    ```bash
+    sc status serverhost
+    sc logs serverhost --lines 200
+    ```
+
+    Falls die Einrichtung nicht abgeschlossen wurde, behebe den im Terminal
+    angezeigten Fehler und führe einen neuen **Add host**-Befehl aus.
+  </Accordion>
+
+  <Accordion title="Spieler sehen Network Protocol Error auf einem Server auf einem anderen Host">
+    Der Proxy erreicht diesen Server nicht. Prüfe Folgendes:
+
+    - `SERVER_HOST_IP` in der `serverhost.properties` jedes Serverhosts enthält
+      die eigene IP-Adresse dieser Maschine, nicht `0.0.0.0`.
+    - Du hast den Serverhost und den betroffenen Server nach der Änderung neu
+      gestartet.
+    - Eine Firewall erlaubt die TCP-Ports `50000-60000` auf diesem Serverhost
+      von der Maschine des Proxys.
+  </Accordion>
+
+  <Accordion title="Ein persistenter Server zeigt Startup blocked: der Serverhost ist offline">
+    Ein persistenter Server läuft nur auf seinem zugewiesenen Serverhost. Starte
+    diesen Serverhost erneut oder wähle **Review deployment**, um den Server auf
+    einen anderen Serverhost zu verschieben. Kopiere zuerst seine Dateien, wie
+    unter
+    [Server auf einen anderen Serverhost verschieben](/de/manual/setup/persistent-servers#server-auf-einen-anderen-serverhost-verschieben)
+    beschrieben.
+  </Accordion>
+
+  <Accordion title="Ein Synchronisierungsbefehl wurde unterbrochen">
+    - Wenn du den Beitrittsbefehl verlierst, führe `sc sync add` erneut auf dem
+      primären Synchronisierungshost aus, um einen neuen zu generieren.
+    - Wenn der Beitritt oder die Genehmigung mit einem Fehler abbricht, behebe
+      das gemeldete Problem und führe den Befehl erneut aus. Die Befehle
+      behalten die bestehenden Synchronisierungseinstellungen bei.
+    - Wenn du `--as-root` verwendest, gib die Option auch bei `sc sync status`
+      und beim erneuten Ausführen eines Einrichtungsbefehls auf diesem Host an.
+  </Accordion>
+
+  <Accordion title="Ein Synchronisierungs-Peer wird als offline angezeigt">
+    Prüfe, ob beide Serverhosts laufen und einander erreichen können. Falls eine
+    Firewall direkte Verbindungen blockiert, erlaube TCP- und UDP-Port `22000`
+    zwischen den Hosts.
+  </Accordion>
+
+  <Accordion title="Ein zusätzlicher Host hat eine falsche Synchronisierungskonfiguration">
+    Führe dort `sc sync reset` aus. Der Befehl entfernt die
+    Synchronisierungseinstellungen, lässt die synchronisierten Dateien aber
+    bestehen. Generiere danach auf dem primären Synchronisierungshost einen neuen
+    Beitrittsbefehl und wiederhole die Schritte für Beitritt und Genehmigung.
+  </Accordion>
+</AccordionGroup>
 
 ## Nächste Schritte
 
