@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Official documentation for SimpleCloud, a Minecraft server network management system. Built with Mintlify and deployed at docs.simplecloud.app.
+Official documentation for SimpleCloud, a Minecraft server network management system. Built with Mintlify and deployed at simplecloud.app/docs.
 
 ## Development Commands
 
