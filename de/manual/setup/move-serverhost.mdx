@@ -1,0 +1,73 @@
+---
+title: "Serverhost auf eine neue Maschine umziehen"
+description: "Ziehe deinen Serverhost auf eine andere Maschine oder zu einem anderen Hosting-Anbieter um"
+---
+
+Deine Gruppen, persistenten Server und Einstellungen gehören zu deinem
+Netzwerk und ziehen deshalb automatisch mit. Du musst nur deine Dateien von der
+alten auf die neue Maschine kopieren. Während des Umzugs sind deine Server
+offline.
+
+Wenn du mehrere Serverhosts betreibst, folge stattdessen
+[SimpleCloud auf mehreren Maschinen ausführen](/de/manual/setup/multi-root).
+
+<Steps>
+  <Step title="Alle Server stoppen">
+    Öffne **Servers** im Dashboard. Klicke mit der rechten Maustaste auf jede
+    Gruppe und jeden persistenten Server und halte **Disable** gedrückt.
+  </Step>
+
+  <Step title="Neue Maschine hinzufügen">
+    Öffne
+    [Settings > Server Hosts](https://dash.simplecloud.app/redirect?target=%2Fsettings%2Fserverhosts),
+    wähle **Add host** und führe den Befehl auf der neuen Maschine aus.
+  </Step>
+
+  <Step title="Auf den Netzwerkschlüssel warten">
+    Der neue Serverhost erhält den Schlüssel für die Secrets deines Netzwerks
+    vom alten. Führe auf der neuen Maschine Folgendes aus:
+
+    ```bash
+    sc logs serverhost --lines 200
+    ```
+
+    Fahre fort, sobald das Log
+    `Shared private key synchronized from a peer serverhost` anzeigt.
+
+    <Warning>
+      Lass den alten Serverhost laufen, bis diese Zeile erscheint. Ohne den
+      Schlüssel können Server auf der neuen Maschine nicht starten.
+    </Warning>
+  </Step>
+
+  <Step title="Dateien kopieren">
+    Kopiere die Ordner `templates`, `workflows` und `options` aus der alten
+    Installation in die neue. Wenn du persistente Server hast, kopiere auch
+    `running/persistent`. Kopiere `secrets` und `serverhost.properties` nicht.
+  </Step>
+
+  <Step title="Persistente Server dem neuen Serverhost zuweisen">
+    Öffne jeden persistenten Server, gehe zu **Settings > Deployment** und
+    wähle den neuen Serverhost aus.
+  </Step>
+
+  <Step title="Alten Serverhost stoppen">
+    Führe auf der alten Maschine Folgendes aus:
+
+    ```bash
+    sc stop serverhost
+    ```
+  </Step>
+
+  <Step title="Server wieder starten">
+    Klicke unter **Servers** mit der rechten Maustaste auf jede Gruppe und
+    jeden persistenten Server und halte **Enable** gedrückt.
+  </Step>
+
+  <Step title="Alten Serverhost entfernen">
+    Wenn Spieler über eine Domain beitreten, richte ihren DNS-Eintrag auf die
+    IP-Adresse der neuen Maschine. Wenn alles funktioniert, öffne
+    **Settings > Server Hosts** und wähle im Aktionsmenü des alten Serverhosts
+    erst **Deactivate** und dann **Delete**.
+  </Step>
+</Steps>

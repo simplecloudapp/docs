@@ -53,6 +53,7 @@
                   "en/manual/setup/servers",
                   "en/manual/setup/templates",
                   "en/manual/setup/multi-root",
+                  "en/manual/setup/move-serverhost",
                   "en/manual/setup/self-hosting"
                 ]
               },
@@ -152,6 +153,7 @@
                   "de/manual/setup/servers",
                   "de/manual/setup/templates",
                   "de/manual/setup/multi-root",
+                  "de/manual/setup/move-serverhost",
                   "de/manual/setup/self-hosting"
                 ]
               },
